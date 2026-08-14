@@ -21,7 +21,7 @@ function fmt(value: number | null, decimals = 1): string {
 export default async function RatingsPage({
   searchParams,
 }: {
-  searchParams: Promise<{ class?: string }>;
+  searchParams: Promise<{ class?: string; conf?: string }>;
 }) {
   const params = await searchParams;
   const showAll = params.class === "all";
@@ -66,6 +66,8 @@ export default async function RatingsPage({
         }))
         .sort((a, b) => b.avg - a.avg)
     : [];
+  const selectedConference =
+    conferences.find((c) => c.name === params.conf) ?? conferences[0];
   const lastUpdated = ratings[0]?.as_of ?? null;
   const weekLabel =
     season != null && week != null ? `${season} · Week ${week}` : "";
@@ -105,7 +107,7 @@ export default async function RatingsPage({
           { href: "/cfb/ratings?class=all", label: "All D1", active: showAll },
           {
             href: "/cfb/ratings?class=conference",
-            label: "Conferences",
+            label: "Conference",
             active: byConference,
           },
         ].map((tab) => (
@@ -124,13 +126,35 @@ export default async function RatingsPage({
         ))}
       </div>
 
+      {byConference && (
+        <div className="flex flex-wrap gap-1.5 font-mono text-[11px] uppercase tracking-wider">
+          {[...conferences]
+            .sort((a, b) => a.name.localeCompare(b.name))
+            .map(({ name }) => (
+              <Link
+                key={name}
+                href={`/cfb/ratings?class=conference&conf=${encodeURIComponent(name)}`}
+                className={cn(
+                  "rounded-md border px-2 py-1 transition-colors",
+                  name === selectedConference.name
+                    ? "border-foreground text-foreground"
+                    : "border-border text-muted-foreground hover:text-foreground"
+                )}
+              >
+                {name}
+              </Link>
+            ))}
+        </div>
+      )}
+
       {byConference ? (
-        conferences.map(({ name, teams, avg }) => (
-          <section key={name} className="space-y-2">
+          <section className="space-y-2">
             <div className="flex items-baseline justify-between gap-4">
-              <h2 className="font-heading text-lg tracking-tight">{name}</h2>
+              <h2 className="font-heading text-lg tracking-tight">
+                {selectedConference.name}
+              </h2>
               <span className="font-mono text-xs uppercase tracking-wider text-muted-foreground">
-                Avg {fmt(avg)}
+                Avg {fmt(selectedConference.avg)}
               </span>
             </div>
             <div className="overflow-x-auto rounded-xl border border-border">
@@ -148,7 +172,7 @@ export default async function RatingsPage({
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {teams.map((r, index) => (
+                  {selectedConference.teams.map((r, index) => (
                     <TableRow key={r.team_id}>
                       <TableCell className="text-right font-mono tabular-nums text-muted-foreground">
                         {index + 1}
@@ -182,7 +206,6 @@ export default async function RatingsPage({
               </Table>
             </div>
           </section>
-        ))
       ) : (
       <div className="overflow-x-auto rounded-xl border border-border">
         <Table>
