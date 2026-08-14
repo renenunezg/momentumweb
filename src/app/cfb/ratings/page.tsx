@@ -25,6 +25,7 @@ export default async function RatingsPage({
 }) {
   const params = await searchParams;
   const showAll = params.class === "all";
+  const byConference = params.class === "conference";
 
   const { ratings, season, week } = await fetchLatestRatings();
 
@@ -42,6 +43,29 @@ export default async function RatingsPage({
   const visible = showAll
     ? ratings
     : ratings.filter((r) => r.classification === "fbs");
+
+  // Ratings arrive sorted by power_rating desc, so insertion order within a
+  // conference is already the conference ranking and the array index is the
+  // overall D1 rank.
+  const d1Rank = new Map(ratings.map((r, i) => [r.team_id, i + 1]));
+  const conferences = byConference
+    ? [...ratings
+        .reduce((groups, r) => {
+          const name = r.conference ?? "Independent";
+          const group = groups.get(name) ?? [];
+          group.push(r);
+          return groups.set(name, group);
+        }, new Map<string, typeof ratings>())
+        .entries()]
+        .map(([name, teams]) => ({
+          name,
+          teams,
+          avg:
+            teams.reduce((sum, t) => sum + (t.power_rating ?? 0), 0) /
+            teams.length,
+        }))
+        .sort((a, b) => b.avg - a.avg)
+    : [];
   const lastUpdated = ratings[0]?.as_of ?? null;
   const weekLabel =
     season != null && week != null ? `${season} · Week ${week}` : "";
@@ -73,8 +97,17 @@ export default async function RatingsPage({
 
       <div className="flex items-center gap-0 font-mono text-xs uppercase tracking-wider">
         {[
-          { href: "/cfb/ratings", label: "FBS", active: !showAll },
+          {
+            href: "/cfb/ratings",
+            label: "FBS",
+            active: !showAll && !byConference,
+          },
           { href: "/cfb/ratings?class=all", label: "All D1", active: showAll },
+          {
+            href: "/cfb/ratings?class=conference",
+            label: "Conferences",
+            active: byConference,
+          },
         ].map((tab) => (
           <Link
             key={tab.label}
@@ -91,6 +124,66 @@ export default async function RatingsPage({
         ))}
       </div>
 
+      {byConference ? (
+        conferences.map(({ name, teams, avg }) => (
+          <section key={name} className="space-y-2">
+            <div className="flex items-baseline justify-between gap-4">
+              <h2 className="font-heading text-lg tracking-tight">{name}</h2>
+              <span className="font-mono text-xs uppercase tracking-wider text-muted-foreground">
+                Avg {fmt(avg)}
+              </span>
+            </div>
+            <div className="overflow-x-auto rounded-xl border border-border">
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead className="w-12 text-right">Rk</TableHead>
+                    <TableHead>Team</TableHead>
+                    <TableHead className="hidden text-right sm:table-cell">
+                      D1 Rk
+                    </TableHead>
+                    <TableHead className="text-right">Rating</TableHead>
+                    <TableHead className="text-right">Off</TableHead>
+                    <TableHead className="text-right">Def</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {teams.map((r, index) => (
+                    <TableRow key={r.team_id}>
+                      <TableCell className="text-right font-mono tabular-nums text-muted-foreground">
+                        {index + 1}
+                      </TableCell>
+                      <TableCell>
+                        <span className="font-medium">{r.team}</span>
+                        {(r.missing_input_count ?? 0) >= 4 && (
+                          <span
+                            className="ml-2 font-mono text-[10px] uppercase tracking-wider text-accent-amber"
+                            title="Several rating inputs are unavailable for this team; treat the rating as degraded."
+                          >
+                            Limited data
+                          </span>
+                        )}
+                      </TableCell>
+                      <TableCell className="hidden text-right font-mono tabular-nums text-muted-foreground sm:table-cell">
+                        {d1Rank.get(r.team_id)}
+                      </TableCell>
+                      <TableCell className="text-right font-mono font-semibold tabular-nums">
+                        {fmt(r.power_rating)}
+                      </TableCell>
+                      <TableCell className="text-right font-mono tabular-nums">
+                        {fmt(r.offense_points)}
+                      </TableCell>
+                      <TableCell className="text-right font-mono tabular-nums">
+                        {fmt(r.defense_points)}
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            </div>
+          </section>
+        ))
+      ) : (
       <div className="overflow-x-auto rounded-xl border border-border">
         <Table>
           <TableHeader>
@@ -151,6 +244,7 @@ export default async function RatingsPage({
           </TableBody>
         </Table>
       </div>
+      )}
 
       <p className="text-xs text-muted-foreground">
         Off and Def are points per game above an average opponent; Rating is
