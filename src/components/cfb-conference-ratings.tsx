@@ -1,8 +1,9 @@
 "use client";
 
 import { useMemo, useState } from "react";
-import type { CfbTeamRating } from "@/lib/types";
+import type { CfbTeamIdentity, CfbTeamRating } from "@/lib/types";
 import { cn } from "@/lib/utils";
+import { TeamLogo } from "@/components/team-logo";
 import {
   Table,
   TableHeader,
@@ -26,9 +27,11 @@ type Conference = {
 
 export default function CfbConferenceRatings({
   ratings,
+  teamById,
   initialConference,
 }: {
   ratings: CfbTeamRating[];
+  teamById: Map<number, CfbTeamIdentity>;
   initialConference?: string;
 }) {
   // Ratings arrive sorted by power_rating desc, so insertion order within a
@@ -156,7 +159,10 @@ export default function CfbConferenceRatings({
                     {index + 1}
                   </TableCell>
                   <TableCell>
-                    <span className="font-medium">{r.team}</span>
+                    <span className="inline-flex items-center gap-2 align-middle">
+                      <TeamLogo team={teamById.get(r.team_id)} />
+                      <span className="font-medium">{r.team}</span>
+                    </span>
                     {(r.missing_input_count ?? 0) >= 4 && !allLimited && (
                       <span
                         className="ml-2 font-mono text-[10px] uppercase tracking-wider text-accent-amber"

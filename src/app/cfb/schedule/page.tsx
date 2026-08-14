@@ -1,11 +1,19 @@
 import { supabaseCfb } from "@/lib/supabase";
 import {
+  fetchTeams,
   formatHomeLine,
-  formatKickoffEt,
+  formatKickoffDay,
+  formatKickoffTime,
   marketHomeLine,
 } from "@/lib/cfb";
-import type { CfbGameProjection, CfbMarketComparison } from "@/lib/types";
+import { teamColor } from "@/lib/team-colors";
+import type {
+  CfbGameProjection,
+  CfbMarketComparison,
+  CfbTeamIdentity,
+} from "@/lib/types";
 import { LastUpdated } from "@/components/last-updated";
+import { TeamLogo } from "@/components/team-logo";
 import {
   Table,
   TableHeader,
@@ -20,6 +28,58 @@ export const revalidate = 300;
 function fmt(value: number | null, decimals = 1): string {
   if (value == null) return "–";
   return value.toFixed(decimals);
+}
+
+// One side of a matchup: logo, name, and the team's primary color as an edge
+// bar plus a faint tint. A cell with no bar means CFBD has no primary color on
+// file for that team (four in D1, including Chicago State and West Florida).
+function TeamCell({
+  name,
+  team,
+  degraded,
+  marker,
+}: {
+  name: string;
+  team: CfbTeamIdentity | undefined;
+  degraded: boolean;
+  marker?: string;
+}) {
+  const color = teamColor(team);
+  return (
+    <TableCell
+      style={
+        color
+          ? {
+              boxShadow: `inset 3px 0 0 ${color}`,
+              // 14 hex = 8% alpha: enough to read as the team's color, light
+              // enough to leave the theme's text contrast untouched.
+              backgroundColor: `${color}14`,
+            }
+          : undefined
+      }
+    >
+      <span className="flex items-center gap-2">
+        <TeamLogo team={team} />
+        <span className="font-medium">{name}</span>
+        {marker && (
+          <span
+            className="font-mono text-[10px] uppercase tracking-wider opacity-70"
+            title="Neutral site: neither team is at home."
+          >
+            {marker}
+          </span>
+        )}
+        {degraded && (
+          <span
+            className="font-mono text-xs opacity-70"
+            title="Several rating inputs are unavailable for this team; treat the line as degraded."
+          >
+            *
+          </span>
+        )}
+      </span>
+    </TableCell>
+  );
 }
 
 export default async function SchedulePage() {
@@ -42,7 +102,7 @@ export default async function SchedulePage() {
     );
   }
 
-  const [projRes, marketRes] = await Promise.all([
+  const [projRes, marketRes, teams] = await Promise.all([
     supabaseCfb
       .from("game_projections")
       .select("*")
@@ -51,6 +111,7 @@ export default async function SchedulePage() {
       .order("start_date", { ascending: true })
       .order("game_id", { ascending: true }),
     supabaseCfb.from("market_comparisons").select("*"),
+    fetchTeams(),
   ]);
 
   const games = (projRes.data ?? []) as CfbGameProjection[];
@@ -85,16 +146,20 @@ export default async function SchedulePage() {
       </p>
 
       <div className="overflow-x-auto rounded-xl border border-border">
+        {/* Everything is centered except the two team columns, whose ragged
+            name lengths read badly off a center axis. */}
         <Table>
           <TableHeader>
             <TableRow>
-              <TableHead>Kick</TableHead>
-              <TableHead>Matchup</TableHead>
-              <TableHead className="text-right">Proj score</TableHead>
-              <TableHead className="text-right">Model line</TableHead>
-              <TableHead className="text-right">Market line</TableHead>
-              <TableHead className="text-right">Diff</TableHead>
-              <TableHead className="text-right">Total</TableHead>
+              <TableHead className="text-center">Day</TableHead>
+              <TableHead className="text-center">Time ET</TableHead>
+              <TableHead>Away</TableHead>
+              <TableHead>Home</TableHead>
+              <TableHead className="text-center">Model line</TableHead>
+              <TableHead className="text-center">Proj score</TableHead>
+              <TableHead className="text-center">Market line</TableHead>
+              <TableHead className="text-center">Diff</TableHead>
+              <TableHead className="text-center">Total</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
@@ -110,46 +175,47 @@ export default async function SchedulePage() {
                 marketLine != null && g.home_spread != null
                   ? g.home_spread - marketLine
                   : null;
-              const degraded =
-                (g.home_missing_input_count ?? 0) >= 4 ||
-                (g.away_missing_input_count ?? 0) >= 4;
               return (
                 <TableRow key={g.game_id}>
-                  <TableCell className="whitespace-nowrap font-mono text-xs text-muted-foreground">
-                    {formatKickoffEt(g.start_date)}
+                  <TableCell className="whitespace-nowrap text-center text-xs text-muted-foreground">
+                    {formatKickoffDay(g.start_date)}
                   </TableCell>
-                  <TableCell>
-                    <span className="font-medium">
-                      {g.away_team}
-                      <span className="text-muted-foreground">
-                        {" "}
-                        {g.neutral_site ? "vs" : "@"}{" "}
-                      </span>
-                      {g.home_team}
-                    </span>
-                    {degraded && (
-                      <span
-                        className="ml-2 font-mono text-[10px] uppercase tracking-wider text-accent-amber"
-                        title="Several rating inputs are unavailable for one side of this game; treat the line as degraded."
-                      >
-                        Limited data
-                      </span>
-                    )}
+                  <TableCell className="whitespace-nowrap text-center text-xs text-muted-foreground">
+                    {formatKickoffTime(g.start_date)}
                   </TableCell>
-                  <TableCell className="whitespace-nowrap text-right font-mono tabular-nums">
+                  <TeamCell
+                    name={g.away_team}
+                    team={
+                      g.away_team_id != null
+                        ? teams.get(g.away_team_id)
+                        : undefined
+                    }
+                    degraded={(g.away_missing_input_count ?? 0) >= 4}
+                  />
+                  <TeamCell
+                    name={g.home_team}
+                    team={
+                      g.home_team_id != null
+                        ? teams.get(g.home_team_id)
+                        : undefined
+                    }
+                    degraded={(g.home_missing_input_count ?? 0) >= 4}
+                    marker={g.neutral_site ? "N" : undefined}
+                  />
+                  <TableCell className="text-center font-mono font-semibold tabular-nums">
+                    {formatHomeLine(g.home_spread)}
+                  </TableCell>
+                  <TableCell className="whitespace-nowrap text-center font-mono tabular-nums">
                     {fmt(g.expected_away_points, 0)}&ndash;
                     {fmt(g.expected_home_points, 0)}
                   </TableCell>
-                  <TableCell className="text-right font-mono font-semibold tabular-nums">
-                    {formatHomeLine(g.home_spread)}
-                  </TableCell>
-                  <TableCell className="text-right font-mono tabular-nums text-muted-foreground">
+                  <TableCell className="text-center font-mono tabular-nums text-muted-foreground">
                     {marketLine != null ? formatHomeLine(marketLine) : "–"}
                   </TableCell>
-                  <TableCell className="text-right font-mono tabular-nums">
+                  <TableCell className="text-center font-mono tabular-nums">
                     {diff != null ? formatHomeLine(diff) : "–"}
                   </TableCell>
-                  <TableCell className="text-right font-mono tabular-nums">
+                  <TableCell className="text-center font-mono tabular-nums">
                     {fmt(g.model_total)}
                   </TableCell>
                 </TableRow>
@@ -162,7 +228,8 @@ export default async function SchedulePage() {
       <p className="text-xs text-muted-foreground">
         Proj score is away&ndash;home expected points. Diff is model line minus
         market line: a large gap usually reflects degraded inputs rather than
-        an edge, and nothing here is betting advice.
+        an edge, and nothing here is betting advice. A star marks a team whose
+        rating inputs are incomplete; N marks a neutral site.
       </p>
     </main>
   );

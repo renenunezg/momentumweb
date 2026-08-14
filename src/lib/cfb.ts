@@ -1,23 +1,33 @@
 import { supabaseCfb } from "@/lib/supabase";
-import type { CfbBacktestPrediction, CfbTeamRating } from "@/lib/types";
+import type {
+  CfbBacktestPrediction,
+  CfbTeamIdentity,
+  CfbTeamRating,
+} from "@/lib/types";
 
-// College football schedules are anchored to Eastern time.
-export function formatKickoffEt(startDate: string | null): string {
+// College football schedules are anchored to Eastern time. Day and time are
+// formatted separately because the schedule table gives each its own column.
+export function formatKickoffDay(startDate: string | null): string {
   if (!startDate) return "TBD";
   const d = new Date(startDate);
   if (Number.isNaN(d.getTime())) return "TBD";
-  const day = d.toLocaleDateString("en-US", {
+  return d.toLocaleDateString("en-US", {
     timeZone: "America/New_York",
     weekday: "short",
     month: "short",
     day: "numeric",
   });
-  const time = d.toLocaleTimeString("en-US", {
+}
+
+export function formatKickoffTime(startDate: string | null): string {
+  if (!startDate) return "TBD";
+  const d = new Date(startDate);
+  if (Number.isNaN(d.getTime())) return "TBD";
+  return d.toLocaleTimeString("en-US", {
     timeZone: "America/New_York",
     hour: "numeric",
     minute: "2-digit",
   });
-  return `${day}, ${time} ET`;
 }
 
 // A home line like -7.5 means the home team is favored by 7.5.
@@ -38,6 +48,26 @@ export function marketHomeLine(
   if (market !== "spreads" || selection == null || point == null) return null;
   if (homeTeam != null && selection === homeTeam) return point;
   return -point;
+}
+
+// Team identity (logos, colors) is a dimension keyed by team_id alone, so one
+// fetch serves every table on the page. Only the five display columns are
+// selected: the table carries every division, so asking for "*" would ship a
+// few hundred KB of mascots and conferences the tables never render.
+//
+// A failure here must not take a page down: the tables degrade to plain text
+// without logos or team colors.
+export async function fetchTeams(): Promise<Map<number, CfbTeamIdentity>> {
+  const { data, error } = await supabaseCfb
+    .from("teams")
+    .select("team_id, color, alternate_color, logo_light, logo_dark");
+  if (error) {
+    console.error("cfb teams fetch failed:", error.message);
+    return new Map();
+  }
+  return new Map(
+    ((data ?? []) as CfbTeamIdentity[]).map((t) => [t.team_id, t])
+  );
 }
 
 // The published ratings artifact for the latest (season, week).

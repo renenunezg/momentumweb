@@ -1,9 +1,10 @@
 "use client";
 
 import { useMemo, useState } from "react";
-import type { CfbTeamRating } from "@/lib/types";
+import type { CfbTeamIdentity, CfbTeamRating } from "@/lib/types";
 import { cn } from "@/lib/utils";
 import CfbConferenceRatings from "@/components/cfb-conference-ratings";
+import { TeamLogo } from "@/components/team-logo";
 import {
   Table,
   TableHeader,
@@ -29,15 +30,24 @@ type View = (typeof VIEWS)[number]["key"];
 
 export default function CfbRatings({
   ratings,
+  teams,
   initialView,
   initialConference,
 }: {
   ratings: CfbTeamRating[];
+  teams: CfbTeamIdentity[];
   initialView?: string;
   initialConference?: string;
 }) {
   const [view, setView] = useState<View>(
     () => VIEWS.find((v) => v.key === initialView)?.key ?? "top25"
+  );
+
+  // Teams cross the server boundary as an array; index them once here so both
+  // this table and the conference view look logos up by id.
+  const teamById = useMemo(
+    () => new Map(teams.map((t) => [t.team_id, t])),
+    [teams]
   );
 
   // Every view is a slice of the ratings already in the browser, so switching
@@ -89,6 +99,7 @@ export default function CfbRatings({
       {view === "conference" ? (
         <CfbConferenceRatings
           ratings={ratings}
+          teamById={teamById}
           initialConference={initialConference}
         />
       ) : (
@@ -123,7 +134,10 @@ export default function CfbRatings({
                       {index + 1}
                     </TableCell>
                     <TableCell>
-                      <span className="font-medium">{r.team}</span>
+                      <span className="inline-flex items-center gap-2 align-middle">
+                        <TeamLogo team={teamById.get(r.team_id)} />
+                        <span className="font-medium">{r.team}</span>
+                      </span>
                       {view === "top25" && r.classification !== "fbs" && (
                         <span className="ml-2 font-mono text-[10px] uppercase tracking-wider text-muted-foreground">
                           {r.classification ?? "?"}

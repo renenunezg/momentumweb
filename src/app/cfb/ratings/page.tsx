@@ -1,4 +1,4 @@
-import { fetchLatestRatings } from "@/lib/cfb";
+import { fetchLatestRatings, fetchTeams } from "@/lib/cfb";
 import { LastUpdated } from "@/components/last-updated";
 import CfbRatings from "@/components/cfb-ratings";
 
@@ -10,7 +10,10 @@ export default async function RatingsPage({
   searchParams: Promise<{ class?: string; conf?: string }>;
 }) {
   const params = await searchParams;
-  const { ratings, season, week } = await fetchLatestRatings();
+  const [{ ratings, season, week }, teams] = await Promise.all([
+    fetchLatestRatings(),
+    fetchTeams(),
+  ]);
 
   if (ratings.length === 0) {
     return (
@@ -54,6 +57,7 @@ export default async function RatingsPage({
 
       <CfbRatings
         ratings={ratings}
+        teams={[...teams.values()]}
         initialView={params.class}
         initialConference={params.conf}
       />
