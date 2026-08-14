@@ -16,7 +16,7 @@ export default function AboutPage() {
         <div className="shrink-0">
           <Image
             src="/portrait.jpeg"
-            alt="Rene Nunez"
+            alt="René Núñez"
             width={96}
             height={96}
             className="rounded-full object-cover"
@@ -26,7 +26,9 @@ export default function AboutPage() {
 
         {/* Name + bio + contact */}
         <div className="flex-1 min-w-0">
-          <h1 className="font-heading text-2xl tracking-tight">Rene Nunez</h1>
+          <h1 className="font-heading text-2xl tracking-tight">
+            Ren&eacute; N&uacute;&ntilde;ez
+          </h1>
           <p className="mt-2 text-sm text-muted-foreground leading-relaxed max-w-xl">
             {/* Write your one-liner here */}
           </p>

@@ -29,7 +29,7 @@ export const viewport: Viewport = {
 };
 
 export const metadata: Metadata = {
-  title: "Rene Nunez — Sports Prediction Models",
+  title: "René Núñez | Sports Prediction Models",
   description:
     "Open sports prediction models: Bayesian simulation, daily picks, and performance tracked in public.",
 };

@@ -80,7 +80,7 @@ export default async function HistoryPage({
 
   const [{ data: rows, count, error }, { data: recordRows }, { data: latest }, { data: firstV2GameRows }] = await Promise.all([
     query,
-    // Win/loss record aggregated in the database — one tiny response instead
+    // Win/loss record aggregated in the database: one tiny response instead
     // of paging the full bet ledger view across sequential requests.
     supabase.rpc("bet_record_summary", {
       p_from: periodFloor || null,

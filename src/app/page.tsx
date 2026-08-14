@@ -56,10 +56,12 @@ export default async function Home() {
       <main className="mx-auto w-full max-w-3xl min-w-0 px-4 py-10">
         {/* Hero */}
         <section>
-          <h1 className="font-heading text-3xl tracking-tight">Rene Nunez</h1>
+          <h1 className="font-heading text-3xl tracking-tight">
+            Ren&eacute; N&uacute;&ntilde;ez
+          </h1>
           <p className="mt-3 text-sm text-muted-foreground leading-relaxed max-w-xl">
-            Building open, Bayesian sports prediction models &mdash; daily
-            picks, graded and tracked in public.
+            I&apos;m a data analyst / statistician working on modeling momentum
+            and sports.
           </p>
         </section>
 
@@ -97,7 +99,7 @@ export default async function Home() {
                     ROI
                   </p>
                   <p className="mt-0.5 font-mono text-sm tabular-nums">
-                    {mlb.roi != null ? `${signed(mlb.roi * 100, 1)}%` : "—"}
+                    {mlb.roi != null ? `${signed(mlb.roi * 100, 1)}%` : "–"}
                   </p>
                 </div>
                 <div>

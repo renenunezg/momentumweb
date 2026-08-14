@@ -11,7 +11,7 @@ export function SiteHeader() {
     <header className="relative z-10 border-b border-border bg-background">
       <div className="mx-auto flex w-full max-w-7xl items-center justify-between px-4 py-3">
         <Link href="/" className="font-heading text-lg tracking-tight">
-          Rene Nunez
+          Ren&eacute; N&uacute;&ntilde;ez
         </Link>
         <div className="flex items-center gap-1">
           {links.map((link) => (

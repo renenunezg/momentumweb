@@ -76,7 +76,7 @@ export function MethodologyDistributionChart({
   });
 
   const pct = (x: number | null | undefined) =>
-    x == null ? "—" : `${(x * 100).toFixed(1)}%`;
+    x == null ? "–" : `${(x * 100).toFixed(1)}%`;
   const fmt = (x: number, d = 2) => x.toFixed(d);
 
   return (

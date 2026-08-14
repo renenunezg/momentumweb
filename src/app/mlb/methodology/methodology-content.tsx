@@ -719,7 +719,7 @@ export function MethodologyContent({
                     {row.pass === true ? (
                       <Badge variant="outline" className="text-emerald-400 border-emerald-500/40">PASS</Badge>
                     ) : (
-                      <span className="text-xs text-muted-foreground">—</span>
+                      <span className="text-xs text-muted-foreground">–</span>
                     )}
                   </TableCell>
                 </TableRow>

@@ -21,7 +21,7 @@ export async function generateMetadata({
   const post = posts.find((p) => p.slug === slug);
   if (!post) return {};
   return {
-    title: `${post.title} | Rene Nunez`,
+    title: `${post.title} | René Núñez`,
     description: post.summary,
   };
 }
