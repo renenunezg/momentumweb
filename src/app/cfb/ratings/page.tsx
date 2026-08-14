@@ -25,8 +25,10 @@ export default async function RatingsPage({
   searchParams: Promise<{ class?: string; conf?: string }>;
 }) {
   const params = await searchParams;
-  const showAll = params.class === "all";
-  const byConference = params.class === "conference";
+  const view = (["fbs", "fcs", "conference"] as const).find(
+    (v) => v === params.class
+  );
+  const byConference = view === "conference";
 
   const { ratings, season, week } = await fetchLatestRatings();
 
@@ -41,9 +43,16 @@ export default async function RatingsPage({
     );
   }
 
-  const visible = showAll
-    ? ratings
-    : ratings.filter((r) => r.classification === "fbs");
+  // Top 25 ranks across all of D1; today that is every FBS team, but an FCS
+  // team good enough to crack it should show up rather than be filtered out.
+  const visible =
+    view === "fbs" || view === "fcs"
+      ? ratings.filter((r) => r.classification === view)
+      : ratings.slice(0, 25);
+  // Whole tiers (all of FCS today) run on reduced inputs, and a badge on every
+  // row says nothing; call it out once instead and keep the per-row badge for
+  // tables where it actually singles a team out.
+  const allLimited = visible.every((r) => (r.missing_input_count ?? 0) >= 4);
   const lastUpdated = ratings[0]?.as_of ?? null;
   const weekLabel =
     season != null && week != null ? `${season} · Week ${week}` : "";
@@ -75,12 +84,9 @@ export default async function RatingsPage({
 
       <div className="flex items-center gap-0 font-mono text-xs uppercase tracking-wider">
         {[
-          {
-            href: "/cfb/ratings",
-            label: "FBS",
-            active: !showAll && !byConference,
-          },
-          { href: "/cfb/ratings?class=all", label: "All D1", active: showAll },
+          { href: "/cfb/ratings", label: "Top 25", active: view == null },
+          { href: "/cfb/ratings?class=fbs", label: "FBS", active: view === "fbs" },
+          { href: "/cfb/ratings?class=fcs", label: "FCS", active: view === "fcs" },
           {
             href: "/cfb/ratings?class=conference",
             label: "Conference",
@@ -105,6 +111,13 @@ export default async function RatingsPage({
       {byConference ? (
         <CfbConferenceRatings ratings={ratings} initialConference={params.conf} />
       ) : (
+      <div className="space-y-2">
+      {allLimited && (
+        <p className="text-xs text-accent-amber">
+          Several rating inputs are unavailable for every team here; treat these
+          ratings as degraded.
+        </p>
+      )}
       <div className="overflow-x-auto rounded-xl border border-border">
         <Table>
           <TableHeader>
@@ -130,12 +143,12 @@ export default async function RatingsPage({
                   </TableCell>
                   <TableCell>
                     <span className="font-medium">{r.team}</span>
-                    {showAll && r.classification !== "fbs" && (
+                    {view == null && r.classification !== "fbs" && (
                       <span className="ml-2 font-mono text-[10px] uppercase tracking-wider text-muted-foreground">
                         {r.classification ?? "?"}
                       </span>
                     )}
-                    {limitedInputs && (
+                    {limitedInputs && !allLimited && (
                       <span
                         className="ml-2 font-mono text-[10px] uppercase tracking-wider text-accent-amber"
                         title="Several rating inputs are unavailable for this team; treat the rating as degraded."
@@ -164,6 +177,7 @@ export default async function RatingsPage({
             })}
           </TableBody>
         </Table>
+      </div>
       </div>
       )}
 

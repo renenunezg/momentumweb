@@ -76,6 +76,12 @@ export default function CfbConferenceRatings({
 
   if (!selected) return null;
 
+  // A badge on every row singles out nobody; whole conferences (all of FCS
+  // today) run on reduced inputs, so say it once above the table instead.
+  const allLimited = selected.teams.every(
+    (r) => (r.missing_input_count ?? 0) >= 4
+  );
+
   return (
     <div className="space-y-6">
       <div className="space-y-3">
@@ -123,6 +129,12 @@ export default function CfbConferenceRatings({
             Avg {fmt(selected.avg)}
           </span>
         </div>
+        {allLimited && (
+          <p className="text-xs text-accent-amber">
+            Several rating inputs are unavailable for every team here; treat
+            these ratings as degraded.
+          </p>
+        )}
         <div className="overflow-x-auto rounded-xl border border-border">
           <Table>
             <TableHeader>
@@ -145,7 +157,7 @@ export default function CfbConferenceRatings({
                   </TableCell>
                   <TableCell>
                     <span className="font-medium">{r.team}</span>
-                    {(r.missing_input_count ?? 0) >= 4 && (
+                    {(r.missing_input_count ?? 0) >= 4 && !allLimited && (
                       <span
                         className="ml-2 font-mono text-[10px] uppercase tracking-wider text-accent-amber"
                         title="Several rating inputs are unavailable for this team; treat the rating as degraded."
