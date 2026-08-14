@@ -115,7 +115,7 @@ export default async function PerformancePage() {
         </div>
       </div>
 
-      <p className="max-w-2xl text-sm text-muted-foreground leading-relaxed">
+      <p className="max-w-4xl text-sm text-muted-foreground leading-relaxed">
         Every prediction below was made walking forward through each season
         with only the data available at the time, then frozen. The market
         benchmark is the closing spread: the strongest public forecast of a

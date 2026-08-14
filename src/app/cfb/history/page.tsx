@@ -93,7 +93,7 @@ export default async function HistoryPage({
         </div>
       </div>
 
-      <p className="max-w-2xl text-sm text-muted-foreground leading-relaxed">
+      <p className="max-w-4xl text-sm text-muted-foreground leading-relaxed">
         Every graded prediction from the frozen walk-forward backtest, next to
         the closing spread and the final margin. Lines are quoted for the home
         team.
