@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import { HeaderDate } from "@/components/header-date";
 import { ThemeToggle } from "@/components/theme-toggle";
 
 const links = [
@@ -22,13 +23,7 @@ export function Nav() {
           <Link href="/" className="font-heading text-lg tracking-tight">
             Home
           </Link>
-          <span className="font-mono text-xs text-muted-foreground tabular-nums">
-            {new Date().toLocaleDateString("en-US", {
-              month: "short",
-              day: "numeric",
-              year: "numeric",
-            })}
-          </span>
+          <HeaderDate />
         </div>
         <div className="flex w-full items-center gap-0 overflow-x-auto pb-0 sm:w-auto sm:overflow-visible">
           {links.map((link) => {

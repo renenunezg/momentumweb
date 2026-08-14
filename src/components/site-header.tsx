@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { HeaderDate } from "@/components/header-date";
 import { ThemeToggle } from "@/components/theme-toggle";
 
 const links = [
@@ -11,9 +12,12 @@ export function SiteHeader() {
   return (
     <header className="relative z-10 border-b border-border bg-background">
       <div className="mx-auto flex w-full max-w-7xl items-center justify-between px-4 py-3">
-        <Link href="/" className="font-heading text-lg tracking-tight">
-          Home
-        </Link>
+        <div className="flex items-baseline gap-3">
+          <Link href="/" className="font-heading text-lg tracking-tight">
+            Home
+          </Link>
+          <HeaderDate />
+        </div>
         <div className="flex items-center gap-1">
           {links.map((link) => (
             <Link
