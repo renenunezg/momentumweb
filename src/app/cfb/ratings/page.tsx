@@ -49,7 +49,7 @@ export default async function RatingsPage({
         />
       </div>
 
-      <p className="max-w-2xl text-sm text-muted-foreground leading-relaxed">
+      <p className="max-w-4xl text-sm text-muted-foreground leading-relaxed">
         A team&apos;s power rating is its expected scoring margin against an
         average opponent on a neutral field, split into offense and defense
         points per game. Ratings are model output, not a poll.

@@ -14,6 +14,7 @@ import type {
 } from "@/lib/types";
 import { LastUpdated } from "@/components/last-updated";
 import { TeamLogo } from "@/components/team-logo";
+import { CfbScheduleSearch } from "@/components/cfb-schedule-search";
 import {
   Table,
   TableHeader,
@@ -138,94 +139,100 @@ export default async function SchedulePage() {
         />
       </div>
 
-      <p className="max-w-2xl text-sm text-muted-foreground leading-relaxed">
+      <p className="max-w-4xl text-sm text-muted-foreground leading-relaxed">
         Model lines are quoted for the home team: a negative line means the
         model favors the home side. Market is the best priced spread offer
-        found when the forecast ran, converted to the same home axis. No plays
-        are recommended pregame.
+        found when the forecast ran, converted to the same home axis.
       </p>
 
-      <div className="overflow-x-auto rounded-xl border border-border">
-        {/* Everything is centered except the two team columns, whose ragged
-            name lengths read badly off a center axis. */}
-        <Table>
-          <TableHeader>
-            <TableRow>
-              <TableHead className="text-center">Day</TableHead>
-              <TableHead className="text-center">Time ET</TableHead>
-              <TableHead>Away</TableHead>
-              <TableHead>Home</TableHead>
-              <TableHead className="text-center">Model line</TableHead>
-              <TableHead className="text-center">Proj score</TableHead>
-              <TableHead className="text-center">Market line</TableHead>
-              <TableHead className="text-center">Diff</TableHead>
-              <TableHead className="text-center">Total</TableHead>
-            </TableRow>
-          </TableHeader>
-          <TableBody>
-            {games.map((g) => {
-              const market = marketByGame.get(g.game_id);
-              const marketLine = marketHomeLine(
-                market?.best_offer_market ?? null,
-                market?.best_offer_selection ?? null,
-                market?.best_offer_point ?? null,
-                g.home_team
-              );
-              const diff =
-                marketLine != null && g.home_spread != null
-                  ? g.home_spread - marketLine
-                  : null;
-              return (
-                <TableRow key={g.game_id}>
-                  <TableCell className="whitespace-nowrap text-center text-xs text-muted-foreground">
-                    {formatKickoffDay(g.start_date)}
-                  </TableCell>
-                  <TableCell className="whitespace-nowrap text-center text-xs text-muted-foreground">
-                    {formatKickoffTime(g.start_date)}
-                  </TableCell>
-                  <TeamCell
-                    name={g.away_team}
-                    team={
-                      g.away_team_id != null
-                        ? teams.get(g.away_team_id)
-                        : undefined
-                    }
-                    degraded={(g.away_missing_input_count ?? 0) >= 4}
-                  />
-                  <TeamCell
-                    name={g.home_team}
-                    team={
-                      g.home_team_id != null
-                        ? teams.get(g.home_team_id)
-                        : undefined
-                    }
-                    degraded={(g.home_missing_input_count ?? 0) >= 4}
-                    marker={g.neutral_site ? "N" : undefined}
-                  />
-                  <TableCell className="text-center font-mono font-semibold tabular-nums">
-                    {formatHomeLine(g.home_spread)}
-                  </TableCell>
-                  <TableCell className="whitespace-nowrap text-center font-mono tabular-nums">
-                    {fmt(g.expected_away_points, 0)}&ndash;
-                    {fmt(g.expected_home_points, 0)}
-                  </TableCell>
-                  <TableCell className="text-center font-mono tabular-nums text-muted-foreground">
-                    {marketLine != null ? formatHomeLine(marketLine) : "–"}
-                  </TableCell>
-                  <TableCell className="text-center font-mono tabular-nums">
-                    {diff != null ? formatHomeLine(diff) : "–"}
-                  </TableCell>
-                  <TableCell className="text-center font-mono tabular-nums">
-                    {fmt(g.model_total)}
-                  </TableCell>
-                </TableRow>
-              );
-            })}
-          </TableBody>
-        </Table>
-      </div>
+      <CfbScheduleSearch total={games.length}>
+        <div className="overflow-x-auto rounded-xl border border-border">
+          {/* Everything is centered except the two team columns, whose ragged
+              name lengths read badly off a center axis. */}
+          <Table>
+            <TableHeader>
+              <TableRow>
+                <TableHead className="text-center">Day</TableHead>
+                <TableHead className="text-center">Time ET</TableHead>
+                <TableHead>Away</TableHead>
+                <TableHead>Home</TableHead>
+                <TableHead className="text-center">Model line</TableHead>
+                <TableHead className="text-center">Proj score</TableHead>
+                <TableHead className="text-center">Market line</TableHead>
+                <TableHead className="text-center">Diff</TableHead>
+                <TableHead className="text-center">Total</TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {games.map((g) => {
+                const market = marketByGame.get(g.game_id);
+                const marketLine = marketHomeLine(
+                  market?.best_offer_market ?? null,
+                  market?.best_offer_selection ?? null,
+                  market?.best_offer_point ?? null,
+                  g.home_team
+                );
+                const diff =
+                  marketLine != null && g.home_spread != null
+                    ? g.home_spread - marketLine
+                    : null;
+                return (
+                  // Search matches this rather than the rendered cells, so a
+                  // query cannot accidentally hit a line, a total or a date.
+                  <TableRow
+                    key={g.game_id}
+                    data-search={`${g.away_team} ${g.home_team}`.toLowerCase()}
+                  >
+                    <TableCell className="whitespace-nowrap text-center text-xs text-muted-foreground">
+                      {formatKickoffDay(g.start_date)}
+                    </TableCell>
+                    <TableCell className="whitespace-nowrap text-center text-xs text-muted-foreground">
+                      {formatKickoffTime(g.start_date)}
+                    </TableCell>
+                    <TeamCell
+                      name={g.away_team}
+                      team={
+                        g.away_team_id != null
+                          ? teams.get(g.away_team_id)
+                          : undefined
+                      }
+                      degraded={(g.away_missing_input_count ?? 0) >= 4}
+                    />
+                    <TeamCell
+                      name={g.home_team}
+                      team={
+                        g.home_team_id != null
+                          ? teams.get(g.home_team_id)
+                          : undefined
+                      }
+                      degraded={(g.home_missing_input_count ?? 0) >= 4}
+                      marker={g.neutral_site ? "N" : undefined}
+                    />
+                    <TableCell className="text-center font-mono font-semibold tabular-nums">
+                      {formatHomeLine(g.home_spread)}
+                    </TableCell>
+                    <TableCell className="whitespace-nowrap text-center font-mono tabular-nums">
+                      {fmt(g.expected_away_points, 0)}&ndash;
+                      {fmt(g.expected_home_points, 0)}
+                    </TableCell>
+                    <TableCell className="text-center font-mono tabular-nums text-muted-foreground">
+                      {marketLine != null ? formatHomeLine(marketLine) : "–"}
+                    </TableCell>
+                    <TableCell className="text-center font-mono tabular-nums">
+                      {diff != null ? formatHomeLine(diff) : "–"}
+                    </TableCell>
+                    <TableCell className="text-center font-mono tabular-nums">
+                      {fmt(g.model_total)}
+                    </TableCell>
+                  </TableRow>
+                );
+              })}
+            </TableBody>
+          </Table>
+        </div>
+      </CfbScheduleSearch>
 
-      <p className="text-xs text-muted-foreground">
+      <p className="max-w-4xl text-xs text-muted-foreground">
         Proj score is away&ndash;home expected points. Diff is model line minus
         market line: a large gap usually reflects degraded inputs rather than
         an edge, and nothing here is betting advice. A star marks a team whose
