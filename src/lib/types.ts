@@ -201,3 +201,102 @@ export interface GameMatchup {
   current_inning?: number | null;
   inning_state?: string | null;
 }
+
+// ---------------------------------------------------------------------------
+// CFB (cfb schema)
+
+export interface CfbTeamRating {
+  season: number;
+  week: number;
+  as_of: string;
+  model_version: string;
+  team_id: number;
+  team: string;
+  conference: string | null;
+  classification: string | null;
+  offense_points: number | null;
+  defense_points: number | null;
+  power_rating: number;
+  scoring_environment: number | null;
+  expected_possessions: number | null;
+  power_rating_sd: number | null;
+  missing_input_count: number | null;
+}
+
+export interface CfbGameProjection {
+  game_id: number;
+  season: number;
+  week: number;
+  as_of: string;
+  model_version: string;
+  start_date: string | null;
+  home_team_id: number | null;
+  home_team: string;
+  away_team_id: number | null;
+  away_team: string;
+  neutral_site: boolean | null;
+  home_field_points: number | null;
+  expected_home_points: number | null;
+  expected_away_points: number | null;
+  home_margin: number | null;
+  home_spread: number | null;
+  model_total: number | null;
+  margin_sd: number | null;
+  total_sd: number | null;
+  margin_total_correlation: number | null;
+  distribution: string | null;
+  degrees_of_freedom: number | null;
+  home_classification: string | null;
+  away_classification: string | null;
+  home_missing_input_count: number | null;
+  away_missing_input_count: number | null;
+}
+
+export interface CfbMarketComparison {
+  game_id: number;
+  start_date: string | null;
+  home_team: string | null;
+  away_team: string | null;
+  model_home_spread: number | null;
+  model_total: number | null;
+  margin_sd: number | null;
+  total_sd: number | null;
+  model_as_of: string | null;
+  market_available: boolean | null;
+  priced_offer_available: boolean | null;
+  executable_offer_available: boolean | null;
+  review_status: string | null;
+  recommendation_status: string | null;
+  best_offer_market: string | null;
+  best_offer_selection: string | null;
+  best_offer_point: number | null;
+  best_offer_price: number | null;
+  best_offer_provider: string | null;
+  best_offer_provider_key: string | null;
+  best_offer_provider_last_update: string | null;
+  best_offer_event_link: string | null;
+  best_offer_market_link: string | null;
+  best_offer_bet_link: string | null;
+  best_offer_edge_points: number | null;
+  best_offer_edge_standardized: number | null;
+  best_offer_model_cover_probability: number | null;
+  best_offer_model_fair_price: number | null;
+  best_offer_expected_value_per_unit: number | null;
+}
+
+export interface CfbBacktestPrediction {
+  game_id: number;
+  season: number;
+  week: number;
+  week_index: number | null;
+  season_type: string | null;
+  home_team: string;
+  away_team: string;
+  neutral_site: boolean | null;
+  home_points: number | null;
+  away_points: number | null;
+  margin: number | null;
+  closing_spread: number | null;
+  model_margin: number | null;
+  actual_margin: number | null;
+}

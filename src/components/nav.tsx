@@ -5,7 +5,7 @@ import { usePathname } from "next/navigation";
 import { HeaderDate } from "@/components/header-date";
 import { ThemeToggle } from "@/components/theme-toggle";
 
-const links = [
+const mlbLinks = [
   { href: "/mlb/methodology", label: "Methodology" },
   { href: "/mlb/games", label: "Games" },
   { href: "/mlb/history", label: "History" },
@@ -13,7 +13,11 @@ const links = [
   { href: "/about", label: "About" },
 ];
 
-export function Nav() {
+export function Nav({
+  links = mlbLinks,
+}: {
+  links?: { href: string; label: string }[];
+}) {
   const pathname = usePathname();
 
   return (
