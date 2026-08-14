@@ -2,7 +2,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import type { GameMatchup } from "@/lib/types";
-import type { LiveScore } from "@/app/api/live-scores/route";
+import type { LiveScore } from "@/app/mlb/api/live-scores/route";
 import { GameCard } from "@/components/game-card";
 
 const POLL_MS = 60_000;
@@ -45,7 +45,7 @@ export function GamesLive({ initial }: { initial: GameMatchup[] }) {
       if (evalFiredRef.current.has(game_pk)) return;
       evalFiredRef.current.add(game_pk);
       try {
-        await fetch("/api/eval-game", {
+        await fetch("/mlb/api/eval-game", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ game_pk }),
@@ -57,7 +57,7 @@ export function GamesLive({ initial }: { initial: GameMatchup[] }) {
 
     async function fetchOnce() {
       try {
-        const res = await fetch("/api/live-scores", { cache: "no-store" });
+        const res = await fetch("/mlb/api/live-scores", { cache: "no-store" });
         if (!res.ok) return;
         const data = (await res.json()) as { scores?: LiveScore[] };
         if (cancelled || !data.scores) return;

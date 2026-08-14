@@ -741,7 +741,7 @@ export function MethodologyContent({
             (replay populates the v2 prediction table for a date range; backtester joins v1,
             v2, and actuals and emits the head-to-head report). Live performance, including
             ongoing Brier and calibration, is on the{" "}
-            <Link href="/performance" className="underline underline-offset-2 hover:text-foreground">
+            <Link href="/mlb/performance" className="underline underline-offset-2 hover:text-foreground">
               Performance page
             </Link>
             .

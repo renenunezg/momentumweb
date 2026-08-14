@@ -5,10 +5,10 @@ import { usePathname } from "next/navigation";
 import { ThemeToggle } from "@/components/theme-toggle";
 
 const links = [
-  { href: "/", label: "Methodology" },
-  { href: "/games", label: "Games" },
-  { href: "/history", label: "History" },
-  { href: "/performance", label: "Performance" },
+  { href: "/mlb/methodology", label: "Methodology" },
+  { href: "/mlb/games", label: "Games" },
+  { href: "/mlb/history", label: "History" },
+  { href: "/mlb/performance", label: "Performance" },
   { href: "/about", label: "About" },
 ];
 

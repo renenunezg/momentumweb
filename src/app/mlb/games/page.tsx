@@ -5,7 +5,7 @@ import { SummaryStats } from "@/components/summary-stats";
 import { GameCardUnavailable } from "@/components/game-card-unavailable";
 import { LastUpdated } from "@/components/last-updated";
 import { RealtimeRefresh } from "@/components/realtime-refresh";
-import type { LiveScore } from "@/app/api/live-scores/route";
+import type { LiveScore } from "@/app/mlb/api/live-scores/route";
 
 // Render fresh on every request so predictions always reflect the current
 // model_outputs (the last pre-pitch re-score / frozen value), not a cached

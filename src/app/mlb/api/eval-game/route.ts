@@ -13,8 +13,8 @@ function originAllowed(req: Request): boolean {
   if (!origin) return false;
   const allow = [
     "http://localhost:3000",
-    "https://renenunez.work",
-    "https://www.renenunez.work",
+    "https://renenunez.dev",
+    "https://www.renenunez.dev",
   ];
   if (allow.some((a) => origin.startsWith(a))) return true;
   return /https:\/\/[a-z0-9-]+\.vercel\.app/.test(origin);
