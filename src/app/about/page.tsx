@@ -1,7 +1,5 @@
 import Image from "next/image";
 import Link from "next/link";
-import { PostCard } from "@/components/post-card";
-import { posts } from "./posts";
 
 const contact = [
   { label: "Email", value: "renenunezgalaviz@gmail.com", href: "mailto:renenunezgalaviz@gmail.com" },
@@ -13,7 +11,7 @@ const contact = [
 export default function AboutPage() {
   return (
     <main className="mx-auto w-full max-w-3xl min-w-0 px-4 py-8">
-      <div className="mb-10 flex flex-col gap-6 sm:flex-row sm:items-start sm:gap-8">
+      <div className="flex flex-col gap-6 sm:flex-row sm:items-start sm:gap-8">
         {/* Photo */}
         <div className="shrink-0">
           <Image
@@ -57,19 +55,6 @@ export default function AboutPage() {
           </div>
         </div>
       </div>
-
-      <section>
-        <h2 className="font-heading text-base tracking-tight mb-4">Research</h2>
-        {posts.length === 0 ? (
-          <p className="text-sm text-muted-foreground">Nothing published yet.</p>
-        ) : (
-          <div className="flex flex-col gap-4">
-            {posts.map((post) => (
-              <PostCard key={post.slug} post={post} />
-            ))}
-          </div>
-        )}
-      </section>
     </main>
   );
 }

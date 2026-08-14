@@ -5,39 +5,14 @@ import type {
   EdgeBucket,
   PosteriorSkill,
   PosteriorSigma,
-  BetLedgerRow,
 } from "@/lib/types";
 import { aggregateLedger } from "@/lib/betting-aggs";
+import { fetchFullBetLedger } from "@/lib/bet-ledger";
 import { PerformanceTabs } from "./tabs";
 import { LastUpdated } from "@/components/last-updated";
 import { RealtimeRefresh } from "@/components/realtime-refresh";
 
 export const revalidate = 300;
-
-const LEDGER_PAGE_SIZE = 1000;
-
-async function fetchFullBetLedger(): Promise<BetLedgerRow[]> {
-  const rows: BetLedgerRow[] = [];
-
-  for (let from = 0; ; from += LEDGER_PAGE_SIZE) {
-    const { data, error } = await supabase
-      .from("bet_ledger_v")
-      .select("date, team, game_pk, bet_type, stake, decimal_odds, american_odds, totals_side, won, edge, payout")
-      .order("date", { ascending: true })
-      .order("game_pk", { ascending: true })
-      .order("bet_type", { ascending: true })
-      .order("team", { ascending: true })
-      .range(from, from + LEDGER_PAGE_SIZE - 1);
-
-    if (error) {
-      throw new Error(`Failed to load bet ledger: ${error.message}`);
-    }
-
-    const page = (data ?? []) as BetLedgerRow[];
-    rows.push(...page);
-    if (page.length < LEDGER_PAGE_SIZE) return rows;
-  }
-}
 
 export default async function PerformancePage() {
   // Fetch all data in parallel
@@ -77,8 +52,6 @@ export default async function PerformancePage() {
       .select("*")
       .order("refit_date", { ascending: false })
       .limit(20),
-    // Supabase caps each response at 1000 rows, so load the ledger in stable
-    // pages. A single oversized range silently omitted every bet after row 1000.
     fetchFullBetLedger(),
   ]);
 

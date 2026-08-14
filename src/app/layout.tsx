@@ -29,9 +29,9 @@ export const viewport: Viewport = {
 };
 
 export const metadata: Metadata = {
-  title: "MLB Model Predictions",
+  title: "Rene Nunez — Sports Prediction Models",
   description:
-    "Daily MLB expected runs predictions, betting edge analysis, and model performance tracking.",
+    "Open sports prediction models: Bayesian simulation, daily picks, and performance tracked in public.",
 };
 
 export default function RootLayout({
