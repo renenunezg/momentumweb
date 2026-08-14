@@ -205,26 +205,15 @@ export interface GameMatchup {
 // ---------------------------------------------------------------------------
 // CFB (cfb schema)
 
-export interface CfbTeam {
+// cfb.teams carries identity only; conference and classification come from
+// team_ratings, which every consumer already loads.
+export interface CfbTeamIdentity {
   team_id: number;
-  team: string;
-  mascot: string | null;
-  abbreviation: string | null;
-  conference: string | null;
-  classification: string | null;
   color: string | null;
   alternate_color: string | null;
   logo_light: string | null;
   logo_dark: string | null;
 }
-
-// What the tables actually need off a team: everything else in cfb.teams
-// (mascot, abbreviation, conference, classification) would just be dead weight
-// in the payload, so the queries never ask for it.
-export type CfbTeamIdentity = Pick<
-  CfbTeam,
-  "team_id" | "color" | "alternate_color" | "logo_light" | "logo_dark"
->;
 
 export interface CfbTeamRating {
   season: number;
@@ -271,6 +260,7 @@ export interface CfbGameProjection {
   away_classification: string | null;
   home_missing_input_count: number | null;
   away_missing_input_count: number | null;
+  conference_game: boolean | null;
 }
 
 export interface CfbMarketComparison {

@@ -160,7 +160,7 @@ export default function CfbConferenceRatings({
                   </TableCell>
                   <TableCell>
                     <span className="inline-flex items-center gap-2 align-middle">
-                      <TeamLogo team={teamById.get(r.team_id)} />
+                      <TeamLogo team={teamById.get(r.team_id)} name={r.team} />
                       <span className="font-medium">{r.team}</span>
                     </span>
                     {(r.missing_input_count ?? 0) >= 4 && !allLimited && (

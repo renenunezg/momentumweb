@@ -50,17 +50,11 @@ export function marketHomeLine(
   return -point;
 }
 
-// Team identity (logos, colors) is a dimension keyed by team_id alone, so one
-// fetch serves every table on the page. Only the five display columns are
-// selected: the table carries every division, so asking for "*" would ship a
-// few hundred KB of mascots and conferences the tables never render.
-//
-// A failure here must not take a page down: the tables degrade to plain text
-// without logos or team colors.
+// Team identity is keyed by team_id alone, so one fetch serves every table on
+// a page. A failure here must not take the page down: the tables degrade to
+// plain text without logos or team colors.
 export async function fetchTeams(): Promise<Map<number, CfbTeamIdentity>> {
-  const { data, error } = await supabaseCfb
-    .from("teams")
-    .select("team_id, color, alternate_color, logo_light, logo_dark");
+  const { data, error } = await supabaseCfb.from("teams").select("*");
   if (error) {
     console.error("cfb teams fetch failed:", error.message);
     return new Map();

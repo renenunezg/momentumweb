@@ -1,32 +1,41 @@
 import type { CfbTeamIdentity } from "@/lib/types";
 import { cn } from "@/lib/utils";
 
-// One image per logo, never two, and the right one for the theme.
-//
-// CFBD ships a light and a dark variant. Rendering both as <img> and hiding
-// one with CSS doubles the bytes, because a display:none <img> is still
-// fetched: a 172-game slate would pull ~690 logos instead of ~345. Picking the
-// variant in React instead would mean reading the theme on the client, which
-// the server-rendered schedule table cannot do without a flash.
-//
-// A CSS background-image sidesteps both. Only the declaration that wins the
-// cascade is ever fetched, so each logo costs exactly one request, and the
-// swap keys off the .dark class, which is what the theme toggle actually sets
-// (prefers-color-scheme would ignore a manual override).
+// A CSS background rather than an <img>, so each logo costs one request and
+// still follows the theme. A display:none <img> is still fetched, so rendering
+// both CFBD variants would pull ~690 logos for a 172 game slate instead of
+// ~345; picking in React would need the theme on the client, which the
+// server-rendered schedule cannot have without a flash. Only the declaration
+// winning the cascade is fetched, and .dark is what the toggle sets
+// (prefers-color-scheme would ignore a manual pick).
 export function TeamLogo({
   team,
+  name,
   className,
 }: {
   team: CfbTeamIdentity | undefined;
+  name: string;
   className?: string;
 }) {
   const box = cn("inline-block h-5 w-5 shrink-0 align-middle", className);
   const light = team?.logo_light ?? team?.logo_dark;
   const dark = team?.logo_dark ?? team?.logo_light;
 
-  // Two D1 teams (Chicago State, West Florida) have no logo on file; an empty
-  // box keeps every team name on the same left edge.
-  if (!light || !dark) return <span className={box} aria-hidden="true" />;
+  // Chicago State and West Florida have no logo on file; a monogram keeps the
+  // row aligned and still identifies the team.
+  if (!light || !dark) {
+    return (
+      <span
+        aria-hidden="true"
+        className={cn(
+          box,
+          "flex items-center justify-center rounded-[4px] bg-muted text-[9px] font-semibold text-muted-foreground"
+        )}
+      >
+        {monogram(name)}
+      </span>
+    );
+  }
 
   return (
     <span
@@ -44,4 +53,12 @@ export function TeamLogo({
       )}
     />
   );
+}
+
+// Initials of the first two words, so "West Florida" reads WF and a
+// single-word name falls back to its first two letters.
+function monogram(name: string): string {
+  const words = name.trim().split(/\s+/);
+  if (words.length === 1) return words[0].slice(0, 2).toUpperCase();
+  return (words[0][0] + words[1][0]).toUpperCase();
 }

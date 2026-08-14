@@ -135,7 +135,7 @@ export default function CfbRatings({
                     </TableCell>
                     <TableCell>
                       <span className="inline-flex items-center gap-2 align-middle">
-                        <TeamLogo team={teamById.get(r.team_id)} />
+                        <TeamLogo team={teamById.get(r.team_id)} name={r.team} />
                         <span className="font-medium">{r.team}</span>
                       </span>
                       {view === "top25" && r.classification !== "fbs" && (

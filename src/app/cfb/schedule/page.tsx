@@ -1,5 +1,6 @@
 import { supabaseCfb } from "@/lib/supabase";
 import {
+  fetchLatestRatings,
   fetchTeams,
   formatHomeLine,
   formatKickoffDay,
@@ -14,7 +15,7 @@ import type {
 } from "@/lib/types";
 import { LastUpdated } from "@/components/last-updated";
 import { TeamLogo } from "@/components/team-logo";
-import { CfbScheduleSearch } from "@/components/cfb-schedule-search";
+import { CfbScheduleFilters } from "@/components/cfb-schedule-filters";
 import {
   Table,
   TableHeader,
@@ -31,17 +32,21 @@ function fmt(value: number | null, decimals = 1): string {
   return value.toFixed(decimals);
 }
 
-// One side of a matchup: logo, name, and the team's primary color as an edge
-// bar plus a faint tint. A cell with no bar means CFBD has no primary color on
-// file for that team (four in D1, including Chicago State and West Florida).
+// One side of a matchup. The primary color is an accent only, never a text
+// background: CFBD's primary and secondary are not a usable pair (55 of 243 D1
+// teams have a secondary failing WCAG AA against their own primary, and San
+// Diego ships the same hex twice), so text stays on the theme foreground.
+// A cell with no bar is a team with no color on file, four of them in D1.
 function TeamCell({
   name,
   team,
+  rank,
   degraded,
   marker,
 }: {
   name: string;
   team: CfbTeamIdentity | undefined;
+  rank: number | undefined;
   degraded: boolean;
   marker?: string;
 }) {
@@ -60,8 +65,11 @@ function TeamCell({
       }
     >
       <span className="flex items-center gap-2">
-        <TeamLogo team={team} />
+        <TeamLogo team={team} name={name} />
         <span className="font-medium">{name}</span>
+        {rank != null && (
+          <span className="font-mono text-xs opacity-60">{rank}</span>
+        )}
         {marker && (
           <span
             className="font-mono text-[10px] uppercase tracking-wider opacity-70"
@@ -103,7 +111,7 @@ export default async function SchedulePage() {
     );
   }
 
-  const [projRes, marketRes, teams] = await Promise.all([
+  const [projRes, marketRes, teams, { ratings }] = await Promise.all([
     supabaseCfb
       .from("game_projections")
       .select("*")
@@ -113,7 +121,12 @@ export default async function SchedulePage() {
       .order("game_id", { ascending: true }),
     supabaseCfb.from("market_comparisons").select("*"),
     fetchTeams(),
+    fetchLatestRatings(),
   ]);
+
+  // Ratings arrive sorted by power_rating desc, so position is the D1 rank,
+  // the same number the ratings page shows.
+  const rankByTeam = new Map(ratings.map((r, i) => [r.team_id, i + 1]));
 
   const games = (projRes.data ?? []) as CfbGameProjection[];
   const marketByGame = new Map(
@@ -145,7 +158,7 @@ export default async function SchedulePage() {
         found when the forecast ran, converted to the same home axis.
       </p>
 
-      <CfbScheduleSearch total={games.length}>
+      <CfbScheduleFilters total={games.length}>
         <div className="overflow-x-auto rounded-xl border border-border">
           {/* Everything is centered except the two team columns, whose ragged
               name lengths read badly off a center axis. */}
@@ -176,12 +189,25 @@ export default async function SchedulePage() {
                   marketLine != null && g.home_spread != null
                     ? g.home_spread - marketLine
                     : null;
+                const awayRank = g.away_team_id
+                  ? rankByTeam.get(g.away_team_id)
+                  : undefined;
+                const homeRank = g.home_team_id
+                  ? rankByTeam.get(g.home_team_id)
+                  : undefined;
                 return (
-                  // Search matches this rather than the rendered cells, so a
-                  // query cannot accidentally hit a line, a total or a date.
+                  // The filters read these rather than the rendered cells, so
+                  // a query cannot accidentally hit a line, total or date.
                   <TableRow
                     key={g.game_id}
                     data-search={`${g.away_team} ${g.home_team}`.toLowerCase()}
+                    data-top25={String(
+                      awayRank != null &&
+                        awayRank <= 25 &&
+                        homeRank != null &&
+                        homeRank <= 25
+                    )}
+                    data-conference={String(g.conference_game === true)}
                   >
                     <TableCell className="whitespace-nowrap text-center text-xs text-muted-foreground">
                       {formatKickoffDay(g.start_date)}
@@ -196,6 +222,7 @@ export default async function SchedulePage() {
                           ? teams.get(g.away_team_id)
                           : undefined
                       }
+                      rank={awayRank}
                       degraded={(g.away_missing_input_count ?? 0) >= 4}
                     />
                     <TeamCell
@@ -205,6 +232,7 @@ export default async function SchedulePage() {
                           ? teams.get(g.home_team_id)
                           : undefined
                       }
+                      rank={homeRank}
                       degraded={(g.home_missing_input_count ?? 0) >= 4}
                       marker={g.neutral_site ? "N" : undefined}
                     />
@@ -230,7 +258,7 @@ export default async function SchedulePage() {
             </TableBody>
           </Table>
         </div>
-      </CfbScheduleSearch>
+      </CfbScheduleFilters>
 
       <p className="max-w-4xl text-xs text-muted-foreground">
         Proj score is away&ndash;home expected points. Diff is model line minus
