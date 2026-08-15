@@ -2,6 +2,8 @@ import { cn, formatRuns, formatPct, formatOdds, formatConfidence } from "@/lib/u
 import type { GameMatchup, ModelOutput } from "@/lib/types";
 import { Card, CardHeader, CardContent } from "@/components/ui/card";
 import { EvBadge } from "@/components/ev-badge";
+import { TeamLogo } from "@/components/team-logo";
+import { mlbTeamIdentity } from "@/lib/mlb-teams";
 
 interface GameCardProps {
   matchup: GameMatchup;
@@ -25,6 +27,11 @@ function TeamRow({
       {/* Team + Starter */}
       <div className="min-w-0">
         <div className="flex items-center gap-2">
+          <TeamLogo
+            team={mlbTeamIdentity(prediction.team)}
+            name={prediction.team}
+            className="h-4 w-4"
+          />
           <span
             className={cn(
               "font-bold tracking-wide",

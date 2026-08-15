@@ -1,5 +1,12 @@
-import type { CfbTeamIdentity } from "@/lib/types";
 import { cn } from "@/lib/utils";
+
+// Structural, so both CfbTeamIdentity (logos stored per team by CFBD) and
+// MlbTeamIdentity (logo URLs derived from the team id) satisfy it without the
+// component knowing which sport it is rendering.
+interface TeamLogoSource {
+  logo_light: string | null;
+  logo_dark: string | null;
+}
 
 // A CSS background rather than an <img>, so each logo costs one request and
 // still follows the theme. A display:none <img> is still fetched, so rendering
@@ -13,7 +20,7 @@ export function TeamLogo({
   name,
   className,
 }: {
-  team: CfbTeamIdentity | undefined;
+  team: TeamLogoSource | undefined;
   name: string;
   className?: string;
 }) {

@@ -14,11 +14,41 @@ import {
   TableRow,
   TableCell,
 } from "@/components/ui/table";
+import { TeamLogo } from "@/components/team-logo";
+import { mlbTeamIdentity } from "@/lib/mlb-teams";
 import Link from "next/link";
 
 export const revalidate = 300;
 
 const PAGE_SIZE = 50;
+
+// Same treatment as the CFB schedule: a color rule down the leading edge plus a
+// faint wash of the team's color, so a long table is scannable by club without
+// the color fighting the win/loss text coloring the row already carries.
+function TeamCell({ team }: { team: string }) {
+  const identity = mlbTeamIdentity(team);
+  const color = identity?.color ?? null;
+  return (
+    <TableCell
+      className="font-medium"
+      style={
+        color
+          ? {
+              boxShadow: `inset 3px 0 0 ${color}`,
+              // 14 hex = 8% alpha: enough to read as the team's color, light
+              // enough to leave the theme's text contrast untouched.
+              backgroundColor: `${color}14`,
+            }
+          : undefined
+      }
+    >
+      <span className="flex items-center gap-2">
+        <TeamLogo team={identity} name={team} />
+        <span>{team}</span>
+      </span>
+    </TableCell>
+  );
+}
 
 // Extra columns the unified view carries from its games join, so row-level
 // results render without a follow-up query per page.
@@ -283,7 +313,7 @@ export default async function HistoryPage({
                     {formatDate(row.date)}
                     {showV2Badge ? <V2Badge /> : null}
                   </TableCell>
-                  <TableCell className="font-medium">{row.team}</TableCell>
+                  <TeamCell team={row.team} />
                   <TableCell>{row.starter ?? "-"}</TableCell>
                   <TableCell className="text-right">{formatRuns(row.expected_runs)}</TableCell>
                   <TableCell className="text-right">{formatPct(row.win_prob)}</TableCell>
