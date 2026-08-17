@@ -311,3 +311,134 @@ export interface CfbBacktestPrediction {
   model_margin: number | null;
   actual_margin: number | null;
 }
+
+// ---------------------------------------------------------------------------
+// NFL (nfl schema)
+
+// nfl.teams carries identity only, keyed by the current franchise
+// abbreviation; conference and division come from team_ratings, which every
+// consumer already loads.
+export interface NflTeamIdentity {
+  team_abbr: string;
+  team: string;
+  color: string | null;
+  alternate_color: string | null;
+  logo_light: string | null;
+  logo_dark: string | null;
+}
+
+export interface NflTeamRating {
+  season: number;
+  week: number;
+  as_of: string;
+  model_version: string;
+  team_abbr: string;
+  team: string;
+  conference: string | null;
+  division: string | null;
+  offense_points: number | null;
+  defense_points: number | null;
+  power_rating: number;
+  scoring_environment: number | null;
+  expected_drives: number | null;
+  power_rating_sd: number | null;
+  missing_input_count: number | null;
+}
+
+export interface NflTeamUnitRating {
+  season: number;
+  week: number;
+  as_of: string;
+  model_version: string;
+  team_abbr: string;
+  team: string;
+  rush_offense: number | null;
+  pass_offense: number | null;
+  rush_defense: number | null;
+  pass_defense: number | null;
+  pass_block: number | null;
+  run_block: number | null;
+  special_teams: number | null;
+}
+
+export interface NflGameProjection {
+  game_id: string;
+  season: number;
+  week: number;
+  as_of: string;
+  model_version: string;
+  start_date: string | null;
+  home_team_abbr: string | null;
+  home_team: string;
+  away_team_abbr: string | null;
+  away_team: string;
+  neutral_site: boolean | null;
+  div_game: boolean | null;
+  home_field_points: number | null;
+  expected_home_points: number | null;
+  expected_away_points: number | null;
+  home_qb_adjustment: number | null;
+  away_qb_adjustment: number | null;
+  rest_adjustment: number | null;
+  pure_home_margin: number | null;
+  pure_home_spread: number | null;
+  market_home_spread: number | null;
+  market_weight: number | null;
+  home_margin: number | null;
+  home_spread: number | null;
+  model_total: number | null;
+  margin_sd: number | null;
+  total_sd: number | null;
+  margin_total_correlation: number | null;
+  distribution: string | null;
+  degrees_of_freedom: number | null;
+}
+
+export interface NflMarketComparison {
+  game_id: string;
+  start_date: string | null;
+  home_team: string | null;
+  away_team: string | null;
+  model_home_spread: number | null;
+  model_total: number | null;
+  margin_sd: number | null;
+  total_sd: number | null;
+  model_as_of: string | null;
+  market_available: boolean | null;
+  priced_offer_available: boolean | null;
+  executable_offer_available: boolean | null;
+  review_status: string | null;
+  recommendation_status: string | null;
+  best_offer_market: string | null;
+  best_offer_selection: string | null;
+  best_offer_point: number | null;
+  best_offer_price: number | null;
+  best_offer_provider: string | null;
+  best_offer_provider_key: string | null;
+  best_offer_provider_last_update: string | null;
+  best_offer_event_link: string | null;
+  best_offer_market_link: string | null;
+  best_offer_bet_link: string | null;
+  best_offer_edge_points: number | null;
+  best_offer_edge_standardized: number | null;
+  best_offer_model_cover_probability: number | null;
+  best_offer_model_fair_price: number | null;
+  best_offer_expected_value_per_unit: number | null;
+}
+
+export interface NflBacktestPrediction {
+  game_id: string;
+  season: number;
+  week: number;
+  week_index: number | null;
+  season_type: string | null;
+  home_team: string;
+  away_team: string;
+  neutral_site: boolean | null;
+  home_points: number | null;
+  away_points: number | null;
+  closing_spread: number | null;
+  model_margin: number | null;
+  pure_model_margin: number | null;
+  actual_margin: number | null;
+}

@@ -2,7 +2,7 @@ import Link from "next/link";
 import { SiteHeader } from "@/components/site-header";
 import { fetchFullBetLedger } from "@/lib/bet-ledger";
 import { aggregateLedger } from "@/lib/betting-aggs";
-import { supabaseCfb } from "@/lib/supabase";
+import { supabaseCfb, supabaseNfl } from "@/lib/supabase";
 import { posts } from "./blog/posts";
 
 export const revalidate = 300;
@@ -93,13 +93,65 @@ async function getCfbHeadline(): Promise<CfbHeadline | null> {
   }
 }
 
-const upcomingSports = [
-  { name: "NFL", label: "Football" },
-  { name: "NHL", label: "Hockey" },
-];
+type NflHeadline = {
+  topTeam: string | null;
+  teamCount: number;
+  season: number | null;
+  week: number | null;
+  gameCount: number;
+};
+
+async function getNflHeadline(): Promise<NflHeadline | null> {
+  try {
+    const latestRes = await supabaseNfl
+      .from("team_ratings")
+      .select("season, week")
+      .order("season", { ascending: false })
+      .order("week", { ascending: false })
+      .limit(1);
+    const latest = latestRes.data?.[0];
+    if (!latest) return null;
+    const [topRes, countRes, gamesRes] = await Promise.all([
+      supabaseNfl
+        .from("team_ratings")
+        .select("team")
+        .eq("season", latest.season)
+        .eq("week", latest.week)
+        .order("power_rating", { ascending: false })
+        .limit(1),
+      supabaseNfl
+        .from("team_ratings")
+        .select("team_abbr", { count: "exact", head: true })
+        .eq("season", latest.season)
+        .eq("week", latest.week),
+      supabaseNfl
+        .from("game_projections")
+        .select("game_id", { count: "exact", head: true })
+        .eq("season", latest.season)
+        .eq("week", latest.week),
+    ]);
+    return {
+      topTeam: topRes.data?.[0]?.team ?? null,
+      teamCount: countRes.count ?? 0,
+      season: latest.season,
+      week: latest.week,
+      gameCount: gamesRes.count ?? 0,
+    };
+  } catch {
+    // Home should never 500 because Supabase is unreachable; the NFL card
+    // degrades to a plain link.
+    return null;
+  }
+}
+
+const upcomingSports = [{ name: "NHL", label: "Hockey" }];
 
 export default async function Home() {
-  const [mlb, cfb] = await Promise.all([getMlbHeadline(), getCfbHeadline()]);
+  const [mlb, cfb, nfl] = await Promise.all([
+    getMlbHeadline(),
+    getCfbHeadline(),
+    getNflHeadline(),
+  ]);
   const latestPosts = posts.slice(0, 2);
 
   return (
@@ -227,6 +279,62 @@ export default async function Home() {
                 </div>
                 <p className="ml-auto self-end font-mono text-xs text-muted-foreground">
                   {cfb.season} preseason
+                </p>
+              </div>
+            )}
+          </Link>
+
+          <Link
+            href="/nfl"
+            className="group mt-4 block rounded-xl border border-border bg-card p-5 transition-colors hover:border-foreground/30"
+          >
+            <div className="flex items-center justify-between gap-4">
+              <div className="flex items-baseline gap-3">
+                <span className="font-heading text-lg tracking-tight group-hover:underline underline-offset-4">
+                  NFL
+                </span>
+                <span className="flex items-center gap-1.5 font-mono text-xs uppercase tracking-wider text-muted-foreground">
+                  <span className="h-1.5 w-1.5 rounded-full bg-amber-500" />
+                  Preseason
+                </span>
+              </div>
+              <span className="font-mono text-xs uppercase tracking-wider text-muted-foreground group-hover:text-foreground transition-colors">
+                View ratings &rarr;
+              </span>
+            </div>
+            <p className="mt-2 text-sm text-muted-foreground leading-relaxed">
+              Bayesian power ratings for all 32 teams from drive-level EPA,
+              with weekly spread and total projections priced against the
+              market.
+            </p>
+            {nfl && (
+              <div className="mt-4 flex flex-wrap gap-x-8 gap-y-3 border-t border-border pt-4">
+                <div>
+                  <p className="font-mono text-xs uppercase tracking-wider text-muted-foreground">
+                    No. 1
+                  </p>
+                  <p className="mt-0.5 font-mono text-sm">
+                    {nfl.topTeam ?? "–"}
+                  </p>
+                </div>
+                <div>
+                  <p className="font-mono text-xs uppercase tracking-wider text-muted-foreground">
+                    Teams rated
+                  </p>
+                  <p className="mt-0.5 font-mono text-sm tabular-nums">
+                    {nfl.teamCount}
+                  </p>
+                </div>
+                <div>
+                  <p className="font-mono text-xs uppercase tracking-wider text-muted-foreground">
+                    Week {nfl.week ?? "–"} games
+                  </p>
+                  <p className="mt-0.5 font-mono text-sm tabular-nums">
+                    {nfl.gameCount}
+                  </p>
+                </div>
+                <p className="ml-auto self-end font-mono text-xs text-muted-foreground">
+                  {nfl.season} season
                 </p>
               </div>
             )}

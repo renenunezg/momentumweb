@@ -13,3 +13,9 @@ export const supabaseCfb = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
   { db: { schema: "cfb" } }
 );
+
+export const supabaseNfl = createClient(
+  process.env.NEXT_PUBLIC_SUPABASE_URL!,
+  process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+  { db: { schema: "nfl" } }
+);
