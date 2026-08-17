@@ -207,12 +207,12 @@ export function MethodologyContent() {
             {[
               { label: "Prediction target", val: "Home margin and game total, joint distribution" },
               { label: "Rating unit", val: "Points per possession, offense and defense per team" },
-              { label: "Rating engine", val: "Ridge regression with priors, solved in closed form" },
+              { label: "Rating engine", val: "Bayesian linear model, posterior in closed form" },
               { label: "Training data", val: "2019–2025 play-by-play; holdout 2023–2025" },
               { label: "Home field", val: "Fitted each season, currently 3.22 points" },
               { label: "In-game model", val: "3-parameter Gaussian on the final margin" },
               { label: "Kickoff anchor", val: "Market closing spread, sd 15.45 points" },
-              { label: "Betting output", val: "None. Every comparison is marked not_recommended" },
+              { label: "Market output", val: "+EV flags for benchmarking; no picks, no sizing" },
             ].map(({ label, val }) => (
               <div key={label} className="rounded-sm border border-border p-3">
                 <p className="font-mono text-xs uppercase tracking-wider text-muted-foreground">{label}</p>
@@ -321,7 +321,7 @@ export function MethodologyContent() {
       <SectionCard
         id="engine"
         title="Rating Engine"
-        subtitle="A ridge regression over points per possession, blending scoreboard results with process signal"
+        subtitle="A Bayesian linear model over points per possession, blending scoreboard results with process signal"
       >
         <div className="space-y-4 text-sm leading-relaxed">
           <p>
@@ -337,7 +337,11 @@ export function MethodologyContent() {
           <p>
             The model itself is small on purpose: one offense number and one defense
             number per team, plus a single shared home-field term. For 266 teams that is
-            roughly 530 parameters, solved as a ridge regression in closed form.
+            roughly 530 parameters, solved as a ridge regression in closed form. Ridge
+            is the computational name; statistically this is a Bayesian update. The
+            priors are genuine Gaussian priors, conjugate with the Gaussian likelihood,
+            so the posterior mean and covariance drop straight out of the normal
+            equations, and that covariance is what feeds projection uncertainty later.
           </p>
           <FormulaBlock>
             E[ppp_home] = base + off_home − def_away + 0.5 · hfa
@@ -466,10 +470,14 @@ export function MethodologyContent() {
           <p>
             For market comparisons, the distribution prices every offer directly: the
             probability the home side covers is the t-CDF of the edge over the scale,
-            and expected value follows from the American price. Games where the model
-            and the market disagree by at least 4 points get flagged for review of the
-            model&apos;s inputs, which in practice mostly surfaces FCS opponents with
-            degraded data. No row is ever marked as a recommended bet.
+            and expected value follows from the American price. Plays where the model
+            sees an edge of at least 4 points with positive EV get flagged. Those
+            flags are the model&apos;s benchmark against the market, and each one is
+            also a prompt to review the model&apos;s inputs first, since the biggest
+            edges in practice tend to involve FCS opponents with degraded data. What
+            never happens is the step after: no sizing, no picks, and every row ships
+            with <span className="font-mono">recommendation_status</span> set to{" "}
+            <span className="font-mono">not_recommended</span>.
           </p>
         </div>
       </SectionCard>
@@ -743,12 +751,13 @@ export function MethodologyContent() {
               input permanently widens every team&apos;s rating uncertainty instead.
             </li>
             <li>
-              <strong className="text-foreground">No betting recommendations.</strong>{" "}
-              Market comparisons exist to grade the model against the strongest
-              available benchmark. Every row is stamped{" "}
-              <span className="font-mono">not_recommended</span>, and a model that
-              loses to the closing line by a point of MAE has no business suggesting
-              otherwise.
+              <strong className="text-foreground">No picks, no sizing, no profitability claims.</strong>{" "}
+              The model does flag +EV plays; pricing the market and surfacing
+              disagreements is how it gets benchmarked against the strongest available
+              forecast. It stops there. Nothing sizes a wager or sells a pick, the
+              flags are a measurement tool rather than betting advice, and every row
+              ships with <span className="font-mono">recommendation_status</span> set
+              to <span className="font-mono">not_recommended</span>.
             </li>
             <li>
               <strong className="text-foreground">No live production feed yet.</strong>{" "}
@@ -794,13 +803,19 @@ export function MethodologyContent() {
 
           <div className="mt-2 rounded-sm border border-border bg-muted/50 p-3 text-xs text-muted-foreground leading-relaxed">
             <strong className="text-foreground">A note on model size:</strong> there is
-            no machine learning framework anywhere in this system. The rating engine is
-            a ridge regression solved in closed form with NumPy, and the in-game model
-            has three parameters fit with a Nelder-Mead search. Nothing needs a GPU,
-            every artifact is a parquet file, and any number on this site can be
-            regenerated from raw data with one CLI command. When a model this small is
-            calibrated across seven seasons, added complexity has to argue for itself
-            on holdout. So far, momentum could not.
+            no machine learning framework anywhere in this system, but that is a
+            statement about tooling, and the underlying model is still Bayesian. The
+            rating engine puts Gaussian priors on every team&apos;s offense, defense,
+            and the shared home-field term, updates them with each week&apos;s
+            possessions, and carries the posterior covariance into every projection
+            interval. Because the model is Gaussian throughout, the posterior has a
+            closed form: what a NUTS sampler does for the MLB model on this site,
+            plain NumPy linear algebra does here. The in-game layer is three
+            parameters fit with a Nelder-Mead search. Nothing needs a GPU, every
+            artifact is a parquet file, and any number on this site can be regenerated
+            from raw data with one CLI command. When a model this small is calibrated
+            across seven seasons, added complexity has to argue for itself on holdout.
+            So far, momentum could not.
           </div>
         </div>
       </SectionCard>
