@@ -184,7 +184,9 @@ export function MethodologyContent() {
             Across
             3,853 backtested games from 2021 through 2025, the model&apos;s average margin
             error is 13.40 points and the closing line&apos;s is 12.14. The market wins
-            every season. That result is not buried in a footnote because it drives the
+            every season. Those are backtested numbers on seasons that already happened,
+            provisional in the way all sports backtests are; the backtest section says
+            more. The result is not buried in a footnote because it drives the
             most consequential design decision in the system: once a game kicks off, the
             in-game model anchors on the closing spread rather than the model&apos;s own
             number, and gets measurably better for it.
@@ -516,6 +518,21 @@ export function MethodologyContent() {
             is calibration. On the untouched 2023&ndash;2025 holdout (2,258 games), the
             50/80/95% margin intervals covered 51.6%, 80.1%, and 94.2% of outcomes, and
             the total projection came out unbiased to a hundredth of a point.
+          </p>
+          <p>
+            One caveat applies to everything in this table, and it applies to sports
+            modeling generally. A backtest reports how this procedure would have done
+            in seasons that already happened, and college football does not hold
+            still: the portal, NIL, realignment, and playoff expansion keep rewriting
+            the sport underneath the model, and the market adapts too. The absolute
+            error levels above are era-specific and should be expected to drift. They
+            stand in because the season has not started yet; once it does, live graded
+            games on the Performance page become the record that matters, and they
+            supersede this table as they accumulate. What the backtest is trusted for
+            is its structural findings, the ones that repeated in every single season:
+            the market beats the model pregame, momentum fails out of sample, the
+            stated intervals cover. Those drove the design decisions, and they
+            transfer far better than any error number.
           </p>
           <p className="text-muted-foreground">
             The known weak segment is early season: games where either team has fewer
