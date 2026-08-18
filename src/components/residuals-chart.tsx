@@ -10,6 +10,11 @@ import {
   ReferenceLine,
   ResponsiveContainer,
 } from "recharts";
+import {
+  chartAxisProps,
+  chartTooltipStyle,
+  useChartTheme,
+} from "@/lib/chart-theme";
 
 export interface ResidualsChartProps {
   residuals: number[];
@@ -33,6 +38,8 @@ function buildBins(values: number[]) {
 }
 
 export function ResidualsChart({ residuals }: ResidualsChartProps) {
+  const theme = useChartTheme();
+  const axis = chartAxisProps(theme);
   const bins = buildBins(residuals);
   const mean =
     residuals.length > 0
@@ -51,44 +58,27 @@ export function ResidualsChart({ residuals }: ResidualsChartProps) {
           data={bins}
           margin={{ top: 8, right: 16, left: 8, bottom: 8 }}
         >
-          <CartesianGrid strokeDasharray="3 3" stroke="#e5e5e5" />
+          <CartesianGrid vertical={false} stroke={theme.grid} strokeWidth={1} />
           <XAxis
             dataKey="bucket"
-            tick={{
-              fill: "#52525b",
-              fontSize: 11,
-              fontFamily: "var(--font-geist-mono)",
-            }}
-            stroke="#d4d4d8"
             label={{
               value: "Actual − Predicted (runs)",
               position: "insideBottom",
               offset: -4,
-              style: { fill: "#52525b", fontSize: 11 },
+              style: { fill: theme["muted-foreground"], fontSize: 11 },
             }}
+            {...axis}
           />
-          <YAxis
-            tick={{
-              fill: "#52525b",
-              fontSize: 11,
-              fontFamily: "var(--font-geist-mono)",
-            }}
-            stroke="#d4d4d8"
-            allowDecimals={false}
-          />
+          <YAxis allowDecimals={false} {...axis} />
           <Tooltip
-            contentStyle={{
-              backgroundColor: "#ffffff",
-              border: "1px solid #d4d4d8",
-              borderRadius: "2px",
-              fontFamily: "var(--font-geist-mono)",
-              fontSize: "12px",
-            }}
+            contentStyle={chartTooltipStyle(theme)}
+            cursor={{ fill: theme.grid, fillOpacity: 0.4 }}
             formatter={(value) => [value as number, "Count"]}
             labelFormatter={(label) => `Residual bin: ${label}`}
           />
-          <ReferenceLine x="0" stroke="#b08a30" strokeDasharray="4 2" />
-          <Bar dataKey="count" fill="#4a6fa5" />
+          {/* Zero bias: where an unbiased model centers. */}
+          <ReferenceLine x="0" stroke={theme.foreground} strokeWidth={1} />
+          <Bar dataKey="count" fill={theme["chart-2"]} />
         </BarChart>
       </ResponsiveContainer>
     </div>

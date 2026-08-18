@@ -149,7 +149,7 @@ export default async function HistoryPage({
           No graded games match these filters.
         </p>
       ) : (
-        <div className="overflow-x-auto rounded-xl border border-border">
+        <div className="overflow-x-auto">
           <Table>
             <TableHeader>
               <TableRow>

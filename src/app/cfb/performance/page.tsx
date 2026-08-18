@@ -123,7 +123,7 @@ export default async function PerformancePage() {
         measured against it, not against a naive baseline.
       </p>
 
-      <div className="grid grid-cols-2 gap-4 rounded-xl border border-border bg-card p-5 sm:grid-cols-3 lg:grid-cols-5">
+      <div className="grid grid-cols-2 gap-4 border-y border-rule-strong py-4 sm:grid-cols-3 lg:grid-cols-5">
         <KpiCard
           label="Games graded"
           value={String(overall.games)}
@@ -154,7 +154,7 @@ export default async function PerformancePage() {
         />
       </div>
 
-      <div className="overflow-x-auto rounded-xl border border-border">
+      <div className="overflow-x-auto">
         <Table>
           <TableHeader>
             <TableRow>

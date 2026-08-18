@@ -3,7 +3,7 @@
 import { useEffect, useRef, useState } from "react";
 import type { GameMatchup } from "@/lib/types";
 import type { LiveScore } from "@/app/mlb/api/live-scores/route";
-import { GameCard } from "@/components/game-card";
+import { GamesTable } from "@/components/games-table";
 
 const POLL_MS = 60_000;
 
@@ -106,11 +106,5 @@ export function GamesLive({ initial }: { initial: GameMatchup[] }) {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [allFinal(matchups)]);
 
-  return (
-    <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
-      {matchups.map((matchup) => (
-        <GameCard key={matchup.game_pk} matchup={matchup} />
-      ))}
-    </div>
-  );
+  return <GamesTable matchups={matchups} />;
 }

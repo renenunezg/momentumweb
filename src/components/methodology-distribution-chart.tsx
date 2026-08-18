@@ -11,6 +11,11 @@ import {
   ReferenceLine,
   Legend,
 } from "recharts";
+import {
+  chartAxisProps,
+  chartTooltipStyle,
+  useChartTheme,
+} from "@/lib/chart-theme";
 
 interface TeamDist {
   team: string;
@@ -48,6 +53,8 @@ export function MethodologyDistributionChart({
   totalP90,
   startTimeUtc,
 }: Props) {
+  const theme = useChartTheme();
+  const axis = chartAxisProps(theme);
   const homeHist = Array.isArray(home.hist) ? home.hist : [];
   const awayHist = Array.isArray(away.hist) ? away.hist : [];
   const MAX = Math.max(homeHist.length, awayHist.length, 1) - 1;
@@ -97,40 +104,30 @@ export function MethodologyDistributionChart({
           margin={{ top: 8, right: 12, left: 0, bottom: 24 }}
           barCategoryGap={2}
         >
-          <CartesianGrid strokeDasharray="3 3" stroke="#e5e5e5" vertical={false} />
+          <CartesianGrid vertical={false} stroke={theme.grid} strokeWidth={1} />
           <XAxis
             dataKey="runs"
-            tick={{
-              fill: "#52525b",
-              fontSize: 11,
-              fontFamily: "var(--font-geist-mono)",
-            }}
-            stroke="#d4d4d8"
             label={{
               value: "Runs scored by team (capped at 20)",
               position: "insideBottom",
               offset: -10,
-              fill: "#71717a",
+              fill: theme["muted-foreground"],
               fontSize: 11,
               fontFamily: "var(--font-geist-mono)",
             }}
+            {...axis}
           />
           <YAxis
-            tick={{
-              fill: "#52525b",
-              fontSize: 11,
-              fontFamily: "var(--font-geist-mono)",
-            }}
-            stroke="#d4d4d8"
             tickFormatter={(v: number) => `${v.toFixed(0)}%`}
             label={{
               value: "share of sims",
               angle: -90,
               position: "insideLeft",
-              fill: "#71717a",
+              fill: theme["muted-foreground"],
               fontSize: 11,
               fontFamily: "var(--font-geist-mono)",
             }}
+            {...axis}
           />
           <Tooltip
             formatter={(value, name) => [
@@ -138,13 +135,8 @@ export function MethodologyDistributionChart({
               String(name ?? ""),
             ]}
             labelFormatter={(label) => `${label} runs`}
-            contentStyle={{
-              backgroundColor: "#ffffff",
-              border: "1px solid #d4d4d8",
-              borderRadius: "2px",
-              fontFamily: "var(--font-geist-mono)",
-              fontSize: "12px",
-            }}
+            cursor={{ fill: theme.grid, fillOpacity: 0.4 }}
+            contentStyle={chartTooltipStyle(theme)}
           />
           <Legend
             verticalAlign="top"
@@ -159,37 +151,37 @@ export function MethodologyDistributionChart({
           <Bar
             dataKey="home"
             name={`${home.team} (home)`}
-            fill="#2d7a4f"
-            fillOpacity={0.7}
+            fill={theme["chart-1"]}
+            fillOpacity={0.75}
           />
           <Bar
             dataKey="away"
             name={`${away.team} (away)`}
-            fill="#a855f7"
-            fillOpacity={0.55}
+            fill={theme["chart-4"]}
+            fillOpacity={0.6}
           />
           <ReferenceLine
             x={Math.round(home.mean)}
-            stroke="#2d7a4f"
+            stroke={theme["chart-1"]}
             strokeDasharray="3 3"
             strokeWidth={1}
             label={{
               value: `μ ${fmt(home.mean, 1)}`,
               position: "top",
-              fill: "#2d7a4f",
+              fill: theme["chart-1"],
               fontSize: 10,
               fontFamily: "var(--font-geist-mono)",
             }}
           />
           <ReferenceLine
             x={Math.round(away.mean)}
-            stroke="#a855f7"
+            stroke={theme["chart-4"]}
             strokeDasharray="3 3"
             strokeWidth={1}
             label={{
               value: `μ ${fmt(away.mean, 1)}`,
               position: "top",
-              fill: "#a855f7",
+              fill: theme["chart-4"],
               fontSize: 10,
               fontFamily: "var(--font-geist-mono)",
             }}

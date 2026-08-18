@@ -106,7 +106,7 @@ export default function NflRatings({
       ) : view === "units" ? (
         <NflUnitRatings units={units} ratings={ratings} teamByAbbr={teamByAbbr} />
       ) : (
-        <div className="overflow-x-auto rounded-xl border border-border">
+        <div className="overflow-x-auto">
           <Table>
             <TableHeader>
               <TableRow>

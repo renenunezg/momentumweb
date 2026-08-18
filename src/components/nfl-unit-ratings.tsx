@@ -78,7 +78,7 @@ export default function NflUnitRatings({
         the line ratings attribute outcomes without snap level film data.
         Click a column to sort.
       </p>
-      <div className="overflow-x-auto rounded-xl border border-border">
+      <div className="overflow-x-auto">
         <Table>
           <TableHeader>
             <TableRow>

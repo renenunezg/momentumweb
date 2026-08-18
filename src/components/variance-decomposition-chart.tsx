@@ -11,6 +11,11 @@ import {
   ResponsiveContainer,
   ErrorBar,
 } from "recharts";
+import {
+  chartAxisProps,
+  chartTooltipStyle,
+  useChartTheme,
+} from "@/lib/chart-theme";
 
 interface VarianceDecompositionChartProps {
   data: PosteriorSigma[];
@@ -24,6 +29,10 @@ const SIGMA_LABELS: Record<string, string> = {
 };
 
 export function VarianceDecompositionChart({ data }: VarianceDecompositionChartProps) {
+  // Hooks must run before the empty-data bail-out.
+  const theme = useChartTheme();
+  const axis = chartAxisProps(theme);
+
   if (data.length === 0) return null;
 
   const latestDate = data.reduce(
@@ -55,41 +64,36 @@ export function VarianceDecompositionChart({ data }: VarianceDecompositionChartP
           layout="vertical"
           margin={{ top: 4, right: 40, left: 100, bottom: 4 }}
         >
+          {/* Bars run horizontally here, so the value-axis rules are vertical. */}
           <CartesianGrid
-            strokeDasharray="3 3"
-            stroke="#e5e5e5"
             horizontal={false}
+            stroke={theme.grid}
+            strokeWidth={1}
           />
           <XAxis
             type="number"
-            tick={{ fill: "#52525b", fontSize: 11, fontFamily: "var(--font-geist-mono)" }}
-            stroke="#d4d4d8"
             tickFormatter={(v: number) => v.toFixed(2)}
             domain={[0, "auto"]}
+            {...axis}
           />
-          <YAxis
-            type="category"
-            dataKey="name"
-            tick={{ fill: "#52525b", fontSize: 11, fontFamily: "var(--font-geist-mono)" }}
-            stroke="#d4d4d8"
-            width={96}
-          />
+          <YAxis type="category" dataKey="name" width={96} {...axis} />
           <Tooltip
             formatter={(value) => Number(value).toFixed(4)}
-            contentStyle={{
-              backgroundColor: "#ffffff",
-              border: "1px solid #d4d4d8",
-              borderRadius: "2px",
-              fontFamily: "var(--font-geist-mono)",
-              fontSize: "12px",
-            }}
+            cursor={{ fill: theme.grid, fillOpacity: 0.4 }}
+            contentStyle={chartTooltipStyle(theme)}
           />
-          <Bar dataKey="mean" name="Posterior mean" fill="#2d7a4f" barSize={18} radius={2}>
+          <Bar
+            dataKey="mean"
+            name="Posterior mean"
+            fill={theme["chart-1"]}
+            barSize={18}
+            radius={0}
+          >
             <ErrorBar
               dataKey="error"
               width={6}
-              strokeWidth={1.5}
-              stroke="#1a5c38"
+              strokeWidth={1}
+              stroke={theme.foreground}
               direction="x"
             />
           </Bar>

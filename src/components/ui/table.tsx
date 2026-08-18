@@ -12,7 +12,10 @@ function Table({ className, ...props }: React.ComponentProps<"table">) {
     >
       <table
         data-slot="table"
-        className={cn("w-full caption-bottom text-sm tabular-nums", className)}
+        className={cn(
+          "w-full caption-bottom border-collapse text-sm tabular-nums",
+          className
+        )}
         {...props}
       />
     </div>
@@ -21,9 +24,10 @@ function Table({ className, ...props }: React.ComponentProps<"table">) {
 
 function TableHeader({ className, ...props }: React.ComponentProps<"thead">) {
   return (
+    // Booktabs: a rule above the header and one below it, none between rows.
     <thead
       data-slot="table-header"
-      className={cn("[&_tr]:border-b", className)}
+      className={cn("border-y border-rule-strong", className)}
       {...props}
     />
   )
@@ -33,7 +37,7 @@ function TableBody({ className, ...props }: React.ComponentProps<"tbody">) {
   return (
     <tbody
       data-slot="table-body"
-      className={cn("[&_tr:last-child]:border-0", className)}
+      className={cn("border-b border-rule-strong", className)}
       {...props}
     />
   )
@@ -56,8 +60,9 @@ function TableRow({ className, ...props }: React.ComponentProps<"tr">) {
   return (
     <tr
       data-slot="table-row"
+      // No rules between body rows; hover carries row tracking instead.
       className={cn(
-        "border-b transition-colors hover:bg-muted/50 data-[state=selected]:bg-muted",
+        "transition-colors hover:bg-muted/60 data-[state=selected]:bg-muted",
         className
       )}
       {...props}
@@ -70,7 +75,7 @@ function TableHead({ className, ...props }: React.ComponentProps<"th">) {
     <th
       data-slot="table-head"
       className={cn(
-        "h-8 px-2 text-left align-middle text-xs font-medium uppercase tracking-wider whitespace-nowrap text-muted-foreground [&:has([role=checkbox])]:pr-0",
+        "h-8 px-2 py-2 text-left align-middle font-mono text-xs font-normal uppercase tracking-wider whitespace-nowrap text-muted-foreground [&:has([role=checkbox])]:pr-0",
         className
       )}
       {...props}

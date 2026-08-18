@@ -15,12 +15,12 @@ export default function BlogPage() {
       {posts.length === 0 ? (
         <p className="text-sm text-muted-foreground">Nothing published yet.</p>
       ) : (
-        <div className="flex flex-col gap-4">
+        <div className="divide-y divide-border border-y border-rule-strong">
           {posts.map((post) => (
             <Link
               key={post.slug}
               href={`/blog/${post.slug}`}
-              className="group block rounded-xl border border-border bg-card p-5 transition-colors hover:border-foreground/30"
+              className="group -mx-3 block px-3 py-5 transition-colors hover:bg-muted/50"
             >
               <p className="font-mono text-xs text-muted-foreground">
                 {post.date}

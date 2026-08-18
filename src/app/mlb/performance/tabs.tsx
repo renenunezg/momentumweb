@@ -185,7 +185,7 @@ export function PerformanceTabs({
             data={dailyEvals}
             dataKey="mae"
             name="MAE"
-            color="#b08a30"
+            token="chart-3"
           />
         </div>
 
@@ -195,7 +195,7 @@ export function PerformanceTabs({
             data={dailyEvals}
             dataKey="rmse"
             name="RMSE"
-            color="#4a6fa5"
+            token="chart-2"
           />
         </div>
       </TabsContent>
@@ -233,7 +233,7 @@ export function PerformanceTabs({
             data={dailyEvals}
             dataKey="brier_score"
             name="Brier Score"
-            color="#2d7a4f"
+            token="chart-1"
           />
         </div>
       </TabsContent>
@@ -409,7 +409,7 @@ export function PerformanceTabs({
 
         <div className="border-t border-border pt-6">
           <h2 className="font-heading text-lg mb-4">MAE Over Time</h2>
-          <MetricLineChart data={dailyEvals} dataKey="mae" name="MAE" color="#b08a30" />
+          <MetricLineChart data={dailyEvals} dataKey="mae" name="MAE" token="chart-3" />
         </div>
 
         <div className="border-t border-border pt-6">

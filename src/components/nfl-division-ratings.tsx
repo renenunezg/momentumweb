@@ -126,7 +126,7 @@ export default function NflDivisionRatings({
             Avg {fmt(selected.avg)}
           </span>
         </div>
-        <div className="overflow-x-auto rounded-xl border border-border">
+        <div className="overflow-x-auto">
           <Table>
             <TableHeader>
               <TableRow>

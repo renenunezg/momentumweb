@@ -151,7 +151,7 @@ export default async function SchedulePage() {
       </p>
 
       <NflScheduleFilters total={games.length}>
-        <div className="overflow-x-auto rounded-xl border border-border">
+        <div className="overflow-x-auto">
           {/* Everything is centered except the two team columns, whose ragged
               name lengths read badly off a center axis. */}
           <Table>

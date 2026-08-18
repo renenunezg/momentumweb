@@ -80,7 +80,7 @@ export default async function Page() {
 
   if ((!predictions || predictions.length === 0) && (!allGames || allGames.length === 0)) {
     return (
-      <main className="mx-auto max-w-6xl px-4 py-8">
+      <main className="mx-auto w-full min-w-0 max-w-6xl px-4 py-8">
         <h1 className="font-heading text-2xl tracking-tight">
           Today&apos;s Games
         </h1>
@@ -159,7 +159,7 @@ export default async function Page() {
   });
 
   return (
-    <main className="mx-auto max-w-6xl px-4 py-8">
+    <main className="mx-auto w-full min-w-0 max-w-6xl px-4 py-8">
       <div className="mb-6 flex items-start justify-between gap-4">
         <div>
           <h1 className="font-heading text-2xl tracking-tight">

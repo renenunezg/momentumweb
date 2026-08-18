@@ -163,7 +163,7 @@ export default async function Home() {
           <h1 className="font-heading text-3xl tracking-tight">
             Ren&eacute; N&uacute;&ntilde;ez
           </h1>
-          <p className="mt-3 text-sm text-muted-foreground leading-relaxed max-w-xl">
+          <p className="mt-3 max-w-[68ch] text-base text-muted-foreground leading-relaxed">
             I&apos;m a data analyst / statistician working on modeling momentum
             and sports.
           </p>
@@ -174,9 +174,11 @@ export default async function Home() {
           <h2 className="font-mono text-xs uppercase tracking-wider text-muted-foreground mb-3">
             Models
           </h2>
+          {/* Entries are separated by rules, not enclosed in boxes. */}
+          <div className="divide-y divide-border border-y border-rule-strong">
           <Link
             href="/mlb"
-            className="group block rounded-xl border border-border bg-card p-5 transition-colors hover:border-foreground/30"
+            className="group -mx-3 block px-3 py-5 transition-colors hover:bg-muted/50"
           >
             <div className="flex items-center justify-between gap-4">
               <div className="flex items-baseline gap-3">
@@ -199,7 +201,7 @@ export default async function Home() {
             {mlb && (
               <div className="mt-4 flex flex-wrap gap-x-8 gap-y-3 border-t border-border pt-4">
                 <div>
-                  <p className="font-mono text-xs uppercase tracking-wider text-muted-foreground">
+                  <p className="text-xs text-muted-foreground">
                     ROI
                   </p>
                   <p className="mt-0.5 font-mono text-sm tabular-nums">
@@ -207,7 +209,7 @@ export default async function Home() {
                   </p>
                 </div>
                 <div>
-                  <p className="font-mono text-xs uppercase tracking-wider text-muted-foreground">
+                  <p className="text-xs text-muted-foreground">
                     Record
                   </p>
                   <p className="mt-0.5 font-mono text-sm tabular-nums">
@@ -215,7 +217,7 @@ export default async function Home() {
                   </p>
                 </div>
                 <div>
-                  <p className="font-mono text-xs uppercase tracking-wider text-muted-foreground">
+                  <p className="text-xs text-muted-foreground">
                     Net units
                   </p>
                   <p className="mt-0.5 font-mono text-sm tabular-nums">
@@ -231,7 +233,7 @@ export default async function Home() {
 
           <Link
             href="/cfb"
-            className="group mt-4 block rounded-xl border border-border bg-card p-5 transition-colors hover:border-foreground/30"
+            className="group -mx-3 block px-3 py-5 transition-colors hover:bg-muted/50"
           >
             <div className="flex items-center justify-between gap-4">
               <div className="flex items-baseline gap-3">
@@ -254,7 +256,7 @@ export default async function Home() {
             {cfb && (
               <div className="mt-4 flex flex-wrap gap-x-8 gap-y-3 border-t border-border pt-4">
                 <div>
-                  <p className="font-mono text-xs uppercase tracking-wider text-muted-foreground">
+                  <p className="text-xs text-muted-foreground">
                     No. 1
                   </p>
                   <p className="mt-0.5 font-mono text-sm">
@@ -262,7 +264,7 @@ export default async function Home() {
                   </p>
                 </div>
                 <div>
-                  <p className="font-mono text-xs uppercase tracking-wider text-muted-foreground">
+                  <p className="text-xs text-muted-foreground">
                     Teams rated
                   </p>
                   <p className="mt-0.5 font-mono text-sm tabular-nums">
@@ -270,7 +272,7 @@ export default async function Home() {
                   </p>
                 </div>
                 <div>
-                  <p className="font-mono text-xs uppercase tracking-wider text-muted-foreground">
+                  <p className="text-xs text-muted-foreground">
                     Week {cfb.week ?? "–"} games
                   </p>
                   <p className="mt-0.5 font-mono text-sm tabular-nums">
@@ -286,7 +288,7 @@ export default async function Home() {
 
           <Link
             href="/nfl"
-            className="group mt-4 block rounded-xl border border-border bg-card p-5 transition-colors hover:border-foreground/30"
+            className="group -mx-3 block px-3 py-5 transition-colors hover:bg-muted/50"
           >
             <div className="flex items-center justify-between gap-4">
               <div className="flex items-baseline gap-3">
@@ -310,7 +312,7 @@ export default async function Home() {
             {nfl && (
               <div className="mt-4 flex flex-wrap gap-x-8 gap-y-3 border-t border-border pt-4">
                 <div>
-                  <p className="font-mono text-xs uppercase tracking-wider text-muted-foreground">
+                  <p className="text-xs text-muted-foreground">
                     No. 1
                   </p>
                   <p className="mt-0.5 font-mono text-sm">
@@ -318,7 +320,7 @@ export default async function Home() {
                   </p>
                 </div>
                 <div>
-                  <p className="font-mono text-xs uppercase tracking-wider text-muted-foreground">
+                  <p className="text-xs text-muted-foreground">
                     Teams rated
                   </p>
                   <p className="mt-0.5 font-mono text-sm tabular-nums">
@@ -326,7 +328,7 @@ export default async function Home() {
                   </p>
                 </div>
                 <div>
-                  <p className="font-mono text-xs uppercase tracking-wider text-muted-foreground">
+                  <p className="text-xs text-muted-foreground">
                     Week {nfl.week ?? "–"} games
                   </p>
                   <p className="mt-0.5 font-mono text-sm tabular-nums">
@@ -339,12 +341,13 @@ export default async function Home() {
               </div>
             )}
           </Link>
+          </div>
 
           <div className="mt-4 grid grid-cols-1 gap-4 sm:grid-cols-2">
             {upcomingSports.map((sport) => (
               <div
                 key={sport.name}
-                className="rounded-xl border border-dashed border-border p-4"
+                className="border-b border-dashed border-border py-3"
               >
                 <div className="flex items-baseline justify-between gap-2">
                   <span className="font-heading text-base tracking-tight text-muted-foreground">
@@ -380,12 +383,12 @@ export default async function Home() {
               Nothing published yet.
             </p>
           ) : (
-            <div className="flex flex-col gap-4">
+            <div className="divide-y divide-border border-y border-rule-strong">
               {latestPosts.map((post) => (
                 <Link
                   key={post.slug}
                   href={`/blog/${post.slug}`}
-                  className="group block rounded-xl border border-border bg-card p-5 transition-colors hover:border-foreground/30"
+                  className="group -mx-3 block px-3 py-5 transition-colors hover:bg-muted/50"
                 >
                   <p className="font-mono text-xs text-muted-foreground">
                     {post.date}
