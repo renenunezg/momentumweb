@@ -6,6 +6,7 @@ const sections = [
   { id: "overview", label: "Overview" },
   { id: "flow", label: "Architecture" },
   { id: "engine", label: "Rating Engine" },
+  { id: "units", label: "Unit Ratings" },
   { id: "preseason", label: "Preseason" },
   { id: "projections", label: "Projections" },
   { id: "backtest", label: "Backtest" },

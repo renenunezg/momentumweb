@@ -233,6 +233,24 @@ export interface CfbTeamRating {
   missing_input_count: number | null;
 }
 
+export interface CfbTeamUnitRating {
+  season: number;
+  week: number;
+  as_of: string;
+  model_version: string;
+  source_season: number | null;
+  team_id: number;
+  team: string;
+  classification: string | null;
+  unit_history_missing: boolean;
+  rush_offense: number | null;
+  pass_offense: number | null;
+  rush_defense: number | null;
+  pass_defense: number | null;
+  pass_block: number | null;
+  run_block: number | null;
+}
+
 export interface CfbGameProjection {
   game_id: number;
   season: number;
@@ -261,6 +279,12 @@ export interface CfbGameProjection {
   home_missing_input_count: number | null;
   away_missing_input_count: number | null;
   conference_game: boolean | null;
+  pure_home_margin: number | null;
+  pure_home_spread: number | null;
+  market_home_spread: number | null;
+  market_weight: number | null;
+  market_informed_home_margin: number | null;
+  market_informed_home_spread: number | null;
 }
 
 export interface CfbMarketComparison {

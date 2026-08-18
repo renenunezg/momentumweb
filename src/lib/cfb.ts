@@ -3,6 +3,7 @@ import type {
   CfbBacktestPrediction,
   CfbTeamIdentity,
   CfbTeamRating,
+  CfbTeamUnitRating,
 } from "@/lib/types";
 
 // College football schedules are anchored to Eastern time. Day and time are
@@ -90,6 +91,25 @@ export async function fetchLatestRatings(): Promise<{
     season: latest.season,
     week: latest.week,
   };
+}
+
+// Descriptive unit companions for the same published ratings snapshot.
+// Missing historical unit data is represented on the row itself rather than
+// making the whole request fail.
+export async function fetchUnitRatings(
+  season: number,
+  week: number
+): Promise<CfbTeamUnitRating[]> {
+  const { data, error } = await supabaseCfb
+    .from("team_unit_ratings")
+    .select("*")
+    .eq("season", season)
+    .eq("week", week);
+  if (error) {
+    console.error("cfb unit ratings fetch failed:", error.message);
+    return [];
+  }
+  return (data ?? []) as CfbTeamUnitRating[];
 }
 
 // Supabase caps a response at 1000 rows; page the full backtest through

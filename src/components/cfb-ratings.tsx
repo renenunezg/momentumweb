@@ -1,9 +1,14 @@
 "use client";
 
 import { useMemo, useState } from "react";
-import type { CfbTeamIdentity, CfbTeamRating } from "@/lib/types";
+import type {
+  CfbTeamIdentity,
+  CfbTeamRating,
+  CfbTeamUnitRating,
+} from "@/lib/types";
 import { cn } from "@/lib/utils";
 import CfbConferenceRatings from "@/components/cfb-conference-ratings";
+import CfbUnitRatings from "@/components/cfb-unit-ratings";
 import { TeamLogo } from "@/components/team-logo";
 import {
   Table,
@@ -24,17 +29,20 @@ const VIEWS = [
   { key: "fbs", label: "FBS" },
   { key: "fcs", label: "FCS" },
   { key: "conference", label: "Conference" },
+  { key: "units", label: "Units" },
 ] as const;
 
 type View = (typeof VIEWS)[number]["key"];
 
 export default function CfbRatings({
   ratings,
+  units,
   teams,
   initialView,
   initialConference,
 }: {
   ratings: CfbTeamRating[];
+  units: CfbTeamUnitRating[];
   teams: CfbTeamIdentity[];
   initialView?: string;
   initialConference?: string;
@@ -51,7 +59,7 @@ export default function CfbRatings({
   );
 
   // Every view is a slice of the ratings already in the browser, so switching
-  // is state only — no navigation, no refetch.
+  // is state only: no navigation, no refetch.
   const visible = useMemo(() => {
     if (view === "fbs" || view === "fcs")
       return ratings.filter((r) => r.classification === view);
@@ -102,6 +110,8 @@ export default function CfbRatings({
           teamById={teamById}
           initialConference={initialConference}
         />
+      ) : view === "units" ? (
+        <CfbUnitRatings units={units} ratings={ratings} teamById={teamById} />
       ) : (
         <div className="space-y-2">
           {allLimited && (

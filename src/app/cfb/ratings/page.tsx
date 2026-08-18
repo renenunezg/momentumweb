@@ -1,4 +1,4 @@
-import { fetchLatestRatings, fetchTeams } from "@/lib/cfb";
+import { fetchLatestRatings, fetchTeams, fetchUnitRatings } from "@/lib/cfb";
 import { LastUpdated } from "@/components/last-updated";
 import CfbRatings from "@/components/cfb-ratings";
 
@@ -14,6 +14,8 @@ export default async function RatingsPage({
     fetchLatestRatings(),
     fetchTeams(),
   ]);
+  const units =
+    season != null && week != null ? await fetchUnitRatings(season, week) : [];
 
   if (ratings.length === 0) {
     return (
@@ -57,6 +59,7 @@ export default async function RatingsPage({
 
       <CfbRatings
         ratings={ratings}
+        units={units}
         teams={[...teams.values()]}
         initialView={params.class}
         initialConference={params.conf}

@@ -375,6 +375,42 @@ export function MethodologyContent() {
         </div>
       </SectionCard>
 
+      {/* Unit ratings */}
+      <SectionCard
+        id="units"
+        title="Unit Ratings"
+        subtitle="Six opponent-adjusted companions that describe how each team produced its results"
+      >
+        <div className="space-y-4 text-sm leading-relaxed">
+          <p>
+            The Ratings page also publishes rush offense, pass offense, rush
+            defense, pass defense, pass blocking, and run blocking. Each number
+            is fit with an opponent-adjusted ridge over completed games strictly
+            before the forecast week, then centered so zero is an average FBS
+            unit. Positive is better in every column. The six values are
+            descriptive companions only: they never feed the joint scoring
+            engine and do not add up to the headline offense or defense rating.
+          </p>
+          <p>
+            Rush and pass units use competitive-play PPA. Pass blocking measures
+            sack PPA relative to the expected sack cost for the team&apos;s number
+            of dropbacks. Run blocking uses adjusted line yards, converted to a
+            PPA-equivalent scale from the same admitted training window. Both
+            line ratings capture shared outcomes involving the line, skill
+            players, quarterback, and scheme, so they are not film grades of the
+            offensive line in isolation.
+          </p>
+          <p>
+            A preseason forecast carries the latest final unit ratings from the
+            prior season. Teams without that history receive a neutral zero and
+            a visible missing-history flag. Special teams is omitted because the
+            current CFBD play contract does not provide reliable PPA for routine
+            punts, kickoffs, and field-goal attempts; inventing a complete rating
+            from sparse scoring-event rows would be misleading.
+          </p>
+        </div>
+      </SectionCard>
+
       {/* Preseason */}
       <SectionCard
         id="preseason"
