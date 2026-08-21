@@ -232,7 +232,7 @@ export default async function Home() {
           </Link>
 
           <Link
-            href="/cfb"
+            href="/cfb/ratings"
             className="group -mx-3 block px-3 py-5 transition-colors hover:bg-muted/50"
           >
             <div className="flex items-center justify-between gap-4">
@@ -287,7 +287,7 @@ export default async function Home() {
           </Link>
 
           <Link
-            href="/nfl"
+            href="/nfl/ratings"
             className="group -mx-3 block px-3 py-5 transition-colors hover:bg-muted/50"
           >
             <div className="flex items-center justify-between gap-4">

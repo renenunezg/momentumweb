@@ -4,8 +4,8 @@ import { ThemeToggle } from "@/components/theme-toggle";
 
 const links = [
   { href: "/mlb", label: "MLB" },
-  { href: "/cfb", label: "CFB" },
-  { href: "/nfl", label: "NFL" },
+  { href: "/cfb/ratings", label: "CFB" },
+  { href: "/nfl/ratings", label: "NFL" },
   { href: "/blog", label: "Blog" },
   { href: "/about", label: "About" },
 ];

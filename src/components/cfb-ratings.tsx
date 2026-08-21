@@ -1,12 +1,13 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useMemo } from "react";
 import type {
   CfbTeamIdentity,
   CfbTeamRating,
   CfbTeamUnitRating,
 } from "@/lib/types";
 import { cn } from "@/lib/utils";
+import { replaceLocation, useLocationSearch } from "@/lib/use-location-search";
 import CfbConferenceRatings from "@/components/cfb-conference-ratings";
 import CfbUnitRatings from "@/components/cfb-unit-ratings";
 import { TeamLogo } from "@/components/team-logo";
@@ -38,18 +39,20 @@ export default function CfbRatings({
   ratings,
   units,
   teams,
-  initialView,
-  initialConference,
 }: {
   ratings: CfbTeamRating[];
   units: CfbTeamUnitRating[];
   teams: CfbTeamIdentity[];
-  initialView?: string;
-  initialConference?: string;
 }) {
-  const [view, setView] = useState<View>(
-    () => VIEWS.find((v) => v.key === initialView)?.key ?? "top25"
-  );
+  // Search params are read in the browser without opting the server page into
+  // dynamic rendering. The server snapshot uses the default view, then deep
+  // links switch locally after hydration without a refetch.
+  const search = useLocationSearch();
+  const params = useMemo(() => new URLSearchParams(search), [search]);
+  const requestedView = params.get("class");
+  const view: View =
+    VIEWS.find((option) => option.key === requestedView)?.key ?? "top25";
+  const initialConference = params.get("conf") ?? undefined;
 
   // Teams cross the server boundary as an array; index them once here so both
   // this table and the conference view look logos up by id.
@@ -59,7 +62,7 @@ export default function CfbRatings({
   );
 
   // Every view is a slice of the ratings already in the browser, so switching
-  // is state only: no navigation, no refetch.
+  // only updates the URL-backed client view: no navigation, no refetch.
   const visible = useMemo(() => {
     if (view === "fbs" || view === "fcs")
       return ratings.filter((r) => r.classification === view);
@@ -74,12 +77,11 @@ export default function CfbRatings({
   const allLimited = visible.every((r) => (r.missing_input_count ?? 0) >= 4);
 
   function select(next: View) {
-    setView(next);
     const url = new URL(window.location.href);
     if (next === "top25") url.searchParams.delete("class");
     else url.searchParams.set("class", next);
     if (next !== "conference") url.searchParams.delete("conf");
-    window.history.replaceState(null, "", url);
+    replaceLocation(url);
   }
 
   return (

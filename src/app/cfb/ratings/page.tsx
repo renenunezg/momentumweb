@@ -4,12 +4,7 @@ import CfbRatings from "@/components/cfb-ratings";
 
 export const revalidate = 300;
 
-export default async function RatingsPage({
-  searchParams,
-}: {
-  searchParams: Promise<{ class?: string; conf?: string }>;
-}) {
-  const params = await searchParams;
+export default async function RatingsPage() {
   const [{ ratings, season, week }, teams] = await Promise.all([
     fetchLatestRatings(),
     fetchTeams(),
@@ -61,8 +56,6 @@ export default async function RatingsPage({
         ratings={ratings}
         units={units}
         teams={[...teams.values()]}
-        initialView={params.class}
-        initialConference={params.conf}
       />
 
       <p className="text-xs text-muted-foreground">

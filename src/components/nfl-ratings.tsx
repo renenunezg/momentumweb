@@ -1,12 +1,13 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useMemo } from "react";
 import type {
   NflTeamIdentity,
   NflTeamRating,
   NflTeamUnitRating,
 } from "@/lib/types";
 import { cn } from "@/lib/utils";
+import { replaceLocation, useLocationSearch } from "@/lib/use-location-search";
 import NflDivisionRatings from "@/components/nfl-division-ratings";
 import NflUnitRatings from "@/components/nfl-unit-ratings";
 import { TeamLogo } from "@/components/team-logo";
@@ -38,18 +39,20 @@ export default function NflRatings({
   ratings,
   units,
   teams,
-  initialView,
-  initialDivision,
 }: {
   ratings: NflTeamRating[];
   units: NflTeamUnitRating[];
   teams: NflTeamIdentity[];
-  initialView?: string;
-  initialDivision?: string;
 }) {
-  const [view, setView] = useState<View>(
-    () => VIEWS.find((v) => v.key === initialView)?.key ?? "all"
-  );
+  // Search params are read in the browser without opting the server page into
+  // dynamic rendering. The server snapshot uses the default view, then deep
+  // links switch locally after hydration without a refetch.
+  const search = useLocationSearch();
+  const params = useMemo(() => new URLSearchParams(search), [search]);
+  const requestedView = params.get("view");
+  const view: View =
+    VIEWS.find((option) => option.key === requestedView)?.key ?? "all";
+  const initialDivision = params.get("division") ?? undefined;
 
   // Teams cross the server boundary as an array; index them once here so
   // every view looks logos up by abbreviation.
@@ -59,7 +62,7 @@ export default function NflRatings({
   );
 
   // Every view is a slice of the ratings already in the browser, so switching
-  // is state only: no navigation, no refetch.
+  // only updates the URL-backed client view: no navigation, no refetch.
   const visible = useMemo(() => {
     if (view === "afc" || view === "nfc")
       return ratings.filter((r) => r.conference?.toLowerCase() === view);
@@ -67,12 +70,11 @@ export default function NflRatings({
   }, [ratings, view]);
 
   function select(next: View) {
-    setView(next);
     const url = new URL(window.location.href);
     if (next === "all") url.searchParams.delete("view");
     else url.searchParams.set("view", next);
     if (next !== "division") url.searchParams.delete("division");
-    window.history.replaceState(null, "", url);
+    replaceLocation(url);
   }
 
   return (

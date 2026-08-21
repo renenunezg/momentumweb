@@ -3,6 +3,7 @@
 import { useMemo, useState } from "react";
 import type { NflTeamIdentity, NflTeamRating } from "@/lib/types";
 import { cn } from "@/lib/utils";
+import { replaceLocation } from "@/lib/use-location-search";
 import { TeamLogo } from "@/components/team-logo";
 import {
   Table,
@@ -74,7 +75,7 @@ export default function NflDivisionRatings({
     const url = new URL(window.location.href);
     url.searchParams.set("view", "division");
     url.searchParams.set("division", name);
-    window.history.replaceState(null, "", url);
+    replaceLocation(url);
   }
 
   if (!selected) return null;
