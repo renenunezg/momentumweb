@@ -163,7 +163,7 @@ export default async function Home() {
           <h1 className="font-heading text-3xl tracking-tight">
             Ren&eacute; N&uacute;&ntilde;ez
           </h1>
-          <p className="mt-3 max-w-[68ch] text-base text-muted-foreground leading-relaxed">
+          <p className="mt-3 text-base text-muted-foreground leading-relaxed">
             I&apos;m a data analyst / statistician working on modeling momentum
             and sports.
           </p>
