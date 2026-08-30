@@ -4,7 +4,8 @@ import { useRef, useState, type ReactNode } from "react";
 import { cn } from "@/lib/utils";
 
 const VIEWS = [
-  { key: "all", label: "All", empty: "No games this week." },
+  { key: "fbs", label: "FBS", empty: "No FBS games this week." },
+  { key: "fcs", label: "FCS", empty: "No FCS games this week." },
   {
     key: "top25",
     label: "Top 25",
@@ -30,15 +31,17 @@ type View = (typeof VIEWS)[number]["key"];
 // table.
 export function CfbScheduleFilters({
   total,
+  initialShown,
   children,
 }: {
   total: number;
+  initialShown: number;
   children: ReactNode;
 }) {
   const container = useRef<HTMLDivElement>(null);
-  const [view, setView] = useState<View>("all");
+  const [view, setView] = useState<View>("fbs");
   const [query, setQuery] = useState("");
-  const [shown, setShown] = useState(total);
+  const [shown, setShown] = useState(initialShown);
 
   function apply(nextView: View, nextQuery: string) {
     setView(nextView);
@@ -50,14 +53,12 @@ export function CfbScheduleFilters({
     for (const row of rows) {
       const match =
         (!needle || (row.dataset.search ?? "").includes(needle)) &&
-        (nextView === "all" || row.dataset[nextView] === "true");
+        row.dataset[nextView] === "true";
       row.hidden = !match;
       if (match) visible += 1;
     }
     setShown(visible);
   }
-
-  const filtered = view !== "all" || query.trim() !== "";
 
   return (
     <div className="space-y-3">
@@ -91,16 +92,14 @@ export function CfbScheduleFilters({
           className="w-56 rounded-md border border-border bg-transparent px-3 py-1.5 font-mono text-xs placeholder:text-muted-foreground focus:border-foreground focus:outline-none"
         />
 
-        {filtered && (
-          <span className="font-mono text-xs uppercase tracking-wider text-muted-foreground">
-            {shown} of {total} games
-          </span>
-        )}
+        <span className="font-mono text-xs uppercase tracking-wider text-muted-foreground">
+          {shown} of {total} games
+        </span>
       </div>
 
       <div ref={container}>{children}</div>
 
-      {filtered && shown === 0 && (
+      {shown === 0 && (
         <p className="text-sm text-muted-foreground">
           {query.trim()
             ? `No team matches "${query.trim()}" in this view.`

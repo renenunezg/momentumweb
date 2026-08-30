@@ -129,6 +129,11 @@ export default async function SchedulePage() {
   const rankByTeam = new Map(ratings.map((r, i) => [r.team_id, i + 1]));
 
   const games = (projRes.data ?? []) as CfbGameProjection[];
+  const fbsGameCount = games.filter(
+    (game) =>
+      game.away_classification === "fbs" ||
+      game.home_classification === "fbs"
+  ).length;
   const marketByGame = new Map(
     ((marketRes.data ?? []) as CfbMarketComparison[]).map((m) => [
       m.game_id,
@@ -158,7 +163,7 @@ export default async function SchedulePage() {
         found when the forecast ran, converted to the same home axis.
       </p>
 
-      <CfbScheduleFilters total={games.length}>
+      <CfbScheduleFilters total={games.length} initialShown={fbsGameCount}>
         <div className="overflow-x-auto">
           {/* Everything is centered except the two team columns, whose ragged
               name lengths read badly off a center axis. */}
@@ -195,12 +200,21 @@ export default async function SchedulePage() {
                 const homeRank = g.home_team_id
                   ? rankByTeam.get(g.home_team_id)
                   : undefined;
+                const isFbsGame =
+                  g.away_classification === "fbs" ||
+                  g.home_classification === "fbs";
                 return (
                   // The filters read these rather than the rendered cells, so
                   // a query cannot accidentally hit a line, total or date.
                   <TableRow
                     key={g.game_id}
+                    hidden={!isFbsGame}
                     data-search={`${g.away_team} ${g.home_team}`.toLowerCase()}
+                    data-fbs={String(isFbsGame)}
+                    data-fcs={String(
+                      g.away_classification === "fcs" &&
+                        g.home_classification === "fcs"
+                    )}
                     data-top25={String(
                       awayRank != null &&
                         awayRank <= 25 &&
