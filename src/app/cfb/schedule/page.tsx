@@ -221,7 +221,11 @@ export default async function SchedulePage() {
                         homeRank != null &&
                         homeRank <= 25
                     )}
-                    data-conference={String(g.conference_game === true)}
+                    data-conference={String(
+                      g.conference_game === true &&
+                        g.away_classification === "fbs" &&
+                        g.home_classification === "fbs"
+                    )}
                   >
                     <TableCell className="whitespace-nowrap text-center text-xs text-muted-foreground">
                       {formatKickoffDay(g.start_date)}
