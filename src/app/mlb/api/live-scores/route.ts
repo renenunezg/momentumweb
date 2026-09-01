@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 
-// Cached proxy to MLB Stats API so N browsers polling us don't become N requests to MLB.
-// Next's fetch cache + revalidate=30 means we hit MLB at most ~2x/minute regardless of traffic.
+// Cached proxy to the MLB Stats API: N browsers polling this route become at
+// most two upstream requests a minute, whatever the traffic.
 
 export const revalidate = 30;
 
@@ -32,7 +32,7 @@ export interface LiveScore {
 }
 
 export async function GET() {
-  // Use PT date to match pipeline/games page
+  // Pacific date, the same slate boundary the pipeline and games page use.
   const today = new Date().toLocaleDateString("en-CA", {
     timeZone: "America/Los_Angeles",
   });
@@ -43,6 +43,7 @@ export async function GET() {
     const res = await fetch(url, {
       next: { revalidate: 30 },
       headers: { "User-Agent": "mlb-model-dashboard" },
+      signal: AbortSignal.timeout(4000),
     });
     if (!res.ok) {
       return NextResponse.json(
@@ -67,7 +68,6 @@ export async function GET() {
       { scores, fetched_at: new Date().toISOString() },
       {
         headers: {
-          // Edge/CDN can also cache for 30s
           "Cache-Control": "public, s-maxage=30, stale-while-revalidate=60",
         },
       }

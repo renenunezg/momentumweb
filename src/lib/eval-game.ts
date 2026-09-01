@@ -1,4 +1,5 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
+import type { Database } from "@/lib/database.types";
 import {
   computeBaseRow,
   computeSegmentRow,
@@ -9,6 +10,8 @@ import {
 // Best-effort live eval triggered when a game flips to Final. Verifies via MLB
 // API, writes back the score, and partial-upserts today's evaluation windows.
 // Nightly Python batch is the canonical reconciliation.
+
+type MlbClient = SupabaseClient<Database, "mlb">;
 
 interface MLBGameStatus {
   gamePk: number;
@@ -100,10 +103,30 @@ export type EvalResult =
   | { ok: false; error: string };
 
 export async function runEvalForGame(
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  sb: SupabaseClient<any, any, any, any, any>,
-  game_pk: number,
+  sb: MlbClient,
+  game_pk: number
 ): Promise<EvalResult> {
+  // The cheap, indexed lookup comes first so a repeated call for a game that is
+  // already graded costs one query and never reaches the MLB API or the scans.
+  const { data: existingGame, error: lookupErr } = await sb
+    .from("games")
+    .select("status, home_score, away_score")
+    .eq("game_pk", game_pk)
+    .maybeSingle();
+  if (lookupErr) {
+    return { ok: false, error: `games lookup failed: ${lookupErr.message}` };
+  }
+  if (!existingGame) {
+    return { ok: false, reason: "unknown game" };
+  }
+  if (
+    existingGame.status === "Final" &&
+    existingGame.home_score != null &&
+    existingGame.away_score != null
+  ) {
+    return { ok: true, game_pk, eval_date: ptDateString(new Date()), windows_updated: [] };
+  }
+
   const mlb = await fetchMlbGame(game_pk);
   if (!mlb || mlb.status?.abstractGameState !== "Final") {
     return { ok: false, reason: "not final per MLB API" };
@@ -114,30 +137,12 @@ export async function runEvalForGame(
     return { ok: false, reason: "missing scores" };
   }
 
-  const { data: existingGame } = await sb
+  const { error: gameWriteErr } = await sb
     .from("games")
-    .select("status, home_score, away_score")
-    .eq("game_pk", game_pk)
-    .maybeSingle();
-
-  const needsGameWrite =
-    !existingGame ||
-    existingGame.status !== "Final" ||
-    existingGame.home_score !== homeScore ||
-    existingGame.away_score !== awayScore;
-
-  if (needsGameWrite) {
-    const { error } = await sb
-      .from("games")
-      .update({
-        status: "Final",
-        home_score: homeScore,
-        away_score: awayScore,
-      })
-      .eq("game_pk", game_pk);
-    if (error) {
-      return { ok: false, error: `games update failed: ${error.message}` };
-    }
+    .update({ status: "Final", home_score: homeScore, away_score: awayScore })
+    .eq("game_pk", game_pk);
+  if (gameWriteErr) {
+    return { ok: false, error: `games update failed: ${gameWriteErr.message}` };
   }
 
   const { data: preds, error: predErr } = await sb
@@ -238,8 +243,8 @@ export async function runEvalForGame(
     if (w.rows.length === 0) continue;
     const base = computeBaseRow(w.rows);
     const seg = computeSegmentRow(w.rows);
-    const merged = { ...base, ...seg } as unknown as Record<string, unknown>;
-    const partial: Record<string, unknown> = {
+    const merged = { ...base, ...seg };
+    const partial: Database["mlb"]["Tables"]["model_evaluation"]["Insert"] = {
       date: evalDate,
       eval_window: w.name,
     };
@@ -247,20 +252,12 @@ export async function runEvalForGame(
       partial[col] = merged[col];
     }
 
-    const { data: existing } = await sb
+    // Several browsers see the same game go Final within the same poll window,
+    // so the write has to be one atomic statement against the (date, window)
+    // unique index rather than a select followed by an insert.
+    const { error } = await sb
       .from("model_evaluation")
-      .select("date")
-      .eq("date", evalDate)
-      .eq("eval_window", w.name)
-      .maybeSingle();
-
-    const { error } = existing
-      ? await sb
-          .from("model_evaluation")
-          .update(partial)
-          .eq("date", evalDate)
-          .eq("eval_window", w.name)
-      : await sb.from("model_evaluation").insert(partial);
+      .upsert(partial, { onConflict: "date,eval_window" });
 
     if (error) {
       return { ok: false, error: `eval write failed (${w.name}): ${error.message}` };

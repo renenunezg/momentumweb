@@ -35,7 +35,8 @@ function allFinal(matchups: GameMatchup[]): boolean {
 export function GamesLive({ initial }: { initial: GameMatchup[] }) {
   const [matchups, setMatchups] = useState<GameMatchup[]>(initial);
   const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-  // Track which games we've already triggered eval-game for (per page load).
+  // Games already sent to eval-game this page load; the route is idempotent
+  // but there is no point repeating the call every poll.
   const evalFiredRef = useRef<Set<number>>(new Set());
 
   useEffect(() => {
@@ -51,7 +52,7 @@ export function GamesLive({ initial }: { initial: GameMatchup[] }) {
           body: JSON.stringify({ game_pk }),
         });
       } catch {
-        // Best-effort. Nightly batch reconciles.
+        // Best effort: the nightly batch reconciles anything missed here.
       }
     }
 
@@ -66,7 +67,7 @@ export function GamesLive({ initial }: { initial: GameMatchup[] }) {
         }
         setMatchups((prev) => mergeScores(prev, data.scores!));
       } catch {
-        // network blip, wait for next tick
+        // A failed poll waits for the next tick.
       }
     }
 
@@ -80,7 +81,7 @@ export function GamesLive({ initial }: { initial: GameMatchup[] }) {
       }, POLL_MS);
     }
 
-    // Kick off immediately on mount so users see live data without waiting 60s
+    // Poll once on mount so live data shows without waiting a full interval.
     fetchOnce().then(() => {
       if (!cancelled) schedule();
     });
@@ -102,8 +103,7 @@ export function GamesLive({ initial }: { initial: GameMatchup[] }) {
       if (timerRef.current) clearTimeout(timerRef.current);
       document.removeEventListener("visibilitychange", onVisibility);
     };
-    // Re-evaluate when all games become Final so we can stop polling
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- re-run only when the last game goes Final, so polling stops
   }, [allFinal(matchups)]);
 
   return <GamesTable matchups={matchups} />;
