@@ -10,9 +10,8 @@ const contact = [
 
 export default function AboutPage() {
   return (
-    <main className="mx-auto w-full max-w-3xl min-w-0 px-4 py-8">
+    <main id="main" className="mx-auto w-full max-w-3xl min-w-0 px-4 py-8">
       <div className="flex flex-col gap-6 sm:flex-row sm:items-start sm:gap-8">
-        {/* Photo */}
         <div className="shrink-0">
           <Image
             src="/portrait.jpeg"
@@ -24,13 +23,13 @@ export default function AboutPage() {
           />
         </div>
 
-        {/* Name + bio + contact */}
         <div className="flex-1 min-w-0">
           <h1 className="font-heading text-2xl tracking-tight">
             Ren&eacute; N&uacute;&ntilde;ez
           </h1>
           <p className="mt-2 text-sm text-muted-foreground leading-relaxed max-w-xl">
-            {/* Write your one-liner here */}
+            Data analyst and statistician. I build Bayesian models for sports,
+            publish their picks before first pitch, and grade them in public.
           </p>
 
           <div className="mt-5">

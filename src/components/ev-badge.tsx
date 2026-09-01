@@ -45,7 +45,7 @@ export function EvBadge({ prediction }: EvBadgeProps) {
       <div className="w-10 text-center">
         {isOver || isUnder ? (
           <>
-            <div className={isOver ? "text-accent-amber" : "text-accent-amber"}>
+            <div className="text-accent-amber">
               {isOver ? `O${totalLine}` : `U${totalLine}`}
             </div>
             <div className="text-[10px] font-normal text-muted-foreground">O/U</div>

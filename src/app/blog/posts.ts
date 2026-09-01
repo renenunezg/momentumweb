@@ -6,7 +6,7 @@ export type Post = {
   body: string;       // GitHub-flavored markdown, rendered with react-markdown + remark-gfm
 };
 
-// Add new entries at the top. Each entry appears as a card on the About page.
+// Newest first: the home page shows the top two and /blog lists them all.
 export const posts: Post[] = [
   {
     slug: "totals-problem",
