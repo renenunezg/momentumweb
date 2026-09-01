@@ -136,9 +136,12 @@ function SegmentTable({
                 <TableCell className="font-medium">
                   {m.segment_kind === "week" ? `Week ${m.segment}` : m.segment}
                   {m.thin_sample && (
-                    <span className="ml-2 text-xs text-muted-foreground">
-                      thin
-                    </span>
+                    <>
+                      {" "}
+                      <span className="ml-1 text-xs text-muted-foreground">
+                        thin
+                      </span>
+                    </>
                   )}
                 </TableCell>
                 <TableCell className={numCell}>{m.games ?? "–"}</TableCell>
