@@ -47,13 +47,16 @@ type CfbHeadline = {
   season: number | null;
   week: number | null;
   gameCount: number;
+  // Preseason ratings carry a preseason model version; once a weekly refit
+  // has published, the card reads as in season.
+  inSeason: boolean;
 };
 
 async function getCfbHeadline(): Promise<CfbHeadline | null> {
   try {
     const latestRes = await supabaseCfb
       .from("team_ratings")
-      .select("season, week")
+      .select("season, week, model_version")
       .order("season", { ascending: false })
       .order("week", { ascending: false })
       .limit(1);
@@ -85,6 +88,7 @@ async function getCfbHeadline(): Promise<CfbHeadline | null> {
       season: latest.season,
       week: latest.week,
       gameCount: gamesRes.count ?? 0,
+      inSeason: !String(latest.model_version ?? "").startsWith("preseason"),
     };
   } catch {
     // Home should never 500 because Supabase is unreachable; the CFB card
@@ -240,10 +244,17 @@ export default async function Home() {
                 <span className="font-heading text-lg tracking-tight group-hover:underline underline-offset-4">
                   CFB
                 </span>
-                <span className="flex items-center gap-1.5 font-mono text-xs uppercase tracking-wider text-muted-foreground">
-                  <span className="h-1.5 w-1.5 rounded-full bg-amber-500" />
-                  Preseason
-                </span>
+                {cfb?.inSeason ? (
+                  <span className="flex items-center gap-1.5 font-mono text-xs uppercase tracking-wider text-muted-foreground">
+                    <span className="h-1.5 w-1.5 rounded-full bg-emerald-500" />
+                    In season
+                  </span>
+                ) : (
+                  <span className="flex items-center gap-1.5 font-mono text-xs uppercase tracking-wider text-muted-foreground">
+                    <span className="h-1.5 w-1.5 rounded-full bg-amber-500" />
+                    Preseason
+                  </span>
+                )}
               </div>
               <span className="font-mono text-xs uppercase tracking-wider text-muted-foreground group-hover:text-foreground transition-colors">
                 View ratings &rarr;
@@ -280,7 +291,9 @@ export default async function Home() {
                   </p>
                 </div>
                 <p className="ml-auto self-end font-mono text-xs text-muted-foreground">
-                  {cfb.season} preseason
+                  {cfb.inSeason
+                    ? `${cfb.season} week ${cfb.week ?? "–"}`
+                    : `${cfb.season} preseason`}
                 </p>
               </div>
             )}

@@ -57,9 +57,16 @@ export default function CfbUnitRatings({
     () => new Map(ratings.map((rating, index) => [rating.team_id, index + 1])),
     [ratings]
   );
+  const ratingsSeason = ratings[0]?.season ?? null;
   const sourceSeasons = useMemo(
     () =>
-      [...new Set(units.map((unit) => unit.source_season).filter(Boolean))].sort(),
+      [
+        ...new Set(
+          units
+            .map((unit) => unit.source_season)
+            .filter((season): season is number => season != null)
+        ),
+      ].sort((a, b) => a - b),
     [units]
   );
   const sorted = useMemo(
@@ -91,9 +98,12 @@ export default function CfbUnitRatings({
           better in every column. These are descriptive companions to the power
           ratings, not model inputs or components of Off and Def. Pass and run
           blocking are shared-outcome proxies, not isolated line grades.
-          {sourceSeasons.length === 1 && (
-            <> Current preseason ratings use {sourceSeasons[0]} game history.</>
-          )}
+          {sourceSeasons.length === 1 &&
+            (ratingsSeason != null && sourceSeasons[0] < ratingsSeason ? (
+              <> Preseason unit ratings use {sourceSeasons[0]} game history.</>
+            ) : (
+              <> Unit ratings use {sourceSeasons[0]} games played so far.</>
+            ))}
         </p>
         <div className="flex shrink-0 items-center font-mono text-xs uppercase tracking-wider">
           {CLASSES.map((option) => (
