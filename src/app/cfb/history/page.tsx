@@ -77,7 +77,12 @@ export default async function HistoryPage({
       .order("season", { ascending: false })
       .limit(1),
   ]);
-  const isLive = liveSeason != null && season === String(liveSeason);
+  // With live graded games, the tab opens on the live season; "backtest"
+  // selects the full frozen history and a year selects one backtest season.
+  const isLive =
+    liveSeason != null && (season === "" || season === String(liveSeason));
+  const backtestSeason =
+    season === "" || season === "backtest" ? "" : season;
 
   let rows: HistoryRow[] = [];
   let totalRows = 0;
@@ -106,8 +111,8 @@ export default async function HistoryPage({
       .order("week", { ascending: false })
       .order("game_id", { ascending: true })
       .range(offset, offset + PAGE_SIZE - 1);
-    if (season) {
-      query = query.eq("season", parseInt(season, 10));
+    if (backtestSeason) {
+      query = query.eq("season", parseInt(backtestSeason, 10));
     }
     if (team) {
       query = query.or(`home_team.eq.${team},away_team.eq.${team}`);
@@ -170,21 +175,21 @@ export default async function HistoryPage({
 
       <div className="flex flex-wrap items-center gap-0 font-mono text-xs uppercase tracking-wider">
         {liveSeason != null && (
-          <Link
-            href={seasonUrl(String(liveSeason))}
-            className={tabClass(isLive)}
-          >
+          <Link href={seasonUrl("")} className={tabClass(isLive)}>
             {liveSeason} live
           </Link>
         )}
-        <Link href={seasonUrl("")} className={tabClass(!season)}>
+        <Link
+          href={seasonUrl(liveSeason == null ? "" : "backtest")}
+          className={tabClass(!isLive && backtestSeason === "")}
+        >
           Backtest
         </Link>
         {backtestSeasons.map((s) => (
           <Link
             key={s}
             href={seasonUrl(s)}
-            className={tabClass(!isLive && season === s)}
+            className={tabClass(!isLive && backtestSeason === s)}
           >
             {s}
           </Link>
