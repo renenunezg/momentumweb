@@ -1,83 +1,47 @@
 import { supabaseNfl } from "@/lib/supabase";
+import { fetchLatestRatings, fetchTeams } from "@/lib/nfl";
 import {
-  fetchLatestRatings,
-  fetchTeams,
   formatHomeLine,
   formatKickoffDay,
   formatKickoffTime,
   marketHomeLine,
-} from "@/lib/nfl";
-import { teamColor } from "@/lib/team-colors";
-import type {
-  NflGameProjection,
-  NflMarketComparison,
-  NflTeamIdentity,
-} from "@/lib/types";
+} from "@/lib/football";
+import type { NflGameProjection, NflMarketComparison } from "@/lib/types";
+import { formatNumber } from "@/lib/utils";
 import { LastUpdated } from "@/components/last-updated";
-import { TeamLogo } from "@/components/team-logo";
-import { NflScheduleFilters } from "@/components/nfl-schedule-filters";
+import { ScheduleFilters } from "@/components/schedule-filters";
+import { ScheduleMarker, ScheduleTeamCell } from "@/components/schedule-team-cell";
 import {
   Table,
-  TableHeader,
   TableBody,
-  TableHead,
-  TableRow,
+  TableCaption,
   TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
 } from "@/components/ui/table";
 
 export const revalidate = 300;
 
-function fmt(value: number | null, decimals = 1): string {
-  if (value == null) return "–";
-  return value.toFixed(decimals);
-}
+const VIEWS = [
+  { key: "all", label: "All", empty: "No games this week.", all: true },
+  { key: "division", label: "Divisional", empty: "No divisional games this week." },
+] as const;
 
-// One side of a matchup. The primary color is an accent only, never a text
-// background, so text stays on the theme foreground.
-function TeamCell({
-  name,
-  team,
-  rank,
-  marker,
-  markerTitle,
-}: {
-  name: string;
-  team: NflTeamIdentity | undefined;
-  rank: number | undefined;
-  marker?: string;
-  markerTitle?: string;
-}) {
-  const color = teamColor(team);
-  return (
-    <TableCell
-      style={
-        color
-          ? {
-              boxShadow: `inset 3px 0 0 ${color}`,
-              // 14 hex = 8% alpha: enough to read as the team's color, light
-              // enough to leave the theme's text contrast untouched.
-              backgroundColor: `${color}14`,
-            }
-          : undefined
-      }
-    >
-      <span className="flex items-center gap-2">
-        <TeamLogo team={team} name={name} />
-        <span className="font-medium">{name}</span>
-        {rank != null && (
-          <span className="font-mono text-xs opacity-60">{rank}</span>
-        )}
-        {marker && (
-          <span
-            className="font-mono text-[10px] uppercase tracking-wider opacity-70"
-            title={markerTitle}
-          >
-            {marker}
-          </span>
-        )}
-      </span>
-    </TableCell>
-  );
+const NEUTRAL: ScheduleMarker = {
+  label: "N",
+  note: "Neutral site: neither team is at home.",
+};
+
+// A projected starter whose value differs meaningfully from the QB play baked
+// into the team's rating.
+function qbMarker(adjustment: number | null): ScheduleMarker | null {
+  const qb = adjustment ?? 0;
+  if (Math.abs(qb) < 1.5) return null;
+  return {
+    label: "QB",
+    note: `QB adjustment ${qb > 0 ? "+" : ""}${qb.toFixed(1)} pts: the projected starter differs meaningfully from the QB play in the team's rating.`,
+  };
 }
 
 export default async function SchedulePage() {
@@ -91,7 +55,7 @@ export default async function SchedulePage() {
 
   if (!latest) {
     return (
-      <main className="mx-auto w-full max-w-6xl min-w-0 px-4 py-8">
+      <main id="main" className="mx-auto w-full max-w-6xl min-w-0 px-4 py-8">
         <h1 className="font-heading text-2xl tracking-tight">Schedule</h1>
         <p className="mt-4 text-muted-foreground">
           No projections published yet. Run the publish pipeline to load them.
@@ -127,7 +91,7 @@ export default async function SchedulePage() {
   const lastUpdated = games[0]?.as_of ?? null;
 
   return (
-    <main className="mx-auto w-full max-w-6xl min-w-0 px-4 py-8 space-y-6">
+    <main id="main" className="mx-auto w-full max-w-6xl min-w-0 px-4 py-8 space-y-6">
       <div className="flex items-start justify-between gap-4">
         <div>
           <h1 className="font-heading text-2xl tracking-tight">Schedule</h1>
@@ -150,11 +114,19 @@ export default async function SchedulePage() {
         offer was available.
       </p>
 
-      <NflScheduleFilters total={games.length}>
+      <ScheduleFilters
+        views={VIEWS}
+        defaultView="all"
+        total={games.length}
+        initialShown={games.length}
+      >
         <div className="overflow-x-auto">
           {/* Everything is centered except the two team columns, whose ragged
               name lengths read badly off a center axis. */}
           <Table>
+            <TableCaption className="sr-only">
+              Week {latest.week} projections against the market
+            </TableCaption>
             <TableHeader>
               <TableRow>
                 <TableHead className="text-center">Day</TableHead>
@@ -189,8 +161,6 @@ export default async function SchedulePage() {
                 const homeRank = g.home_team_abbr
                   ? rankByTeam.get(g.home_team_abbr)
                   : undefined;
-                const awayQb = g.away_qb_adjustment ?? 0;
-                const homeQb = g.home_qb_adjustment ?? 0;
                 return (
                   // The filters read these rather than the rendered cells, so
                   // a query cannot accidentally hit a line, total or date.
@@ -205,37 +175,17 @@ export default async function SchedulePage() {
                     <TableCell className="whitespace-nowrap text-center text-xs text-muted-foreground">
                       {formatKickoffTime(g.start_date)}
                     </TableCell>
-                    <TeamCell
+                    <ScheduleTeamCell
                       name={g.away_team}
-                      team={
-                        g.away_team_abbr != null
-                          ? teams.get(g.away_team_abbr)
-                          : undefined
-                      }
+                      team={g.away_team_abbr != null ? teams.get(g.away_team_abbr) : undefined}
                       rank={awayRank}
-                      marker={Math.abs(awayQb) >= 1.5 ? "QB" : undefined}
-                      markerTitle={`QB adjustment ${awayQb > 0 ? "+" : ""}${awayQb.toFixed(1)} pts: the projected starter differs meaningfully from the QB play in the team's rating.`}
+                      markers={[qbMarker(g.away_qb_adjustment)]}
                     />
-                    <TeamCell
+                    <ScheduleTeamCell
                       name={g.home_team}
-                      team={
-                        g.home_team_abbr != null
-                          ? teams.get(g.home_team_abbr)
-                          : undefined
-                      }
+                      team={g.home_team_abbr != null ? teams.get(g.home_team_abbr) : undefined}
                       rank={homeRank}
-                      marker={
-                        g.neutral_site
-                          ? "N"
-                          : Math.abs(homeQb) >= 1.5
-                            ? "QB"
-                            : undefined
-                      }
-                      markerTitle={
-                        g.neutral_site
-                          ? "Neutral site: neither team is at home."
-                          : `QB adjustment ${homeQb > 0 ? "+" : ""}${homeQb.toFixed(1)} pts: the projected starter differs meaningfully from the QB play in the team's rating.`
-                      }
+                      markers={[g.neutral_site && NEUTRAL, qbMarker(g.home_qb_adjustment)]}
                     />
                     <TableCell className="text-center font-mono font-semibold tabular-nums">
                       {formatHomeLine(g.home_spread)}
@@ -244,8 +194,8 @@ export default async function SchedulePage() {
                       {formatHomeLine(g.pure_home_spread)}
                     </TableCell>
                     <TableCell className="whitespace-nowrap text-center font-mono tabular-nums">
-                      {fmt(g.expected_away_points, 0)}&ndash;
-                      {fmt(g.expected_home_points, 0)}
+                      {formatNumber(g.expected_away_points, 0)}&ndash;
+                      {formatNumber(g.expected_home_points, 0)}
                     </TableCell>
                     <TableCell className="text-center font-mono tabular-nums text-muted-foreground">
                       {marketLine != null ? formatHomeLine(marketLine) : "–"}
@@ -254,7 +204,7 @@ export default async function SchedulePage() {
                       {diff != null ? formatHomeLine(diff) : "–"}
                     </TableCell>
                     <TableCell className="text-center font-mono tabular-nums">
-                      {fmt(g.model_total)}
+                      {formatNumber(g.model_total)}
                     </TableCell>
                   </TableRow>
                 );
@@ -262,7 +212,7 @@ export default async function SchedulePage() {
             </TableBody>
           </Table>
         </div>
-      </NflScheduleFilters>
+      </ScheduleFilters>
 
       <p className="max-w-4xl text-xs text-muted-foreground">
         Proj score is away&ndash;home expected points. Diff is model line minus

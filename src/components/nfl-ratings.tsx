@@ -6,24 +6,14 @@ import type {
   NflTeamRating,
   NflTeamUnitRating,
 } from "@/lib/types";
-import { cn } from "@/lib/utils";
 import { replaceLocation, useLocationSearch } from "@/lib/use-location-search";
-import NflDivisionRatings from "@/components/nfl-division-ratings";
-import NflUnitRatings from "@/components/nfl-unit-ratings";
-import { TeamLogo } from "@/components/team-logo";
+import { GroupRatings } from "@/components/group-ratings";
 import {
-  Table,
-  TableHeader,
-  TableBody,
-  TableHead,
-  TableRow,
-  TableCell,
-} from "@/components/ui/table";
-
-function fmt(value: number | null, decimals = 1): string {
-  if (value == null) return "–";
-  return value.toFixed(decimals);
-}
+  PowerRatingsTable,
+  type LimitedDataRule,
+} from "@/components/power-ratings-table";
+import { UnitRatingsTable } from "@/components/unit-ratings-table";
+import { ViewTabPanel, ViewTabs } from "@/components/view-tabs";
 
 const VIEWS = [
   { key: "all", label: "All" },
@@ -34,6 +24,26 @@ const VIEWS = [
 ] as const;
 
 type View = (typeof VIEWS)[number]["key"];
+
+const UNIT_COLUMNS = [
+  { key: "rush_offense", label: "Rush O" },
+  { key: "pass_offense", label: "Pass O" },
+  { key: "rush_defense", label: "Rush D" },
+  { key: "pass_defense", label: "Pass D" },
+  { key: "pass_block", label: "Pass Blk" },
+  { key: "run_block", label: "Run Blk" },
+  { key: "special_teams", label: "ST" },
+] as const;
+
+const LIMITED: LimitedDataRule = {
+  isLimited: (r) => (r.missing_input_count ?? 0) >= 1,
+  rowNote:
+    "A preseason rating input is unavailable for this team; treat the rating as degraded.",
+  allNote:
+    "A preseason rating input is unavailable for every team here; treat these ratings as degraded.",
+};
+
+const rowKey = (r: { team_abbr: string }) => r.team_abbr;
 
 export default function NflRatings({
   ratings,
@@ -54,20 +64,22 @@ export default function NflRatings({
     VIEWS.find((option) => option.key === requestedView)?.key ?? "all";
   const initialDivision = params.get("division") ?? undefined;
 
-  // Teams cross the server boundary as an array; index them once here so
-  // every view looks logos up by abbreviation.
   const teamByAbbr = useMemo(
     () => new Map(teams.map((t) => [t.team_abbr, t])),
     [teams]
   );
+  const logo = (r: { team_abbr: string }) => teamByAbbr.get(r.team_abbr);
 
-  // Every view is a slice of the ratings already in the browser, so switching
-  // only updates the URL-backed client view: no navigation, no refetch.
   const visible = useMemo(() => {
     if (view === "afc" || view === "nfc")
       return ratings.filter((r) => r.conference?.toLowerCase() === view);
     return ratings;
   }, [ratings, view]);
+
+  const powerRank = useMemo(
+    () => new Map<string | number, number>(ratings.map((r, i) => [r.team_abbr, i + 1])),
+    [ratings]
+  );
 
   function select(next: View) {
     const url = new URL(window.location.href);
@@ -77,96 +89,60 @@ export default function NflRatings({
     replaceLocation(url);
   }
 
-  return (
-    <div className="space-y-6">
-      <div className="flex items-center gap-0 font-mono text-xs uppercase tracking-wider">
-        {VIEWS.map((tab) => (
-          <button
-            key={tab.key}
-            type="button"
-            onClick={() => select(tab.key)}
-            className={cn(
-              // Tailwind's preflight resets text-transform on <button>, so the
-              // tab bar's uppercase has to be set here rather than inherited.
-              "border-b-2 px-3 py-2 uppercase transition-colors",
-              tab.key === view
-                ? "border-foreground text-foreground"
-                : "border-transparent text-muted-foreground hover:text-foreground"
-            )}
-          >
-            {tab.label}
-          </button>
-        ))}
-      </div>
+  function selectDivision(name: string) {
+    const url = new URL(window.location.href);
+    url.searchParams.set("view", "division");
+    url.searchParams.set("division", name);
+    replaceLocation(url);
+  }
 
-      {view === "division" ? (
-        <NflDivisionRatings
-          ratings={ratings}
-          teamByAbbr={teamByAbbr}
-          initialDivision={initialDivision}
-        />
-      ) : view === "units" ? (
-        <NflUnitRatings units={units} ratings={ratings} teamByAbbr={teamByAbbr} />
-      ) : (
-        <div className="overflow-x-auto">
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead className="w-12 text-right">Rk</TableHead>
-                <TableHead>Team</TableHead>
-                <TableHead className="hidden sm:table-cell">Division</TableHead>
-                <TableHead className="text-right">Rating</TableHead>
-                <TableHead className="text-right">Off</TableHead>
-                <TableHead className="text-right">Def</TableHead>
-                <TableHead className="hidden text-right sm:table-cell">
-                  SD
-                </TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {visible.map((r, index) => (
-                <TableRow key={r.team_abbr}>
-                  <TableCell className="text-right font-mono tabular-nums text-muted-foreground">
-                    {index + 1}
-                  </TableCell>
-                  <TableCell>
-                    <span className="inline-flex items-center gap-2 align-middle">
-                      <TeamLogo
-                        team={teamByAbbr.get(r.team_abbr)}
-                        name={r.team}
-                      />
-                      <span className="font-medium">{r.team}</span>
-                    </span>
-                    {(r.missing_input_count ?? 0) >= 1 && (
-                      <span
-                        className="ml-2 font-mono text-[10px] uppercase tracking-wider text-accent-amber"
-                        title="A preseason rating input is unavailable for this team; treat the rating as degraded."
-                      >
-                        Limited data
-                      </span>
-                    )}
-                  </TableCell>
-                  <TableCell className="hidden text-muted-foreground sm:table-cell">
-                    {r.division ?? "–"}
-                  </TableCell>
-                  <TableCell className="text-right font-mono font-semibold tabular-nums">
-                    {fmt(r.power_rating)}
-                  </TableCell>
-                  <TableCell className="text-right font-mono tabular-nums">
-                    {fmt(r.offense_points)}
-                  </TableCell>
-                  <TableCell className="text-right font-mono tabular-nums">
-                    {fmt(r.defense_points)}
-                  </TableCell>
-                  <TableCell className="hidden text-right font-mono tabular-nums text-muted-foreground sm:table-cell">
-                    {fmt(r.power_rating_sd)}
-                  </TableCell>
-                </TableRow>
-              ))}
-            </TableBody>
-          </Table>
-        </div>
-      )}
-    </div>
+  return (
+    <ViewTabs label="Ratings view" options={VIEWS} value={view} onValueChange={select}>
+      <ViewTabPanel value={view}>
+        {view === "division" ? (
+          <GroupRatings
+            ratings={ratings}
+            rowKey={rowKey}
+            logo={logo}
+            groupOf={(r) => r.division ?? "Unknown"}
+            tierOf={(r) => r.conference ?? "AFC"}
+            tiers={["AFC", "NFC"]}
+            noun="divisions"
+            overallRankLabel="NFL Rk"
+            initialGroup={initialDivision}
+            onSelect={selectDivision}
+            limited={LIMITED}
+          />
+        ) : view === "units" ? (
+          units.length === 0 ? (
+            <p className="text-sm text-muted-foreground">
+              Unit ratings appear once the season has played games; the
+              preseason forecast publishes team ratings only.
+            </p>
+          ) : (
+            <UnitRatingsTable
+              units={units}
+              columns={UNIT_COLUMNS}
+              defaultSort="pass_offense"
+              rowKey={rowKey}
+              logo={logo}
+              powerRank={powerRank}
+              caption="NFL unit ratings"
+              intro="Points per game above league average, opponent adjusted. Companions to the power ratings, not components: they do not sum to Off and Def, and the line ratings attribute outcomes without snap level film data. Click a column to sort."
+            />
+          )
+        ) : (
+          <PowerRatingsTable
+            rows={visible}
+            rowKey={rowKey}
+            logo={logo}
+            caption={`${VIEWS.find((v) => v.key === view)?.label} power ratings`}
+            group={{ label: "Division", value: (r) => r.division }}
+            showSd
+            limited={LIMITED}
+          />
+        )}
+      </ViewTabPanel>
+    </ViewTabs>
   );
 }

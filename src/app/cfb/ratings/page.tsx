@@ -14,7 +14,7 @@ export default async function RatingsPage() {
 
   if (ratings.length === 0) {
     return (
-      <main className="mx-auto w-full max-w-5xl min-w-0 px-4 py-8">
+      <main id="main" className="mx-auto w-full max-w-5xl min-w-0 px-4 py-8">
         <h1 className="font-heading text-2xl tracking-tight">Power Ratings</h1>
         <p className="mt-4 text-muted-foreground">
           No ratings published yet. Run the publish pipeline to load them.
@@ -28,7 +28,7 @@ export default async function RatingsPage() {
     season != null && week != null ? `${season} · Week ${week}` : "";
 
   return (
-    <main className="mx-auto w-full max-w-5xl min-w-0 px-4 py-8 space-y-6">
+    <main id="main" className="mx-auto w-full max-w-5xl min-w-0 px-4 py-8 space-y-6">
       <div className="flex items-start justify-between gap-4">
         <div>
           <h1 className="font-heading text-2xl tracking-tight">

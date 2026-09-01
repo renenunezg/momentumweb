@@ -1,29 +1,20 @@
 "use client";
 
-import { useMemo } from "react";
+import { useMemo, useState } from "react";
 import type {
   CfbTeamIdentity,
   CfbTeamRating,
   CfbTeamUnitRating,
 } from "@/lib/types";
-import { cn } from "@/lib/utils";
 import { replaceLocation, useLocationSearch } from "@/lib/use-location-search";
-import CfbConferenceRatings from "@/components/cfb-conference-ratings";
-import CfbUnitRatings from "@/components/cfb-unit-ratings";
-import { TeamLogo } from "@/components/team-logo";
+import { GroupRatings } from "@/components/group-ratings";
 import {
-  Table,
-  TableHeader,
-  TableBody,
-  TableHead,
-  TableRow,
-  TableCell,
-} from "@/components/ui/table";
-
-function fmt(value: number | null, decimals = 1): string {
-  if (value == null) return "–";
-  return value.toFixed(decimals);
-}
+  PowerRatingsTable,
+  type LimitedDataRule,
+} from "@/components/power-ratings-table";
+import { ToggleGroup } from "@/components/toggle-group";
+import { UnitRatingsTable } from "@/components/unit-ratings-table";
+import { ViewTabPanel, ViewTabs } from "@/components/view-tabs";
 
 const VIEWS = [
   { key: "top25", label: "Top 25" },
@@ -34,6 +25,33 @@ const VIEWS = [
 ] as const;
 
 type View = (typeof VIEWS)[number]["key"];
+
+const UNIT_COLUMNS = [
+  { key: "rush_offense", label: "Rush O" },
+  { key: "pass_offense", label: "Pass O" },
+  { key: "rush_defense", label: "Rush D" },
+  { key: "pass_defense", label: "Pass D" },
+  { key: "pass_block", label: "Pass Blk" },
+  { key: "run_block", label: "Run Blk" },
+] as const;
+
+const CLASSES = [
+  { key: "fbs", label: "FBS" },
+  { key: "fcs", label: "FCS" },
+  { key: "all", label: "All D1" },
+] as const;
+
+type ClassKey = (typeof CLASSES)[number]["key"];
+
+const LIMITED: LimitedDataRule = {
+  isLimited: (r) => (r.missing_input_count ?? 0) >= 4,
+  rowNote:
+    "Several rating inputs are unavailable for this team; treat the rating as degraded.",
+  allNote:
+    "Several rating inputs are unavailable for every team here; treat these ratings as degraded.",
+};
+
+const rowKey = (r: { team_id: number }) => r.team_id;
 
 export default function CfbRatings({
   ratings,
@@ -54,12 +72,11 @@ export default function CfbRatings({
     VIEWS.find((option) => option.key === requestedView)?.key ?? "top25";
   const initialConference = params.get("conf") ?? undefined;
 
-  // Teams cross the server boundary as an array; index them once here so both
-  // this table and the conference view look logos up by id.
   const teamById = useMemo(
     () => new Map(teams.map((t) => [t.team_id, t])),
     [teams]
   );
+  const logo = (r: { team_id: number }) => teamById.get(r.team_id);
 
   // Every view is a slice of the ratings already in the browser, so switching
   // only updates the URL-backed client view: no navigation, no refetch.
@@ -71,11 +88,6 @@ export default function CfbRatings({
     return ratings.slice(0, 25);
   }, [ratings, view]);
 
-  // Whole tiers (all of FCS today) run on reduced inputs, and a badge on every
-  // row says nothing; call it out once instead and keep the per-row badge for
-  // tables where it actually singles a team out.
-  const allLimited = visible.every((r) => (r.missing_input_count ?? 0) >= 4);
-
   function select(next: View) {
     const url = new URL(window.location.href);
     if (next === "top25") url.searchParams.delete("class");
@@ -84,108 +96,133 @@ export default function CfbRatings({
     replaceLocation(url);
   }
 
-  return (
-    <div className="space-y-6">
-      <div className="flex items-center gap-0 font-mono text-xs uppercase tracking-wider">
-        {VIEWS.map((tab) => (
-          <button
-            key={tab.key}
-            type="button"
-            onClick={() => select(tab.key)}
-            className={cn(
-              // Tailwind's preflight resets text-transform on <button>, so the
-              // tab bar's uppercase has to be set here rather than inherited.
-              "border-b-2 px-3 py-2 uppercase transition-colors",
-              tab.key === view
-                ? "border-foreground text-foreground"
-                : "border-transparent text-muted-foreground hover:text-foreground"
-            )}
-          >
-            {tab.label}
-          </button>
-        ))}
-      </div>
+  function selectConference(name: string) {
+    const url = new URL(window.location.href);
+    url.searchParams.set("class", "conference");
+    url.searchParams.set("conf", name);
+    replaceLocation(url);
+  }
 
-      {view === "conference" ? (
-        <CfbConferenceRatings
-          ratings={ratings}
-          teamById={teamById}
-          initialConference={initialConference}
+  return (
+    <ViewTabs label="Ratings view" options={VIEWS} value={view} onValueChange={select}>
+      <ViewTabPanel value={view}>
+        {view === "conference" ? (
+          <GroupRatings
+            ratings={ratings}
+            rowKey={rowKey}
+            logo={logo}
+            groupOf={(r) => r.conference ?? "Independent"}
+            tierOf={(r) => r.classification ?? "fbs"}
+            tiers={["fbs", "fcs"]}
+            noun="conferences"
+            overallRankLabel="D1 Rk"
+            initialGroup={initialConference}
+            onSelect={selectConference}
+            limited={LIMITED}
+          />
+        ) : view === "units" ? (
+          <CfbUnitRatings units={units} ratings={ratings} logo={logo} />
+        ) : (
+          <PowerRatingsTable
+            rows={visible}
+            rowKey={rowKey}
+            logo={logo}
+            caption={`${VIEWS.find((v) => v.key === view)?.label} power ratings`}
+            group={{ label: "Conference", value: (r) => r.conference }}
+            showSd
+            tag={(r) =>
+              view === "top25" && r.classification !== "fbs" ? (
+                <span className="ml-2 font-mono text-[10px] uppercase tracking-wider text-muted-foreground">
+                  {r.classification ?? "?"}
+                </span>
+              ) : null
+            }
+            limited={LIMITED}
+          />
+        )}
+      </ViewTabPanel>
+    </ViewTabs>
+  );
+}
+
+function CfbUnitRatings({
+  units,
+  ratings,
+  logo,
+}: {
+  units: CfbTeamUnitRating[];
+  ratings: CfbTeamRating[];
+  logo: (r: { team_id: number }) => CfbTeamIdentity | undefined;
+}) {
+  const [classification, setClassification] = useState<ClassKey>("fbs");
+  const powerRank = useMemo(
+    () => new Map<string | number, number>(ratings.map((r, i) => [r.team_id, i + 1])),
+    [ratings]
+  );
+  const ratingsSeason = ratings[0]?.season ?? null;
+  const sourceSeasons = useMemo(
+    () =>
+      [...new Set(units.map((u) => u.source_season).filter((s) => s != null))].sort(
+        (a, b) => a - b
+      ),
+    [units]
+  );
+  const shown = useMemo(
+    () =>
+      units.filter(
+        (u) => classification === "all" || u.classification === classification
+      ),
+    [units, classification]
+  );
+
+  if (units.length === 0) {
+    return (
+      <p className="text-sm text-muted-foreground">
+        Unit ratings have not been published for this ratings snapshot.
+      </p>
+    );
+  }
+
+  return (
+    <UnitRatingsTable
+      units={shown}
+      columns={UNIT_COLUMNS}
+      defaultSort="pass_offense"
+      rowKey={rowKey}
+      logo={logo}
+      powerRank={powerRank}
+      caption={`${CLASSES.find((c) => c.key === classification)?.label} unit ratings`}
+      intro={
+        <>
+          Opponent-adjusted PPA per game above an average FBS team. Positive is
+          better in every column. These are descriptive companions to the power
+          ratings, not model inputs or components of Off and Def. Pass and run
+          blocking are shared-outcome proxies, not isolated line grades.
+          {sourceSeasons.length === 1 &&
+            (ratingsSeason != null && sourceSeasons[0] < ratingsSeason ? (
+              <> Preseason unit ratings use {sourceSeasons[0]} game history.</>
+            ) : (
+              <> Unit ratings use {sourceSeasons[0]} games played so far.</>
+            ))}
+        </>
+      }
+      controls={
+        <ToggleGroup
+          label="Classification"
+          options={CLASSES}
+          value={classification}
+          onChange={setClassification}
+          className="shrink-0"
         />
-      ) : view === "units" ? (
-        <CfbUnitRatings units={units} ratings={ratings} teamById={teamById} />
-      ) : (
-        <div className="space-y-2">
-          {allLimited && (
-            <p className="text-xs text-accent-amber">
-              Several rating inputs are unavailable for every team here; treat
-              these ratings as degraded.
-            </p>
-          )}
-          <div className="overflow-x-auto">
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead className="w-12 text-right">Rk</TableHead>
-                  <TableHead>Team</TableHead>
-                  <TableHead className="hidden sm:table-cell">
-                    Conference
-                  </TableHead>
-                  <TableHead className="text-right">Rating</TableHead>
-                  <TableHead className="text-right">Off</TableHead>
-                  <TableHead className="text-right">Def</TableHead>
-                  <TableHead className="hidden text-right sm:table-cell">
-                    SD
-                  </TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {visible.map((r, index) => (
-                  <TableRow key={r.team_id}>
-                    <TableCell className="text-right font-mono tabular-nums text-muted-foreground">
-                      {index + 1}
-                    </TableCell>
-                    <TableCell>
-                      <span className="inline-flex items-center gap-2 align-middle">
-                        <TeamLogo team={teamById.get(r.team_id)} name={r.team} />
-                        <span className="font-medium">{r.team}</span>
-                      </span>
-                      {view === "top25" && r.classification !== "fbs" && (
-                        <span className="ml-2 font-mono text-[10px] uppercase tracking-wider text-muted-foreground">
-                          {r.classification ?? "?"}
-                        </span>
-                      )}
-                      {(r.missing_input_count ?? 0) >= 4 && !allLimited && (
-                        <span
-                          className="ml-2 font-mono text-[10px] uppercase tracking-wider text-accent-amber"
-                          title="Several rating inputs are unavailable for this team; treat the rating as degraded."
-                        >
-                          Limited data
-                        </span>
-                      )}
-                    </TableCell>
-                    <TableCell className="hidden text-muted-foreground sm:table-cell">
-                      {r.conference ?? "–"}
-                    </TableCell>
-                    <TableCell className="text-right font-mono font-semibold tabular-nums">
-                      {fmt(r.power_rating)}
-                    </TableCell>
-                    <TableCell className="text-right font-mono tabular-nums">
-                      {fmt(r.offense_points)}
-                    </TableCell>
-                    <TableCell className="text-right font-mono tabular-nums">
-                      {fmt(r.defense_points)}
-                    </TableCell>
-                    <TableCell className="hidden text-right font-mono tabular-nums text-muted-foreground sm:table-cell">
-                      {fmt(r.power_rating_sd)}
-                    </TableCell>
-                  </TableRow>
-                ))}
-              </TableBody>
-            </Table>
-          </div>
-        </div>
-      )}
-    </div>
+      }
+      badge={(u) =>
+        u.unit_history_missing
+          ? {
+              label: "No history",
+              note: "No prior-season unit history is available; all unit values use the neutral fallback.",
+            }
+          : null
+      }
+    />
   );
 }

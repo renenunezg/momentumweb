@@ -3,7 +3,7 @@ import { cn } from "@/lib/utils";
 // Structural, so both CfbTeamIdentity (logos stored per team by CFBD) and
 // MlbTeamIdentity (logo URLs derived from the team id) satisfy it without the
 // component knowing which sport it is rendering.
-interface TeamLogoSource {
+export interface TeamLogoSource {
   logo_light: string | null;
   logo_dark: string | null;
 }

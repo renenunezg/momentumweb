@@ -1,6 +1,5 @@
 "use client";
 
-import { useMemo, useState } from "react";
 import type {
   ModelEvaluation,
   CalibrationBin,
@@ -9,7 +8,9 @@ import type {
   PosteriorSigma,
   LiveKpis,
 } from "@/lib/types";
+import { EMPTY, formatNumber, formatOdds, formatPct, formatSigned } from "@/lib/utils";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { WindowPager, usePagedWindow } from "@/components/window-pager";
 import { KpiCard } from "@/components/kpi-card";
 import { AccuracyChart } from "@/components/accuracy-chart";
 import { MetricLineChart } from "@/components/metric-line-chart";
@@ -29,6 +30,9 @@ import {
   TableRow,
 } from "@/components/ui/table";
 
+const REWRITTEN_NOTE =
+  "Predictions for this day were overwritten by a later hand-run with a different model. Eval is computed against the rewritten predictions, not what was live on the day.";
+
 interface PerformanceTabsProps {
   evaluations: ModelEvaluation[];
   calibration: CalibrationBin[];
@@ -37,28 +41,6 @@ interface PerformanceTabsProps {
   posteriorSkills: PosteriorSkill[];
   posteriorSigmas: PosteriorSigma[];
   liveKpis: LiveKpis;
-}
-
-function pct(value: number | null | undefined): string {
-  if (value == null) return "\u2014";
-  return `${(value * 100).toFixed(1)}%`;
-}
-
-function fmt(value: number | null | undefined, decimals = 3): string {
-  if (value == null) return "\u2014";
-  return value.toFixed(decimals);
-}
-
-function fmtSigned(value: number | null | undefined, decimals = 2): string {
-  if (value == null) return "\u2014";
-  const s = value.toFixed(decimals);
-  return value >= 0 ? `+${s}` : s;
-}
-
-function fmtAmerican(value: number | null | undefined): string {
-  if (value == null) return "\u2014";
-  const r = Math.round(value);
-  return r > 0 ? `+${r}` : `${r}`;
 }
 
 export function PerformanceTabs({
@@ -70,7 +52,6 @@ export function PerformanceTabs({
   posteriorSigmas,
   liveKpis,
 }: PerformanceTabsProps) {
-  // Split evaluations by window type
   const dailyEvals = evaluations.filter(
     (e) => !e.eval_window || e.eval_window === "day"
   );
@@ -91,7 +72,6 @@ export function PerformanceTabs({
       ? findLastPopulated(seasonEvals)
       : findLastPopulated(dailyEvals);
 
-  // Latest calibration data (most recent date)
   const latestCalDate =
     calibration.length > 0 ? calibration[0].date : null;
   const latestCalibration = latestCalDate
@@ -100,7 +80,6 @@ export function PerformanceTabs({
         .sort((a, b) => a.bin_mid - b.bin_mid)
     : [];
 
-  // Latest edge buckets (season window, most recent date)
   const seasonBuckets = edgeBuckets.filter((b) => b.eval_window === "season");
   const latestBucketDate =
     seasonBuckets.length > 0 ? seasonBuckets[0].date : null;
@@ -120,39 +99,36 @@ export function PerformanceTabs({
         </TabsList>
       </div>
 
-      {/* ============================================================ */}
-      {/* OVERVIEW TAB */}
-      {/* ============================================================ */}
       <TabsContent value="overview" className="space-y-8">
         <div className="grid grid-cols-3 sm:flex sm:flex-wrap items-baseline gap-x-4 gap-y-3 font-mono text-sm">
           <KpiCard
             label="ROI"
-            value={pct(liveKpis.roi)}
+            value={formatPct(liveKpis.roi)}
             tooltip="Profit per dollar risked. ROI = total P&L ÷ total stakes. 13% ROI means 13¢ profit per $1 staked, on average - not 13% of your bankroll."
           />
           <KpiCard
             label="Sharpe"
-            value={fmt(liveKpis.sharpe, 2)}
+            value={formatNumber(liveKpis.sharpe, 2)}
             tooltip="Risk-adjusted return: mean daily P&L ÷ std dev of daily P&L. >1 is good, >2 excellent."
           />
           <KpiCard
             label="Max DD"
-            value={liveKpis.max_drawdown != null ? `${fmtSigned(liveKpis.max_drawdown)}u` : "-"}
+            value={liveKpis.max_drawdown != null ? `${formatSigned(liveKpis.max_drawdown, 2)}u` : EMPTY}
             tooltip="Worst peak-to-trough decline of cumulative P&L, in units. With flat 1u stake sizing (no compounding), drawdown is reported in absolute units rather than as a % of equity - a Kelly-style % would misrepresent a non-compounding strategy."
           />
           <KpiCard
             label="Brier"
-            value={fmt(latest?.brier_score)}
+            value={formatNumber(latest?.brier_score, 3)}
             tooltip="Mean squared error of probabilistic predictions vs binary outcomes. Lower is better; 0.25 is the coin-flip baseline."
           />
           <KpiCard
             label="MAE"
-            value={fmt(latest?.mae)}
+            value={formatNumber(latest?.mae, 3)}
             tooltip="Mean absolute error of expected runs vs actual runs. Lower is better; ~2.5 is typical for MLB run prediction."
           />
           <KpiCard
             label="Pick Acc"
-            value={pct(latest?.total_accuracy)}
+            value={formatPct(latest?.total_accuracy)}
             sub={`model picks winner (${latest?.total_correct ?? 0}/${latest?.total_predictions ?? 0})`}
           />
         </div>
@@ -168,15 +144,12 @@ export function PerformanceTabs({
         </div>
       </TabsContent>
 
-      {/* ============================================================ */}
-      {/* REGRESSION TAB */}
-      {/* ============================================================ */}
       <TabsContent value="regression" className="space-y-8">
         <div className="grid grid-cols-3 sm:flex sm:flex-wrap items-baseline gap-x-4 gap-y-3 font-mono text-sm">
-          <KpiCard label="MAE" value={fmt(latest?.mae)} />
-          <KpiCard label="RMSE" value={fmt(latest?.rmse)} />
-          <KpiCard label="R&#178;" value={fmt(latest?.r2)} />
-          <KpiCard label="MAPE" value={latest?.mape != null ? `${latest.mape.toFixed(1)}%` : "\u2014"} />
+          <KpiCard label="MAE" value={formatNumber(latest?.mae, 3)} />
+          <KpiCard label="RMSE" value={formatNumber(latest?.rmse, 3)} />
+          <KpiCard label="R&#178;" value={formatNumber(latest?.r2, 3)} />
+          <KpiCard label="MAPE" value={latest?.mape != null ? `${latest.mape.toFixed(1)}%` : "–"} />
         </div>
 
         <div className="border-t border-border pt-6">
@@ -200,15 +173,12 @@ export function PerformanceTabs({
         </div>
       </TabsContent>
 
-      {/* ============================================================ */}
-      {/* PROBABILISTIC TAB */}
-      {/* ============================================================ */}
       <TabsContent value="probabilistic" className="space-y-8">
         <div className="grid grid-cols-3 sm:flex sm:flex-wrap items-baseline gap-x-4 gap-y-3 font-mono text-sm">
-          <KpiCard label="Brier Score" value={fmt(latest?.brier_score)} sub="Lower is better (baseline: 0.250)" />
-          <KpiCard label="Log Loss" value={fmt(latest?.log_loss)} />
-          <KpiCard label="Sharpness" value={fmt(latest?.sharpness, 4)} sub="Higher = more decisive" />
-          <KpiCard label="80% Coverage" value={pct(latest?.interval_coverage_80)} sub="Target: 80%" />
+          <KpiCard label="Brier Score" value={formatNumber(latest?.brier_score, 3)} sub="Lower is better (baseline: 0.250)" />
+          <KpiCard label="Log Loss" value={formatNumber(latest?.log_loss, 3)} />
+          <KpiCard label="Sharpness" value={formatNumber(latest?.sharpness, 4)} sub="Higher = more decisive" />
+          <KpiCard label="80% Coverage" value={formatPct(latest?.interval_coverage_80)} sub="Target: 80%" />
         </div>
 
         <div className="border-t border-border pt-6">
@@ -238,62 +208,59 @@ export function PerformanceTabs({
         </div>
       </TabsContent>
 
-      {/* ============================================================ */}
-      {/* BETTING TAB */}
-      {/* ============================================================ */}
       <TabsContent value="betting" className="space-y-8">
         <div className="grid grid-cols-3 sm:flex sm:flex-wrap items-baseline gap-x-4 gap-y-3 font-mono text-sm">
           <KpiCard
             label="ROI"
-            value={pct(liveKpis.roi)}
+            value={formatPct(liveKpis.roi)}
             tooltip="Profit per dollar risked. ROI = total P&L ÷ total stakes. 13% ROI means the model returns 13¢ profit on every $1 staked, on average. Independent of bankroll size."
           />
           <KpiCard
             label="Sharpe"
-            value={fmt(liveKpis.sharpe, 2)}
+            value={formatNumber(liveKpis.sharpe, 2)}
             tooltip="Risk-adjusted return: mean daily P&L ÷ std dev of daily P&L. Higher is better. >1 is good, >2 is excellent."
           />
           <KpiCard
             label="Sortino"
-            value={fmt(liveKpis.sortino, 2)}
+            value={formatNumber(liveKpis.sortino, 2)}
             tooltip="Like Sharpe but penalizes only downside volatility. Better metric for asymmetric strategies (gambling, where upside variance is fine)."
           />
           <KpiCard
             label="Max Drawdown"
-            value={liveKpis.max_drawdown != null ? `${fmtSigned(liveKpis.max_drawdown)}u` : "-"}
+            value={liveKpis.max_drawdown != null ? `${formatSigned(liveKpis.max_drawdown, 2)}u` : EMPTY}
             tooltip="Worst peak-to-trough decline of cumulative P&L, in units. Stakes are flat fractions of a fixed 1u base (no compounding), so reporting drawdown as a % of running equity (the Kelly-style metric) would be misleading."
           />
           <KpiCard
             label="P&L"
-            value={`${fmtSigned(liveKpis.net_profit_units)}u`}
-            sub={`${fmt(liveKpis.total_staked_units, 2)}u staked`}
+            value={`${formatSigned(liveKpis.net_profit_units, 2)}u`}
+            sub={`${formatNumber(liveKpis.total_staked_units, 2)}u staked`}
             tooltip="Net profit in units. 1 unit = your chosen bankroll size - if your bankroll is $100, 1u = $100. Stakes shown below are TOTAL summed across all bets in the window, not a single bet. Bankroll never compounds; each bet is sized as a fraction of a fixed 1u."
           />
           <KpiCard
             label="Favorites"
-            value={pct(liveKpis.roi_favorites)}
+            value={formatPct(liveKpis.roi_favorites)}
             sub={`(${liveKpis.favorites_correct}-${liveKpis.n_favorites - liveKpis.favorites_correct})`}
           />
           <KpiCard
             label="Underdogs"
-            value={pct(liveKpis.roi_underdogs)}
+            value={formatPct(liveKpis.roi_underdogs)}
             sub={`(${liveKpis.underdogs_correct}-${liveKpis.n_underdogs - liveKpis.underdogs_correct})`}
           />
           <KpiCard
             label="Run Line"
-            value={pct(liveKpis.roi_run_line)}
+            value={formatPct(liveKpis.roi_run_line)}
             sub={`(${liveKpis.run_line_bets_correct}-${liveKpis.n_run_line - liveKpis.run_line_bets_correct})`}
             tooltip="Run-line bet ROI. Computed from the same ledger as the headline ROI; bets sized via quarter-Kelly on the model's cover probability vs. book spread odds."
           />
-          <KpiCard label="Avg Line" value={fmtAmerican(liveKpis.avg_ml_line)} />
+          <KpiCard label="Avg Line" value={formatOdds(liveKpis.avg_ml_line)} />
           <KpiCard
             label="Overs"
-            value={pct(liveKpis.overs_roi)}
+            value={formatPct(liveKpis.overs_roi)}
             sub={`(${liveKpis.overs_correct}-${liveKpis.overs_predictions - liveKpis.overs_correct})`}
           />
           <KpiCard
             label="Unders"
-            value={pct(liveKpis.unders_roi)}
+            value={formatPct(liveKpis.unders_roi)}
             sub={`(${liveKpis.unders_correct}-${liveKpis.unders_predictions - liveKpis.unders_correct})`}
           />
         </div>
@@ -340,10 +307,10 @@ export function PerformanceTabs({
                       {b.n_bets}
                     </TableCell>
                     <TableCell className="text-right font-mono tabular-nums">
-                      {pct(b.hit_rate)}
+                      {formatPct(b.hit_rate)}
                     </TableCell>
                     <TableCell className="text-right font-mono tabular-nums">
-                      {pct(b.roi)}
+                      {formatPct(b.roi)}
                     </TableCell>
                   </TableRow>
                 ))}
@@ -357,9 +324,6 @@ export function PerformanceTabs({
         </div>
       </TabsContent>
 
-      {/* ============================================================ */}
-      {/* DIAGNOSTICS TAB */}
-      {/* ============================================================ */}
       <TabsContent value="diagnostics" className="space-y-8">
         <div>
           <h2 className="font-heading text-lg mb-1">Posterior Skill Leaderboard</h2>
@@ -391,17 +355,17 @@ export function PerformanceTabs({
           <div className="grid grid-cols-3 sm:flex sm:flex-wrap items-baseline gap-x-4 gap-y-3 font-mono text-sm">
             <KpiCard
               label="50% Interval"
-              value={pct(latest?.interval_coverage_50)}
+              value={formatPct(latest?.interval_coverage_50)}
               sub="Target: 50%"
             />
             <KpiCard
               label="80% Interval"
-              value={pct(latest?.interval_coverage_80)}
+              value={formatPct(latest?.interval_coverage_80)}
               sub="Target: 80%"
             />
             <KpiCard
               label="90% Interval"
-              value={pct(latest?.interval_coverage_90)}
+              value={formatPct(latest?.interval_coverage_90)}
               sub="Target: 90%"
             />
           </div>
@@ -427,82 +391,20 @@ export function PerformanceTabs({
   );
 }
 
-const WINDOW_LABELS = [
-  { key: "7", label: "Last 7" },
-  { key: "30", label: "Last 30" },
-  { key: "season", label: "Season" },
-] as const;
-
-const PAGE_SIZE = 25;
-
 function EvalHistoryTable({ rows }: { rows: ModelEvaluation[] }) {
-  const [windowKey, setWindowKey] =
-    useState<(typeof WINDOW_LABELS)[number]["key"]>("7");
-  const [page, setPage] = useState(0);
-
-  const filtered = useMemo(() => {
-    const sorted = [...rows].sort((a, b) => (a.date < b.date ? 1 : -1));
-    if (windowKey === "season") return sorted;
-    const days = Number(windowKey);
-    return sorted.slice(0, days);
-  }, [rows, windowKey]);
-
-  const totalPages =
-    windowKey === "season"
-      ? Math.max(1, Math.ceil(filtered.length / PAGE_SIZE))
-      : 1;
-  const visible =
-    windowKey === "season"
-      ? filtered.slice(page * PAGE_SIZE, (page + 1) * PAGE_SIZE)
-      : filtered;
-  const firstV2Date = getV2BoundaryDate(visible);
+  const paged = usePagedWindow(rows);
+  const firstV2Date = getV2BoundaryDate(paged.visible);
 
   return (
     <div>
-      <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
-        <div className="inline-flex rounded-sm border border-border p-0.5 text-xs font-mono">
-          {WINDOW_LABELS.map((w) => (
-            <button
-              key={w.key}
-              type="button"
-              onClick={() => {
-                setWindowKey(w.key);
-                setPage(0);
-              }}
-              className={`px-3 py-1 transition-colors ${
-                windowKey === w.key
-                  ? "bg-foreground text-background"
-                  : "text-muted-foreground hover:text-foreground"
-              }`}
-            >
-              {w.label}
-            </button>
-          ))}
-        </div>
-        {windowKey === "season" && totalPages > 1 ? (
-          <div className="flex items-center gap-2 font-mono text-xs">
-            <button
-              type="button"
-              onClick={() => setPage((p) => Math.max(0, p - 1))}
-              disabled={page === 0}
-              className="px-2 py-1 text-muted-foreground hover:text-foreground disabled:opacity-30"
-            >
-              {"<"}
-            </button>
-            <span className="text-muted-foreground">
-              {page + 1} / {totalPages}
-            </span>
-            <button
-              type="button"
-              onClick={() => setPage((p) => Math.min(totalPages - 1, p + 1))}
-              disabled={page >= totalPages - 1}
-              className="px-2 py-1 text-muted-foreground hover:text-foreground disabled:opacity-30"
-            >
-              {">"}
-            </button>
-          </div>
-        ) : null}
-      </div>
+      <WindowPager
+        label="Evaluation window"
+        windowKey={paged.windowKey}
+        onWindow={paged.setWindow}
+        page={paged.page}
+        totalPages={paged.totalPages}
+        onPage={paged.setPage}
+      />
       <Table>
         <TableHeader>
           <TableRow>
@@ -515,7 +417,7 @@ function EvalHistoryTable({ rows }: { rows: ModelEvaluation[] }) {
           </TableRow>
         </TableHeader>
         <TableBody>
-          {visible.map((row) => (
+          {paged.visible.map((row) => (
             <TableRow key={row.date}>
               <TableCell className="font-medium">
                 {row.date}
@@ -523,39 +425,39 @@ function EvalHistoryTable({ rows }: { rows: ModelEvaluation[] }) {
                 {row.predictions_rewritten ? (
                   <span
                     className="ml-2 inline-block rounded-sm border border-amber-500/40 bg-amber-500/10 px-1.5 py-0 text-[10px] font-mono uppercase tracking-wider text-amber-600 dark:text-amber-400"
-                    title="Predictions for this day were overwritten by a later hand-run with a different model. Eval is computed against the rewritten predictions, not what was live on the day."
+                    title={REWRITTEN_NOTE}
                   >
-                    recomputed
+                    recomputed<span className="sr-only">: {REWRITTEN_NOTE}</span>
                   </span>
                 ) : null}
               </TableCell>
               <TableCell>
                 {row.total_correct}/{row.total_predictions}{" "}
                 <span className="text-muted-foreground">
-                  ({pct(row.total_accuracy)})
+                  ({formatPct(row.total_accuracy)})
                 </span>
               </TableCell>
               <TableCell>
                 {row.ml_correct}/{row.ml_predictions}{" "}
                 <span className="text-muted-foreground">
-                  ({pct(row.ml_accuracy)})
+                  ({formatPct(row.ml_accuracy)})
                 </span>
               </TableCell>
               <TableCell>
                 {row.run_line_correct}/{row.run_line_predictions}{" "}
                 <span className="text-muted-foreground">
-                  ({pct(row.run_line_accuracy)})
+                  ({formatPct(row.run_line_accuracy)})
                 </span>
               </TableCell>
               <TableCell>
-                {row.totals_correct ?? "-"}/
-                {row.totals_predictions ?? "-"}{" "}
+                {row.totals_correct ?? EMPTY}/
+                {row.totals_predictions ?? EMPTY}{" "}
                 <span className="text-muted-foreground">
-                  ({pct(row.totals_accuracy)})
+                  ({formatPct(row.totals_accuracy)})
                 </span>
               </TableCell>
               <TableCell className="text-right font-mono tabular-nums">
-                {fmt(row.mae ?? row.average_total_diff)}
+                {formatNumber(row.mae ?? row.average_total_diff, 3)}
               </TableCell>
             </TableRow>
           ))}
@@ -566,72 +468,19 @@ function EvalHistoryTable({ rows }: { rows: ModelEvaluation[] }) {
 }
 
 function DailyBettingHistory({ rows }: { rows: ModelEvaluation[] }) {
-  const [windowKey, setWindowKey] =
-    useState<(typeof WINDOW_LABELS)[number]["key"]>("7");
-  const [page, setPage] = useState(0);
-
-  const filtered = useMemo(() => {
-    const sorted = [...rows].sort((a, b) => (a.date < b.date ? 1 : -1));
-    if (windowKey === "season") return sorted;
-    return sorted.slice(0, Number(windowKey));
-  }, [rows, windowKey]);
-
-  const totalPages =
-    windowKey === "season"
-      ? Math.max(1, Math.ceil(filtered.length / PAGE_SIZE))
-      : 1;
-  const visible =
-    windowKey === "season"
-      ? filtered.slice(page * PAGE_SIZE, (page + 1) * PAGE_SIZE)
-      : filtered;
-  const firstV2Date = getV2BoundaryDate(visible);
+  const paged = usePagedWindow(rows);
+  const firstV2Date = getV2BoundaryDate(paged.visible);
 
   return (
     <div>
-      <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
-        <div className="inline-flex rounded-sm border border-border p-0.5 text-xs font-mono">
-          {WINDOW_LABELS.map((w) => (
-            <button
-              key={w.key}
-              type="button"
-              onClick={() => {
-                setWindowKey(w.key);
-                setPage(0);
-              }}
-              className={`px-3 py-1 transition-colors ${
-                windowKey === w.key
-                  ? "bg-foreground text-background"
-                  : "text-muted-foreground hover:text-foreground"
-              }`}
-            >
-              {w.label}
-            </button>
-          ))}
-        </div>
-        {windowKey === "season" && totalPages > 1 ? (
-          <div className="flex items-center gap-2 font-mono text-xs">
-            <button
-              type="button"
-              onClick={() => setPage((p) => Math.max(0, p - 1))}
-              disabled={page === 0}
-              className="px-2 py-1 text-muted-foreground hover:text-foreground disabled:opacity-30"
-            >
-              {"<"}
-            </button>
-            <span className="text-muted-foreground">
-              {page + 1} / {totalPages}
-            </span>
-            <button
-              type="button"
-              onClick={() => setPage((p) => Math.min(totalPages - 1, p + 1))}
-              disabled={page >= totalPages - 1}
-              className="px-2 py-1 text-muted-foreground hover:text-foreground disabled:opacity-30"
-            >
-              {">"}
-            </button>
-          </div>
-        ) : null}
-      </div>
+      <WindowPager
+        label="Betting history window"
+        windowKey={paged.windowKey}
+        onWindow={paged.setWindow}
+        page={paged.page}
+        totalPages={paged.totalPages}
+        onPage={paged.setPage}
+      />
       <p className="text-xs text-muted-foreground mb-2 font-mono">
         Stakes = total units risked summed across all bets that day (not per-bet). 1u = your bankroll. ROI = P&amp;L ÷ Stakes.
       </p>
@@ -646,7 +495,7 @@ function DailyBettingHistory({ rows }: { rows: ModelEvaluation[] }) {
           </TableRow>
         </TableHeader>
         <TableBody>
-          {visible.map((d) => {
+          {paged.visible.map((d) => {
             const bets =
               (d.ml_predictions ?? 0) +
               (d.run_line_predictions ?? 0) +
@@ -655,9 +504,9 @@ function DailyBettingHistory({ rows }: { rows: ModelEvaluation[] }) {
               d.roi == null
                 ? ""
                 : d.roi > 0
-                ? "text-emerald-500"
+                ? "text-positive"
                 : d.roi < 0
-                ? "text-rose-500"
+                ? "text-negative"
                 : "";
             return (
               <TableRow key={d.date}>
@@ -669,13 +518,13 @@ function DailyBettingHistory({ rows }: { rows: ModelEvaluation[] }) {
                   {bets}
                 </TableCell>
                 <TableCell className="text-right font-mono tabular-nums">
-                  {fmt(d.total_staked_units, 2)}u
+                  {formatNumber(d.total_staked_units, 2)}u
                 </TableCell>
                 <TableCell className="text-right font-mono tabular-nums">
-                  {fmtSigned(d.net_profit_units)}u
+                  {formatSigned(d.net_profit_units, 2)}u
                 </TableCell>
                 <TableCell className={`text-right font-mono tabular-nums ${roiClass}`}>
-                  {pct(d.roi)}
+                  {formatPct(d.roi)}
                 </TableCell>
               </TableRow>
             );

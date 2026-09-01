@@ -2,55 +2,93 @@
 
 import { useMemo, useState } from "react";
 import type { PosteriorSkill } from "@/lib/types";
+import { EMPTY, formatNumber } from "@/lib/utils";
+import { ToggleGroup } from "@/components/toggle-group";
 import {
   Table,
   TableBody,
+  TableCaption,
   TableCell,
   TableHead,
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
 
-interface Props {
-  skills: PosteriorSkill[];
+const TABS = [
+  { key: "bat_rhp", label: "Batters vs RHP", actor_type: "batter", split_label: "vs_rhp" },
+  { key: "bat_lhp", label: "Batters vs LHP", actor_type: "batter", split_label: "vs_lhp" },
+  { key: "sp", label: "Starting Pitchers", actor_type: "pitcher", split_label: "sp" },
+  { key: "rp", label: "Relief Pitchers", actor_type: "pitcher", split_label: "rp" },
+] as const;
+
+type TabKey = (typeof TABS)[number]["key"];
+
+function SkillTable({
+  title,
+  rows,
+  heading,
+  valueLabel,
+}: {
+  title: string;
+  rows: PosteriorSkill[];
+  heading: string;
+  valueLabel: string;
+}) {
+  return (
+    <div>
+      <h3 className="mb-2 font-mono text-sm uppercase tracking-wider text-muted-foreground">
+        {title}
+      </h3>
+      {rows.length > 0 ? (
+        <Table>
+          <TableCaption className="sr-only">{title}</TableCaption>
+          <TableHeader>
+            <TableRow>
+              <TableHead className="w-8">#</TableHead>
+              <TableHead>{heading}</TableHead>
+              <TableHead>Team</TableHead>
+              <TableHead className="text-right">{valueLabel}</TableHead>
+            </TableRow>
+          </TableHeader>
+          <TableBody>
+            {rows.map((r) => (
+              <TableRow key={`${r.rank}-${r.actor_id}`}>
+                <TableCell className="font-mono text-muted-foreground">{r.rank}</TableCell>
+                <TableCell className="font-medium">
+                  {r.actor_name || `id ${r.actor_id}`}
+                </TableCell>
+                <TableCell className="text-muted-foreground">{r.team || EMPTY}</TableCell>
+                <TableCell className="text-right font-mono tabular-nums">
+                  {formatNumber(r.skill_score, 3)}
+                </TableCell>
+              </TableRow>
+            ))}
+          </TableBody>
+        </Table>
+      ) : (
+        <p className="text-sm text-muted-foreground">No data.</p>
+      )}
+    </div>
+  );
 }
 
-type Tab = {
-  key: string;
-  label: string;
-  actor_type: "batter" | "pitcher";
-  split_label: string;
-  // For batters, higher xwOBA = better. For pitchers, lower xwOBA allowed = better.
-  invertSort: boolean;
-};
+export function TopSkillsLeaderboard({ skills }: { skills: PosteriorSkill[] }) {
+  const [tabKey, setTabKey] = useState<TabKey>("bat_rhp");
+  const tab = TABS.find((t) => t.key === tabKey) ?? TABS[0];
 
-const TABS: Tab[] = [
-  { key: "bat_rhp", label: "Batters vs RHP", actor_type: "batter", split_label: "vs_rhp", invertSort: false },
-  { key: "bat_lhp", label: "Batters vs LHP", actor_type: "batter", split_label: "vs_lhp", invertSort: false },
-  { key: "sp", label: "Starting Pitchers", actor_type: "pitcher", split_label: "sp", invertSort: true },
-  { key: "rp", label: "Relief Pitchers", actor_type: "pitcher", split_label: "rp", invertSort: true },
-];
-
-function fmtScore(v: number): string {
-  return v.toFixed(3);
-}
-
-export function TopSkillsLeaderboard({ skills }: Props) {
-  const [tabKey, setTabKey] = useState<string>("bat_rhp");
-  const tab = TABS.find((t) => t.key === tabKey)!;
-
-  const { topRows, bottomRows } = useMemo(() => {
+  const { best, worst } = useMemo(() => {
     const subset = skills.filter(
-      (s) => s.actor_type === tab.actor_type && s.split_label === tab.split_label,
+      (s) => s.actor_type === tab.actor_type && s.split_label === tab.split_label
     );
-    // For pitchers, "top" in the table means "best at preventing wOBA" = lowest
-    // xwOBA allowed. In the DB we always ranked by ascending xwOBA so rank_type
-    // 'top' = highest skill_score (best batter; worst pitcher). Swap for pitchers.
-    const topKey = tab.invertSort ? "bottom" : "top";
-    const bottomKey = tab.invertSort ? "top" : "bottom";
-    const top = subset.filter((s) => s.rank_type === topKey).sort((a, b) => a.rank - b.rank);
-    const bot = subset.filter((s) => s.rank_type === bottomKey).sort((a, b) => a.rank - b.rank);
-    return { topRows: top, bottomRows: bot };
+    // The database ranks by ascending xwOBA, so rank_type "top" is the highest
+    // skill score: the best batter but the worst pitcher. Swap for pitchers.
+    const invert = tab.actor_type === "pitcher";
+    const bestKey = invert ? "bottom" : "top";
+    const byRank = (a: PosteriorSkill, b: PosteriorSkill) => a.rank - b.rank;
+    return {
+      best: subset.filter((s) => s.rank_type === bestKey).sort(byRank),
+      worst: subset.filter((s) => s.rank_type !== bestKey).sort(byRank),
+    };
   }, [skills, tab]);
 
   const heading = tab.actor_type === "batter" ? "Hitter" : "Pitcher";
@@ -58,88 +96,17 @@ export function TopSkillsLeaderboard({ skills }: Props) {
 
   return (
     <div>
-      <div className="mb-4 flex flex-wrap items-center justify-between gap-2">
-        <div className="inline-flex rounded-sm border border-border p-0.5 text-xs font-mono">
-          {TABS.map((t) => (
-            <button
-              key={t.key}
-              type="button"
-              onClick={() => setTabKey(t.key)}
-              className={`px-3 py-1 transition-colors ${
-                tabKey === t.key
-                  ? "bg-foreground text-background"
-                  : "text-muted-foreground hover:text-foreground"
-              }`}
-            >
-              {t.label}
-            </button>
-          ))}
-        </div>
-      </div>
-
+      <ToggleGroup
+        variant="pill"
+        label="Skill leaderboard split"
+        options={TABS}
+        value={tabKey}
+        onChange={setTabKey}
+        className="mb-4"
+      />
       <div className="grid gap-6 sm:grid-cols-2">
-        <div>
-          <h3 className="mb-2 text-sm font-mono uppercase tracking-wider text-muted-foreground">
-            Best {heading}s
-          </h3>
-          {topRows.length > 0 ? (
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead className="w-8">#</TableHead>
-                  <TableHead>{heading}</TableHead>
-                  <TableHead>Team</TableHead>
-                  <TableHead className="text-right">{valueLabel}</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {topRows.map((r) => (
-                  <TableRow key={`top-${r.rank}-${r.actor_id}`}>
-                    <TableCell className="font-mono text-muted-foreground">{r.rank}</TableCell>
-                    <TableCell className="font-medium">{r.actor_name || `id ${r.actor_id}`}</TableCell>
-                    <TableCell className="text-muted-foreground">{r.team || "-"}</TableCell>
-                    <TableCell className="text-right font-mono tabular-nums">
-                      {fmtScore(r.skill_score)}
-                    </TableCell>
-                  </TableRow>
-                ))}
-              </TableBody>
-            </Table>
-          ) : (
-            <p className="text-sm text-muted-foreground">No data.</p>
-          )}
-        </div>
-        <div>
-          <h3 className="mb-2 text-sm font-mono uppercase tracking-wider text-muted-foreground">
-            Worst {heading}s
-          </h3>
-          {bottomRows.length > 0 ? (
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead className="w-8">#</TableHead>
-                  <TableHead>{heading}</TableHead>
-                  <TableHead>Team</TableHead>
-                  <TableHead className="text-right">{valueLabel}</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {bottomRows.map((r) => (
-                  <TableRow key={`bot-${r.rank}-${r.actor_id}`}>
-                    <TableCell className="font-mono text-muted-foreground">{r.rank}</TableCell>
-                    <TableCell className="font-medium">{r.actor_name || `id ${r.actor_id}`}</TableCell>
-                    <TableCell className="text-muted-foreground">{r.team || "-"}</TableCell>
-                    <TableCell className="text-right font-mono tabular-nums">
-                      {fmtScore(r.skill_score)}
-                    </TableCell>
-                  </TableRow>
-                ))}
-              </TableBody>
-            </Table>
-          ) : (
-            <p className="text-sm text-muted-foreground">No data.</p>
-          )}
-        </div>
+        <SkillTable title={`Best ${heading}s`} rows={best} heading={heading} valueLabel={valueLabel} />
+        <SkillTable title={`Worst ${heading}s`} rows={worst} heading={heading} valueLabel={valueLabel} />
       </div>
     </div>
   );

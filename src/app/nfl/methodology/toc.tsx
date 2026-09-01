@@ -42,7 +42,10 @@ export function TableOfContents() {
     <>
       {/* Desktop sidebar */}
       <aside className="hidden lg:block">
-        <nav className="sticky top-6 flex flex-col gap-0.5">
+        <nav
+          aria-label="On this page"
+          className="sticky top-6 flex flex-col gap-0.5"
+        >
           <p className="mb-2 font-mono text-xs uppercase tracking-wider text-muted-foreground">
             Contents
           </p>
@@ -50,6 +53,7 @@ export function TableOfContents() {
             <a
               key={id}
               href={`#${id}`}
+              aria-current={activeId === id ? "true" : undefined}
               className={`border-l-2 py-1 pl-3 font-mono text-xs uppercase tracking-wider transition-colors ${
                 activeId === id
                   ? "border-foreground text-foreground"
@@ -64,11 +68,12 @@ export function TableOfContents() {
 
       {/* Mobile horizontal strip */}
       <div className="lg:hidden mb-6 overflow-x-auto border-b border-border pb-3">
-        <nav className="flex gap-0 min-w-max">
+        <nav aria-label="On this page" className="flex gap-0 min-w-max">
           {sections.map(({ id, label }) => (
             <a
               key={id}
               href={`#${id}`}
+              aria-current={activeId === id ? "true" : undefined}
               className={`border-b-2 px-3 py-1.5 font-mono text-xs uppercase tracking-wider whitespace-nowrap transition-colors ${
                 activeId === id
                   ? "border-foreground text-foreground"

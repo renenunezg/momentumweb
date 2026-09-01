@@ -3,6 +3,7 @@ import { SiteHeader } from "@/components/site-header";
 import { fetchFullBetLedger } from "@/lib/bet-ledger";
 import { aggregateLedger } from "@/lib/betting-aggs";
 import { supabaseCfb, supabaseNfl } from "@/lib/supabase";
+import { formatSigned } from "@/lib/utils";
 import { posts } from "./blog/posts";
 
 export const revalidate = 300;
@@ -31,14 +32,6 @@ async function getMlbHeadline(): Promise<MlbHeadline | null> {
     // degrades to a plain link.
     return null;
   }
-}
-
-function signed(value: number, decimals: number): string {
-  const rounded = Number(value.toFixed(decimals));
-  const text = Math.abs(rounded).toFixed(decimals);
-  if (rounded > 0) return `+${text}`;
-  if (rounded < 0) return `-${text}`;
-  return text;
 }
 
 type CfbHeadline = {
@@ -161,8 +154,7 @@ export default async function Home() {
   return (
     <>
       <SiteHeader />
-      <main className="mx-auto w-full max-w-3xl min-w-0 px-4 py-10">
-        {/* Hero */}
+      <main id="main" className="mx-auto w-full max-w-3xl min-w-0 px-4 py-10">
         <section>
           <h1 className="font-heading text-3xl tracking-tight">
             Ren&eacute; N&uacute;&ntilde;ez
@@ -173,7 +165,6 @@ export default async function Home() {
           </p>
         </section>
 
-        {/* Models */}
         <section className="mt-10">
           <h2 className="font-mono text-xs uppercase tracking-wider text-muted-foreground mb-3">
             Models
@@ -209,7 +200,7 @@ export default async function Home() {
                     ROI
                   </p>
                   <p className="mt-0.5 font-mono text-sm tabular-nums">
-                    {mlb.roi != null ? `${signed(mlb.roi * 100, 1)}%` : "–"}
+                    {mlb.roi != null ? `${formatSigned(mlb.roi * 100, 1)}%` : "–"}
                   </p>
                 </div>
                 <div>
@@ -225,7 +216,7 @@ export default async function Home() {
                     Net units
                   </p>
                   <p className="mt-0.5 font-mono text-sm tabular-nums">
-                    {signed(mlb.netUnits, 1)}u
+                    {formatSigned(mlb.netUnits, 1)}u
                   </p>
                 </div>
                 <p className="ml-auto self-end font-mono text-xs text-muted-foreground">
@@ -378,7 +369,6 @@ export default async function Home() {
           </div>
         </section>
 
-        {/* Latest writing */}
         <section className="mt-10">
           <div className="flex items-baseline justify-between gap-4 mb-3">
             <h2 className="font-mono text-xs uppercase tracking-wider text-muted-foreground">
