@@ -1,4 +1,5 @@
 import { createClient } from "@supabase/supabase-js";
+import type { Database } from "@/lib/database.types";
 
 // These clients are anon and read-only: nothing here ever signs a user in, so
 // there is no session to persist or refresh, and no auth timers are wanted.
@@ -17,22 +18,23 @@ function anonAuth(sport: string) {
   } as const;
 }
 
+const url = process.env.NEXT_PUBLIC_SUPABASE_URL!;
+const anonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!;
+
 // One client per sport schema: the schema is fixed at construction, so each
-// sport section imports its own pinned client.
-export const supabase = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
-  { db: { schema: "mlb" }, auth: anonAuth("mlb") }
-);
+// sport section imports its own pinned client and table names are checked
+// against the generated types at compile time.
+export const supabase = createClient<Database, "mlb">(url, anonKey, {
+  db: { schema: "mlb" },
+  auth: anonAuth("mlb"),
+});
 
-export const supabaseCfb = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
-  { db: { schema: "cfb" }, auth: anonAuth("cfb") }
-);
+export const supabaseCfb = createClient<Database, "cfb">(url, anonKey, {
+  db: { schema: "cfb" },
+  auth: anonAuth("cfb"),
+});
 
-export const supabaseNfl = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
-  { db: { schema: "nfl" }, auth: anonAuth("nfl") }
-);
+export const supabaseNfl = createClient<Database, "nfl">(url, anonKey, {
+  db: { schema: "nfl" },
+  auth: anonAuth("nfl"),
+});

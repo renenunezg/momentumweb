@@ -1,4 +1,5 @@
 import { supabase } from "@/lib/supabase";
+import type { Tables } from "@/lib/database.types";
 import type { ModelOutput, GameMatchup, GameInfo } from "@/lib/types";
 import { GamesLive } from "@/components/games-live";
 import { SummaryStats } from "@/components/summary-stats";
@@ -12,6 +13,13 @@ import type { LiveScore } from "@/app/mlb/api/live-scores/route";
 // snapshot from an earlier scoring pass. Live scores still come from the
 // client poll in GamesLive.
 export const dynamic = "force-dynamic";
+
+interface MlbScheduleGame {
+  gamePk: number;
+  status?: { detailedState?: string; abstractGameState?: string };
+  teams?: { home?: { score?: number }; away?: { score?: number } };
+  linescore?: { currentInning?: number; inningState?: string };
+}
 
 async function fetchLiveScores(): Promise<Map<number, LiveScore>> {
   const today = new Date().toLocaleDateString("en-CA", {
@@ -28,11 +36,10 @@ async function fetchLiveScores(): Promise<Map<number, LiveScore>> {
     });
     if (!res.ok) return new Map();
     const data = await res.json();
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const games: any[] = data?.dates?.[0]?.games ?? [];
+    const games: MlbScheduleGame[] = data?.dates?.[0]?.games ?? [];
     return new Map(
       games.map((g) => [
-        g.gamePk as number,
+        g.gamePk,
         {
           game_pk: g.gamePk,
           status: g.status?.detailedState ?? null,
@@ -41,7 +48,7 @@ async function fetchLiveScores(): Promise<Map<number, LiveScore>> {
           away_score: g.teams?.away?.score ?? null,
           current_inning: g.linescore?.currentInning ?? null,
           inning_state: g.linescore?.inningState ?? null,
-        } as LiveScore,
+        },
       ])
     );
   } catch {
@@ -49,12 +56,27 @@ async function fetchLiveScores(): Promise<Map<number, LiveScore>> {
   }
 }
 
+type ModelOutputRow = Tables<"mlb", "model_outputs">;
+
+// The scorer writes the projection, win probability and play flags together;
+// a row missing any of them is half-written and must not render as a pick.
+function isPick(row: ModelOutputRow): row is ModelOutputRow & ModelOutput {
+  return (
+    row.expected_runs != null &&
+    row.win_prob != null &&
+    row.total_play != null &&
+    row.ev_flag != null &&
+    row.run_line_ev_flag != null &&
+    row.high_variance_flag != null
+  );
+}
+
 export default async function Page() {
   const today = new Date().toLocaleDateString("en-CA", {
     timeZone: "America/Los_Angeles",
-  }); // "YYYY-MM-DD"
+  });
 
-  const [{ data: predictions }, { data: allGames }, { data: latest }, liveScores] = await Promise.all([
+  const [{ data: outputs }, { data: allGames }, { data: latest }, liveScores] = await Promise.all([
     supabase.from("model_outputs").select("*").eq("date", today).order("game_pk"),
     supabase
       .from("games")
@@ -71,16 +93,17 @@ export default async function Page() {
   ]);
 
   const lastUpdated: string | null = latest?.[0]?.updated_at ?? null;
+  const predictions = (outputs ?? []).filter(isPick);
 
   // Eval-on-final (score writeback + model_evaluation upsert) runs off the
-  // render path: GamesLive POSTs /api/eval-game for every Final game on mount.
-  // Keeping it out of the server render avoids blocking first paint on slow
-  // MLB API calls + full-season scans. Picks are unaffected (read fresh above);
-  // the freeze invariant lives in the Python scorer, not here.
+  // render path: GamesLive POSTs /mlb/api/eval-game for every Final game on
+  // mount. Keeping it out of the server render avoids blocking first paint on
+  // slow MLB API calls and full-season scans. Picks are unaffected (read fresh
+  // above); the freeze invariant lives in the Python scorer, not here.
 
-  if ((!predictions || predictions.length === 0) && (!allGames || allGames.length === 0)) {
+  if (predictions.length === 0 && (!allGames || allGames.length === 0)) {
     return (
-      <main className="mx-auto w-full min-w-0 max-w-6xl px-4 py-8">
+      <main id="main" className="mx-auto w-full min-w-0 max-w-6xl px-4 py-8">
         <h1 className="font-heading text-2xl tracking-tight">
           Today&apos;s Games
         </h1>
@@ -92,21 +115,16 @@ export default async function Page() {
     );
   }
 
-  const predictionPks = new Set((predictions ?? []).map((p: ModelOutput) => p.game_pk));
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const gameMap = new Map((allGames ?? []).map((g: any) => [g.game_pk, g]));
+  const predictionPks = new Set(predictions.map((p) => p.game_pk));
+  const gameMap = new Map((allGames ?? []).map((g) => [g.game_pk, g]));
 
-  const matchups: GameMatchup[] = (predictions ?? [])
-    .reduce((acc: number[], p: ModelOutput) => {
-      if (!acc.includes(p.game_pk)) acc.push(p.game_pk);
-      return acc;
-    }, [])
-    .map((pk: number) => {
+  const matchups: GameMatchup[] = [...predictionPks]
+    .map((pk): GameMatchup | null => {
       const game = gameMap.get(pk);
       if (!game) return null;
-      const rows = (predictions ?? []).filter((p: ModelOutput) => p.game_pk === pk);
-      const away = rows.find((r: ModelOutput) => r.team === game.away_team);
-      const home = rows.find((r: ModelOutput) => r.team === game.home_team);
+      const rows = predictions.filter((p) => p.game_pk === pk);
+      const away = rows.find((r) => r.team === game.away_team);
+      const home = rows.find((r) => r.team === game.home_team);
       if (!away || !home) return null;
       const live = liveScores.get(pk);
       return {
@@ -125,12 +143,11 @@ export default async function Page() {
         inning_state: live?.inning_state ?? null,
       };
     })
-    .filter(Boolean) as GameMatchup[];
+    .filter((m): m is GameMatchup => m != null);
 
   const unavailableGames: GameInfo[] = (allGames ?? []).filter(
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    (g: any) => !predictionPks.has(g.game_pk)
-  ) as GameInfo[];
+    (g) => !predictionPks.has(g.game_pk)
+  );
 
   const hasAnyPlay = (m: GameMatchup) =>
     m.away.ev_flag !== "No Play" ||
@@ -159,7 +176,7 @@ export default async function Page() {
   });
 
   return (
-    <main className="mx-auto w-full min-w-0 max-w-6xl px-4 py-8">
+    <main id="main" className="mx-auto w-full min-w-0 max-w-6xl px-4 py-8">
       <div className="mb-6 flex items-start justify-between gap-4">
         <div>
           <h1 className="font-heading text-2xl tracking-tight">

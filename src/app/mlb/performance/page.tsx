@@ -15,8 +15,7 @@ import { RealtimeRefresh } from "@/components/realtime-refresh";
 export const revalidate = 300;
 
 export default async function PerformancePage() {
-  // Fetch all data in parallel
-  const [evalRes, calRes, edgeRes, residRes, latestRes, skillsRes, sigmasRes, ledgerRes] = await Promise.all([
+  const [evalRes, calRes, edgeRes, residRes, latestRes, skillsRes, sigmasRes, ledger] = await Promise.all([
     supabase
       .from("model_evaluation")
       .select("*")
@@ -52,7 +51,9 @@ export default async function PerformancePage() {
       .select("*")
       .order("refit_date", { ascending: false })
       .limit(20),
-    fetchFullBetLedger(),
+    // The betting tab degrades to empty KPIs if the ledger view is unreachable;
+    // the rest of the page must still render.
+    fetchFullBetLedger().catch(() => []),
   ]);
 
   const evaluations = (evalRes.data ?? []) as ModelEvaluation[];
@@ -61,11 +62,10 @@ export default async function PerformancePage() {
   const edgeBuckets = (edgeRes.data ?? []) as EdgeBucket[];
   const posteriorSkills = (skillsRes.data ?? []) as PosteriorSkill[];
   const posteriorSigmas = (sigmasRes.data ?? []) as PosteriorSigma[];
-  const ledger = ledgerRes;
   const liveKpis = aggregateLedger(ledger);
 
-  // Residuals: fetch model_outputs_season for graded game_pks and join client-side.
-  // PostgREST embedded !inner requires an FK constraint, which these tables lack.
+  // Residuals join predictions to graded games here rather than in PostgREST:
+  // an embedded !inner needs an FK constraint, which these tables lack.
   type FinalGame = {
     game_pk: number;
     home_team: string;
@@ -83,8 +83,8 @@ export default async function PerformancePage() {
       .in("game_pk", finalGames.map((g) => g.game_pk));
 
     residuals = (predRes.data ?? [])
-      .map((r: { game_pk: number; team: string; expected_runs: number | null }) => {
-        const g = gameByPk.get(r.game_pk);
+      .map((r) => {
+        const g = r.game_pk != null ? gameByPk.get(r.game_pk) : undefined;
         if (!g || r.expected_runs == null) return null;
         const actual = r.team === g.home_team ? g.home_score : g.away_score;
         if (actual == null) return null;
@@ -95,7 +95,7 @@ export default async function PerformancePage() {
 
   if (evaluations.length === 0) {
     return (
-      <main className="mx-auto w-full max-w-5xl min-w-0 px-4 py-8">
+      <main id="main" className="mx-auto w-full max-w-5xl min-w-0 px-4 py-8">
         <h1 className="font-heading text-2xl tracking-tight">
           Model Performance
         </h1>
@@ -108,7 +108,7 @@ export default async function PerformancePage() {
   }
 
   return (
-    <main className="mx-auto w-full max-w-5xl min-w-0 px-4 py-8 space-y-6">
+    <main id="main" className="mx-auto w-full max-w-5xl min-w-0 px-4 py-8 space-y-6">
       <div className="flex items-start justify-between gap-4">
         <h1 className="font-heading text-2xl tracking-tight">
           Model Performance

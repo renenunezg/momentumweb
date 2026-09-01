@@ -1,11 +1,5 @@
 import { Fragment } from "react";
-import {
-  cn,
-  formatRuns,
-  formatPct,
-  formatOdds,
-  formatConfidence,
-} from "@/lib/utils";
+import { cn, formatNumber, formatOdds, formatPct } from "@/lib/utils";
 import type { GameMatchup, ModelOutput } from "@/lib/types";
 import { gameStatus } from "@/lib/game-status";
 import {
@@ -15,6 +9,7 @@ import {
   TableHead,
   TableRow,
   TableCell,
+  TableCaption,
 } from "@/components/ui/table";
 import { EvBadge } from "@/components/ev-badge";
 import { TeamLogo } from "@/components/team-logo";
@@ -48,16 +43,18 @@ function TeamRow({
           <span className={cn("font-semibold tracking-wide", hasEvPlay && "text-positive")}>
             {prediction.team}
           </span>
-          {score != null && (
-            <span className="font-semibold tabular-nums">{score}</span>
-          )}
+          <span aria-live="polite" className="contents">
+            {score != null && (
+              <span className="font-semibold tabular-nums">{score}</span>
+            )}
+          </span>
         </div>
         <span className="mt-0.5 block font-sans text-xs leading-tight text-muted-foreground">
           {prediction.starter ?? "TBD"}
         </span>
       </TableCell>
       <TableCell className="text-right tabular-nums">
-        {formatRuns(prediction.expected_runs)}
+        {formatNumber(prediction.expected_runs)}
       </TableCell>
       <TableCell className="text-right tabular-nums">
         {formatPct(prediction.win_prob)}
@@ -72,7 +69,7 @@ function TeamRow({
               : "text-muted-foreground"
         )}
       >
-        {formatConfidence(confidence)}
+        {formatPct(confidence)}
       </TableCell>
       <TableCell className="text-right tabular-nums">
         <span>{formatOdds(prediction.our_odds)}</span>
@@ -91,6 +88,9 @@ function TeamRow({
 export function GamesTable({ matchups }: { matchups: GameMatchup[] }) {
   return (
     <Table>
+      <TableCaption className="sr-only">
+        Today&apos;s games with model picks and live scores
+      </TableCaption>
       <TableHeader>
         <TableRow>
           <TableHead>Team</TableHead>
@@ -126,21 +126,23 @@ export function GamesTable({ matchups }: { matchups: GameMatchup[] }) {
                       >
                         {matchup.away_team} @ {matchup.home_team}
                       </span>
-                      {status.isFinal && (
-                        <span className="text-[10px] uppercase tracking-wider text-muted-foreground">
-                          Final
-                        </span>
-                      )}
-                      {status.isLive && (
-                        <span className="text-[10px] uppercase tracking-wider text-positive">
-                          {status.liveLabel}
-                        </span>
-                      )}
-                      {status.lineupsPending && (
-                        <span className="text-[10px] uppercase tracking-wider text-muted-foreground">
-                          Lineups pending
-                        </span>
-                      )}
+                      <span aria-live="polite" className="contents">
+                        {status.isFinal && (
+                          <span className="text-[10px] uppercase tracking-wider text-muted-foreground">
+                            Final
+                          </span>
+                        )}
+                        {status.isLive && (
+                          <span className="text-[10px] uppercase tracking-wider text-positive">
+                            {status.liveLabel}
+                          </span>
+                        )}
+                        {status.lineupsPending && (
+                          <span className="text-[10px] uppercase tracking-wider text-muted-foreground">
+                            Lineups pending
+                          </span>
+                        )}
+                      </span>
                     </div>
                     <span className="min-w-0 text-xs font-normal text-muted-foreground">
                       {matchup.venue && <>{matchup.venue} &middot; </>}

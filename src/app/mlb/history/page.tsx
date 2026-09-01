@@ -1,6 +1,7 @@
 import { supabase } from "@/lib/supabase";
-import { ModelOutput } from "@/lib/types";
-import { cn, formatDate, formatOdds, formatRuns, formatPct } from "@/lib/utils";
+import type { Tables } from "@/lib/database.types";
+import type { Narrow } from "@/lib/types";
+import { EMPTY, cn, formatDate, formatNumber, formatOdds, formatPct, pageNumber } from "@/lib/utils";
 import { V2_CUTOVER_DATE } from "@/lib/constants";
 import { V2Badge } from "@/components/v2-badge";
 import Filters from "@/components/filters";
@@ -50,15 +51,19 @@ function TeamCell({ team }: { team: string }) {
   );
 }
 
-// Extra columns the unified view carries from its games join, so row-level
-// results render without a follow-up query per page.
-type HistoryRow = ModelOutput & {
-  game_status: string | null;
-  home_team: string | null;
-  away_team: string | null;
-  home_score: number | null;
-  away_score: number | null;
-};
+// The unified view joins games onto both model output tables, so row-level
+// results render without a follow-up query per page. A view reports every
+// column nullable; the keys and play flags are always written.
+type HistoryRow = Narrow<
+  Tables<"mlb", "model_outputs_season_unified">,
+  {
+    game_pk: number;
+    team: string;
+    ev_flag: string;
+    run_line_ev_flag: string;
+    total_play: string;
+  }
+>;
 
 type BetRecord = { bet_type: string; wins: number; losses: number };
 
@@ -73,7 +78,7 @@ export default async function HistoryPage({
   const from = params.from ?? "";
   const to = params.to ?? "";
   const period = params.period ?? "7";
-  const page = Math.max(1, parseInt(params.page ?? "1", 10));
+  const page = pageNumber(params.page);
   const offset = (page - 1) * PAGE_SIZE;
 
   // 7D / 30D quick-filter applies a date floor to both the table and the
@@ -133,7 +138,7 @@ export default async function HistoryPage({
 
   const lastUpdated: string | null = latest?.[0]?.updated_at ?? null;
 
-  const predictions: HistoryRow[] = rows ?? [];
+  const predictions = (rows ?? []) as HistoryRow[];
   const totalRows = count ?? 0;
   const totalPages = Math.max(1, Math.ceil(totalRows / PAGE_SIZE));
 
@@ -160,7 +165,6 @@ export default async function HistoryPage({
     return `${w}-${l} (${pct}%)`;
   }
 
-  // Build current search params string for pagination links
   function pageUrl(p: number) {
     const sp = new URLSearchParams();
     if (team) sp.set("team", team);
@@ -168,11 +172,11 @@ export default async function HistoryPage({
     if (to) sp.set("to", to);
     if (period) sp.set("period", period);
     sp.set("page", String(p));
-    return `/history?${sp.toString()}`;
+    return `/mlb/history?${sp.toString()}`;
   }
 
   return (
-    <main className="mx-auto w-full max-w-6xl min-w-0 px-4 py-8 space-y-6">
+    <main id="main" className="mx-auto w-full max-w-6xl min-w-0 px-4 py-8 space-y-6">
       <RealtimeRefresh tables={["games", "model_outputs_season"]} />
       <div className="flex items-start justify-between gap-4">
         <h1 className="font-heading text-2xl tracking-tight">Season History</h1>
@@ -314,13 +318,13 @@ export default async function HistoryPage({
                     {showV2Badge ? <V2Badge /> : null}
                   </TableCell>
                   <TeamCell team={row.team} />
-                  <TableCell>{row.starter ?? "-"}</TableCell>
-                  <TableCell className="text-right">{formatRuns(row.expected_runs)}</TableCell>
+                  <TableCell>{row.starter ?? EMPTY}</TableCell>
+                  <TableCell className="text-right">{formatNumber(row.expected_runs)}</TableCell>
                   <TableCell className="text-right">{formatPct(row.win_prob)}</TableCell>
                   <TableCell className="text-right">{formatOdds(row.our_odds)}</TableCell>
                   <TableCell className="text-right">{formatOdds(row.moneyline)}</TableCell>
                   <TableCell className="text-right tabular-nums">
-                    {isFinal && teamScore != null ? `${teamScore}` : "-"}
+                    {isFinal && teamScore != null ? `${teamScore}` : EMPTY}
                   </TableCell>
                   <TableCell className="text-center">
                     {won != null ? (
@@ -333,22 +337,22 @@ export default async function HistoryPage({
                         {won ? "W" : "L"}
                       </span>
                     ) : (
-                      "-"
+                      EMPTY
                     )}
                   </TableCell>
                   <TableCell className="text-center">
                     <span className={cellClass(mlWon, mlIsPlay)}>
-                      {mlIsPlay ? row.ev_flag : "-"}
+                      {mlIsPlay ? row.ev_flag : EMPTY}
                     </span>
                   </TableCell>
                   <TableCell className="text-center">
                     <span className={cellClass(rlWon, rlIsPlay)}>
-                      {rlIsPlay ? row.run_line_ev_flag : "-"}
+                      {rlIsPlay ? row.run_line_ev_flag : EMPTY}
                     </span>
                   </TableCell>
                   <TableCell className="text-center">
                     <span className={cellClass(totalsWon, totalsIsPlay)}>
-                      {totalsIsPlay ? row.total_play : "-"}
+                      {totalsIsPlay ? row.total_play : EMPTY}
                     </span>
                   </TableCell>
                 </TableRow>
