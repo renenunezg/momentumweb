@@ -10,7 +10,7 @@ export const metadata: Metadata = {
 
 export default function BlogPage() {
   return (
-    <main className="mx-auto w-full max-w-3xl min-w-0 px-4 py-8">
+    <main id="main" className="mx-auto w-full max-w-3xl min-w-0 px-4 py-8">
       <h1 className="font-heading text-2xl tracking-tight mb-6">Blog</h1>
       {posts.length === 0 ? (
         <p className="text-sm text-muted-foreground">Nothing published yet.</p>

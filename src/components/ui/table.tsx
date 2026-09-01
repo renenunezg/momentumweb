@@ -70,10 +70,15 @@ function TableRow({ className, ...props }: React.ComponentProps<"tr">) {
   )
 }
 
-function TableHead({ className, ...props }: React.ComponentProps<"th">) {
+function TableHead({
+  className,
+  scope = "col",
+  ...props
+}: React.ComponentProps<"th">) {
   return (
     <th
       data-slot="table-head"
+      scope={scope}
       className={cn(
         "h-8 px-2 py-2 text-left align-middle font-mono text-xs font-normal uppercase tracking-wider whitespace-nowrap text-muted-foreground [&:has([role=checkbox])]:pr-0",
         className

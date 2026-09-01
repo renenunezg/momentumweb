@@ -146,6 +146,10 @@ export function AccuracyChart({ data }: AccuracyChartProps) {
   const [windowDays, setWindow] = useState<WindowDays>(14);
   const points = useMemo(() => rollingAccuracy(data, windowDays), [data, windowDays]);
   const domain = accuracyDomain(points);
+  const range =
+    data.length > 0
+      ? `, ${formatDateLabel(data[0].date)} to ${formatDateLabel(data[data.length - 1].date)}`
+      : "";
   const [isolated, setIsolated] = useState<SeriesKey | null>(null);
   const isHidden = (key: SeriesKey) => isolated !== null && isolated !== key;
   const handleLegendClick = (entry: { dataKey?: string | number | ((obj: unknown) => unknown) }) => {
@@ -180,6 +184,10 @@ export function AccuracyChart({ data }: AccuracyChartProps) {
           ))}
         </div>
       </div>
+      <div
+        role="img"
+        aria-label={`Rolling ${windowDays}-day accuracy for moneyline, run line, totals, and overall picks by day${range}`}
+      >
       <ResponsiveContainer width="100%" height={400}>
         <LineChart
           data={points}
@@ -237,6 +245,7 @@ export function AccuracyChart({ data }: AccuracyChartProps) {
         ))}
         </LineChart>
       </ResponsiveContainer>
+      </div>
     </div>
   );
 }

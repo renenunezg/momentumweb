@@ -20,7 +20,10 @@ export function SiteHeader() {
           </Link>
           <HeaderDate />
         </div>
-        <div className="flex w-full items-center gap-1 overflow-x-auto sm:w-auto sm:overflow-visible">
+        <nav
+          aria-label="Primary"
+          className="flex w-full items-center gap-1 overflow-x-auto sm:w-auto sm:overflow-visible"
+        >
           {links.map((link) => (
             <Link
               key={link.href}
@@ -31,7 +34,7 @@ export function SiteHeader() {
             </Link>
           ))}
           <ThemeToggle />
-        </div>
+        </nav>
       </div>
     </header>
   );

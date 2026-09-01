@@ -56,8 +56,14 @@ export function VarianceDecompositionChart({ data }: VarianceDecompositionChartP
   return (
     <div>
       <p className="text-xs text-muted-foreground mb-3 font-mono">
-        Posterior sigma (logit scale) as of {latestDate}. Bars show posterior mean; whiskers show 10th-90th percentile.
+        Posterior sigma (logit scale) as of {latestDate}. Bars show posterior mean; whiskers show 10th–90th percentile.
       </p>
+      <div
+        role="img"
+        aria-label={`Posterior sigma by component as of ${latestDate}: ${chartData
+          .map((d) => `${d.name} ${d.mean.toFixed(2)}`)
+          .join(", ")}`}
+      >
       <ResponsiveContainer width="100%" height={Math.max(160, chartData.length * 48)}>
         <BarChart
           data={chartData}
@@ -99,6 +105,7 @@ export function VarianceDecompositionChart({ data }: VarianceDecompositionChartP
           </Bar>
         </BarChart>
       </ResponsiveContainer>
+      </div>
     </div>
   );
 }

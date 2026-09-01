@@ -30,8 +30,16 @@ function formatDateLabel(dateStr: string) {
 export function EquityCurveChart({ data }: EquityCurveChartProps) {
   const theme = useChartTheme();
   const axis = chartAxisProps(theme);
+  const range =
+    data.length > 0
+      ? `, ${formatDateLabel(data[0].date)} to ${formatDateLabel(data[data.length - 1].date)}`
+      : "";
 
   return (
+    <div
+      role="img"
+      aria-label={`Cumulative equity in units by day against a 1 unit break-even line${range}`}
+    >
     <ResponsiveContainer width="100%" height={350}>
       <AreaChart data={data} margin={{ top: 8, right: 16, left: 8, bottom: 8 }}>
         <CartesianGrid vertical={false} stroke={theme.grid} strokeWidth={1} />
@@ -68,5 +76,6 @@ export function EquityCurveChart({ data }: EquityCurveChartProps) {
         />
       </AreaChart>
     </ResponsiveContainer>
+    </div>
   );
 }

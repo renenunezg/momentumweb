@@ -41,6 +41,7 @@ export default function Filters() {
   return (
     <div className="flex flex-wrap items-center gap-3 font-mono text-xs">
       <select
+        aria-label="Filter by team"
         value={team}
         onChange={(e) => updateParam("team", e.target.value)}
         className="h-8 border border-input bg-transparent px-2"
@@ -77,6 +78,8 @@ export default function Filters() {
         {(["7", "30", "all"] as const).map((p) => (
           <button
             key={p}
+            type="button"
+            aria-pressed={period === p}
             onClick={() => updateParam("period", p)}
             className={`h-8 px-2.5 border transition-colors ${
               period === p
@@ -91,6 +94,7 @@ export default function Filters() {
 
       {(team || from || to) && (
         <button
+          type="button"
           onClick={clearAll}
           className="text-muted-foreground underline hover:text-foreground transition-colors"
         >

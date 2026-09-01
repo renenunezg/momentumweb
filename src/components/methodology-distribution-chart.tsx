@@ -98,6 +98,10 @@ export function MethodologyDistributionChart({
         </p>
       </div>
 
+      <div
+        role="img"
+        aria-label={`Simulated run distribution for ${away.team} at ${home.team}, ${dateDisplay}: share of simulations by runs scored, with each team's mean marked`}
+      >
       <ResponsiveContainer width="100%" height={280}>
         <BarChart
           data={data}
@@ -188,6 +192,7 @@ export function MethodologyDistributionChart({
           />
         </BarChart>
       </ResponsiveContainer>
+      </div>
 
       <div className="grid grid-cols-1 gap-3 sm:grid-cols-3 text-sm">
         <div className="rounded-sm border border-border p-3">

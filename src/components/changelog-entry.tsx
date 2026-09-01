@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, type ReactNode } from "react";
+import { useId, useState, type ReactNode } from "react";
 
 interface Props {
   date: string;
@@ -11,6 +11,7 @@ interface Props {
 
 export function ChangelogEntry({ date, title, accent = "default", children }: Props) {
   const [open, setOpen] = useState(false);
+  const contentId = useId();
 
   const borderClass =
     accent === "emerald" ? "border-emerald-500/50" : "border-border";
@@ -22,6 +23,7 @@ export function ChangelogEntry({ date, title, accent = "default", children }: Pr
       </p>
       <p className="font-medium mb-1.5">{title}</p>
       <div
+        id={contentId}
         className={`text-muted-foreground leading-relaxed transition-[max-height] duration-200 ${
           open ? "" : "line-clamp-5"
         }`}
@@ -30,6 +32,8 @@ export function ChangelogEntry({ date, title, accent = "default", children }: Pr
       </div>
       <button
         type="button"
+        aria-expanded={open}
+        aria-controls={contentId}
         onClick={() => setOpen((v) => !v)}
         className="mt-1.5 font-mono text-xs uppercase tracking-wider text-muted-foreground hover:text-foreground transition-colors"
       >

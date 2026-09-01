@@ -53,6 +53,10 @@ export function ResidualsChart({ residuals }: ResidualsChartProps) {
         {mean >= 0 ? "+" : ""}
         {mean.toFixed(2)} runs
       </p>
+      <div
+        role="img"
+        aria-label={`Histogram of actual minus predicted runs across ${residuals.length} graded team-games, mean bias ${mean >= 0 ? "+" : ""}${mean.toFixed(2)} runs`}
+      >
       <ResponsiveContainer width="100%" height={300}>
         <BarChart
           data={bins}
@@ -81,6 +85,7 @@ export function ResidualsChart({ residuals }: ResidualsChartProps) {
           <Bar dataKey="count" fill={theme["chart-2"]} />
         </BarChart>
       </ResponsiveContainer>
+      </div>
     </div>
   );
 }

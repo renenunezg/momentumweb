@@ -43,6 +43,12 @@ export default function RootLayout({
       className={`${textSerif.variable} ${geistMono.variable} h-full overflow-x-hidden antialiased`}
     >
       <body className="min-h-full flex flex-col overflow-x-hidden">
+        <a
+          href="#main"
+          className="sr-only focus:not-sr-only focus:fixed focus:left-4 focus:top-4 focus:z-50 focus:rounded-md focus:bg-background focus:px-3 focus:py-2 focus:text-sm focus:ring-2 focus:ring-ring"
+        >
+          Skip to content
+        </a>
         <ThemeProvider
           attribute="class"
           defaultTheme="system"

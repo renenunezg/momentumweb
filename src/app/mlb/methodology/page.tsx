@@ -117,7 +117,7 @@ export default async function Page() {
   const featured = await fetchFeaturedGame();
 
   return (
-    <main className="mx-auto w-full max-w-6xl min-w-0 px-4 py-8">
+    <main id="main" className="mx-auto w-full max-w-6xl min-w-0 px-4 py-8">
       <div className="mb-6">
         <h1 className="font-heading text-2xl tracking-tight">Methodology</h1>
         <p className="mt-1 text-sm text-muted-foreground">

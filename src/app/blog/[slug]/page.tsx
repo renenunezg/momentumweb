@@ -38,7 +38,7 @@ export default async function BlogPostPage({
   if (!post) notFound();
 
   return (
-    <main className="mx-auto w-full max-w-3xl min-w-0 px-4 py-8">
+    <main id="main" className="mx-auto w-full max-w-3xl min-w-0 px-4 py-8">
       <Link
         href="/blog"
         className="font-mono text-xs uppercase tracking-wider text-muted-foreground hover:text-foreground transition-colors"

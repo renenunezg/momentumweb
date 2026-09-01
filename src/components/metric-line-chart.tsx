@@ -41,8 +41,13 @@ export function MetricLineChart({
 }: MetricLineChartProps) {
   const theme = useChartTheme();
   const axis = chartAxisProps(theme);
+  const range =
+    data.length > 0
+      ? `, ${formatDateLabel(data[0].date)} to ${formatDateLabel(data[data.length - 1].date)}`
+      : "";
 
   return (
+    <div role="img" aria-label={`${name} by day${range}`}>
     <ResponsiveContainer width="100%" height={300}>
       <LineChart data={data} margin={{ top: 8, right: 16, left: 8, bottom: 8 }}>
         <CartesianGrid vertical={false} stroke={theme.grid} strokeWidth={1} />
@@ -77,5 +82,6 @@ export function MetricLineChart({
         />
       </LineChart>
     </ResponsiveContainer>
+    </div>
   );
 }

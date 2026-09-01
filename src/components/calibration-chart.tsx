@@ -26,6 +26,10 @@ export function CalibrationChart({ data }: CalibrationChartProps) {
   const axis = chartAxisProps(theme);
 
   return (
+    <div
+      role="img"
+      aria-label={`Calibration: observed win rate against predicted win probability across ${data.length} bins, with the perfect-calibration diagonal for reference`}
+    >
     <ResponsiveContainer width="100%" height={350}>
       <LineChart data={data} margin={{ top: 8, right: 16, left: 8, bottom: 8 }}>
         <CartesianGrid vertical={false} stroke={theme.grid} strokeWidth={1} />
@@ -76,5 +80,6 @@ export function CalibrationChart({ data }: CalibrationChartProps) {
         />
       </LineChart>
     </ResponsiveContainer>
+    </div>
   );
 }
