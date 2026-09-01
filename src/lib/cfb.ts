@@ -1,6 +1,8 @@
 import { supabaseCfb } from "@/lib/supabase";
 import type {
   CfbBacktestPrediction,
+  CfbGradedGame,
+  CfbPerformanceMetric,
   CfbTeamIdentity,
   CfbTeamRating,
   CfbTeamUnitRating,
@@ -132,3 +134,74 @@ export async function fetchFullBacktest(): Promise<CfbBacktestPrediction[]> {
   }
   return all;
 }
+
+export interface CfbLivePerformance {
+  season: number | null;
+  metrics: CfbPerformanceMetric[];
+  gradedGames: number;
+  lastGradedAt: string | null;
+  latestKickoff: string | null;
+}
+
+// Live-season grading for the most recent graded season. Every number here
+// comes from frozen records graded by the backend; the page only formats
+// them. A failure degrades to the empty state rather than failing the build.
+export async function fetchLivePerformance(): Promise<CfbLivePerformance> {
+  const empty: CfbLivePerformance = {
+    season: null,
+    metrics: [],
+    gradedGames: 0,
+    lastGradedAt: null,
+    latestKickoff: null,
+  };
+  const latestRes = await supabaseCfb
+    .from("graded_games")
+    .select("season, graded_at, start_date")
+    .order("season", { ascending: false })
+    .order("graded_at", { ascending: false })
+    .limit(1);
+  const latest = latestRes.data?.[0];
+  if (latestRes.error || !latest) return empty;
+
+  const [metricsRes, countRes, kickoffRes] = await Promise.all([
+    supabaseCfb
+      .from("performance_metrics")
+      .select("*")
+      .eq("season", latest.season)
+      .order("segment_order", { ascending: true }),
+    supabaseCfb
+      .from("graded_games")
+      .select("game_id", { count: "exact", head: true })
+      .eq("season", latest.season),
+    supabaseCfb
+      .from("graded_games")
+      .select("start_date")
+      .eq("season", latest.season)
+      .order("start_date", { ascending: false })
+      .limit(1),
+  ]);
+  if (metricsRes.error) {
+    console.error("cfb performance metrics fetch failed:", metricsRes.error.message);
+    return empty;
+  }
+  return {
+    season: latest.season,
+    metrics: (metricsRes.data ?? []) as CfbPerformanceMetric[],
+    gradedGames: countRes.count ?? 0,
+    lastGradedAt: latest.graded_at,
+    latestKickoff: kickoffRes.data?.[0]?.start_date ?? null,
+  };
+}
+
+// The most recent season with graded live games, used by the history page to
+// decide which tab is live and which are backtest.
+export async function fetchLiveGradedSeason(): Promise<number | null> {
+  const { data } = await supabaseCfb
+    .from("graded_games")
+    .select("season")
+    .order("season", { ascending: false })
+    .limit(1);
+  return data?.[0]?.season ?? null;
+}
+
+export type { CfbGradedGame };

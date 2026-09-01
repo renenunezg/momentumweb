@@ -1,8 +1,8 @@
 import Link from "next/link";
 import { supabaseCfb } from "@/lib/supabase";
-import type { CfbBacktestPrediction } from "@/lib/types";
+import type { CfbBacktestPrediction, CfbGradedGame } from "@/lib/types";
 import { cn } from "@/lib/utils";
-import { formatHomeLine } from "@/lib/cfb";
+import { fetchLiveGradedSeason, formatHomeLine } from "@/lib/cfb";
 import {
   Table,
   TableHeader,
@@ -15,6 +15,43 @@ import {
 export const revalidate = 300;
 
 const PAGE_SIZE = 50;
+const FIRST_BACKTEST_SEASON = 2021;
+
+// Both the live grading record and the frozen backtest render through the
+// same row shape: a home-axis model margin, closing spread, and result.
+interface HistoryRow {
+  game_id: number;
+  season: number;
+  week: number;
+  home_team: string;
+  away_team: string;
+  neutral_site: boolean | null;
+  home_points: number | null;
+  away_points: number | null;
+  closing_spread: number | null;
+  model_margin: number | null;
+  actual_margin: number | null;
+}
+
+function fromBacktest(r: CfbBacktestPrediction): HistoryRow {
+  return r;
+}
+
+function fromGraded(r: CfbGradedGame): HistoryRow {
+  return {
+    game_id: r.game_id,
+    season: r.season,
+    week: r.week,
+    home_team: r.home_team,
+    away_team: r.away_team,
+    neutral_site: r.neutral_site,
+    home_points: r.home_points,
+    away_points: r.away_points,
+    closing_spread: r.closing_spread,
+    model_margin: r.pure_home_margin,
+    actual_margin: r.actual_margin,
+  };
+}
 
 function fmt(value: number | null, decimals = 1): string {
   if (value == null) return "–";
@@ -32,39 +69,63 @@ export default async function HistoryPage({
   const page = Math.max(1, parseInt(params.page ?? "1", 10));
   const offset = (page - 1) * PAGE_SIZE;
 
-  let query = supabaseCfb
-    .from("backtest_predictions")
-    .select("*", { count: "exact" })
-    .order("season", { ascending: false })
-    .order("week", { ascending: false })
-    .order("game_id", { ascending: true })
-    .range(offset, offset + PAGE_SIZE - 1);
-
-  if (season) {
-    query = query.eq("season", parseInt(season, 10));
-  }
-  if (team) {
-    query = query.or(`home_team.eq.${team},away_team.eq.${team}`);
-  }
-
-  const [{ data, count, error }, seasonsRes] = await Promise.all([
-    query,
+  const [liveSeason, backtestSeasonRes] = await Promise.all([
+    fetchLiveGradedSeason(),
     supabaseCfb
       .from("backtest_predictions")
       .select("season")
       .order("season", { ascending: false })
       .limit(1),
   ]);
+  const isLive = liveSeason != null && season === String(liveSeason);
 
-  const rows = (data ?? []) as CfbBacktestPrediction[];
-  const totalRows = count ?? 0;
+  let rows: HistoryRow[] = [];
+  let totalRows = 0;
+  let errorMessage: string | null = null;
+
+  if (isLive) {
+    let query = supabaseCfb
+      .from("graded_games")
+      .select("*", { count: "exact" })
+      .eq("season", liveSeason)
+      .order("start_date", { ascending: false })
+      .order("game_id", { ascending: true })
+      .range(offset, offset + PAGE_SIZE - 1);
+    if (team) {
+      query = query.or(`home_team.eq.${team},away_team.eq.${team}`);
+    }
+    const { data, count, error } = await query;
+    rows = ((data ?? []) as CfbGradedGame[]).map(fromGraded);
+    totalRows = count ?? 0;
+    errorMessage = error?.message ?? null;
+  } else {
+    let query = supabaseCfb
+      .from("backtest_predictions")
+      .select("*", { count: "exact" })
+      .order("season", { ascending: false })
+      .order("week", { ascending: false })
+      .order("game_id", { ascending: true })
+      .range(offset, offset + PAGE_SIZE - 1);
+    if (season) {
+      query = query.eq("season", parseInt(season, 10));
+    }
+    if (team) {
+      query = query.or(`home_team.eq.${team},away_team.eq.${team}`);
+    }
+    const { data, count, error } = await query;
+    rows = ((data ?? []) as CfbBacktestPrediction[]).map(fromBacktest);
+    totalRows = count ?? 0;
+    errorMessage = error?.message ?? null;
+  }
+
   const totalPages = Math.max(1, Math.ceil(totalRows / PAGE_SIZE));
-  const latestSeason = seasonsRes.data?.[0]?.season ?? null;
-  const seasonOptions =
-    latestSeason == null
+  const latestBacktestSeason = backtestSeasonRes.data?.[0]?.season ?? null;
+  const backtestSeasons =
+    latestBacktestSeason == null
       ? []
-      : Array.from({ length: latestSeason - 2021 + 1 }, (_, i) =>
-          String(latestSeason - i)
+      : Array.from(
+          { length: latestBacktestSeason - FIRST_BACKTEST_SEASON + 1 },
+          (_, i) => String(latestBacktestSeason - i)
         );
 
   function pageUrl(p: number) {
@@ -82,11 +143,19 @@ export default async function HistoryPage({
     return `/cfb/history?${sp.toString()}`;
   }
 
+  const tabClass = (active: boolean) =>
+    cn(
+      "border-b-2 px-3 py-2 transition-colors",
+      active
+        ? "border-foreground text-foreground"
+        : "border-transparent text-muted-foreground hover:text-foreground"
+    );
+
   return (
     <main className="mx-auto w-full max-w-6xl min-w-0 px-4 py-8 space-y-6">
       <div className="flex items-start justify-between gap-4">
         <h1 className="font-heading text-2xl tracking-tight">
-          Backtest History
+          {isLive ? `${liveSeason} Graded Games` : "Backtest History"}
         </h1>
         <div className="text-xs text-muted-foreground">
           {totalRows} graded games
@@ -94,33 +163,28 @@ export default async function HistoryPage({
       </div>
 
       <p className="max-w-4xl text-sm text-muted-foreground leading-relaxed">
-        Every graded prediction from the frozen walk-forward backtest, next to
-        the closing spread and the final margin. Lines are quoted for the home
-        team.
+        {isLive
+          ? "Every completed game graded live this season: the projection published before kickoff, the CFBD closing spread, and the final margin. Nothing is re-fit after a result is known. Lines are quoted for the home team."
+          : "Every graded prediction from the frozen walk-forward backtest, next to the closing spread and the final margin. Backtest seasons are historical stand-ins, not live results. Lines are quoted for the home team."}
       </p>
 
       <div className="flex flex-wrap items-center gap-0 font-mono text-xs uppercase tracking-wider">
-        <Link
-          href={seasonUrl("")}
-          className={cn(
-            "border-b-2 px-3 py-2 transition-colors",
-            !season
-              ? "border-foreground text-foreground"
-              : "border-transparent text-muted-foreground hover:text-foreground"
-          )}
-        >
-          All
+        {liveSeason != null && (
+          <Link
+            href={seasonUrl(String(liveSeason))}
+            className={tabClass(isLive)}
+          >
+            {liveSeason} live
+          </Link>
+        )}
+        <Link href={seasonUrl("")} className={tabClass(!season)}>
+          Backtest
         </Link>
-        {seasonOptions.map((s) => (
+        {backtestSeasons.map((s) => (
           <Link
             key={s}
             href={seasonUrl(s)}
-            className={cn(
-              "border-b-2 px-3 py-2 transition-colors",
-              season === s
-                ? "border-foreground text-foreground"
-                : "border-transparent text-muted-foreground hover:text-foreground"
-            )}
+            className={tabClass(!isLive && season === s)}
           >
             {s}
           </Link>
@@ -140,13 +204,15 @@ export default async function HistoryPage({
         )}
       </div>
 
-      {error ? (
+      {errorMessage ? (
         <p className="text-sm text-destructive">
-          Could not load history: {error.message}
+          Could not load history: {errorMessage}
         </p>
       ) : rows.length === 0 ? (
         <p className="text-sm text-muted-foreground">
-          No graded games match these filters.
+          {isLive
+            ? "No completed games have been graded yet this season."
+            : "No graded games match these filters."}
         </p>
       ) : (
         <div className="overflow-x-auto">
@@ -262,6 +328,9 @@ export default async function HistoryPage({
         Model and Close are home lines; Result is the final margin on the same
         axis. Model err is the absolute miss of the model&apos;s margin, shown
         green when the model was closer than the closing line.
+        {isLive
+          ? " Model is the pure projection, not the market-informed blend."
+          : ""}
       </p>
     </main>
   );

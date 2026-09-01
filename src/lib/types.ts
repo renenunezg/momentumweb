@@ -336,6 +336,85 @@ export interface CfbBacktestPrediction {
   actual_margin: number | null;
 }
 
+// One frozen grading record per completed game: the projection published
+// before kickoff, the CFBD closing line, and the final score.
+export interface CfbGradedGame {
+  game_id: number;
+  season: number;
+  week: number;
+  season_type: string | null;
+  forecast_week: number | null;
+  start_date: string | null;
+  neutral_site: boolean | null;
+  conference_game: boolean | null;
+  home_team_id: number | null;
+  home_team: string;
+  away_team_id: number | null;
+  away_team: string;
+  home_classification: string | null;
+  away_classification: string | null;
+  home_missing_input_count: number | null;
+  away_missing_input_count: number | null;
+  model_version: string | null;
+  forecast_as_of: string | null;
+  pure_home_margin: number | null;
+  market_informed_home_margin: number | null;
+  market_weight: number | null;
+  forecast_market_home_spread: number | null;
+  model_total: number | null;
+  margin_sd: number | null;
+  total_sd: number | null;
+  distribution: string | null;
+  degrees_of_freedom: number | null;
+  home_win_probability: number | null;
+  probability_method: string | null;
+  closing_spread: number | null;
+  closing_total: number | null;
+  n_spread_offers: number | null;
+  n_total_offers: number | null;
+  closing_source: string | null;
+  home_points: number | null;
+  away_points: number | null;
+  actual_margin: number | null;
+  actual_total: number | null;
+  score_source: string | null;
+  source_ingested_at: string | null;
+  graded_at: string | null;
+}
+
+export type CfbPredictionSource =
+  | "pure_model"
+  | "market_informed"
+  | "closing_market";
+
+export interface CfbPerformanceMetric {
+  season: number;
+  prediction_source: CfbPredictionSource;
+  segment_kind: string;
+  segment: string;
+  segment_order: number | null;
+  games: number | null;
+  thin_sample: boolean | null;
+  margin_mae: number | null;
+  margin_rmse: number | null;
+  margin_bias: number | null;
+  total_games: number | null;
+  total_mae: number | null;
+  total_rmse: number | null;
+  total_bias: number | null;
+  coverage_50: number | null;
+  coverage_80: number | null;
+  coverage_90: number | null;
+  games_with_market: number | null;
+  market_mae: number | null;
+  model_minus_market_mae: number | null;
+  closer_than_market_share: number | null;
+  probability_games: number | null;
+  brier_score: number | null;
+  log_loss: number | null;
+  computed_at: string | null;
+}
+
 // ---------------------------------------------------------------------------
 // NFL (nfl schema)
 
