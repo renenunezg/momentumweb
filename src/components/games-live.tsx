@@ -35,36 +35,18 @@ function allFinal(matchups: GameMatchup[]): boolean {
 export function GamesLive({ initial }: { initial: GameMatchup[] }) {
   const [matchups, setMatchups] = useState<GameMatchup[]>(initial);
   const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-  // Games already sent to eval-game this page load; the route is idempotent
-  // but there is no point repeating the call every poll.
-  const evalFiredRef = useRef<Set<number>>(new Set());
 
   useEffect(() => {
     let cancelled = false;
 
-    async function fireEval(game_pk: number) {
-      if (evalFiredRef.current.has(game_pk)) return;
-      evalFiredRef.current.add(game_pk);
-      try {
-        await fetch("/mlb/api/eval-game", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ game_pk }),
-        });
-      } catch {
-        // Best effort: the nightly batch reconciles anything missed here.
-      }
-    }
-
+    // Polling live-scores is also what grades finished games: the route
+    // grades any Final game server-side after it responds.
     async function fetchOnce() {
       try {
         const res = await fetch("/mlb/api/live-scores", { cache: "no-store" });
         if (!res.ok) return;
         const data = (await res.json()) as { scores?: LiveScore[] };
         if (cancelled || !data.scores) return;
-        for (const s of data.scores) {
-          if (s.status === "Final") fireEval(s.game_pk);
-        }
         setMatchups((prev) => mergeScores(prev, data.scores!));
       } catch {
         // A failed poll waits for the next tick.

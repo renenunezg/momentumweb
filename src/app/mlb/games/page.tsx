@@ -96,10 +96,11 @@ export default async function Page() {
   const predictions = (outputs ?? []).filter(isPick);
 
   // Eval-on-final (score writeback + model_evaluation upsert) runs off the
-  // render path: GamesLive POSTs /mlb/api/eval-game for every Final game on
-  // mount. Keeping it out of the server render avoids blocking first paint on
-  // slow MLB API calls and full-season scans. Picks are unaffected (read fresh
-  // above); the freeze invariant lives in the Python scorer, not here.
+  // render path: /mlb/api/live-scores grades every Final game it sees after
+  // responding to GamesLive's poll. Keeping it out of the server render avoids
+  // blocking first paint on slow MLB API calls and full-season scans. Picks
+  // are unaffected (read fresh above); the freeze invariant lives in the
+  // Python scorer, not here.
 
   if (predictions.length === 0 && (!allGames || allGames.length === 0)) {
     return (

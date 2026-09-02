@@ -1,6 +1,6 @@
 # momentumweb
 
-The website behind [renenunez.dev](https://renenunez.dev): one frontend for a set of sports prediction models. MLB picks are published daily and graded live, college football and NFL publish weekly power ratings and spread projections, and every model is measured against the closing line in public.
+The website behind [renenunez.dev](https://renenunez.dev): one frontend for a set of probabilistic sports forecasting models. MLB run-distribution forecasts are published daily and graded live, college football and NFL publish weekly power ratings and spread projections, and every model is benchmarked against the closing line in public.
 
 The models themselves live in separate repositories and write their outputs to Postgres. This repository only reads those tables and renders them.
 
@@ -35,12 +35,12 @@ Route tree:
 | `/*/methodology` | How each model works |
 | `/blog`, `/about` | Writing and contact |
 
-Two API routes support the MLB games page. `GET /mlb/api/live-scores` is a cached proxy to the MLB Stats API so many browsers polling the page cost at most two upstream requests a minute. `POST /mlb/api/eval-game` writes a final score back and refreshes the day's evaluation windows when a game finishes; it is idempotent, takes nothing from the request but a game id, and every value it writes comes from the MLB API.
+One API route supports the MLB games page. `GET /mlb/api/live-scores` is a cached proxy to the MLB Stats API so many browsers polling the page cost at most two upstream requests a minute. It is also the live-grading trigger: after responding, it grades any game the schedule shows as Final, writing the score back and refreshing the day's evaluation windows. Which game gets graded is decided server-side from the MLB feed, never from the request, so the site exposes no write endpoint; the route cache bounds grading to one pass per revalidation window, and the nightly Python batch remains the source of truth.
 
 Things that are load-bearing and easy to break:
 
 - `src/app/mlb/games/page.tsx` is `force-dynamic`. The pick shown for a started game must be the frozen pick that gets graded, so it cannot be served from a cached render.
-- `SUPABASE_SERVICE_ROLE_KEY` is read only inside `src/app/mlb/api/eval-game/route.ts`. Everything else uses the anon key.
+- `SUPABASE_SERVICE_ROLE_KEY` is read only inside `src/app/mlb/api/live-scores/route.ts`, for the grading step. Everything else uses the anon key.
 - Every page fetch degrades to an empty state on a Supabase error. A model repo outage should never 500 the site.
 
 ## Running locally
@@ -55,7 +55,7 @@ npm run dev
 | --- | --- |
 | `NEXT_PUBLIC_SUPABASE_URL` | all Supabase clients |
 | `NEXT_PUBLIC_SUPABASE_ANON_KEY` | read-only clients (server and browser) |
-| `SUPABASE_SERVICE_ROLE_KEY` | `eval-game` route only, never shipped to the browser |
+| `SUPABASE_SERVICE_ROLE_KEY` | `live-scores` grading step only, never shipped to the browser |
 
 Checks:
 

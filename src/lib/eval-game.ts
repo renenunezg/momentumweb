@@ -7,9 +7,10 @@ import {
   type EvalWindow,
 } from "@/lib/eval";
 
-// Best-effort live eval triggered when a game flips to Final. Verifies via MLB
-// API, writes back the score, and partial-upserts today's evaluation windows.
-// Nightly Python batch is the canonical reconciliation.
+// Best-effort live eval, run server-side from the live-scores route when the
+// MLB schedule shows a game as Final. Verifies via the MLB API, writes back the
+// score, and partial-upserts today's evaluation windows. The nightly Python
+// batch is the canonical reconciliation.
 
 type MlbClient = SupabaseClient<Database, "mlb">;
 
