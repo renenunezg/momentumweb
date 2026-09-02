@@ -120,7 +120,7 @@ Instead of finding a single best parameter value, we treat parameters as random 
 
 Concretely, v2 models each plate appearance as a probabilistic interaction between batter skill, pitcher skill, platoon effects, and park context.
 
-The model itself is a Dirichlet-Multinomial over eight outcome cells per plate appearance: strikeout, walk, hit-by-pitch, single, double, triple, home run, and out-in-play.
+The model itself is a hierarchical multinomial-logit over eight outcome cells per plate appearance: strikeout, walk, hit-by-pitch, single, double, triple, home run, and out-in-play. (An earlier version of this post called it a Dirichlet-Multinomial. It is not: the actor effects are Normal on the logit scale, which makes the outcome probabilities logistic-normal, and no Dirichlet prior is involved.)
 
 For each batter, we estimate a seven-dimensional vector of additive logit offsets (with "out" as the reference category). Pitchers receive the same treatment, with separate variance structures for starters and relievers. The model also includes platoon split adjustments and park-level residual effects on wOBA.
 

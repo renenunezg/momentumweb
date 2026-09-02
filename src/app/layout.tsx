@@ -26,9 +26,9 @@ export const viewport: Viewport = {
 };
 
 export const metadata: Metadata = {
-  title: "René Núñez | Sports Prediction Models",
+  title: "René Núñez | Probabilistic Sports Forecasting",
   description:
-    "Open sports prediction models: Bayesian simulation, daily picks, and performance tracked in public.",
+    "Open probabilistic forecasting models for MLB, college football, and the NFL: Bayesian simulation, calibrated probabilities, and public benchmarking against the closing line.",
 };
 
 export default function RootLayout({

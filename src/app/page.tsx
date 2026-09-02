@@ -160,8 +160,8 @@ export default async function Home() {
             Ren&eacute; N&uacute;&ntilde;ez
           </h1>
           <p className="mt-3 text-base text-muted-foreground leading-relaxed">
-            I&apos;m a data analyst / statistician working on modeling momentum
-            and sports.
+            Data Analyst. I build probabilistic forecasting
+            models for sports and benchmark them against the market in public.
           </p>
         </section>
 
@@ -186,7 +186,7 @@ export default async function Home() {
                 </span>
               </div>
               <span className="font-mono text-xs uppercase tracking-wider text-muted-foreground group-hover:text-foreground transition-colors">
-                View picks &rarr;
+                View today&apos;s slate &rarr;
               </span>
             </div>
             <p className="mt-2 text-sm text-muted-foreground leading-relaxed">

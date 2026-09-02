@@ -199,8 +199,8 @@ export function MethodologyContent({
           </p>
           <p>
             The current model (v2, live since May 12, 2026) is a two-layer system: a{" "}
-            <strong>hierarchical Bayesian skill model</strong> (Dirichlet-Multinomial over the
-            eight plate-appearance outcomes, fit with NUTS via numpyro/JAX) followed by a{" "}
+            <strong>hierarchical Bayesian skill model</strong> (hierarchical multinomial-logit
+            over the eight plate-appearance outcomes, fit with NUTS via numpyro/JAX) followed by a{" "}
             <strong>per-PA Monte Carlo simulator</strong> that plays out each inning with
             rest-aware bullpen rules, an empirical baserunner-advancement table, and per-game
             posterior draws to propagate parameter uncertainty. It replaced a prior XGBoost
@@ -210,7 +210,7 @@ export function MethodologyContent({
           <div className="mt-4 grid grid-cols-1 gap-3 sm:grid-cols-2">
             {[
               { label: "Prediction target", val: "Per-team run distribution per game" },
-              { label: "Skill model", val: "Hierarchical Dirichlet-Multinomial (8 outcomes)" },
+              { label: "Skill model", val: "Hierarchical multinomial-logit (8 outcomes)" },
               { label: "Sampler", val: "NUTS via numpyro / JAX" },
               { label: "Training data", val: "401,826 PAs across 2024 + 2025 + 2026-YTD" },
               { label: "Simulator", val: "K=30 posterior draws × ~333 inning sims each (default ~10,000 sims total)" },
@@ -269,8 +269,8 @@ export function MethodologyContent({
             accent="emerald"
           >
             Replaced the v1 XGBoost regressor with a two-layer probabilistic system. The
-            skill layer fits three hierarchical Dirichlet-Multinomial models (batter,
-            pitcher, park) via NUTS with full convergence diagnostics. The simulator runs
+            skill layer fits three hierarchical Bayesian models (batter, pitcher, park)
+            via NUTS with full convergence diagnostics. The simulator runs
             ~10,000 vectorized games per matchup (K=30 posterior draws × ~333 inning sims
             each), propagating parameter uncertainty through the draws and feeding an
             empirical baserunner-advancement table built from 365k PAs of Statcast data.
@@ -435,7 +435,7 @@ export function MethodologyContent({
       <SectionCard
         id="skill"
         title="Bayesian Skill Layer"
-        subtitle="Hierarchical Dirichlet-Multinomial per actor, fit with NUTS in numpyro/JAX"
+        subtitle="Hierarchical multinomial-logit per actor, fit with NUTS in numpyro/JAX"
       >
         <div className="space-y-4 text-sm leading-relaxed">
           <p>
@@ -445,14 +445,21 @@ export function MethodologyContent({
             actor (batter, pitcher, venue) contributes to those eight logits, with{" "}
             <span className="font-mono">OUT</span> as the reference category.
           </p>
+          <p>
+            Formally this is a hierarchical multinomial-logit (softmax) model: actor effects
+            enter the logits with Normal priors, so each actor&apos;s outcome-probability
+            vector is logistic-normal. It is not a Dirichlet-Multinomial, which would put a
+            Dirichlet prior directly on the probability vector and has no natural way to add
+            covariate effects such as platoon, role, park, or weather on the log-odds scale.
+          </p>
 
           <p className="font-mono text-xs uppercase tracking-wider text-muted-foreground">
             Generative model (batter, schematic)
           </p>
           <FormulaBlock>
-            μ ~ Normal(0, 1)<sub>7</sub>{"  "}{"//"} per-outcome league intercept
+            μ ~ Normal(logit<sub>league</sub>, 0.5)<sub>7</sub>{"  "}{"//"} per-outcome league intercept
             <br />
-            σ<sub>b</sub> ~ HalfNormal(1)<sub>7</sub>{"  "}{"//"} batter-level scale per outcome
+            σ<sub>b</sub> ~ HalfNormal(0.6)<sub>7</sub>{"  "}{"//"} batter-level scale per outcome
             <br />
             z<sub>i</sub> ~ Normal(0, 1)<sub>7</sub>{"  "}{"//"} non-centered batter offsets
             <br />
