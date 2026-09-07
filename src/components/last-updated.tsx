@@ -33,7 +33,8 @@ export function LastUpdated({
   return (
     <div className="text-xs text-muted-foreground">
       <div>{schedule}</div>
-      <div>Last updated: {formatRelative(timestamp)}</div>
+      {/* Cached server HTML and the browser use different clock times. */}
+      <div suppressHydrationWarning>Last updated: {formatRelative(timestamp)}</div>
     </div>
   );
 }
