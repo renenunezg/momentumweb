@@ -2027,6 +2027,96 @@ export type Database = {
   }
   nfl: {
     Tables: {
+      season_win_totals: {
+        Row: {
+          season: number
+          as_of: string
+          model_version: string
+          team_abbr: string
+          team: string
+          conference: string | null
+          division: string | null
+          wins: number
+          losses: number
+          ties: number
+          games_played: number
+          games_remaining: number
+          projected_wins: number
+          remaining_expected_wins: number
+          wins_p10: number
+          wins_p50: number
+          wins_p90: number
+          simulation_count: number
+          simulation_seed: number
+          ratings_through_week: number
+          ratings_through_date: string | null
+          schedule_fetched_at: string
+          depth_chart_as_of: string | null
+          sportsbook_win_total: number | null
+          sportsbook_source_name: string | null
+          sportsbook_source_date: string | null
+          sportsbook_source_url: string | null
+        }
+        Insert: {
+          season: number
+          as_of: string
+          model_version: string
+          team_abbr: string
+          team: string
+          conference?: string | null
+          division?: string | null
+          wins: number
+          losses: number
+          ties: number
+          games_played: number
+          games_remaining: number
+          projected_wins: number
+          remaining_expected_wins: number
+          wins_p10: number
+          wins_p50: number
+          wins_p90: number
+          simulation_count: number
+          simulation_seed: number
+          ratings_through_week: number
+          ratings_through_date?: string | null
+          schedule_fetched_at: string
+          depth_chart_as_of?: string | null
+          sportsbook_win_total?: number | null
+          sportsbook_source_name?: string | null
+          sportsbook_source_date?: string | null
+          sportsbook_source_url?: string | null
+        }
+        Update: {
+          season?: number
+          as_of?: string
+          model_version?: string
+          team_abbr?: string
+          team?: string
+          conference?: string | null
+          division?: string | null
+          wins?: number
+          losses?: number
+          ties?: number
+          games_played?: number
+          games_remaining?: number
+          projected_wins?: number
+          remaining_expected_wins?: number
+          wins_p10?: number
+          wins_p50?: number
+          wins_p90?: number
+          simulation_count?: number
+          simulation_seed?: number
+          ratings_through_week?: number
+          ratings_through_date?: string | null
+          schedule_fetched_at?: string
+          depth_chart_as_of?: string | null
+          sportsbook_win_total?: number | null
+          sportsbook_source_name?: string | null
+          sportsbook_source_date?: string | null
+          sportsbook_source_url?: string | null
+        }
+        Relationships: []
+      }
       backtest_predictions: {
         Row: {
           game_id: string

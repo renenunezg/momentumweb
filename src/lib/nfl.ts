@@ -1,6 +1,7 @@
 import { supabaseNfl } from "@/lib/supabase";
 import type {
   NflBacktestPrediction,
+  NflSeasonWinTotal,
   NflTeamIdentity,
   NflTeamRating,
   NflTeamUnitRating,
@@ -86,4 +87,29 @@ export async function fetchFullBacktest(): Promise<NflBacktestPrediction[]> {
     if (rows.length < pageSize) break;
   }
   return all;
+}
+
+// A complete snapshot arrives in one request. Fail closed on partial or mixed
+// seasons so the page never presents a truncated league as a valid forecast.
+export async function fetchSeasonWinTotals(): Promise<{
+  rows: NflSeasonWinTotal[];
+  unavailable: boolean;
+}> {
+  const { data, error } = await supabaseNfl.from("season_win_totals")
+    .select("*")
+    .order("season", { ascending: false })
+    .order("projected_wins", { ascending: false })
+    .order("team_abbr")
+    .limit(32);
+  if (error) {
+    console.error("nfl season wins fetch failed:", error.message);
+    return { rows: [], unavailable: true };
+  }
+  const rows = data ?? [];
+  if (rows.length === 0) return { rows: [], unavailable: false };
+  const first = rows[0];
+  const complete = rows.length === 32 && new Set(rows.map((r) => r.team_abbr)).size === 32
+    && rows.every((r) => r.season === first.season && r.as_of === first.as_of
+      && Number.isFinite(r.projected_wins) && r.games_played + r.games_remaining === 17);
+  return { rows: complete ? rows : [], unavailable: !complete };
 }

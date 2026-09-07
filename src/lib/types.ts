@@ -174,6 +174,7 @@ export type CfbPerformanceMetric = Narrow<
 // nfl.teams carries identity only, keyed by the current franchise
 // abbreviation; conference and division come from team_ratings.
 export type NflTeamIdentity = Tables<"nfl", "teams">;
+export type NflSeasonWinTotal = Tables<"nfl", "season_win_totals">;
 export type NflTeamRating = Tables<"nfl", "team_ratings">;
 export type NflTeamUnitRating = Tables<"nfl", "team_unit_ratings">;
 export type NflGameProjection = Tables<"nfl", "game_projections">;
