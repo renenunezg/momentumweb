@@ -2,6 +2,7 @@
 
 import { useMemo, useState, type ReactNode } from "react";
 import { cn, formatSigned } from "@/lib/utils";
+import { RatingsSearch, useRatingsSearch } from "@/components/ratings-search";
 import { TeamLogo, type TeamLogoSource } from "@/components/team-logo";
 import {
   Table,
@@ -49,6 +50,7 @@ export function UnitRatingsTable<
       ),
     [units, sortKey]
   );
+  const { query, setQuery, matches, total } = useRatingsSearch(sorted);
 
   return (
     <div className="space-y-3">
@@ -59,6 +61,12 @@ export function UnitRatingsTable<
         {controls}
       </div>
 
+      <RatingsSearch
+        query={query}
+        onChange={setQuery}
+        shown={matches.length}
+        total={total}
+      />
       <div className="overflow-x-auto">
         <Table>
           <TableCaption className="sr-only">{caption}</TableCaption>
@@ -89,13 +97,13 @@ export function UnitRatingsTable<
             </TableRow>
           </TableHeader>
           <TableBody>
-            {sorted.map((unit, index) => {
+            {matches.map(({ row: unit, rank: unitRank }) => {
               const flag = badge?.(unit);
               const rank = powerRank.get(rowKey(unit));
               return (
                 <TableRow key={rowKey(unit)}>
                   <TableCell className="text-right font-mono tabular-nums text-muted-foreground">
-                    {index + 1}
+                    {unitRank}
                   </TableCell>
                   <TableCell>
                     <span className="inline-flex items-center gap-2 align-middle">

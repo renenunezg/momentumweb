@@ -125,6 +125,8 @@ export default function CfbRatings({
         ) : (
           <PowerRatingsTable
             rows={visible}
+            searchRows={view === "top25" ? ratings : undefined}
+            searchScope={view === "top25" ? "Search includes all D1 teams" : undefined}
             rowKey={rowKey}
             logo={logo}
             caption={`${VIEWS.find((v) => v.key === view)?.label} power ratings`}

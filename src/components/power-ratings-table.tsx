@@ -1,4 +1,7 @@
+"use client";
+
 import type { ReactNode } from "react";
+import { RatingsSearch, useRatingsSearch } from "@/components/ratings-search";
 import { formatNumber } from "@/lib/utils";
 import { TeamLogo, type TeamLogoSource } from "@/components/team-logo";
 import {
@@ -54,6 +57,8 @@ export function PowerRatingsTable<T extends PowerRatingRow>({
   showSd = false,
   tag,
   limited,
+  searchRows,
+  searchScope,
 }: {
   rows: T[];
   rowKey: (row: T) => string | number;
@@ -64,17 +69,29 @@ export function PowerRatingsTable<T extends PowerRatingRow>({
   showSd?: boolean;
   tag?: (row: T) => ReactNode;
   limited: LimitedDataRule;
+  searchRows?: T[];
+  searchScope?: string;
 }) {
+  const { query, setQuery, matches, total } = useRatingsSearch(rows, searchRows);
   // A badge on every row singles out nobody: whole tiers (all of FCS today)
   // run on reduced inputs, so say it once above the table instead.
   const allLimited = rows.length > 0 && rows.every(limited.isLimited);
 
   return (
     <div className="space-y-2">
+      <RatingsSearch
+        query={query}
+        onChange={setQuery}
+        shown={matches.length}
+        total={total}
+        scope={searchScope}
+      />
       {allLimited && <p className="text-xs text-accent-amber">{limited.allNote}</p>}
       <div className="overflow-x-auto">
         <Table>
-          <TableCaption className="sr-only">{caption}</TableCaption>
+          <TableCaption className="sr-only">
+            {query.trim() && searchRows ? "Team search power ratings" : caption}
+          </TableCaption>
           <TableHeader>
             <TableRow>
               <TableHead className="w-12 text-right">Rk</TableHead>
@@ -96,10 +113,10 @@ export function PowerRatingsTable<T extends PowerRatingRow>({
             </TableRow>
           </TableHeader>
           <TableBody>
-            {rows.map((row, index) => (
+            {matches.map(({ row, rank }) => (
               <TableRow key={rowKey(row)}>
                 <TableCell className={`${numCell} text-muted-foreground`}>
-                  {index + 1}
+                  {rank}
                 </TableCell>
                 <TableCell>
                   <span className="inline-flex items-center gap-2 align-middle">
