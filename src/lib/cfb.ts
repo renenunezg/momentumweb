@@ -2,7 +2,11 @@ import { supabaseCfb } from "@/lib/supabase";
 import type {
   CfbBacktestPrediction,
   CfbGradedGame,
+  CfbHeismanBoardRow,
+  CfbHeismanHistory,
   CfbPerformanceMetric,
+  CfbPlayerModelMeta,
+  CfbPlayerValue,
   CfbTeamIdentity,
   CfbTeamRating,
   CfbTeamUnitRating,
@@ -160,3 +164,107 @@ export async function fetchLiveGradedSeason(): Promise<number | null> {
 }
 
 export type { CfbGradedGame };
+
+export interface CfbHeismanTracker {
+  season: number | null;
+  week: number | null;
+  asOf: string | null;
+  values: CfbPlayerValue[];
+  trajectories: CfbPlayerValue[];
+  board: CfbHeismanBoardRow[];
+  boardWeek: number | null;
+  history: CfbHeismanHistory[];
+  meta: CfbPlayerModelMeta | null;
+}
+
+const EMPTY_TRACKER: CfbHeismanTracker = {
+  season: null,
+  week: null,
+  asOf: null,
+  values: [],
+  trajectories: [],
+  board: [],
+  boardWeek: null,
+  history: [],
+  meta: null,
+};
+
+const VALUE_ROWS = 400;
+const TRAJECTORY_PLAYERS = 8;
+const BOARD_ROWS = 25;
+
+// The latest weekly snapshot of player value with the Heisman board built on
+// it. Every number is a frozen backend artifact; the page only formats them,
+// and any failure degrades to the empty state rather than failing the build.
+export async function fetchHeismanTracker(): Promise<CfbHeismanTracker> {
+  const latestRes = await supabaseCfb
+    .from("player_values")
+    .select("season, week, as_of")
+    .order("season", { ascending: false })
+    .order("week", { ascending: false })
+    .limit(1);
+  const latest = latestRes.data?.[0];
+  if (latestRes.error || !latest) return EMPTY_TRACKER;
+
+  const [valuesRes, boardWeekRes, historyRes, metaRes] = await Promise.all([
+    supabaseCfb
+      .from("player_values")
+      .select("*")
+      .eq("season", latest.season)
+      .eq("week", latest.week)
+      .order("overall_rank", { ascending: true })
+      .range(0, VALUE_ROWS - 1),
+    supabaseCfb
+      .from("heisman_board")
+      .select("week")
+      .eq("season", latest.season)
+      .order("week", { ascending: false })
+      .limit(1),
+    supabaseCfb
+      .from("heisman_history")
+      .select("*")
+      .order("season", { ascending: false }),
+    supabaseCfb
+      .from("player_model_meta")
+      .select("*")
+      .eq("season", latest.season)
+      .limit(1),
+  ]);
+  if (valuesRes.error) {
+    console.error("cfb player values fetch failed:", valuesRes.error.message);
+    return EMPTY_TRACKER;
+  }
+  const values = (valuesRes.data ?? []) as CfbPlayerValue[];
+  const boardWeek = boardWeekRes.data?.[0]?.week ?? null;
+
+  const leaders = values.slice(0, TRAJECTORY_PLAYERS).map((v) => v.athlete_id);
+  const [trajectoryRes, boardRes] = await Promise.all([
+    supabaseCfb
+      .from("player_values")
+      .select("*")
+      .eq("season", latest.season)
+      .in("athlete_id", leaders)
+      .order("week", { ascending: true }),
+    boardWeek == null
+      ? Promise.resolve({ data: [] as CfbHeismanBoardRow[] })
+      : supabaseCfb
+          .from("heisman_board")
+          .select("*")
+          .eq("season", latest.season)
+          .eq("week", boardWeek)
+          .order("predicted_rank", { ascending: true })
+          .limit(BOARD_ROWS),
+  ]);
+
+  return {
+    season: latest.season,
+    week: latest.week,
+    asOf: latest.as_of,
+    values,
+    trajectories: (trajectoryRes.data ?? []) as CfbPlayerValue[],
+    board: (boardRes.data ?? []) as CfbHeismanBoardRow[],
+    boardWeek,
+    history: (historyRes.data ?? []) as CfbHeismanHistory[],
+    meta: ((metaRes.data ?? [])[0] as CfbPlayerModelMeta | undefined) ?? null,
+  };
+}

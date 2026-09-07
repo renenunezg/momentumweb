@@ -150,6 +150,10 @@ export type CfbTeamUnitRating = Tables<"cfb", "team_unit_ratings">;
 export type CfbGameProjection = Tables<"cfb", "game_projections">;
 export type CfbMarketComparison = Tables<"cfb", "market_comparisons">;
 export type CfbBacktestPrediction = Tables<"cfb", "backtest_predictions">;
+export type CfbPlayerValue = Tables<"cfb", "player_values">;
+export type CfbHeismanBoardRow = Tables<"cfb", "heisman_board">;
+export type CfbHeismanHistory = Tables<"cfb", "heisman_history">;
+export type CfbPlayerModelMeta = Tables<"cfb", "player_model_meta">;
 
 // One frozen grading record per completed game: the projection published
 // before kickoff, the CFBD closing line, and the final score.

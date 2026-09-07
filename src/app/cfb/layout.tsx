@@ -12,6 +12,7 @@ const cfbLinks = [
   { href: "/cfb/ratings", label: "Ratings" },
   { href: "/cfb/schedule", label: "Schedule" },
   { href: "/cfb/history", label: "History" },
+  { href: "/cfb/heisman", label: "Heisman" },
   { href: "/cfb/performance", label: "Performance" },
   { href: "/about", label: "About" },
 ];

@@ -1825,6 +1825,273 @@ export type Database = {
         }
         Relationships: []
       }
+      heisman_board: {
+        Row: {
+          season: number
+          week: number
+          as_of: string
+          model_version: string
+          athlete_id: string
+          athlete_name: string
+          team: string
+          position: string | null
+          games: number
+          predicted_share: number
+          predicted_rank: number
+          value_rank: number | null
+          rank_gap: number | null
+          win_pct: number | null
+          ap_rank: number | null
+          pass_yards: number | null
+          pass_touchdowns: number | null
+          interceptions: number | null
+          rush_yards: number | null
+          rush_touchdowns: number | null
+          receiving_yards: number | null
+          receiving_touchdowns: number | null
+          total_touchdowns: number | null
+          tackles: number | null
+          sacks: number | null
+          defensive_interceptions: number | null
+        }
+        Insert: {
+          season: number
+          week: number
+          as_of: string
+          model_version: string
+          athlete_id: string
+          athlete_name: string
+          team: string
+          position?: string | null
+          games: number
+          predicted_share: number
+          predicted_rank: number
+          value_rank?: number | null
+          rank_gap?: number | null
+          win_pct?: number | null
+          ap_rank?: number | null
+          pass_yards?: number | null
+          pass_touchdowns?: number | null
+          interceptions?: number | null
+          rush_yards?: number | null
+          rush_touchdowns?: number | null
+          receiving_yards?: number | null
+          receiving_touchdowns?: number | null
+          total_touchdowns?: number | null
+          tackles?: number | null
+          sacks?: number | null
+          defensive_interceptions?: number | null
+        }
+        Update: {
+          season?: number
+          week?: number
+          as_of?: string
+          model_version?: string
+          athlete_id?: string
+          athlete_name?: string
+          team?: string
+          position?: string | null
+          games?: number
+          predicted_share?: number
+          predicted_rank?: number
+          value_rank?: number | null
+          rank_gap?: number | null
+          win_pct?: number | null
+          ap_rank?: number | null
+          pass_yards?: number | null
+          pass_touchdowns?: number | null
+          interceptions?: number | null
+          rush_yards?: number | null
+          rush_touchdowns?: number | null
+          receiving_yards?: number | null
+          receiving_touchdowns?: number | null
+          total_touchdowns?: number | null
+          tackles?: number | null
+          sacks?: number | null
+          defensive_interceptions?: number | null
+        }
+        Relationships: []
+      }
+      heisman_history: {
+        Row: {
+          season: number
+          actual_winner: string
+          actual_winner_team: string
+          actual_share: number
+          predicted_winner: string
+          predicted_winner_team: string
+          predicted_winner_share: number
+          actual_winner_predicted_share: number
+          actual_winner_predicted_rank: number
+          winner_hit: boolean
+          top_three_hit: boolean
+          winner_value_rank: number | null
+        }
+        Insert: {
+          season: number
+          actual_winner: string
+          actual_winner_team: string
+          actual_share: number
+          predicted_winner: string
+          predicted_winner_team: string
+          predicted_winner_share: number
+          actual_winner_predicted_share: number
+          actual_winner_predicted_rank: number
+          winner_hit: boolean
+          top_three_hit: boolean
+          winner_value_rank?: number | null
+        }
+        Update: {
+          season?: number
+          actual_winner?: string
+          actual_winner_team?: string
+          actual_share?: number
+          predicted_winner?: string
+          predicted_winner_team?: string
+          predicted_winner_share?: number
+          actual_winner_predicted_share?: number
+          actual_winner_predicted_rank?: number
+          winner_hit?: boolean
+          top_three_hit?: boolean
+          winner_value_rank?: number | null
+        }
+        Relationships: []
+      }
+      player_model_meta: {
+        Row: {
+          season: number
+          as_of: string
+          value_model_version: string
+          heisman_model_version: string
+          credit_shares: string
+          prior_games: number
+          replacement_percentile: number
+          qualifying_games: number
+          fcs_opponent_weight: number
+          opponent_effect_prior_games: number
+          reliability: string
+          heisman_training_seasons: string
+          heisman_winner_hit_rate: number
+          heisman_top_three_rate: number
+          heisman_coefficients: string
+        }
+        Insert: {
+          season: number
+          as_of: string
+          value_model_version: string
+          heisman_model_version: string
+          credit_shares: string
+          prior_games: number
+          replacement_percentile: number
+          qualifying_games: number
+          fcs_opponent_weight: number
+          opponent_effect_prior_games?: number
+          reliability: string
+          heisman_training_seasons: string
+          heisman_winner_hit_rate: number
+          heisman_top_three_rate: number
+          heisman_coefficients: string
+        }
+        Update: {
+          season?: number
+          as_of?: string
+          value_model_version?: string
+          heisman_model_version?: string
+          credit_shares?: string
+          prior_games?: number
+          replacement_percentile?: number
+          qualifying_games?: number
+          fcs_opponent_weight?: number
+          opponent_effect_prior_games?: number
+          reliability?: string
+          heisman_training_seasons?: string
+          heisman_winner_hit_rate?: number
+          heisman_top_three_rate?: number
+          heisman_coefficients?: string
+        }
+        Relationships: []
+      }
+      player_values: {
+        Row: {
+          season: number
+          week: number
+          as_of: string
+          model_version: string
+          athlete_id: string
+          athlete_name: string
+          team: string
+          team_id: number | null
+          classification: string | null
+          position: string | null
+          position_group: string
+          games: number
+          plays: number
+          raw_epa: number
+          adjusted_epa: number
+          adjusted_rate: number
+          adjusted_per_game: number
+          shrunk_per_game: number
+          replacement_per_game: number
+          value_above_replacement: number
+          wpa: number
+          fcs_play_share: number
+          overall_rank: number
+          position_rank: number
+        }
+        Insert: {
+          season: number
+          week: number
+          as_of: string
+          model_version: string
+          athlete_id: string
+          athlete_name: string
+          team: string
+          team_id?: number | null
+          classification?: string | null
+          position?: string | null
+          position_group: string
+          games: number
+          plays: number
+          raw_epa: number
+          adjusted_epa: number
+          adjusted_rate: number
+          adjusted_per_game: number
+          shrunk_per_game: number
+          replacement_per_game: number
+          value_above_replacement: number
+          wpa: number
+          fcs_play_share: number
+          overall_rank: number
+          position_rank: number
+        }
+        Update: {
+          season?: number
+          week?: number
+          as_of?: string
+          model_version?: string
+          athlete_id?: string
+          athlete_name?: string
+          team?: string
+          team_id?: number | null
+          classification?: string | null
+          position?: string | null
+          position_group?: string
+          games?: number
+          plays?: number
+          raw_epa?: number
+          adjusted_epa?: number
+          adjusted_rate?: number
+          adjusted_per_game?: number
+          shrunk_per_game?: number
+          replacement_per_game?: number
+          value_above_replacement?: number
+          wpa?: number
+          fcs_play_share?: number
+          overall_rank?: number
+          position_rank?: number
+        }
+        Relationships: []
+      }
       serving_anchors: {
         Row: {
           season: number
