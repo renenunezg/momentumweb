@@ -1,3 +1,4 @@
+import { NflForecastSource } from "@/components/nfl-forecast-source";
 import { supabaseNfl } from "@/lib/supabase";
 import type { NflBacktestPrediction } from "@/lib/types";
 import { pageNumber } from "@/lib/utils";
@@ -24,16 +25,23 @@ function historyUrl(params: Record<string, string | number>) {
 export default async function HistoryPage({
   searchParams,
 }: {
-  searchParams: Promise<{ season?: string; team?: string; page?: string }>;
+  searchParams: Promise<{ season?: string; team?: string; page?: string; source?: string }>;
 }) {
   const params = await searchParams;
+  // Preserve historical season bookmarks created before live tracking.
+  const source = params.source === "backtest"
+    || (!params.source && Number(params.season) >= FIRST_SEASON && Number(params.season) < 2026)
+    ? "backtest" : "live";
+  const relation = () => source === "live"
+    ? supabaseNfl.from("live_predictions")
+    : supabaseNfl.from("backtest_predictions");
+  const firstSeason = source === "live" ? 2026 : FIRST_SEASON;
   const season = params.season ?? "";
   const team = params.team ?? "";
   const page = pageNumber(params.page);
   const offset = (page - 1) * PAGE_SIZE;
 
-  let query = supabaseNfl
-    .from("backtest_predictions")
+  let query = relation()
     .select("*", { count: "exact" })
     .order("season", { ascending: false })
     .order("week", { ascending: false })
@@ -44,8 +52,7 @@ export default async function HistoryPage({
 
   const [{ data, count, error }, seasonsRes] = await Promise.all([
     query,
-    supabaseNfl
-      .from("backtest_predictions")
+    relation()
       .select("season")
       .order("season", { ascending: false })
       .limit(1),
@@ -58,51 +65,54 @@ export default async function HistoryPage({
   const seasonOptions =
     latestSeason == null
       ? []
-      : Array.from({ length: latestSeason - FIRST_SEASON + 1 }, (_, i) =>
+      : Array.from({ length: latestSeason - firstSeason + 1 }, (_, i) =>
           String(latestSeason - i)
         );
 
   return (
     <main id="main" className="mx-auto w-full max-w-6xl min-w-0 px-4 py-8 space-y-6">
       <div className="flex items-start justify-between gap-4">
-        <h1 className="font-heading text-2xl tracking-tight">Backtest History</h1>
-        <div className="text-xs text-muted-foreground">{totalRows} graded games</div>
+        <h1 className="font-heading text-2xl tracking-tight">Forecast History</h1>
+        <div className="text-xs text-muted-foreground">{totalRows} completed games</div>
       </div>
 
+      <NflForecastSource source={source} page="history" />
+
       <p className="max-w-4xl text-sm text-muted-foreground leading-relaxed">
-        Every graded prediction from the frozen walk-forward backtest, next to
-        the closing spread and the final margin. Lines are quoted for the home
-        team.
+        {source === "live"
+          ? "Actual published pregame forecasts alongside final scores and nflverse closing lines. The last forecast received before kickoff is preserved; missing forecasts or closes stay blank."
+          : "Every graded prediction from the historical walk-forward backtest, next to the closing spread and final margin."}
+        {" "}Lines are quoted for the home team.
       </p>
 
       <SeasonLinks
         options={[
-          { key: "", label: "All", href: historyUrl({ team }) },
+          { key: "", label: "All", href: historyUrl({ source, team }) },
           ...seasonOptions.map((s) => ({
             key: s,
             label: s,
-            href: historyUrl({ season: s, team }),
+            href: historyUrl({ source, season: s, team }),
           })),
         ]}
         activeKey={season}
         team={team}
-        clearHref={historyUrl({ season })}
+        clearHref={historyUrl({ source, season })}
       />
 
       {error ? (
         <p className="text-sm text-destructive">Could not load history: {error.message}</p>
       ) : rows.length === 0 ? (
         <p className="text-sm text-muted-foreground">
-          No graded games match these filters.
+          {source === "live" ? "No completed live games match these filters yet." : "No backtest games match these filters."}
         </p>
       ) : (
-        <GradedHistoryTable rows={rows} caption="NFL backtest history" />
+        <GradedHistoryTable rows={rows} caption={`NFL ${source} forecast history`} />
       )}
 
       <HistoryPager
         page={page}
         totalPages={totalPages}
-        pageUrl={(p) => historyUrl({ season, team, page: p })}
+        pageUrl={(p) => historyUrl({ source, season, team, page: p })}
       />
 
       <p className="text-xs text-muted-foreground">

@@ -2027,6 +2027,165 @@ export type Database = {
   }
   nfl: {
     Tables: {
+      forecast_snapshots: {
+        Row: {
+          snapshot_id: number
+          recorded_at: string
+          game_id: string
+          season: number
+          week: number
+          as_of: string
+          model_version: string
+          start_date: string | null
+          home_team_abbr: string | null
+          home_team: string
+          away_team_abbr: string | null
+          away_team: string
+          neutral_site: boolean | null
+          div_game: boolean | null
+          home_field_points: number | null
+          expected_home_points: number | null
+          expected_away_points: number | null
+          home_qb_adjustment: number | null
+          away_qb_adjustment: number | null
+          rest_adjustment: number | null
+          pure_home_margin: number | null
+          pure_home_spread: number | null
+          market_home_spread: number | null
+          market_weight: number | null
+          home_margin: number | null
+          home_spread: number | null
+          model_total: number | null
+          margin_sd: number | null
+          total_sd: number | null
+          margin_total_correlation: number | null
+          distribution: string | null
+          degrees_of_freedom: number | null
+        }
+        Insert: {
+          snapshot_id?: never
+          recorded_at?: string
+          game_id: string
+          season: number
+          week: number
+          as_of: string
+          model_version: string
+          start_date?: string | null
+          home_team_abbr?: string | null
+          home_team: string
+          away_team_abbr?: string | null
+          away_team: string
+          neutral_site?: boolean | null
+          div_game?: boolean | null
+          home_field_points?: number | null
+          expected_home_points?: number | null
+          expected_away_points?: number | null
+          home_qb_adjustment?: number | null
+          away_qb_adjustment?: number | null
+          rest_adjustment?: number | null
+          pure_home_margin?: number | null
+          pure_home_spread?: number | null
+          market_home_spread?: number | null
+          market_weight?: number | null
+          home_margin?: number | null
+          home_spread?: number | null
+          model_total?: number | null
+          margin_sd?: number | null
+          total_sd?: number | null
+          margin_total_correlation?: number | null
+          distribution?: string | null
+          degrees_of_freedom?: number | null
+        }
+        Update: {
+          snapshot_id?: never
+          recorded_at?: string
+          game_id?: string
+          season?: number
+          week?: number
+          as_of?: string
+          model_version?: string
+          start_date?: string | null
+          home_team_abbr?: string | null
+          home_team?: string
+          away_team_abbr?: string | null
+          away_team?: string
+          neutral_site?: boolean | null
+          div_game?: boolean | null
+          home_field_points?: number | null
+          expected_home_points?: number | null
+          expected_away_points?: number | null
+          home_qb_adjustment?: number | null
+          away_qb_adjustment?: number | null
+          rest_adjustment?: number | null
+          pure_home_margin?: number | null
+          pure_home_spread?: number | null
+          market_home_spread?: number | null
+          market_weight?: number | null
+          home_margin?: number | null
+          home_spread?: number | null
+          model_total?: number | null
+          margin_sd?: number | null
+          total_sd?: number | null
+          margin_total_correlation?: number | null
+          distribution?: string | null
+          degrees_of_freedom?: number | null
+        }
+        Relationships: []
+      }
+      game_results: {
+        Row: {
+          game_id: string
+          season: number
+          week: number
+          season_type: string
+          start_date: string
+          home_team_abbr: string
+          away_team_abbr: string
+          home_team: string
+          away_team: string
+          neutral_site: boolean
+          home_points: number
+          away_points: number
+          closing_spread: number | null
+          source: string
+          source_fetched_at: string
+        }
+        Insert: {
+          game_id: string
+          season: number
+          week: number
+          season_type: string
+          start_date: string
+          home_team_abbr: string
+          away_team_abbr: string
+          home_team: string
+          away_team: string
+          neutral_site: boolean
+          home_points: number
+          away_points: number
+          closing_spread?: number | null
+          source: string
+          source_fetched_at: string
+        }
+        Update: {
+          game_id?: string
+          season?: number
+          week?: number
+          season_type?: string
+          start_date?: string
+          home_team_abbr?: string
+          away_team_abbr?: string
+          home_team?: string
+          away_team?: string
+          neutral_site?: boolean
+          home_points?: number
+          away_points?: number
+          closing_spread?: number | null
+          source?: string
+          source_fetched_at?: string
+        }
+        Relationships: []
+      }
       season_win_totals: {
         Row: {
           season: number
@@ -2527,7 +2686,34 @@ export type Database = {
       }
     }
     Views: {
-      [_ in never]: never
+      live_predictions: {
+        Row: {
+          game_id: string | null
+          season: number | null
+          week: number | null
+          week_index: number | null
+          season_type: string | null
+          home_team: string | null
+          away_team: string | null
+          neutral_site: boolean | null
+          home_points: number | null
+          away_points: number | null
+          closing_spread: number | null
+          model_margin: number | null
+          pure_model_margin: number | null
+          actual_margin: number | null
+          start_date: string | null
+          forecast_as_of: string | null
+          forecast_recorded_at: string | null
+          model_version: string | null
+          closing_source: string | null
+          source_fetched_at: string | null
+          model_absolute_error: number | null
+          pure_absolute_error: number | null
+          closing_absolute_error: number | null
+        }
+        Relationships: []
+      }
     }
     Functions: {
       [_ in never]: never

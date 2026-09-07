@@ -70,12 +70,15 @@ export async function fetchUnitRatings(
 
 // Supabase caps a response at 1000 rows; page the full backtest through
 // sequential ranges (three requests for 2016-2025).
-export async function fetchFullBacktest(): Promise<NflBacktestPrediction[]> {
+export async function fetchGradedPredictions(
+  source: "live" | "backtest"
+): Promise<NflBacktestPrediction[]> {
   const pageSize = 1000;
   const all: NflBacktestPrediction[] = [];
   for (let offset = 0; ; offset += pageSize) {
-    const { data, error } = await supabaseNfl
-      .from("backtest_predictions")
+    const { data, error } = await (source === "live"
+      ? supabaseNfl.from("live_predictions")
+      : supabaseNfl.from("backtest_predictions"))
       .select("*")
       .order("season", { ascending: true })
       .order("week", { ascending: true })

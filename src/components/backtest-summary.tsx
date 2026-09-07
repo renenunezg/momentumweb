@@ -71,14 +71,16 @@ function MetricsCells({ m, strong }: { m: SliceMetrics; strong?: boolean }) {
 export function BacktestSeasonTable({
   bySeason,
   overall,
+  caption = "Backtest accuracy by season",
 }: {
   bySeason: SliceMetrics[];
   overall: SliceMetrics;
+  caption?: string;
 }) {
   return (
     <div className="overflow-x-auto">
       <Table>
-        <TableCaption className="sr-only">Backtest accuracy by season</TableCaption>
+        <TableCaption className="sr-only">{caption}</TableCaption>
         <TableHeader>
           <TableRow>
             <TableHead>Season</TableHead>
