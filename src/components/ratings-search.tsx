@@ -26,12 +26,14 @@ export function RatingsSearch({
   shown,
   total,
   scope,
+  noun = "teams",
 }: {
   query: string;
   onChange: (query: string) => void;
   shown: number;
   total: number;
   scope?: string;
+  noun?: string;
 }) {
   return (
     <div className="flex flex-wrap items-center gap-3">
@@ -44,7 +46,9 @@ export function RatingsSearch({
         className="w-full rounded-md border border-border bg-transparent px-3 py-1.5 font-mono text-xs placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring sm:w-56"
       />
       <span className="font-mono text-xs text-muted-foreground" role="status">
-        {shown === 0 ? "No teams match your search." : `${shown} of ${total} teams`}
+        {shown === 0
+          ? `No ${noun} match your search.`
+          : `${shown} of ${total} ${noun}`}
         {scope && ` · ${scope}`}
       </span>
     </div>

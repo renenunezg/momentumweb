@@ -2,6 +2,7 @@
 
 import { useMemo, useState, useSyncExternalStore } from "react";
 import { TeamLogo } from "@/components/team-logo";
+import { RatingsSearch } from "@/components/ratings-search";
 import { teamColor } from "@/lib/team-colors";
 import { ToggleGroup } from "@/components/toggle-group";
 import {
@@ -59,6 +60,8 @@ export function WeeklyFootballPredictions({
   games: WeeklyGame[];
 }) {
   const [market, setMarket] = useState<PickMarket>("all");
+  const [query, setQuery] = useState("");
+  const needle = query.trim().toLowerCase();
   const timeZone = useSyncExternalStore(
     subscribeTimezone,
     browserTimezone,
@@ -72,8 +75,16 @@ export function WeeklyFootballPredictions({
   const matches = (pick: WeeklyPick) =>
     pick.status === "recommended" &&
     (market === "all" || pick.market === market);
-  const predictions = games.flatMap((game) => game.rows.filter(matches));
+  const searched = (game: WeeklyGame) =>
+    !needle ||
+    game.home_team.toLowerCase().includes(needle) ||
+    game.away_team.toLowerCase().includes(needle);
+  const found = games.filter(searched);
+  const predictions = found.flatMap((game) => game.rows.filter(matches));
   const gameCount = new Set(predictions.map((row) => row.game_id)).size;
+  const visible = needle
+    ? slates.filter((slate) => slate.games.some(searched))
+    : slates;
 
   return (
     <div className="space-y-6">
@@ -87,9 +98,16 @@ export function WeeklyFootballPredictions({
           />
           <p role="status" className="font-mono text-xs text-muted-foreground">
             {plural(predictions.length, "prediction")} across {gameCount} of{" "}
-            {plural(games.length, "game")}
+            {plural(found.length, "game")}
           </p>
         </div>
+        <RatingsSearch
+          query={query}
+          onChange={setQuery}
+          shown={found.length}
+          total={games.length}
+          noun="games"
+        />
         <div className="space-y-1 text-xs text-muted-foreground">
           <p>Times shown in {timeZone.replaceAll("_", " ")}.</p>
           <p>
@@ -100,7 +118,7 @@ export function WeeklyFootballPredictions({
         </div>
       </div>
       <nav aria-label="Jump to slate" className="flex flex-wrap gap-2">
-        {slates.map((slate) => (
+        {visible.map((slate) => (
           <a
             key={slate.id}
             href={`#${slate.id}`}
@@ -110,8 +128,8 @@ export function WeeklyFootballPredictions({
           </a>
         ))}
       </nav>
-      {slates.map((slate) => {
-        const filtered = slate.games.map((game) => ({
+      {visible.map((slate) => {
+        const filtered = slate.games.filter(searched).map((game) => ({
           ...game,
           evaluated: game.rows.length > 0,
           rows: game.rows.filter(matches),
@@ -122,11 +140,14 @@ export function WeeklyFootballPredictions({
           0,
         );
         const unpublished = filtered.filter((game) => !game.evaluated).length;
-        const shown = qualified.length
-          ? qualified
-          : filtered.length <= EMPTY_CARDS
-            ? filtered
-            : [];
+        // A searched team always shows its game, prediction or not.
+        const shown = needle
+          ? filtered
+          : qualified.length
+            ? qualified
+            : filtered.length <= EMPTY_CARDS
+              ? filtered
+              : [];
         return (
           <section
             key={slate.id}
@@ -147,7 +168,7 @@ export function WeeklyFootballPredictions({
                 </p>
               </div>
               <p className="font-mono text-xs text-muted-foreground">
-                {plural(slate.games.length, "game")} ·{" "}
+                {plural(filtered.length, "game")} ·{" "}
                 {plural(count, "prediction")}
               </p>
             </div>
@@ -157,7 +178,7 @@ export function WeeklyFootballPredictions({
                 className="rounded-lg border border-border bg-muted/30 px-4 py-4 text-sm text-muted-foreground"
               >
                 No qualifying {marketNoun(market)} in this window.{" "}
-                {plural(slate.games.length - unpublished, "game")} evaluated as
+                {plural(filtered.length - unpublished, "game")} evaluated as
                 No Play
                 {unpublished
                   ? `, ${plural(unpublished, "game")} without a published decision`
@@ -206,8 +227,8 @@ function GamePredictions({
       aria-label={`${game.away_team} at ${game.home_team}`}
       className="overflow-hidden rounded-lg border border-border"
     >
-      <div className="flex flex-wrap items-baseline justify-between gap-x-5 gap-y-2 bg-muted/35 px-4 py-3 sm:px-5">
-        <h3 className="flex min-w-0 flex-col gap-2 font-heading text-lg leading-snug tracking-tight sm:flex-row sm:flex-wrap sm:items-center sm:gap-3">
+      <div className="flex flex-wrap items-center justify-between gap-x-5 gap-y-1 bg-muted/35 px-3 py-2 sm:px-4">
+        <h3 className="flex min-w-0 flex-col gap-1 font-heading text-base leading-snug tracking-tight sm:flex-row sm:flex-wrap sm:items-center sm:gap-2">
           {teams.map(({ name, team }, index) => (
             <span key={index} className="flex min-w-0 items-center gap-3">
               {index === 1 && (
@@ -216,7 +237,7 @@ function GamePredictions({
                 </span>
               )}
               <span
-                className="flex min-w-0 items-center gap-2 border-l-[3px] pl-2"
+                className="flex min-w-0 items-center gap-1.5 border-l-[3px] pl-1.5"
                 style={{
                   borderColor: teamColor(team ?? undefined) ?? "var(--border)",
                 }}
@@ -224,7 +245,7 @@ function GamePredictions({
                 <TeamLogo
                   team={team ?? undefined}
                   name={name}
-                  className="h-8 w-8"
+                  className="h-6 w-6"
                 />
                 <span>{name}</span>
               </span>
@@ -236,7 +257,7 @@ function GamePredictions({
         </p>
       </div>
       {rows.length === 0 && (
-        <p className="px-4 py-4 text-sm text-muted-foreground sm:px-5">
+        <p className="px-3 py-2.5 text-sm text-muted-foreground sm:px-4">
           {game.evaluated
             ? `No qualifying ${marketNoun(market)} for this game.`
             : "No published decision for this game yet."}
@@ -255,7 +276,7 @@ function GamePredictions({
         {ordered.map((pick) => (
           <div
             key={pick.market}
-            className="flex min-w-0 flex-col gap-2 bg-background px-4 py-4 sm:px-5"
+            className="flex min-w-0 flex-col gap-0.5 bg-background px-3 py-2 sm:px-4"
           >
             <div className="flex items-center justify-between gap-3">
               <p className="font-mono text-[10px] uppercase tracking-wider text-muted-foreground">
@@ -277,14 +298,14 @@ function GamePredictions({
               )}
             </div>
             <div className="flex items-baseline justify-between gap-4">
-              <p className="text-base font-semibold leading-snug">
+              <p className="text-sm font-semibold leading-snug">
                 {pickLabel(pick)}
               </p>
-              <p className="shrink-0 font-mono text-lg tabular-nums">
+              <p className="shrink-0 font-mono text-sm tabular-nums">
                 {formatOdds(pick.price)}
               </p>
             </div>
-            <div className="flex flex-wrap items-baseline justify-between gap-x-3 gap-y-1 text-xs text-muted-foreground">
+            <div className="flex flex-wrap items-baseline justify-between gap-x-3 gap-y-0.5 text-[11px] text-muted-foreground">
               <p>{pick.provider}</p>
               <p
                 className="font-mono tabular-nums"
