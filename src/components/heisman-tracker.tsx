@@ -391,13 +391,21 @@ function Trajectory({ rows }: { rows: CfbPlayerValue[] }) {
   );
 }
 
-function History({ rows }: { rows: CfbHeismanHistory[] }) {
+function History({ rows, meta, week }: { rows: CfbHeismanHistory[]; meta: CfbPlayerModelMeta | null; week: number | null }) {
+  const weeklyEvaluation = meta?.heisman_model_version === "cfb_heisman_share_v2";
   return (
     <div className="space-y-3">
       <p className="max-w-4xl text-sm text-muted-foreground leading-relaxed">
-        Each season is scored by a ballot model fit on every other season.
-        The value rank is where the winner finished on that season&apos;s
-        final value board, available from 2019 when per-play credit begins.
+        {weeklyEvaluation ? (
+          <>Each season is evaluated through {week != null ? `Week ${week}` : "the available weekly cutoff"}, using a model trained
+          only on earlier seasons and candidates selected from that week&apos;s
+          statistics. Winners outside the candidate pool count as misses.
+          Value ranks use the same weekly cutoff, where available.</>
+        ) : (
+          <>Each season is scored using full-season statistics by a ballot model
+          fit on every other season. This does not measure early-season forecast
+          accuracy. Value ranks show the final season board where available.</>
+        )}
       </p>
       <div className="overflow-x-auto">
         <Table>
@@ -430,7 +438,10 @@ function History({ rows }: { rows: CfbHeismanHistory[] }) {
                     · {formatPct(row.predicted_winner_share, 0)}
                   </span>
                 </TableCell>
-                <TableCell className={numCell}>#{row.actual_winner_predicted_rank}</TableCell>
+                <TableCell className={numCell}>
+                  {row.actual_winner_predicted_rank != null
+                    ? `#${row.actual_winner_predicted_rank}` : "Outside pool"}
+                </TableCell>
                 <TableCell className={numCell}>
                   {row.winner_value_rank != null ? `#${row.winner_value_rank}` : EMPTY}
                 </TableCell>
@@ -566,12 +577,15 @@ function Method({ meta }: { meta: CfbPlayerModelMeta | null }) {
           2014, so a defender&apos;s rates cannot be a feature). It is trained
           on the top-ten finishers from
           {meta ? ` ${JSON.parse(meta.heisman_training_seasons).length}` : ""} past
-          seasons with every other candidate at zero, and validated by holding
-          out one season at a time
+          seasons with every other candidate at zero.
+          {meta?.heisman_model_version === "cfb_heisman_share_v2"
+            ? " Evaluation uses historical snapshots at the current board week, training only on earlier seasons and counting winners outside the candidate pool as misses"
+            : " Historical evaluation holds out one season at a time using full-season statistics, which does not establish early-season forecasting accuracy"}
           {meta
             ? ` (winner called ${formatPct(meta.heisman_winner_hit_rate, 0)} of the time, top three ${formatPct(meta.heisman_top_three_rate, 0)})`
             : ""}.
-          The current season is never in the training set.
+          The current season is never in the training set. Shares are conditional
+          on the selected candidate pool and are not probabilities of winning.
         </p>
         <p className="text-muted-foreground">
           What the tracker does not do: infer injuries or availability, read
@@ -618,7 +632,7 @@ export default function HeismanTracker({
         <Trajectory rows={trajectories} />
       </ViewTabPanel>
       <ViewTabPanel value="history">
-        <History rows={history} />
+        <History rows={history} meta={meta} week={boardWeek} />
       </ViewTabPanel>
       <ViewTabPanel value="method">
         <Method meta={meta} />

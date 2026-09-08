@@ -152,7 +152,11 @@ export type CfbMarketComparison = Tables<"cfb", "market_comparisons">;
 export type CfbBacktestPrediction = Tables<"cfb", "backtest_predictions">;
 export type CfbPlayerValue = Tables<"cfb", "player_values">;
 export type CfbHeismanBoardRow = Tables<"cfb", "heisman_board">;
-export type CfbHeismanHistory = Tables<"cfb", "heisman_history">;
+// Weekly evaluation leaves rank absent when the winner was outside the pool.
+// The backend migration makes this column nullable before publishing v2.
+export type CfbHeismanHistory = Omit<Tables<"cfb", "heisman_history">, "actual_winner_predicted_rank"> & {
+  actual_winner_predicted_rank: number | null;
+};
 export type CfbPlayerModelMeta = Tables<"cfb", "player_model_meta">;
 
 // One frozen grading record per completed game: the projection published
