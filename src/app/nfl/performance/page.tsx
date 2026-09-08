@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { Notice } from "@/components/notice";
 import Link from "next/link";
 import {
   fetchNflPickSummary,
@@ -93,21 +94,18 @@ export default async function PerformancePage({
           />
           <PickKpis metric={metric} unavailable={summary.unavailable} />
           {summary.unavailable ? (
-            <p
-              role="status"
-              className="rounded-md border border-border bg-muted/30 p-4 text-sm"
-            >
+            <Notice role="status">
               Recommendation results are currently unavailable. Forecast
               accuracy remains available in its tab.
-            </p>
+            </Notice>
           ) : !metric?.picks ? (
-            <p className="rounded-md border border-border bg-muted/30 p-4 text-sm">
+            <Notice>
               No recommendations recorded for this selection yet.
               {metric?.no_plays
                 ? ` ${metric.no_plays} market decisions were No Play.`
                 : ""}{" "}
               Past forecast accuracy is available in the Forecast accuracy tab.
-            </p>
+            </Notice>
           ) : (
             <p className="text-sm text-muted-foreground">
               {metric.picks} recommendations across {metric.unique_games ?? 0}{" "}

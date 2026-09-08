@@ -11,6 +11,8 @@ import {
   ReferenceLine,
   Legend,
 } from "recharts";
+import { Notice } from "@/components/notice";
+import { Card, CardContent } from "@/components/ui/card";
 import {
   chartAxisProps,
   chartTooltipStyle,
@@ -195,7 +197,7 @@ export function MethodologyDistributionChart({
       </div>
 
       <div className="grid grid-cols-1 gap-3 sm:grid-cols-3 text-sm">
-        <div className="rounded-sm border border-border p-3">
+        <Card size="sm"><CardContent>
           <p className="font-mono text-xs uppercase tracking-wider text-muted-foreground">
             {home.team} expected runs
           </p>
@@ -203,8 +205,8 @@ export function MethodologyDistributionChart({
           <p className="mt-0.5 font-mono text-xs text-muted-foreground">
             p10–p90: {fmt(home.p10, 1)} – {fmt(home.p90, 1)}
           </p>
-        </div>
-        <div className="rounded-sm border border-border p-3">
+        </CardContent></Card>
+        <Card size="sm"><CardContent>
           <p className="font-mono text-xs uppercase tracking-wider text-muted-foreground">
             {away.team} expected runs
           </p>
@@ -212,8 +214,8 @@ export function MethodologyDistributionChart({
           <p className="mt-0.5 font-mono text-xs text-muted-foreground">
             p10–p90: {fmt(away.p10, 1)} – {fmt(away.p90, 1)}
           </p>
-        </div>
-        <div className="rounded-sm border border-border p-3">
+        </CardContent></Card>
+        <Card size="sm"><CardContent>
           <p className="font-mono text-xs uppercase tracking-wider text-muted-foreground">
             {home.team} win probability
           </p>
@@ -221,10 +223,10 @@ export function MethodologyDistributionChart({
           <p className="mt-0.5 font-mono text-xs text-muted-foreground">
             p10–p90: {pct(homeWinProbP10)} – {pct(homeWinProbP90)}
           </p>
-        </div>
+        </CardContent></Card>
       </div>
 
-      <div className="rounded-sm border border-border bg-muted/30 p-3 text-xs leading-relaxed text-muted-foreground">
+      <Notice className="text-xs leading-relaxed text-muted-foreground">
         <p>
           <span className="font-mono uppercase tracking-wider">Total runs:</span>{" "}
           μ {fmt(totalMean, 2)}, p10–p90 {fmt(totalP10, 1)}–{fmt(totalP90, 1)}.
@@ -235,7 +237,7 @@ export function MethodologyDistributionChart({
           ) : null}{" "}
           Bars are the empirical PMF from the raw 10,000-sim run array, binned 0..20.
         </p>
-      </div>
+      </Notice>
     </div>
   );
 }

@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { Card, CardContent } from "@/components/ui/card";
 import Image from "next/image";
 import Link from "next/link";
 import { JsonLd } from "@/components/json-ld";
@@ -166,10 +167,10 @@ export default function AboutPage() {
         <SectionLabel>Strengths</SectionLabel>
         <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
           {strengths.map(({ title, body }) => (
-            <div key={title} className="rounded-sm border border-border p-3">
+            <Card key={title} size="sm"><CardContent>
               <p className="text-sm font-medium">{title}</p>
               <p className="mt-1 text-sm text-muted-foreground leading-relaxed">{body}</p>
-            </div>
+            </CardContent></Card>
           ))}
         </div>
       </section>

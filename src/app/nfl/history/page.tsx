@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { Notice } from "@/components/notice";
 import Link from "next/link";
 import ForecastHistory from "@/components/nfl-forecast-history";
 import { HistoryPager } from "@/components/graded-history";
@@ -86,13 +87,10 @@ export default async function HistoryPage({
       />
       <PickKpis metric={metric} unavailable={history.unavailable} />
       {history.unavailable ? (
-        <p
-          role="status"
-          className="rounded-md border border-border bg-muted/30 p-4 text-sm"
-        >
+        <Notice role="status">
           Recommendation history is currently unavailable. Forecast history
           remains available.
-        </p>
+        </Notice>
       ) : history.rows.length ? (
         <>
           <PickTable rows={history.rows} caption="Recorded NFL decisions" />
@@ -105,11 +103,11 @@ export default async function HistoryPage({
           <HistoryPager page={page} totalPages={totalPages} pageUrl={pageUrl} />
         </>
       ) : (
-        <p className="rounded-md border border-border bg-muted/30 p-4 text-sm">
+        <Notice>
           No recorded decisions match this selection. Recommendations will
           appear here when the model next publishes qualifying picks or No Play
           decisions.
-        </p>
+        </Notice>
       )}
       <PickPolicy sport="nfl" firstDecision={metric?.first_decision_at} />
     </main>

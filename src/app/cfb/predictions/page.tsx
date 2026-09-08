@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { Notice } from "@/components/notice";
 import Link from "next/link";
 import { LastUpdated } from "@/components/last-updated";
 import { WeeklyFootballPredictions } from "@/components/weekly-football-predictions";
@@ -10,8 +11,6 @@ export const metadata: Metadata = {
   description:
     "This week's college football spread, total, and moneyline predictions, grouped by kickoff slate with recorded lines, odds, and bookmakers.",
 };
-
-const notice = "rounded-lg border border-border bg-muted/30 p-5 text-sm";
 
 export default async function PredictionsPage() {
   const { season, week, schedule, decisions, unavailable } =
@@ -52,20 +51,20 @@ export default async function PredictionsPage() {
         </div>
       </div>
       {unavailable ? (
-        <p role="status" className={notice}>
+        <Notice role="status">
           Weekly predictions are temporarily unavailable. Please try again
           shortly.
-        </p>
+        </Notice>
       ) : season == null ? (
-        <p role="status" className={notice}>
+        <Notice role="status">
           No week has been published yet.
-        </p>
+        </Notice>
       ) : decisions.length === 0 ? (
-        <p role="status" className={notice}>
+        <Notice role="status">
           Week {week} projections are published, but its predictions have not
           been recorded yet. Decisions are published once frozen prices are
           available.
-        </p>
+        </Notice>
       ) : (
         <WeeklyFootballPredictions
           league="cfb"

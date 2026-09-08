@@ -3,6 +3,8 @@
 import { useMemo, useState, useSyncExternalStore } from "react";
 import { TeamLogo } from "@/components/team-logo";
 import { RatingsSearch } from "@/components/ratings-search";
+import { Notice } from "@/components/notice";
+import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { teamColor } from "@/lib/team-colors";
 import { ToggleGroup } from "@/components/toggle-group";
 import {
@@ -173,10 +175,7 @@ export function WeeklyFootballPredictions({
               </p>
             </div>
             {shown.length === 0 && (
-              <p
-                role="status"
-                className="rounded-lg border border-border bg-muted/30 px-4 py-4 text-sm text-muted-foreground"
-              >
+              <Notice role="status" className="text-muted-foreground">
                 No qualifying {marketNoun(market)} in this window.{" "}
                 {plural(filtered.length - unpublished, "game")} evaluated as
                 No Play
@@ -184,7 +183,7 @@ export function WeeklyFootballPredictions({
                   ? `, ${plural(unpublished, "game")} without a published decision`
                   : ""}
                 .
-              </p>
+              </Notice>
             )}
             <div className="space-y-4">
               {shown.map((game) => (
@@ -223,11 +222,13 @@ function GamePredictions({
     { name: game.home_team, team: game.home },
   ];
   return (
-    <article
+    <Card
+      role="article"
       aria-label={`${game.away_team} at ${game.home_team}`}
-      className="overflow-hidden rounded-lg border border-border"
+      size="sm"
+      className="data-[size=sm]:gap-0 data-[size=sm]:py-0"
     >
-      <div className="flex flex-wrap items-center justify-between gap-x-5 gap-y-1 bg-muted/35 px-3 py-2 sm:px-4">
+      <CardHeader className="flex flex-wrap items-center justify-between gap-x-5 gap-y-1 bg-muted/35 py-2">
         <h3 className="flex min-w-0 flex-col gap-1 font-heading text-base leading-snug tracking-tight sm:flex-row sm:flex-wrap sm:items-center sm:gap-2">
           {teams.map(({ name, team }, index) => (
             <span key={index} className="flex min-w-0 items-center gap-3">
@@ -255,17 +256,17 @@ function GamePredictions({
         <p className="shrink-0 font-mono text-xs text-muted-foreground">
           {clock.kickoff(game.start_date)}
         </p>
-      </div>
+      </CardHeader>
       {rows.length === 0 && (
-        <p className="px-3 py-2.5 text-sm text-muted-foreground sm:px-4">
+        <CardContent className="py-2.5 text-muted-foreground">
           {game.evaluated
             ? `No qualifying ${marketNoun(market)} for this game.`
             : "No published decision for this game yet."}
-        </p>
+        </CardContent>
       )}
-      <div
+      <CardContent
         className={cn(
-          "grid gap-px bg-border",
+          "grid gap-px bg-border px-0",
           rows.length === 3
             ? "sm:grid-cols-3"
             : rows.length === 2
@@ -276,7 +277,7 @@ function GamePredictions({
         {ordered.map((pick) => (
           <div
             key={pick.market}
-            className="flex min-w-0 flex-col gap-0.5 bg-background px-3 py-2 sm:px-4"
+            className="flex min-w-0 flex-col gap-0.5 bg-background px-3 py-2"
           >
             <div className="flex items-center justify-between gap-3">
               <p className="font-mono text-[10px] uppercase tracking-wider text-muted-foreground">
@@ -322,7 +323,7 @@ function GamePredictions({
             </div>
           </div>
         ))}
-      </div>
-    </article>
+      </CardContent>
+    </Card>
   );
 }

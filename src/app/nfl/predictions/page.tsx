@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { Notice } from "@/components/notice";
 import Link from "next/link";
 import { LastUpdated } from "@/components/last-updated";
 import { WeeklyFootballPredictions } from "@/components/weekly-football-predictions";
@@ -89,25 +90,19 @@ export default async function PredictionsPage() {
         </div>
       </div>
       {unavailable ? (
-        <p
-          role="status"
-          className="rounded-lg border border-border bg-muted/30 p-5 text-sm"
-        >
+        <Notice role="status">
           Weekly predictions are temporarily unavailable. Please try again
           shortly.
-        </p>
+        </Notice>
       ) : decisions.length ? (
         <WeeklyFootballPredictions
           league="nfl"
           games={weeklyGames([...schedule.values()], decisions)}
         />
       ) : (
-        <p
-          role="status"
-          className="rounded-lg border border-border bg-muted/30 p-5 text-sm"
-        >
+        <Notice role="status">
           This week&apos;s predictions have not been published yet.
-        </p>
+        </Notice>
       )}
       <div className="flex flex-wrap justify-between gap-3 border-t border-border pt-4 text-xs leading-relaxed text-muted-foreground">
         <p className="max-w-2xl">

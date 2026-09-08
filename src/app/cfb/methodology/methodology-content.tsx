@@ -1,4 +1,5 @@
 import type { ReactNode } from "react";
+import { Notice } from "@/components/notice";
 import Link from "next/link";
 import {
   Card,
@@ -214,10 +215,10 @@ export function MethodologyContent() {
               { label: "Kickoff anchor", val: "Market closing spread, sd 15.45 points" },
               { label: "Market output", val: "+EV flags for benchmarking; no picks, no sizing" },
             ].map(({ label, val }) => (
-              <div key={label} className="rounded-sm border border-border p-3">
+              <Card key={label} size="sm"><CardContent>
                 <p className="font-mono text-xs uppercase tracking-wider text-muted-foreground">{label}</p>
                 <p className="mt-0.5 text-sm font-medium">{val}</p>
-              </div>
+              </CardContent></Card>
             ))}
           </div>
         </div>
@@ -692,10 +693,10 @@ export function MethodologyContent() {
           </p>
           <div className="flex flex-wrap gap-2">
             {anchorPhaseRows.map((row) => (
-              <div key={row.phase} className="rounded-sm border border-border px-3 py-2">
+              <Card key={row.phase} size="sm" className="py-2"><CardContent>
                 <p className="font-mono text-[10px] uppercase tracking-wider text-muted-foreground">{row.phase}</p>
                 <p className="font-mono text-sm">{row.delta}</p>
-              </div>
+              </CardContent></Card>
             ))}
           </div>
           <p className="text-muted-foreground">
@@ -837,7 +838,7 @@ export function MethodologyContent() {
             </div>
           ))}
 
-          <div className="mt-2 rounded-sm border border-border bg-muted/50 p-3 text-xs text-muted-foreground leading-relaxed">
+          <Notice className="mt-2 bg-muted/50 text-xs text-muted-foreground leading-relaxed">
             <strong className="text-foreground">A note on model size:</strong> there is
             no machine learning framework anywhere in this system, but that is a
             statement about tooling, and the underlying model is still Bayesian. The
@@ -852,7 +853,7 @@ export function MethodologyContent() {
             from raw data with one CLI command. When a model this small is calibrated
             across seven seasons, added complexity has to argue for itself on holdout.
             So far, momentum could not.
-          </div>
+          </Notice>
         </div>
       </SectionCard>
     </div>

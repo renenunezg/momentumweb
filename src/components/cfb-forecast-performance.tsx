@@ -1,4 +1,5 @@
 import { Suspense } from "react";
+import { Notice } from "@/components/notice";
 import { fetchFullBacktest, type CfbLivePerformance } from "@/lib/cfb";
 import { metricsBySeason } from "@/lib/backtest-metrics";
 import type {
@@ -173,12 +174,12 @@ export default async function ForecastPerformance({
         ) : (
           <>
             {livePure.thin_sample && (
-              <p className="rounded-md border border-border bg-muted/40 px-3 py-2 text-xs text-muted-foreground">
+              <Notice className="bg-muted/40 text-xs text-muted-foreground">
                 {livePure.games} games graded through{" "}
                 {fmtDate(live.latestKickoff)}. Fewer than 30 games describe the
                 season so far, not model skill. Read these as status, not
                 evidence.
-              </p>
+              </Notice>
             )}
 
             <div className="grid grid-cols-2 gap-4 border-y border-rule-strong py-4 sm:grid-cols-3 lg:grid-cols-6">
@@ -301,7 +302,7 @@ export default async function ForecastPerformance({
                 rows={pureSegments.filter((m) => m.segment_kind === kind)}
               />
             ))}
-            <details className="space-y-4 rounded-md border border-border p-4">
+            <details className="space-y-4 rounded-sm border border-border p-4">
               <summary className="cursor-pointer text-sm font-medium">
                 Data and model diagnostics
               </summary>

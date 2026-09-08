@@ -1,4 +1,5 @@
 import type { ReactNode } from "react";
+import { Notice } from "@/components/notice";
 import Link from "next/link";
 import {
   Card,
@@ -218,10 +219,10 @@ export function MethodologyContent({
               { label: "Sizing rule", val: "Quarter-Kelly on flagged plays" },
               { label: "Cutover from v1", val: "May 12, 2026" },
             ].map(({ label, val }) => (
-              <div key={label} className="rounded-sm border border-border p-3">
+              <Card key={label} size="sm"><CardContent>
                 <p className="font-mono text-xs uppercase tracking-wider text-muted-foreground">{label}</p>
                 <p className="mt-0.5 text-sm font-medium">{val}</p>
-              </div>
+              </CardContent></Card>
             ))}
           </div>
         </div>
@@ -778,13 +779,13 @@ export function MethodologyContent({
             </div>
           ))}
 
-          <div className="mt-2 rounded-sm border border-border bg-muted/50 p-3 text-xs text-muted-foreground leading-relaxed">
+          <Notice className="mt-2 bg-muted/50 text-xs text-muted-foreground leading-relaxed">
             <strong className="text-foreground">A note on the sampler stack:</strong> PyMC
             describes the model; numpyro provides the JAX-backed NUTS implementation that
             actually samples. Pinning matters: numpyro 0.20.1 + jax 0.7.2 + jaxlib 0.7.2.
             Newer JAX removed an internal primitive (<span className="font-mono">xla_pmap_p</span>)
             that numpyro depends on, which breaks sampling silently.
-          </div>
+          </Notice>
         </div>
       </SectionCard>
 
