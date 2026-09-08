@@ -5,7 +5,7 @@ import { SeasonWinsTable } from "@/components/season-wins-table";
 
 export const revalidate = 300;
 export const metadata: Metadata = {
-  title: "NFL Season Win Projections",
+  title: "NFL Season Win Totals Projections",
   description:
     "Projected regular-season wins for all 32 NFL teams, with model uncertainty ranges and preseason sportsbook comparisons.",
 };
@@ -27,7 +27,7 @@ export default async function SeasonWinsPage() {
   if (!first)
     return (
       <main id="main" className="mx-auto w-full max-w-5xl min-w-0 px-4 py-8">
-        <h1 className="font-heading text-2xl tracking-tight">Season Wins</h1>
+        <h1 className="font-heading text-2xl tracking-tight">NFL Season Win Projections</h1>
         <p className="mt-4 text-muted-foreground">
           {unavailable
             ? "Season projections are temporarily unavailable. Please check back shortly."
@@ -43,7 +43,7 @@ export default async function SeasonWinsPage() {
     >
       <div className="flex flex-col justify-between gap-3 sm:flex-row sm:items-start">
         <div>
-          <h1 className="font-heading text-2xl tracking-tight">Season Wins</h1>
+          <h1 className="font-heading text-2xl tracking-tight">NFL Season Win Projections</h1>
           <p className="mt-1 font-mono text-xs uppercase tracking-wider text-muted-foreground">
             {first.season} · Regular season ·{" "}
             {inSeason ? "Updated outlook" : "Preseason outlook"}
@@ -55,7 +55,8 @@ export default async function SeasonWinsPage() {
         />
       </div>
       <p className="max-w-3xl text-sm leading-relaxed text-muted-foreground">
-        Expected wins across the full 17-game schedule. The range shows the
+        Projected regular-season win totals for all 32 NFL teams, next to the
+        preseason sportsbook line. Expected wins cover the full 17-game schedule. The range shows the
         middle 80% of simulated season outcomes, including uncertainty in team
         strength and individual games.
         {inSeason &&

@@ -4,6 +4,8 @@ import { notFound } from "next/navigation";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
 import { posts } from "../posts";
+import { JsonLd } from "@/components/json-ld";
+import { SITE_NAME, SITE_URL } from "@/lib/site";
 
 // Markdown tables follow the same booktabs rules as the app's own tables:
 // rule above the header, rule below it, rule at the foot, nothing between rows.
@@ -23,8 +25,18 @@ export async function generateMetadata({
   const post = posts.find((p) => p.slug === slug);
   if (!post) return {};
   return {
-    title: `${post.title} | René Núñez`,
+    title: post.title,
     description: post.summary,
+    // A nested openGraph replaces the root one wholesale, so the shared
+    // fields are repeated here.
+    openGraph: {
+      type: "article",
+      url: "./",
+      siteName: SITE_NAME,
+      locale: "en_US",
+      publishedTime: post.date,
+      authors: [SITE_URL],
+    },
   };
 }
 
@@ -45,6 +57,17 @@ export default async function BlogPostPage({
       >
         &larr; Blog
       </Link>
+      <JsonLd
+        data={{
+          "@context": "https://schema.org",
+          "@type": "BlogPosting",
+          headline: post.title,
+          description: post.summary,
+          datePublished: post.date,
+          author: { "@type": "Person", name: SITE_NAME, url: SITE_URL },
+          mainEntityOfPage: `${SITE_URL}/blog/${post.slug}`,
+        }}
+      />
       <article className="mt-6">
         <p className="font-mono text-xs text-muted-foreground">{post.date}</p>
         <h1 className="font-heading text-3xl tracking-tight mt-1">

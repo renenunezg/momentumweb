@@ -1,3 +1,4 @@
+import type { Metadata } from "next";
 import { supabase } from "@/lib/supabase";
 import type { Tables } from "@/lib/database.types";
 import type { Narrow } from "@/lib/types";
@@ -20,6 +21,11 @@ import { mlbTeamIdentity } from "@/lib/mlb-teams";
 import Link from "next/link";
 
 export const revalidate = 300;
+export const metadata: Metadata = {
+  title: "MLB Prediction History",
+  description:
+    "Every MLB prediction this season next to the final score: moneyline, run line, and total picks frozen before first pitch, with results by team and date.",
+};
 
 const PAGE_SIZE = 50;
 
@@ -179,12 +185,18 @@ export default async function HistoryPage({
     <main id="main" className="mx-auto w-full max-w-6xl min-w-0 px-4 py-8 space-y-6">
       <RealtimeRefresh tables={["games", "model_outputs_season"]} />
       <div className="flex items-start justify-between gap-4">
-        <h1 className="font-heading text-2xl tracking-tight">Season History</h1>
+        <h1 className="font-heading text-2xl tracking-tight">MLB Prediction History</h1>
         <LastUpdated
           timestamp={lastUpdated}
           schedule="Predictions ~5 AM PT • Results scored overnight"
         />
       </div>
+
+      <p className="max-w-4xl text-sm text-muted-foreground leading-relaxed">
+        Every MLB prediction this season next to the final score: the
+        moneyline, run line, and total picks frozen before first pitch and
+        how each one graded.
+      </p>
 
       <Filters />
 

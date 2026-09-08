@@ -1,3 +1,4 @@
+import type { Metadata } from "next";
 import { fetchGradedPredictions } from "@/lib/nfl";
 import { computeMetrics, metricsBySeason } from "@/lib/backtest-metrics";
 import type { NflBacktestPrediction } from "@/lib/types";
@@ -6,6 +7,11 @@ import { NflForecastSource } from "@/components/nfl-forecast-source";
 import { formatNumber } from "@/lib/utils";
 
 export const revalidate = 300;
+export const metadata: Metadata = {
+  title: "NFL Model Performance",
+  description:
+    "Mean absolute error of the NFL model's spreads against the closing line, on live published forecasts and a walk-forward backtest to 2016.",
+};
 
 export default async function PerformancePage({ searchParams }: {
   searchParams: Promise<{ source?: string }>;
@@ -32,7 +38,7 @@ export default async function PerformancePage({ searchParams }: {
 
   return (
     <main id="main" className="mx-auto w-full max-w-5xl min-w-0 px-4 py-8 space-y-6">
-      <h1 className="font-heading text-2xl tracking-tight">Model Performance</h1>
+      <h1 className="font-heading text-2xl tracking-tight">NFL Model Performance</h1>
       <NflForecastSource source={source} page="performance" />
       <p className="max-w-4xl text-sm text-muted-foreground leading-relaxed">
         {source === "live"

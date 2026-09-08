@@ -3,7 +3,7 @@ import Link from "next/link";
 import { posts } from "./posts";
 
 export const metadata: Metadata = {
-  title: "Blog | René Núñez",
+  title: "Blog",
   description:
     "Research notes and updates from building open sports prediction models.",
 };

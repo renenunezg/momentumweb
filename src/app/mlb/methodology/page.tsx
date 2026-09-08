@@ -1,8 +1,14 @@
+import type { Metadata } from "next";
 import { supabase } from "@/lib/supabase";
 import { TableOfContents } from "./toc";
 import { MethodologyContent, type DistributionGameData } from "./methodology-content";
 
 export const revalidate = 1800;
+export const metadata: Metadata = {
+  title: "MLB Model Methodology",
+  description:
+    "How the MLB model works: a hierarchical Bayesian skill model and a per-plate-appearance Monte Carlo simulator, from data to win probabilities and run distributions.",
+};
 
 interface PredRow {
   game_pk: number;
@@ -119,7 +125,7 @@ export default async function Page() {
   return (
     <main id="main" className="mx-auto w-full max-w-6xl min-w-0 px-4 py-8">
       <div className="mb-6">
-        <h1 className="font-heading text-2xl tracking-tight">Methodology</h1>
+        <h1 className="font-heading text-2xl tracking-tight">MLB Model Methodology</h1>
         <p className="mt-1 text-sm text-muted-foreground">
           Hierarchical Bayesian skill model and per-PA Monte Carlo simulator, end to end
         </p>

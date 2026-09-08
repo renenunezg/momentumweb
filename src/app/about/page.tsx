@@ -1,9 +1,11 @@
 import type { Metadata } from "next";
 import Image from "next/image";
 import Link from "next/link";
+import { JsonLd } from "@/components/json-ld";
+import { SITE_NAME, SITE_URL } from "@/lib/site";
 
 export const metadata: Metadata = {
-  title: "About | René Núñez",
+  title: "About",
   description:
     "Data Analyst who builds probabilistic forecasting models and benchmarks them against the market in public.",
 };
@@ -91,6 +93,19 @@ function SectionLabel({ children }: { children: React.ReactNode }) {
 export default function AboutPage() {
   return (
     <main id="main" className="mx-auto w-full max-w-3xl min-w-0 px-4 py-8">
+      <JsonLd
+        data={{
+          "@context": "https://schema.org",
+          "@type": "Person",
+          name: SITE_NAME,
+          url: SITE_URL,
+          image: `${SITE_URL}/portrait.jpeg`,
+          jobTitle: "Data Analyst",
+          sameAs: links
+            .filter((l) => l.href.startsWith("https://"))
+            .map((l) => l.href),
+        }}
+      />
       <div className="flex flex-col gap-6 sm:flex-row sm:items-start sm:gap-8">
         <div className="shrink-0">
           <Image

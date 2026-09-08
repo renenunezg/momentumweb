@@ -5,6 +5,8 @@ import { aggregateLedger } from "@/lib/betting-aggs";
 import { supabaseCfb, supabaseNfl } from "@/lib/supabase";
 import { formatSigned } from "@/lib/utils";
 import { posts } from "./blog/posts";
+import { JsonLd } from "@/components/json-ld";
+import { SITE_DESCRIPTION, SITE_NAME, SITE_URL } from "@/lib/site";
 
 export const revalidate = 300;
 
@@ -153,6 +155,30 @@ export default async function Home() {
 
   return (
     <>
+      <JsonLd
+        data={{
+          "@context": "https://schema.org",
+          "@graph": [
+            {
+              "@type": "WebSite",
+              name: SITE_NAME,
+              url: SITE_URL,
+              description: SITE_DESCRIPTION,
+            },
+            {
+              "@type": "Person",
+              name: SITE_NAME,
+              url: SITE_URL,
+              jobTitle: "Data Analyst",
+              sameAs: [
+                "https://github.com/renenunezg",
+                "https://linkedin.com/in/renenunezg",
+                "https://twitter.com/nunezanalytics",
+              ],
+            },
+          ],
+        }}
+      />
       <SiteHeader />
       <main id="main" className="mx-auto w-full max-w-3xl min-w-0 px-4 py-10">
         <section>

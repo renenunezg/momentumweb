@@ -1,3 +1,4 @@
+import type { Metadata } from "next";
 import { supabaseCfb } from "@/lib/supabase";
 import { fetchLiveGradedSeason } from "@/lib/cfb";
 import type { CfbBacktestPrediction, CfbGradedGame } from "@/lib/types";
@@ -10,6 +11,11 @@ import {
 } from "@/components/graded-history";
 
 export const revalidate = 300;
+export const metadata: Metadata = {
+  title: "College Football Forecast History",
+  description:
+    "Every college football game forecast next to the closing spread and final margin: live graded games this season and a walk-forward backtest.",
+};
 
 const PAGE_SIZE = 50;
 const FIRST_BACKTEST_SEASON = 2021;
@@ -130,7 +136,7 @@ export default async function HistoryPage({
     <main id="main" className="mx-auto w-full max-w-6xl min-w-0 px-4 py-8 space-y-6">
       <div className="flex items-start justify-between gap-4">
         <h1 className="font-heading text-2xl tracking-tight">
-          {isLive ? `${liveSeason} Graded Games` : "Backtest History"}
+          {isLive ? `${liveSeason} College Football Graded Games` : "College Football Backtest History"}
         </h1>
         <div className="text-xs text-muted-foreground">{totalRows} graded games</div>
       </div>

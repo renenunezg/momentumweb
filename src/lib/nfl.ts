@@ -1,3 +1,4 @@
+import { cache } from "react";
 import { supabaseNfl } from "@/lib/supabase";
 import type {
   NflBacktestPrediction,
@@ -22,11 +23,12 @@ export async function fetchTeams(): Promise<Map<string, NflTeamIdentity>> {
 }
 
 // The published ratings artifact for the latest (season, week).
-export async function fetchLatestRatings(): Promise<{
+// Cached per request: generateMetadata and the page both read it.
+export const fetchLatestRatings = cache(async (): Promise<{
   ratings: NflTeamRating[];
   season: number | null;
   week: number | null;
-}> {
+}> => {
   const latestRes = await supabaseNfl
     .from("team_ratings")
     .select("season, week")
@@ -47,7 +49,7 @@ export async function fetchLatestRatings(): Promise<{
     season: latest.season,
     week: latest.week,
   };
-}
+});
 
 // Unit ratings for the same (season, week) as the headline ratings. Week-1
 // preseason publishes carry no unit ratings (they need played games), so an

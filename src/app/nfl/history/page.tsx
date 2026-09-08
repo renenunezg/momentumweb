@@ -1,3 +1,4 @@
+import type { Metadata } from "next";
 import { NflForecastSource } from "@/components/nfl-forecast-source";
 import { supabaseNfl } from "@/lib/supabase";
 import type { NflBacktestPrediction } from "@/lib/types";
@@ -9,6 +10,11 @@ import {
 } from "@/components/graded-history";
 
 export const revalidate = 300;
+export const metadata: Metadata = {
+  title: "NFL Forecast History",
+  description:
+    "Every NFL game forecast next to the final score and closing spread: live published forecasts since 2026 and a walk-forward backtest to 2016.",
+};
 
 const PAGE_SIZE = 50;
 const FIRST_SEASON = 2016;
@@ -72,7 +78,7 @@ export default async function HistoryPage({
   return (
     <main id="main" className="mx-auto w-full max-w-6xl min-w-0 px-4 py-8 space-y-6">
       <div className="flex items-start justify-between gap-4">
-        <h1 className="font-heading text-2xl tracking-tight">Forecast History</h1>
+        <h1 className="font-heading text-2xl tracking-tight">NFL Forecast History</h1>
         <div className="text-xs text-muted-foreground">{totalRows} completed games</div>
       </div>
 

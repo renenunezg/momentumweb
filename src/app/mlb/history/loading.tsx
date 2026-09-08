@@ -1,7 +1,7 @@
 export default function Loading() {
   return (
     <main id="main" className="mx-auto w-full max-w-6xl min-w-0 px-4 py-8 space-y-6">
-      <h1 className="font-heading text-2xl tracking-tight">Season History</h1>
+      <h1 className="font-heading text-2xl tracking-tight">MLB Prediction History</h1>
 
       {/* Filter skeleton */}
       <div className="flex flex-wrap gap-2">

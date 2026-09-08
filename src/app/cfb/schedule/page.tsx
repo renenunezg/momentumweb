@@ -1,3 +1,4 @@
+import type { Metadata } from "next";
 import { supabaseCfb } from "@/lib/supabase";
 import { fetchLatestRatings, fetchTeams } from "@/lib/cfb";
 import {
@@ -22,6 +23,11 @@ import {
 } from "@/components/ui/table";
 
 export const revalidate = 300;
+export const metadata: Metadata = {
+  title: "College Football Spread Projections",
+  description:
+    "Model spreads, projected scores, and totals for every FBS and FCS game this week, compared against the market line.",
+};
 
 const VIEWS = [
   { key: "fbs", label: "FBS", empty: "No FBS games this week." },
@@ -57,7 +63,7 @@ export default async function SchedulePage() {
   if (!latest) {
     return (
       <main id="main" className="mx-auto w-full max-w-6xl min-w-0 px-4 py-8">
-        <h1 className="font-heading text-2xl tracking-tight">Schedule</h1>
+        <h1 className="font-heading text-2xl tracking-tight">College Football Schedule and Projections</h1>
         <p className="mt-4 text-muted-foreground">
           No projections published yet. Run the publish pipeline to load them.
         </p>
@@ -100,7 +106,7 @@ export default async function SchedulePage() {
     <main id="main" className="mx-auto w-full max-w-6xl min-w-0 px-4 py-8 space-y-6">
       <div className="flex items-start justify-between gap-4">
         <div>
-          <h1 className="font-heading text-2xl tracking-tight">Schedule</h1>
+          <h1 className="font-heading text-2xl tracking-tight">College Football Schedule and Projections</h1>
           <p className="mt-1 font-mono text-xs uppercase tracking-wider text-muted-foreground">
             {latest.season} · Week {latest.week} · {games.length} games
           </p>
@@ -112,8 +118,10 @@ export default async function SchedulePage() {
       </div>
 
       <p className="max-w-4xl text-sm text-muted-foreground leading-relaxed">
-        Model lines are quoted for the home team: a negative line means the
-        model favors the home side. Market is the best priced spread offer
+        Every college football game this week with the model&apos;s spread,
+        projected score, and total next to the market. Model lines are quoted
+        for the home team: a negative line means the model favors the home
+        side. Market is the best priced spread offer
         found when the forecast ran, converted to the same home axis.
       </p>
 

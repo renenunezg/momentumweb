@@ -1,3 +1,4 @@
+import { cache } from "react";
 import { supabaseCfb } from "@/lib/supabase";
 import type {
   CfbBacktestPrediction,
@@ -27,11 +28,12 @@ export async function fetchTeams(): Promise<Map<number, CfbTeamIdentity>> {
 }
 
 // The published ratings artifact for the latest (season, week).
-export async function fetchLatestRatings(): Promise<{
+// Cached per request: generateMetadata and the page both read it.
+export const fetchLatestRatings = cache(async (): Promise<{
   ratings: CfbTeamRating[];
   season: number | null;
   week: number | null;
-}> {
+}> => {
   const latestRes = await supabaseCfb
     .from("team_ratings")
     .select("season, week")
@@ -52,7 +54,7 @@ export async function fetchLatestRatings(): Promise<{
     season: latest.season,
     week: latest.week,
   };
-}
+});
 
 // Descriptive unit companions for the same published ratings snapshot.
 // Missing historical unit data is represented on the row itself rather than
@@ -196,7 +198,7 @@ const BOARD_ROWS = 25;
 // The latest weekly snapshot of player value with the Heisman board built on
 // it. Every number is a frozen backend artifact; the page only formats them,
 // and any failure degrades to the empty state rather than failing the build.
-export async function fetchHeismanTracker(): Promise<CfbHeismanTracker> {
+export const fetchHeismanTracker = cache(async (): Promise<CfbHeismanTracker> => {
   const latestRes = await supabaseCfb
     .from("player_values")
     .select("season, week, as_of")
@@ -267,4 +269,4 @@ export async function fetchHeismanTracker(): Promise<CfbHeismanTracker> {
     history: (historyRes.data ?? []) as CfbHeismanHistory[],
     meta: ((metaRes.data ?? [])[0] as CfbPlayerModelMeta | undefined) ?? null,
   };
-}
+});

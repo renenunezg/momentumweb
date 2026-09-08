@@ -1,3 +1,4 @@
+import type { Metadata } from "next";
 import { fetchHeismanTracker, fetchTeams } from "@/lib/cfb";
 import { formatNumber, formatPct } from "@/lib/utils";
 import { KpiCard } from "@/components/kpi-card";
@@ -6,6 +7,16 @@ import HeismanTracker from "@/components/heisman-tracker";
 
 export const revalidate = 300;
 
+export async function generateMetadata(): Promise<Metadata> {
+  const { season, week, board } = await fetchHeismanTracker();
+  const year = season ?? new Date().getFullYear();
+  const favorite = board[0]?.athlete_name;
+  return {
+    title: `Heisman Trophy Tracker ${year}`,
+    description: `Weekly Heisman Trophy forecast for the ${year} season${week != null ? ` through week ${week}` : ""}: predicted vote share from a ballot model fit on sixteen years of voting${favorite ? `, currently led by ${favorite}` : ""}, alongside opponent-adjusted player value.`,
+  };
+}
+
 export default async function HeismanPage() {
   const [tracker, teams] = await Promise.all([fetchHeismanTracker(), fetchTeams()]);
   const { season, week, values, board, history, meta } = tracker;
@@ -13,7 +24,7 @@ export default async function HeismanPage() {
   if (season == null || values.length === 0) {
     return (
       <main id="main" className="mx-auto w-full max-w-5xl min-w-0 px-4 py-8">
-        <h1 className="font-heading text-2xl tracking-tight">Heisman Tracker</h1>
+        <h1 className="font-heading text-2xl tracking-tight">Heisman Trophy Tracker</h1>
         <p className="mt-4 text-muted-foreground">
           No player value snapshots have been published yet. The tracker
           appears once the first week of the season is final.
@@ -32,7 +43,7 @@ export default async function HeismanPage() {
     <main id="main" className="mx-auto w-full max-w-5xl min-w-0 px-4 py-8 space-y-6">
       <div className="flex items-start justify-between gap-4">
         <div>
-          <h1 className="font-heading text-2xl tracking-tight">Heisman Tracker</h1>
+          <h1 className="font-heading text-2xl tracking-tight">Heisman Trophy Tracker</h1>
           <p className="mt-1 font-mono text-xs uppercase tracking-wider text-muted-foreground">
             {season} · Through week {week}
           </p>
@@ -44,7 +55,8 @@ export default async function HeismanPage() {
       </div>
 
       <p className="max-w-4xl text-sm text-muted-foreground leading-relaxed">
-        Two boards that are meant to disagree. The value board measures what
+        A weekly Heisman Trophy forecast in two boards that are meant to
+        disagree. The value board measures what
         a player&apos;s plays were worth in points above a replacement at his
         position, adjusted for every defense and offense he faced. The Heisman
         board forecasts how the voters will actually rank the candidates, fit

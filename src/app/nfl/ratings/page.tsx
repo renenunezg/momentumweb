@@ -1,8 +1,18 @@
+import type { Metadata } from "next";
 import { fetchLatestRatings, fetchTeams, fetchUnitRatings } from "@/lib/nfl";
 import { LastUpdated } from "@/components/last-updated";
 import NflRatings from "@/components/nfl-ratings";
 
 export const revalidate = 300;
+
+export async function generateMetadata(): Promise<Metadata> {
+  const { season, week } = await fetchLatestRatings();
+  const year = season ?? new Date().getFullYear();
+  return {
+    title: `NFL Power Ratings ${year}`,
+    description: `Bayesian power ratings for all 32 NFL teams${week != null ? ` through week ${week}` : ""} of the ${year} season, built from drive-level EPA with offense, defense, and unit splits.`,
+  };
+}
 
 export default async function RatingsPage() {
   const [{ ratings, season, week }, teams] = await Promise.all([
@@ -15,7 +25,7 @@ export default async function RatingsPage() {
   if (ratings.length === 0) {
     return (
       <main id="main" className="mx-auto w-full max-w-5xl min-w-0 px-4 py-8">
-        <h1 className="font-heading text-2xl tracking-tight">Power Ratings</h1>
+        <h1 className="font-heading text-2xl tracking-tight">NFL Power Ratings</h1>
         <p className="mt-4 text-muted-foreground">
           No ratings published yet. Run the publish pipeline to load them.
         </p>
@@ -32,7 +42,7 @@ export default async function RatingsPage() {
       <div className="flex items-start justify-between gap-4">
         <div>
           <h1 className="font-heading text-2xl tracking-tight">
-            Power Ratings
+            NFL Power Ratings
           </h1>
           {weekLabel && (
             <p className="mt-1 font-mono text-xs uppercase tracking-wider text-muted-foreground">
@@ -47,7 +57,8 @@ export default async function RatingsPage() {
       </div>
 
       <p className="max-w-4xl text-sm text-muted-foreground leading-relaxed">
-        A team&apos;s power rating is its expected scoring margin against an
+        Power ratings for all 32 NFL teams, refit each week from drive-level
+        EPA. A team&apos;s rating is its expected scoring margin against an
         average opponent on a neutral field, split into offense and defense
         points per game. Ratings are model output, not a poll.
       </p>

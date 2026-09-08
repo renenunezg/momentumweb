@@ -1,3 +1,4 @@
+import type { Metadata } from "next";
 import {
   fetchFullBacktest,
   fetchLivePerformance,
@@ -23,6 +24,11 @@ import {
 } from "@/components/ui/table";
 
 export const revalidate = 300;
+export const metadata: Metadata = {
+  title: "College Football Model Performance",
+  description:
+    "Mean absolute error of the college football model's spreads and totals against the closing line, on live graded games and a walk-forward backtest.",
+};
 
 function fmtDate(value: string | null): string {
   if (!value) return "unknown";
@@ -149,7 +155,7 @@ export default async function PerformancePage() {
   return (
     <main id="main" className="mx-auto w-full max-w-5xl min-w-0 px-4 py-8 space-y-10">
       <div className="flex items-start justify-between gap-4">
-        <h1 className="font-heading text-2xl tracking-tight">Model Performance</h1>
+        <h1 className="font-heading text-2xl tracking-tight">College Football Model Performance</h1>
         <div className="text-right text-xs text-muted-foreground">
           <div>Live grading runs after each Monday refresh</div>
           <div>

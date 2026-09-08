@@ -1,3 +1,4 @@
+import type { Metadata } from "next";
 import { supabase } from "@/lib/supabase";
 import type { Tables } from "@/lib/database.types";
 import type { ModelOutput, GameMatchup, GameInfo } from "@/lib/types";
@@ -13,6 +14,11 @@ import type { LiveScore } from "@/app/mlb/api/live-scores/route";
 // snapshot from an earlier scoring pass. Live scores still come from the
 // client poll in GamesLive.
 export const dynamic = "force-dynamic";
+export const metadata: Metadata = {
+  title: "MLB Predictions Today",
+  description:
+    "Today's MLB win probabilities, projected run totals, and model picks from a hierarchical Bayesian simulation of every plate appearance, refreshed each morning and graded against the closing line.",
+};
 
 interface MlbScheduleGame {
   gamePk: number;
@@ -106,7 +112,7 @@ export default async function Page() {
     return (
       <main id="main" className="mx-auto w-full min-w-0 max-w-6xl px-4 py-8">
         <h1 className="font-heading text-2xl tracking-tight">
-          Today&apos;s Games
+          Today&apos;s MLB Predictions
         </h1>
         <p className="mt-4 text-muted-foreground">
           No predictions available. Run the pipeline to generate today&apos;s
@@ -181,7 +187,7 @@ export default async function Page() {
       <div className="mb-6 flex items-start justify-between gap-4">
         <div>
           <h1 className="font-heading text-2xl tracking-tight">
-            Today&apos;s Games
+            Today&apos;s MLB Predictions
           </h1>
           <p className="mt-1 text-sm text-muted-foreground">{displayDate}</p>
         </div>
@@ -190,6 +196,12 @@ export default async function Page() {
           schedule="Predictions ~5 AM PT • Scores live"
         />
       </div>
+
+      <p className="mb-6 max-w-4xl text-sm text-muted-foreground leading-relaxed">
+        Win probabilities, projected run totals, and picks for every MLB game
+        today, from a Bayesian model that simulates each plate appearance.
+        Picks freeze at first pitch and are graded against the closing line.
+      </p>
 
       <div className="mb-6">
         <SummaryStats matchups={matchups} />

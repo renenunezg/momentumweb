@@ -1,8 +1,18 @@
+import type { Metadata } from "next";
 import { fetchLatestRatings, fetchTeams, fetchUnitRatings } from "@/lib/cfb";
 import { LastUpdated } from "@/components/last-updated";
 import CfbRatings from "@/components/cfb-ratings";
 
 export const revalidate = 300;
+
+export async function generateMetadata(): Promise<Metadata> {
+  const { season, week } = await fetchLatestRatings();
+  const year = season ?? new Date().getFullYear();
+  return {
+    title: `College Football Power Ratings ${year}`,
+    description: `Bayesian power ratings for every FBS and FCS team${week != null ? ` through week ${week}` : ""} of the ${year} season, with offense and defense splits, unit ratings, and model uncertainty.`,
+  };
+}
 
 export default async function RatingsPage() {
   const [{ ratings, season, week }, teams] = await Promise.all([
@@ -15,7 +25,7 @@ export default async function RatingsPage() {
   if (ratings.length === 0) {
     return (
       <main id="main" className="mx-auto w-full max-w-5xl min-w-0 px-4 py-8">
-        <h1 className="font-heading text-2xl tracking-tight">Power Ratings</h1>
+        <h1 className="font-heading text-2xl tracking-tight">College Football Power Ratings</h1>
         <p className="mt-4 text-muted-foreground">
           No ratings published yet. Run the publish pipeline to load them.
         </p>
@@ -32,7 +42,7 @@ export default async function RatingsPage() {
       <div className="flex items-start justify-between gap-4">
         <div>
           <h1 className="font-heading text-2xl tracking-tight">
-            Power Ratings
+            College Football Power Ratings
           </h1>
           {weekLabel && (
             <p className="mt-1 font-mono text-xs uppercase tracking-wider text-muted-foreground">
@@ -47,9 +57,11 @@ export default async function RatingsPage() {
       </div>
 
       <p className="max-w-4xl text-sm text-muted-foreground leading-relaxed">
-        A team&apos;s power rating is its expected scoring margin against an
-        average opponent on a neutral field, split into offense and defense
-        points per game. Ratings are model output, not a poll.
+        Power ratings for every Division 1 college football team, refit each
+        week from play-by-play data. A team&apos;s rating is its expected
+        scoring margin against an average opponent on a neutral field, split
+        into offense and defense points per game. Ratings are model output,
+        not a poll.
       </p>
 
       <CfbRatings

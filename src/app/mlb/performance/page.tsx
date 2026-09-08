@@ -1,3 +1,4 @@
+import type { Metadata } from "next";
 import { supabase } from "@/lib/supabase";
 import type {
   ModelEvaluation,
@@ -13,6 +14,11 @@ import { LastUpdated } from "@/components/last-updated";
 import { RealtimeRefresh } from "@/components/realtime-refresh";
 
 export const revalidate = 300;
+export const metadata: Metadata = {
+  title: "MLB Model Performance",
+  description:
+    "Calibration, Brier score, and betting ROI of the MLB model's win probabilities and run totals against the closing line, updated nightly.",
+};
 
 export default async function PerformancePage() {
   const [evalRes, calRes, edgeRes, residRes, latestRes, skillsRes, sigmasRes, ledger] = await Promise.all([
@@ -97,7 +103,7 @@ export default async function PerformancePage() {
     return (
       <main id="main" className="mx-auto w-full max-w-5xl min-w-0 px-4 py-8">
         <h1 className="font-heading text-2xl tracking-tight">
-          Model Performance
+          MLB Model Performance
         </h1>
         <p className="mt-4 text-muted-foreground">
           No evaluation data available yet. Run the pipeline to generate
@@ -111,13 +117,18 @@ export default async function PerformancePage() {
     <main id="main" className="mx-auto w-full max-w-5xl min-w-0 px-4 py-8 space-y-6">
       <div className="flex items-start justify-between gap-4">
         <h1 className="font-heading text-2xl tracking-tight">
-          Model Performance
+          MLB Model Performance
         </h1>
         <LastUpdated
           timestamp={lastUpdated}
           schedule="Updates nightly ~midnight PT"
         />
       </div>
+      <p className="max-w-4xl text-sm text-muted-foreground leading-relaxed">
+        How the MLB model&apos;s win probabilities and run totals have held
+        up: calibration, Brier score, and betting results against the closing
+        line, scored overnight after every game.
+      </p>
       <PerformanceTabs
         evaluations={evaluations}
         calibration={calibration}

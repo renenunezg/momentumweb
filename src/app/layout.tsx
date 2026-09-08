@@ -4,6 +4,7 @@ import "./globals.css";
 import { Analytics } from "@vercel/analytics/next";
 import { SpeedInsights } from "@vercel/speed-insights/next";
 import { ThemeProvider } from "@/components/theme-provider";
+import { SITE_DESCRIPTION, SITE_NAME, SITE_URL } from "@/lib/site";
 
 // One text serif carries both prose and headings; Geist Mono carries numerals.
 const textSerif = Source_Serif_4({
@@ -26,9 +27,28 @@ export const viewport: Viewport = {
 };
 
 export const metadata: Metadata = {
-  title: "René Núñez | Probabilistic Sports Forecasting",
-  description:
-    "Open probabilistic forecasting models for MLB, college football, and the NFL: Bayesian simulation, calibrated probabilities, and public benchmarking against the closing line.",
+  metadataBase: new URL(SITE_URL),
+  title: {
+    default: "René Núñez | Probabilistic Sports Forecasting",
+    template: "%s | René Núñez",
+  },
+  description: SITE_DESCRIPTION,
+  // "./" resolves to the current route, so every page canonicalizes to its own
+  // www URL without repeating the field in each segment.
+  alternates: { canonical: "./" },
+  openGraph: {
+    type: "website",
+    siteName: SITE_NAME,
+    locale: "en_US",
+    url: "./",
+  },
+  twitter: {
+    card: "summary_large_image",
+    creator: "@nunezanalytics",
+  },
+  authors: [{ name: SITE_NAME, url: SITE_URL }],
+  creator: SITE_NAME,
+  robots: { index: true, follow: true },
 };
 
 export default function RootLayout({

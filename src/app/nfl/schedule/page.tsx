@@ -1,3 +1,4 @@
+import type { Metadata } from "next";
 import { supabaseNfl } from "@/lib/supabase";
 import { fetchLatestRatings, fetchTeams } from "@/lib/nfl";
 import {
@@ -22,6 +23,11 @@ import {
 } from "@/components/ui/table";
 
 export const revalidate = 300;
+export const metadata: Metadata = {
+  title: "NFL Spread Projections and Model Lines",
+  description:
+    "Model spreads, projected scores, and totals for every NFL game this week, compared against the market line.",
+};
 
 const VIEWS = [
   { key: "all", label: "All", empty: "No games this week.", all: true },
@@ -56,7 +62,7 @@ export default async function SchedulePage() {
   if (!latest) {
     return (
       <main id="main" className="mx-auto w-full max-w-6xl min-w-0 px-4 py-8">
-        <h1 className="font-heading text-2xl tracking-tight">Schedule</h1>
+        <h1 className="font-heading text-2xl tracking-tight">NFL Schedule and Projections</h1>
         <p className="mt-4 text-muted-foreground">
           No projections published yet. Run the publish pipeline to load them.
         </p>
@@ -94,7 +100,7 @@ export default async function SchedulePage() {
     <main id="main" className="mx-auto w-full max-w-6xl min-w-0 px-4 py-8 space-y-6">
       <div className="flex items-start justify-between gap-4">
         <div>
-          <h1 className="font-heading text-2xl tracking-tight">Schedule</h1>
+          <h1 className="font-heading text-2xl tracking-tight">NFL Schedule and Projections</h1>
           <p className="mt-1 font-mono text-xs uppercase tracking-wider text-muted-foreground">
             {latest.season} · Week {latest.week} · {games.length} games
           </p>
