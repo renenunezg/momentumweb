@@ -1,89 +1,186 @@
 import type { Metadata } from "next";
-import { fetchGradedPredictions } from "@/lib/nfl";
-import { computeMetrics, metricsBySeason } from "@/lib/backtest-metrics";
-import type { NflBacktestPrediction } from "@/lib/types";
-import { BacktestKpis, BacktestSeasonTable } from "@/components/backtest-summary";
-import { NflForecastSource } from "@/components/nfl-forecast-source";
-import { formatNumber } from "@/lib/utils";
+import Link from "next/link";
+import {
+  fetchNflPickSummary,
+  pickFilters,
+  pickQuery,
+  MARKET_LABELS,
+  selectedPickMetric,
+} from "@/lib/nfl-picks";
+import {
+  PickBreakdown,
+  PickKpis,
+  PickPolicy,
+} from "@/components/football-picks";
+import { PickFilters } from "@/components/football-pick-filters";
+import { FootballPerformanceTabs } from "@/components/football-performance-tabs";
+import ForecastPerformance from "@/components/nfl-forecast-performance";
 
 export const revalidate = 300;
 export const metadata: Metadata = {
   title: "NFL Model Performance",
   description:
-    "Mean absolute error of the NFL model's spreads against the closing line, on live published forecasts and a walk-forward backtest to 2016.",
+    "Record, ROI, and frozen-price results for the NFL model's recommended moneyline, spread and total picks, plus forecast accuracy against the market.",
 };
 
-export default async function PerformancePage({ searchParams }: {
-  searchParams: Promise<{ source?: string }>;
+export default async function PerformancePage({
+  searchParams,
+}: {
+  searchParams: Promise<{
+    season?: string;
+    market?: string;
+    period?: string;
+    view?: string;
+    source?: string;
+  }>;
 }) {
-  const source = (await searchParams).source === "backtest" ? "backtest" : "live";
-  let predictions: NflBacktestPrediction[] = [];
-  let unavailable = false;
-  try {
-    predictions = await fetchGradedPredictions(source);
-  } catch {
-    unavailable = true;
+  const params = await searchParams;
+  const filters = pickFilters(params);
+  const query = pickQuery(filters).toString();
+  if (params.view === "accuracy" || params.source) {
+    return (
+      <main
+        id="main"
+        className="mx-auto w-full max-w-6xl min-w-0 space-y-6 px-4 py-8"
+      >
+        <h1 className="font-heading text-2xl tracking-tight">
+          NFL Model Performance
+        </h1>
+        <FootballPerformanceTabs sport="nfl" active="accuracy" query={query}>
+          <ForecastPerformance searchParams={Promise.resolve(params)} />
+        </FootballPerformanceTabs>
+      </main>
+    );
   }
-  // All three MAEs use exactly the same games, including tied final scores.
-  const paired = predictions.filter((r) => r.model_margin != null
-    && r.pure_model_margin != null && r.closing_spread != null
-    && r.actual_margin != null);
-  const { overall, bySeason } = metricsBySeason(paired);
-  const pure = computeMetrics("Pure model", paired.map((r) => ({
-    ...r, model_margin: r.pure_model_margin,
-  })));
-  const missingForecast = predictions.filter((r) => r.model_margin == null
-    || r.pure_model_margin == null).length;
-  const missingClose = predictions.filter((r) => r.closing_spread == null).length;
+  const summary = await fetchNflPickSummary(filters);
+  const market = filters.market;
+  const metric = selectedPickMetric(summary.metrics, market);
+  const settled =
+    (metric?.wins ?? 0) + (metric?.losses ?? 0) + (metric?.pushes ?? 0);
+  const historyUrl = `/nfl/history?${query}`;
 
   return (
-    <main id="main" className="mx-auto w-full max-w-5xl min-w-0 px-4 py-8 space-y-6">
-      <h1 className="font-heading text-2xl tracking-tight">NFL Model Performance</h1>
-      <NflForecastSource source={source} page="performance" />
-      <p className="max-w-4xl text-sm text-muted-foreground leading-relaxed">
-        {source === "live"
-          ? "Actual published forecasts, preserved before kickoff and graded against final scores. Each game uses its last eligible pregame revision. Results and closing lines come from nflverse schedules and refresh automatically after games."
-          : "Historical walk-forward backtest, kept separate from actual published forecasts. Each simulated forecast uses the data available at its historical cutoff."}
-        {" "}Model MAE measures the published market-blended margin. Market MAE
-        measures the closing line. Lower is better; both are scored on the same games.
-      </p>
-      {unavailable ? (
-        <p className="text-sm text-destructive">Performance data is temporarily unavailable.</p>
-      ) : (
-        <>
-          <p className="text-sm text-muted-foreground">
-            {predictions.length} completed games; {paired.length} with a forecast,
-            pure-model margin, and closing line. Missing forecast: {missingForecast}.
-            Missing close: {missingClose}. These counts can overlap.
+    <main
+      id="main"
+      className="mx-auto w-full max-w-6xl min-w-0 space-y-6 px-4 py-8"
+    >
+      <div className="flex flex-wrap items-start justify-between gap-3">
+        <div>
+          <h1 className="font-heading text-2xl tracking-tight">
+            NFL Model Performance
+          </h1>
+          <p className="mt-1 max-w-2xl text-sm text-muted-foreground">
+            How the NFL model&apos;s moneyline, spread and total picks have
+            done: recommended picks, the prices recorded at the time, and graded
+            results.
           </p>
-          {overall && pure ? (
-            <>
-              <BacktestKpis overall={overall}
-                gamesTooltip="Games with a frozen blended forecast, pure forecast, closing line, and final score." />
-              <p className="text-sm text-muted-foreground">
-                Pure-model MAE: <span className="font-mono text-foreground">{formatNumber(pure.modelMae, 2)}</span>
-                {" "}points on the same {paired.length}{" "}games. The blended forecast
-                incorporates market information, so its error and the market&apos;s are correlated.
-              </p>
-              <BacktestSeasonTable bySeason={bySeason} overall={overall}
-                caption={`NFL ${source} accuracy by season`} />
-            </>
+        </div>
+        <Link
+          href={historyUrl}
+          className="text-sm underline underline-offset-4"
+        >
+          View pick history
+        </Link>
+      </div>
+      <FootballPerformanceTabs sport="nfl" active="picks" query={query}>
+        <div className="space-y-7">
+          <PickFilters
+            seasonOptions={summary.seasons}
+            season={filters.season}
+            latestSeason={summary.latestSeason}
+            market={market}
+            period={filters.period}
+          />
+          <PickKpis metric={metric} unavailable={summary.unavailable} />
+          {summary.unavailable ? (
+            <p
+              role="status"
+              className="rounded-md border border-border bg-muted/30 p-4 text-sm"
+            >
+              Recommendation results are currently unavailable. Forecast
+              accuracy remains available in its tab.
+            </p>
+          ) : !metric?.picks ? (
+            <p className="rounded-md border border-border bg-muted/30 p-4 text-sm">
+              No recommendations recorded for this selection yet.
+              {metric?.no_plays
+                ? ` ${metric.no_plays} market decisions were No Play.`
+                : ""}{" "}
+              Past forecast accuracy is available in the Forecast accuracy tab.
+            </p>
           ) : (
             <p className="text-sm text-muted-foreground">
-              {source === "live"
-                ? "No live games are ready for comparison yet. Pregame forecasts will be graded once final results and closing lines arrive."
-                : "No backtest games are available for comparison."}
+              {metric.picks} recommendations across {metric.unique_games ?? 0}{" "}
+              unique games · {metric.no_plays} No Play decisions · {settled}{" "}
+              settled.{" "}
+              {settled < 30
+                ? "The sample is too small to establish a reliable edge."
+                : "These are observed results, not a guarantee of future returns."}
+              {metric.last_graded_at && (
+                <span className="block mt-1 text-xs">
+                  Last graded:{" "}
+                  {new Date(metric.last_graded_at)
+                    .toISOString()
+                    .replace("T", " ")
+                    .slice(0, 16)}{" "}
+                  UTC
+                </span>
+              )}
             </p>
           )}
-        </>
-      )}
-      <p className="text-xs text-muted-foreground">
-        {source === "live"
-          ? "Live tracking starts in 2026. Games without a forecast received before kickoff remain visible in coverage counts and are excluded from accuracy comparisons. Earlier completed games are never backfilled with a retrospective forecast."
-          : "Seasons 2016–2021 were used for parameter selection. Later seasons shown here are historical evaluations, not the live season record."}
-        {" "}Bias is the mean signed error of the model&apos;s home margin:
-        positive means the model leans toward home teams.
-      </p>
+          {(["h2h", "spreads", "totals"] as const)
+            .filter((value) => market === "all" || value === market)
+            .map((value) => (
+              <PickBreakdown
+                key={value}
+                title={`${MARKET_LABELS[value]} record`}
+                rows={[
+                  ...summary.metrics.filter(
+                    (m) => m.segment_kind === "market" && m.segment === value,
+                  ),
+                  ...summary.metrics
+                    .filter(
+                      (m) =>
+                        m.segment_kind === "side" &&
+                        m.segment?.startsWith(`${value}:`),
+                    )
+                    .sort((a, b) =>
+                      (a.segment ?? "").localeCompare(b.segment ?? ""),
+                    ),
+                ]}
+              />
+            ))}
+          <p className="text-xs text-muted-foreground">
+            Spread favorites give points (for example -3); underdogs receive
+            points (+3). Totals split by Over and Under. Moneyline favorites
+            have odds below -100; odds of +100 or -100 are shown as even money.
+            A zero spread is pick’em. Each segment uses the frozen recommended
+            side and price.
+          </p>
+          <>
+            <PickBreakdown
+              title="By week"
+              rows={summary.metrics
+                .filter((m) => m.segment_kind === "week")
+                .sort((a, b) =>
+                  (a.segment ?? "").localeCompare(b.segment ?? "", undefined, {
+                    numeric: true,
+                  }),
+                )}
+            />
+            <PickBreakdown
+              title="By probability edge"
+              rows={summary.metrics
+                .filter((m) => m.segment_kind === "edge" && (m.picks ?? 0) > 0)
+                .sort(
+                  (a, b) =>
+                    parseFloat(a.segment ?? "0") - parseFloat(b.segment ?? "0"),
+                )}
+            />
+          </>
+          <PickPolicy sport="nfl" firstDecision={metric?.first_decision_at} />
+        </div>
+      </FootballPerformanceTabs>
     </main>
   );
 }

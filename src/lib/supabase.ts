@@ -1,4 +1,5 @@
 import { createClient } from "@supabase/supabase-js";
+import type { NflPicksDatabase } from "@/lib/nfl-picks.database.types";
 import type { Database } from "@/lib/database.types";
 import type { CfbPicksDatabase } from "@/lib/cfb-picks.database.types";
 
@@ -8,6 +9,15 @@ type CfbDatabase = Omit<Database, "cfb"> & {
     Views: Database["cfb"]["Views"] & CfbPicksDatabase["cfb"]["Views"];
     Functions: Database["cfb"]["Functions"] &
       CfbPicksDatabase["cfb"]["Functions"];
+  };
+};
+
+type NflDatabase = Omit<Database, "nfl"> & {
+  nfl: Omit<Database["nfl"], "Tables" | "Views" | "Functions"> & {
+    Tables: Database["nfl"]["Tables"] & NflPicksDatabase["nfl"]["Tables"];
+    Views: Database["nfl"]["Views"] & NflPicksDatabase["nfl"]["Views"];
+    Functions: Database["nfl"]["Functions"] &
+      NflPicksDatabase["nfl"]["Functions"];
   };
 };
 
@@ -56,7 +66,7 @@ export const supabaseCfb = createClient<CfbDatabase, "cfb">(url, anonKey, {
   global: { fetch: cachedPublicFetch },
 });
 
-export const supabaseNfl = createClient<Database, "nfl">(url, anonKey, {
+export const supabaseNfl = createClient<NflDatabase, "nfl">(url, anonKey, {
   db: { schema: "nfl" },
   auth: anonAuth("nfl"),
   global: { fetch: cachedPublicFetch },
