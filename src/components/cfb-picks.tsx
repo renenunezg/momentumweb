@@ -18,57 +18,13 @@ import {
 } from "@/lib/utils";
 import { formatKickoffDay, formatKickoffTime } from "@/lib/football";
 import {
+  MARKET_LABELS,
+  SIDE_LABELS,
   pickLabel,
   pickReason,
   type CfbPick,
   type CfbPickMetric,
-  type PickMarket,
 } from "@/lib/cfb-picks";
-
-export function PickFilters({
-  season,
-  latestSeason,
-  market,
-}: {
-  season: number;
-  latestSeason: number;
-  market: PickMarket;
-}) {
-  const seasons = [
-    ...new Set([
-      season,
-      ...Array.from({ length: 5 }, (_, i) => latestSeason - i),
-    ]),
-  ].sort((a, b) => b - a);
-  const selectClass =
-    "h-9 rounded-md border border-input bg-background px-3 text-sm";
-  return (
-    <form className="flex flex-wrap items-end gap-3">
-      <label className="grid gap-1 text-xs text-muted-foreground">
-        Season
-        <select name="season" defaultValue={season} className={selectClass}>
-          {seasons.map((year) => (
-            <option key={year}>{year}</option>
-          ))}
-        </select>
-      </label>
-      <label className="grid gap-1 text-xs text-muted-foreground">
-        Market
-        <select name="market" defaultValue={market} className={selectClass}>
-          <option value="all">All markets</option>
-          <option value="spreads">Spread</option>
-          <option value="totals">Total</option>
-        </select>
-      </label>
-      <button
-        type="submit"
-        className="h-9 rounded-md border border-input px-4 text-sm hover:bg-muted"
-      >
-        Apply
-      </button>
-    </form>
-  );
-}
 
 export function PickKpis({
   metric,
@@ -169,7 +125,8 @@ export function PickTable({
                 </div>
               </div>
               <div className="text-[10px] uppercase tracking-wider text-muted-foreground">
-                {pick.market === "spreads" ? "Spread" : "Total"}
+                {MARKET_LABELS[pick.market as keyof typeof MARKET_LABELS] ??
+                  pick.market}
               </div>
               <div
                 className={cn(
@@ -190,9 +147,10 @@ export function PickTable({
                   <p>Decision: {new Date(pick.decision_at).toISOString()}</p>
                   <p>Rule: {pick.policy_version}</p>
                   <p>
-                    Missing inputs: home {pick.home_missing_input_count ?? "unknown"},
-                    away {pick.away_missing_input_count ?? "unknown"}.
-                    Counts include unavailable injury data.
+                    Missing inputs: home{" "}
+                    {pick.home_missing_input_count ?? "unknown"}, away{" "}
+                    {pick.away_missing_input_count ?? "unknown"}. Counts include
+                    unavailable injury data.
                   </p>
                   <p>Model: {pick.model_version}</p>
                   <p>EV {formatPct(pick.expected_value_per_unit)}</p>
@@ -275,7 +233,9 @@ export function PickBreakdown({
         <TableHeader>
           <TableRow>
             <TableHead>Segment</TableHead>
+            <TableHead className="text-right">Picks</TableHead>
             <TableHead className="text-right">W-L-P</TableHead>
+            <TableHead className="text-right">Win rate</TableHead>
             <TableHead className="text-right">Pending</TableHead>
             <TableHead className="text-right">Profit</TableHead>
             <TableHead className="text-right">ROI</TableHead>
@@ -284,20 +244,28 @@ export function PickBreakdown({
         <TableBody>
           {rows.map((row) => (
             <TableRow key={row.segment}>
-              <TableCell>
-                {row.segment_kind === "week"
-                  ? `Week ${row.segment}`
-                  : row.segment === "spreads"
-                    ? "Spread"
-                    : row.segment === "totals"
-                      ? "Total"
-                      : row.segment}
+              <TableCell
+                className={
+                  row.segment_kind === "side" ? "pl-6" : "font-semibold"
+                }
+              >
+                {row.segment_kind === "side"
+                  ? (SIDE_LABELS[row.segment?.split(":")[1] ?? ""] ??
+                    row.segment)
+                  : (MARKET_LABELS[row.segment as keyof typeof MARKET_LABELS] ??
+                    row.segment)}
                 <span className="ml-2 text-xs text-muted-foreground">
                   {row.thin_sample ? "Small sample" : ""}
                 </span>
               </TableCell>
               <TableCell className="text-right font-mono">
+                {row.picks}
+              </TableCell>
+              <TableCell className="text-right font-mono">
                 {row.wins}-{row.losses}-{row.pushes}
+              </TableCell>
+              <TableCell className="text-right font-mono">
+                {formatPct(row.win_rate)}
               </TableCell>
               <TableCell className="text-right font-mono">
                 {row.pending}
@@ -331,14 +299,15 @@ export function PickPolicy({
         changed kickoff voids the original pick.
       </p>
       <p>
-        CFB picks v2 requires a 4.5 percentage-point advantage over the
+        CFB picks v3 requires a 4.5 percentage-point advantage over the
         price&apos;s break-even probability, conditional on no push, plus
         positive EV. Prices must come from the configured odds feed, have an
         opposing price and matching kickoff, and be captured within one hour.
-        Verified game matches are required. Injury availability is unavailable for
-        every team and remains flagged; any additional missing model input
-        blocks a pick. Each
-        pick risks 1 unit; a push returns the stake. Picks use the model&apos;s own
+        Verified game matches are required. Injury availability is unavailable
+        for every team and remains flagged; any additional missing model input
+        blocks a pick. Each pick risks 1 unit; a push returns the stake.
+        Moneylines use the frozen margin distribution’s win probability without
+        a spread; a tied final is void. Picks use the model&apos;s own
         probabilities. Historical calibration is diagnostic and does not gate
         recommendations; this record measures the picks as games finish.
       </p>

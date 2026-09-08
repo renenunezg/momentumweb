@@ -90,23 +90,30 @@ export function GradedHistoryTable({
                 <TableCell className={`${numCell} whitespace-nowrap`}>
                   {r.away_points ?? "–"}&ndash;{r.home_points ?? "–"}
                 </TableCell>
-                <TableCell className={numCell}>{formatHomeLine(modelLine)}</TableCell>
+                <TableCell className={numCell}>
+                  {formatHomeLine(modelLine)}
+                </TableCell>
                 <TableCell className={`${numCell} text-muted-foreground`}>
                   {formatHomeLine(r.closing_spread)}
                 </TableCell>
                 <TableCell className={numCell}>
-                  {r.actual_margin != null ? formatHomeLine(-r.actual_margin) : "–"}
+                  {r.actual_margin != null
+                    ? formatHomeLine(-r.actual_margin)
+                    : "–"}
                 </TableCell>
                 <TableCell
                   className={cn(
                     numCell,
                     modelCloser === true && "text-positive",
-                    modelCloser === false && "text-muted-foreground"
+                    modelCloser === false && "text-muted-foreground",
                   )}
                 >
                   {modelErr != null ? formatNumber(Math.abs(modelErr)) : "–"}
                   {modelCloser === true && (
-                    <span className="sr-only"> (model closer than the closing line)</span>
+                    <span className="sr-only">
+                      {" "}
+                      (model closer than the closing line)
+                    </span>
                   )}
                 </TableCell>
               </TableRow>
@@ -145,7 +152,7 @@ export function SeasonLinks({
             "border-b-2 px-3 py-2 transition-colors",
             o.key === activeKey
               ? "border-foreground text-foreground"
-              : "border-transparent text-muted-foreground hover:text-foreground"
+              : "border-transparent text-muted-foreground hover:text-foreground",
           )}
         >
           {o.label}
@@ -181,20 +188,47 @@ export function HistoryPager({
   return (
     <nav
       aria-label="Pagination"
-      className="flex items-center justify-between font-mono text-xs"
+      className="flex flex-wrap items-center justify-between gap-3 font-mono text-xs"
     >
       <span className="text-muted-foreground">
         Page {page} of {totalPages}
       </span>
-      <div className="flex gap-2">
+      <div className="flex flex-wrap gap-2">
+        {page > 2 && (
+          <Link href={pageUrl(1)} className={linkClass}>
+            First
+          </Link>
+        )}
         {page > 1 && (
           <Link href={pageUrl(page - 1)} className={linkClass}>
             &larr; Newer
           </Link>
         )}
+        {Array.from(
+          { length: Math.min(totalPages, 5) },
+          (_, i) => Math.max(1, Math.min(page - 2, totalPages - 4)) + i,
+        ).map((value) => (
+          <Link
+            key={value}
+            href={pageUrl(value)}
+            aria-label={`Page ${value}`}
+            aria-current={value === page ? "page" : undefined}
+            className={cn(
+              linkClass,
+              value === page && "bg-foreground text-background",
+            )}
+          >
+            {value}
+          </Link>
+        ))}
         {page < totalPages && (
           <Link href={pageUrl(page + 1)} className={linkClass}>
             Older &rarr;
+          </Link>
+        )}
+        {page < totalPages - 1 && (
+          <Link href={pageUrl(totalPages)} className={linkClass}>
+            Last
           </Link>
         )}
       </div>

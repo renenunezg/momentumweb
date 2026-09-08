@@ -782,23 +782,23 @@ export function MethodologyContent() {
           <ul className="ml-4 list-disc space-y-2 text-muted-foreground marker:text-border">
             <li>
               <strong className="text-foreground">No injury or availability modeling.</strong>{" "}
-              There is no reliable public availability feed, and guessing from
-              play-by-play text is a good way to be confidently wrong. The missing
-              input permanently widens every team&apos;s rating uncertainty instead.
+              No injury feed is currently integrated. The configured CFBD API has
+              no documented availability-report endpoint. Injury availability
+              remains explicitly flagged and increases rating uncertainty; it
+              is never inferred from play text.
             </li>
             <li>
-              <strong className="text-foreground">No picks, no sizing, no profitability claims.</strong>{" "}
-              The model does flag +EV plays; pricing the market and surfacing
-              disagreements is how it gets benchmarked against the strongest available
-              forecast. It stops there. Nothing sizes a wager or sells a pick, the
-              flags are a measurement tool rather than betting advice, and every row
-              ships with <span className="font-mono">recommendation_status</span> set
-              to <span className="font-mono">not_recommended</span>.
+              <strong className="text-foreground">No automated wagers or profitability guarantees.</strong>{" "}
+              The model recommends moneyline, spread and total sides when their
+              probabilities, prices and data flags qualify. It records the exact
+              pregame line and odds, then grades each pick at a flat one-unit
+              stake. Recommendations and forecast accuracy are reported separately.
             </li>
             <li>
               <strong className="text-foreground">No live production feed yet.</strong>{" "}
-              Current data sources are batch. The serving path is proven fast enough
-              for live use, but real-time projections wait on a paid low-latency tier.
+              The paid CFBD Tier 2 account includes live scores and play-by-play.
+              Those endpoints have not yet been connected to the in-game model;
+              the existing serving path replays stored plays.
             </li>
             <li>
               <strong className="text-foreground">Early-season fragility.</strong>{" "}

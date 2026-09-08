@@ -1,23 +1,50 @@
-"use client";
-
+import Link from "next/link";
 import type { ReactNode } from "react";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { cn } from "@/lib/utils";
 
 export function CfbPerformanceTabs({
-  recommendations,
-  accuracy,
+  active,
+  query,
+  children,
 }: {
-  recommendations: ReactNode;
-  accuracy: ReactNode;
+  active: "picks" | "accuracy";
+  query: string;
+  children: ReactNode;
 }) {
   return (
-    <Tabs defaultValue="picks">
-      <TabsList className="mb-6">
-        <TabsTrigger value="picks">Recommendations</TabsTrigger>
-        <TabsTrigger value="accuracy">Forecast accuracy</TabsTrigger>
-      </TabsList>
-      <TabsContent value="picks">{recommendations}</TabsContent>
-      <TabsContent value="accuracy">{accuracy}</TabsContent>
-    </Tabs>
+    <>
+      <nav
+        aria-label="Performance view"
+        className="flex gap-1 border-b border-border"
+      >
+        {[
+          {
+            key: "picks",
+            label: "Recommendations",
+            href: `/cfb/performance?${query}`,
+          },
+          {
+            key: "accuracy",
+            label: "Forecast accuracy",
+            href: `/cfb/performance?${query}&view=accuracy`,
+          },
+        ].map((view) => (
+          <Link
+            key={view.key}
+            href={view.href}
+            aria-current={active === view.key ? "page" : undefined}
+            className={cn(
+              "border-b-2 px-4 py-2 text-sm",
+              active === view.key
+                ? "border-foreground"
+                : "border-transparent text-muted-foreground hover:text-foreground",
+            )}
+          >
+            {view.label}
+          </Link>
+        ))}
+      </nav>
+      {children}
+    </>
   );
 }

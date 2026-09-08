@@ -2,26 +2,24 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import ForecastHistory from "@/components/cfb-forecast-history";
 import { HistoryPager } from "@/components/graded-history";
-import {
-  PickFilters,
-  PickKpis,
-  PickPolicy,
-  PickTable,
-} from "@/components/cfb-picks";
+import { PickKpis, PickPolicy, PickTable } from "@/components/cfb-picks";
 import {
   fetchCfbPickHistory,
   fetchCfbPickSummary,
   PICK_PAGE_SIZE,
-  pickMarket,
+  pickFilters,
+  pickQuery,
   selectedPickMetric,
 } from "@/lib/cfb-picks";
+import { redirect } from "next/navigation";
+import { PickFilters } from "@/components/cfb-pick-filters";
 import { pageNumber } from "@/lib/utils";
 
 export const revalidate = 300;
 export const metadata: Metadata = {
   title: "College Football Pick History",
   description:
-    "Every college football spread and total pick with the side, line, and odds recorded before kickoff and how it graded, plus forecast and backtest history.",
+    "Every college football moneyline, spread and total pick with the side, line, and odds recorded before kickoff and how it graded, plus forecast and backtest history.",
 };
 
 type Params = {
@@ -30,6 +28,7 @@ type Params = {
   page?: string;
   view?: string;
   team?: string;
+  period?: string;
 };
 
 export default async function HistoryPage({
@@ -40,11 +39,22 @@ export default async function HistoryPage({
   const params = await searchParams;
   if (params.view === "accuracy" || params.season === "backtest")
     return <ForecastHistory searchParams={searchParams} />;
-  const summary = await fetchCfbPickSummary(params.season);
-  const market = pickMarket(params.market);
+  const filters = pickFilters(params, "7");
+  const market = filters.market;
   const page = pageNumber(params.page);
-  const history = await fetchCfbPickHistory(summary.season, market, page);
+  const [summary, history] = await Promise.all([
+    fetchCfbPickSummary(filters),
+    fetchCfbPickHistory(filters, page),
+  ]);
   const metric = selectedPickMetric(summary.metrics, market);
+  const count = (metric?.picks ?? 0) + (metric?.no_plays ?? 0);
+  const totalPages = Math.max(1, Math.ceil(count / PICK_PAGE_SIZE));
+  function pageUrl(value: number) {
+    const query = pickQuery(filters);
+    query.set("page", String(value));
+    return `/cfb/history?${query}`;
+  }
+  if (!summary.unavailable && page > totalPages) redirect(pageUrl(totalPages));
   return (
     <main
       id="main"
@@ -68,12 +78,13 @@ export default async function HistoryPage({
         </Link>
       </div>
       <PickFilters
-        season={summary.season}
+        season={filters.season}
         latestSeason={summary.latestSeason}
         market={market}
+        period={filters.period}
       />
       <PickKpis metric={metric} unavailable={summary.unavailable} />
-      {history.unavailable ? (
+      {history.unavailable || summary.unavailable ? (
         <p
           role="status"
           className="rounded-md border border-border bg-muted/30 p-4 text-sm"
@@ -85,16 +96,10 @@ export default async function HistoryPage({
         <>
           <PickTable rows={history.rows} />
           <p className="text-xs text-muted-foreground">
-            {history.count} recorded market decisions. No Play decisions are
-            shown for context and excluded from the pick record and ROI.
+            {count} recorded market decisions. No Play decisions are shown for
+            context and excluded from the pick record and ROI.
           </p>
-          <HistoryPager
-            page={page}
-            totalPages={Math.max(1, Math.ceil(history.count / PICK_PAGE_SIZE))}
-            pageUrl={(p) =>
-              `/cfb/history?season=${summary.season}&market=${market}&page=${p}`
-            }
-          />
+          <HistoryPager page={page} totalPages={totalPages} pageUrl={pageUrl} />
         </>
       ) : (
         <p className="rounded-md border border-border bg-muted/30 p-4 text-sm">

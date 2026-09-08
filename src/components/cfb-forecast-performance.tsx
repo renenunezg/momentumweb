@@ -1,3 +1,4 @@
+import { Suspense } from "react";
 import { fetchFullBacktest, type CfbLivePerformance } from "@/lib/cfb";
 import { metricsBySeason } from "@/lib/backtest-metrics";
 import type {
@@ -44,8 +45,6 @@ const SOURCE_LABELS: Record<CfbPredictionSource, string> = {
 const SEGMENT_TITLES: Record<string, string> = {
   week: "By week",
   opponent_classification: "By opponent classification",
-  model_favorite_size: "By model favorite size",
-  missing_inputs: "By missing preseason inputs",
 };
 
 const numCell = "text-right font-mono tabular-nums";
@@ -117,14 +116,6 @@ export default async function ForecastPerformance({
 }: {
   live: CfbLivePerformance;
 }) {
-  let backtest: CfbBacktestPrediction[] = [];
-  try {
-    backtest = await fetchFullBacktest();
-  } catch {
-    // The page degrades to its empty states when the cfb schema is
-    // unreachable; it must never fail the build.
-  }
-
   const overallBySource = new Map(
     live.metrics
       .filter((m) => m.segment_kind === "overall")
@@ -143,8 +134,6 @@ export default async function ForecastPerformance({
   const segmentKinds = Object.keys(SEGMENT_TITLES).filter((kind) =>
     pureSegments.some((m) => m.segment_kind === kind),
   );
-
-  const { overall, bySeason, seasons } = metricsBySeason(backtest);
 
   return (
     <div className="space-y-8">
@@ -312,6 +301,32 @@ export default async function ForecastPerformance({
                 rows={pureSegments.filter((m) => m.segment_kind === kind)}
               />
             ))}
+            <details className="space-y-4 rounded-md border border-border p-4">
+              <summary className="cursor-pointer text-sm font-medium">
+                Data and model diagnostics
+              </summary>
+              <p className="text-xs text-muted-foreground">
+                These explain forecast error, not betting records. Missing-input
+                counts include unavailable injury data and other gaps in
+                preseason sources. Projected winning margin is the absolute
+                model margin: under 7 means the model expects either team to win
+                by fewer than 7 points, regardless of the sportsbook line.
+                Favorite, underdog, over and under pick records are in
+                Recommendations.
+              </p>
+              <SegmentTable
+                title="By input completeness"
+                rows={pureSegments.filter(
+                  (m) => m.segment_kind === "missing_inputs",
+                )}
+              />
+              <SegmentTable
+                title="By projected winning margin (points)"
+                rows={pureSegments.filter(
+                  (m) => m.segment_kind === "model_favorite_size",
+                )}
+              />
+            </details>
             <p className="text-xs text-muted-foreground">
               Segments are pure model rows. Market columns use only the games in
               that segment with a closing spread. A segment marked thin has
@@ -321,48 +336,71 @@ export default async function ForecastPerformance({
         )}
       </section>
 
-      <section className="space-y-6">
-        <div className="flex items-start justify-between gap-4">
-          <h2 className="font-heading text-lg">
-            Historical walk-forward backtest
-          </h2>
-          {seasons.length > 0 && (
-            <div className="text-xs text-muted-foreground">
-              Frozen, {seasons[0]}&ndash;{seasons[seasons.length - 1]}
-            </div>
-          )}
-        </div>
-
-        <p className="max-w-4xl text-sm text-muted-foreground leading-relaxed">
-          Every prediction below was made walking forward through each season
-          with only the data available at the time, then frozen. These are
-          historical stand-ins for live performance, not live results. The
-          market benchmark is the closing spread: the strongest public forecast
-          of a game&apos;s margin. Beating it consistently is rare, and the
-          model is measured against it, not against a naive baseline.
-        </p>
-
-        {!overall ? (
-          <p className="text-sm text-muted-foreground">
-            No backtest data published yet.
+      <Suspense
+        fallback={
+          <p role="status" className="text-sm text-muted-foreground">
+            Loading historical comparison…
           </p>
-        ) : (
-          <>
-            <BacktestKpis
-              overall={overall}
-              gamesTooltip="FBS-vs-FBS games with a model prediction, a closing spread, and a final score."
-            />
-            <BacktestSeasonTable bySeason={bySeason} overall={overall} />
-          </>
-        )}
-
-        <p className="text-xs text-muted-foreground">
-          Bias is the mean signed error of the model&apos;s home margin:
-          positive means the model leans toward home teams. In-game projections
-          anchor on the market closing line precisely because the closing line
-          remains the better pregame forecast.
-        </p>
-      </section>
+        }
+      >
+        <HistoricalBacktest />
+      </Suspense>
     </div>
+  );
+}
+
+async function HistoricalBacktest() {
+  let backtest: CfbBacktestPrediction[] = [];
+  try {
+    backtest = await fetchFullBacktest();
+  } catch {
+    // The page degrades to its empty states when the cfb schema is
+    // unreachable; it must never fail the build.
+  }
+
+  const { overall, bySeason, seasons } = metricsBySeason(backtest);
+  return (
+    <section className="space-y-6">
+      <div className="flex items-start justify-between gap-4">
+        <h2 className="font-heading text-lg">
+          Historical walk-forward backtest
+        </h2>
+        {seasons.length > 0 && (
+          <div className="text-xs text-muted-foreground">
+            Frozen, {seasons[0]}&ndash;{seasons[seasons.length - 1]}
+          </div>
+        )}
+      </div>
+
+      <p className="max-w-4xl text-sm text-muted-foreground leading-relaxed">
+        Every prediction below was made walking forward through each season with
+        only the data available at the time, then frozen. These are historical
+        stand-ins for live performance, not live results. The market benchmark
+        is the closing spread: the strongest public forecast of a game&apos;s
+        margin. Beating it consistently is rare, and the model is measured
+        against it, not against a naive baseline.
+      </p>
+
+      {!overall ? (
+        <p className="text-sm text-muted-foreground">
+          No backtest data published yet.
+        </p>
+      ) : (
+        <>
+          <BacktestKpis
+            overall={overall}
+            gamesTooltip="FBS-vs-FBS games with a model prediction, a closing spread, and a final score."
+          />
+          <BacktestSeasonTable bySeason={bySeason} overall={overall} />
+        </>
+      )}
+
+      <p className="text-xs text-muted-foreground">
+        Bias is the mean signed error of the model&apos;s home margin: positive
+        means the model leans toward home teams. In-game projections anchor on
+        the market closing line precisely because the closing line remains the
+        better pregame forecast.
+      </p>
+    </section>
   );
 }

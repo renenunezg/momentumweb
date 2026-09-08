@@ -3,9 +3,11 @@ import type { Database } from "@/lib/database.types";
 import type { CfbPicksDatabase } from "@/lib/cfb-picks.database.types";
 
 type CfbDatabase = Omit<Database, "cfb"> & {
-  cfb: Omit<Database["cfb"], "Tables" | "Views"> & {
+  cfb: Omit<Database["cfb"], "Tables" | "Views" | "Functions"> & {
     Tables: Database["cfb"]["Tables"] & CfbPicksDatabase["cfb"]["Tables"];
     Views: Database["cfb"]["Views"] & CfbPicksDatabase["cfb"]["Views"];
+    Functions: Database["cfb"]["Functions"] &
+      CfbPicksDatabase["cfb"]["Functions"];
   };
 };
 
@@ -37,27 +39,25 @@ export const supabase = createClient<Database, "mlb">(url, anonKey, {
   auth: anonAuth("mlb"),
 });
 
+// Query URLs include every filter, so cached pages never share different windows.
+// Public football reads refresh within five minutes; mutations bypass the cache.
+const cachedPublicFetch: typeof fetch = (input, init) => {
+  const method = (init?.method ?? "GET").toUpperCase();
+  const restRead =
+    typeof window === "undefined" &&
+    method === "GET" &&
+    String(input).startsWith(`${url}/rest/v1/`);
+  return fetch(input, restRead ? { ...init, next: { revalidate: 300 } } : init);
+};
+
 export const supabaseCfb = createClient<CfbDatabase, "cfb">(url, anonKey, {
   db: { schema: "cfb" },
   auth: anonAuth("cfb"),
+  global: { fetch: cachedPublicFetch },
 });
 
 export const supabaseNfl = createClient<Database, "nfl">(url, anonKey, {
   db: { schema: "nfl" },
   auth: anonAuth("nfl"),
-  global: {
-    // Public NFL reads share the pages' five-minute freshness window, including
-    // dynamic history filters. Browser reads and mutations bypass this cache.
-    fetch: (input, init) => {
-      const method = (init?.method ?? "GET").toUpperCase();
-      const restRead =
-        typeof window === "undefined" &&
-        method === "GET" &&
-        String(input).startsWith(`${url}/rest/v1/`);
-      return fetch(
-        input,
-        restRead ? { ...init, next: { revalidate: 300 } } : init,
-      );
-    },
-  },
+  global: { fetch: cachedPublicFetch },
 });

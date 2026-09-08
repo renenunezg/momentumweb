@@ -32,7 +32,7 @@ export const revalidate = 300;
 export const metadata: Metadata = {
   title: "College Football Spread Projections and Picks",
   description:
-    "Model spreads, projected scores, and totals for every FBS and FCS game this week, compared against the market line with recorded spread and total picks.",
+    "Model spreads, projected scores, and totals for every FBS and FCS game this week, compared against the market line with recorded moneyline, spread and total picks.",
 };
 
 const VIEWS = [
@@ -236,6 +236,7 @@ export default async function SchedulePage() {
                 <TableHead className="text-center">Market line</TableHead>
                 <TableHead className="text-center">Diff</TableHead>
                 <TableHead className="text-center">Total</TableHead>
+                <TableHead>Moneyline pick</TableHead>
                 <TableHead>Spread pick</TableHead>
                 <TableHead>Total pick</TableHead>
               </TableRow>
@@ -333,6 +334,7 @@ export default async function SchedulePage() {
                     <TableCell className="text-center font-mono tabular-nums">
                       {formatNumber(g.model_total)}
                     </TableCell>
+                    <TableCell>{pickCell(g.game_id, "h2h")}</TableCell>
                     <TableCell>{pickCell(g.game_id, "spreads")}</TableCell>
                     <TableCell>{pickCell(g.game_id, "totals")}</TableCell>
                   </TableRow>

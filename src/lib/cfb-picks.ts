@@ -5,56 +5,103 @@ export type CfbPick =
   CfbPicksDatabase["cfb"]["Tables"]["recommendations"]["Row"];
 export type CfbPickMetric =
   CfbPicksDatabase["cfb"]["Views"]["recommendation_performance"]["Row"];
-export type PickMarket = "all" | "spreads" | "totals";
+export type PickMarket = "all" | "h2h" | "spreads" | "totals";
+export type PickPeriod = "7" | "14" | "all";
 export const PICK_PAGE_SIZE = 50;
+export const MARKET_LABELS = {
+  h2h: "Moneyline",
+  spreads: "Spread",
+  totals: "Total",
+};
+export const SIDE_LABELS: Record<string, string> = {
+  favorite: "Favorites",
+  underdog: "Underdogs",
+  pickem: "Pick’em",
+  over: "Overs",
+  under: "Unders",
+  even: "Even money",
+};
 
 export function pickMarket(value?: string): PickMarket {
-  return value === "spreads" || value === "totals" ? value : "all";
+  return value === "h2h" || value === "spreads" || value === "totals"
+    ? value
+    : "all";
 }
 
-export async function fetchCfbPickSummary(requestedSeason?: string) {
-  const latest = await supabaseCfb
-    .from("game_projections")
-    .select("season")
-    .order("season", { ascending: false })
-    .limit(1);
-  const parsed = Number(requestedSeason);
+export function pickFilters(
+  params: { season?: string; market?: string; period?: string },
+  defaultPeriod: PickPeriod = "all",
+) {
+  const parsed = Number(params.season);
   const season =
     Number.isInteger(parsed) && parsed >= 2000 && parsed <= 2100
       ? parsed
-      : (latest.data?.[0]?.season ?? new Date().getUTCFullYear());
-  const { data, error } = await supabaseCfb
-    .from("recommendation_performance")
-    .select("*")
-    .eq("season", season);
+      : null;
+  const period: PickPeriod =
+    params.period === "7" || params.period === "14" || params.period === "all"
+      ? params.period
+      : defaultPeriod;
+  const floor = new Date();
+  floor.setUTCHours(0, 0, 0, 0);
+  if (period !== "all")
+    floor.setUTCDate(floor.getUTCDate() - Number(period) + 1);
   return {
     season,
-    latestSeason: latest.data?.[0]?.season ?? season,
-    metrics: (data ?? []) as CfbPickMetric[],
-    unavailable: Boolean(error),
+    market: pickMarket(params.market),
+    period,
+    from: period === "all" ? null : floor.toISOString(),
+  };
+}
+export type PickFiltersValue = ReturnType<typeof pickFilters>;
+
+export function pickQuery(filters: PickFiltersValue): URLSearchParams {
+  return new URLSearchParams({
+    season: filters.season?.toString() ?? "all",
+    market: filters.market,
+    period: filters.period,
+  });
+}
+
+export async function fetchCfbPickSummary(filters: PickFiltersValue) {
+  const [latest, result] = await Promise.all([
+    supabaseCfb
+      .from("game_projections")
+      .select("season")
+      .order("season", { ascending: false })
+      .limit(1),
+    supabaseCfb.rpc(
+      "recommendation_summary",
+      {
+        p_season: filters.season ?? undefined,
+        p_market: filters.market,
+        p_from: filters.from ?? undefined,
+      },
+      { get: true },
+    ),
+  ]);
+  return {
+    latestSeason: latest.data?.[0]?.season ?? new Date().getUTCFullYear(),
+    metrics: (result.data ?? []) as CfbPickMetric[],
+    unavailable: Boolean(result.error),
   };
 }
 
 export async function fetchCfbPickHistory(
-  season: number,
-  market: PickMarket,
+  filters: PickFiltersValue,
   page: number,
 ) {
   let query = supabaseCfb
     .from("recommendations")
-    .select("*", { count: "exact" })
-    .eq("season", season)
-    .order("start_date", { ascending: false })
+    .select("*")
+    .order("decision_at", { ascending: false })
     .order("game_id", { ascending: true })
     .order("market", { ascending: true })
     .range((page - 1) * PICK_PAGE_SIZE, page * PICK_PAGE_SIZE - 1);
-  if (market !== "all") query = query.eq("market", market);
-  const { data, count, error } = await query;
-  return {
-    rows: (data ?? []) as CfbPick[],
-    count: count ?? 0,
-    unavailable: Boolean(error),
-  };
+  if (filters.season !== null) query = query.eq("season", filters.season);
+  if (filters.market !== "all") query = query.eq("market", filters.market);
+  if (filters.from) query = query.gte("decision_at", filters.from);
+  const { data, error } = await query;
+  return { rows: (data ?? []) as CfbPick[], unavailable: Boolean(error) };
 }
 
 export function selectedPickMetric(
@@ -70,6 +117,7 @@ export function selectedPickMetric(
 
 export function pickLabel(pick: CfbPick): string {
   if (pick.status !== "recommended") return "No Play";
+  if (pick.market === "h2h") return `${pick.selection} ML`;
   const point = pick.point;
   const line =
     point == null

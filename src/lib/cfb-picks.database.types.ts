@@ -1,4 +1,4 @@
-// Generated from sql/003_recommendations.sql using local PostgreSQL column metadata.
+// Generated from sql/005_recommendation_markets_and_filters.sql using local PostgreSQL column metadata.
 export type CfbPicksDatabase = {
   cfb: {
     Tables: {
@@ -47,8 +47,12 @@ export type CfbPicksDatabase = {
           profit_units: number | null;
           graded_at: string | null;
         };
-        Insert: Partial<CfbPicksDatabase["cfb"]["Tables"]["recommendations"]["Row"]>;
-        Update: Partial<CfbPicksDatabase["cfb"]["Tables"]["recommendations"]["Row"]>;
+        Insert: Partial<
+          CfbPicksDatabase["cfb"]["Tables"]["recommendations"]["Row"]
+        >;
+        Update: Partial<
+          CfbPicksDatabase["cfb"]["Tables"]["recommendations"]["Row"]
+        >;
         Relationships: [];
       };
     };
@@ -78,6 +82,15 @@ export type CfbPicksDatabase = {
         Relationships: [];
       };
     };
-    Functions: Record<string, never>;
+    Functions: {
+      recommendation_summary: {
+        Args: {
+          p_season?: number | null;
+          p_market?: string | null;
+          p_from?: string | null;
+        };
+        Returns: CfbPicksDatabase["cfb"]["Views"]["recommendation_performance"]["Row"][];
+      };
+    };
   };
 };
