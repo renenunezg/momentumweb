@@ -77,8 +77,8 @@ export default async function HeismanPage() {
         <KpiCard
           label="Ballot model backtest"
           value={seasonsValidated > 0 ? `${winnersHit} of ${seasonsValidated}` : "–"}
-          sub="winners called, leave-one-season-out"
-          tooltip="Each past season is scored by a model fit on every other season. The current season is never in the training set."
+          sub="winners called, expanding-window"
+          tooltip="Each past season is scored using only earlier seasons and information available through the evaluated week."
         />
       </div>
 

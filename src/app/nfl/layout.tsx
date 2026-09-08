@@ -12,6 +12,7 @@ const nflLinks = [
   { href: "/nfl/ratings", label: "Ratings" },
   { href: "/nfl/schedule", label: "Schedule" },
   { href: "/nfl/season-wins", label: "Season Wins" },
+  { href: "/nfl/awards", label: "Awards" },
   { href: "/nfl/history", label: "History" },
   { href: "/nfl/performance", label: "Performance" },
   { href: "/about", label: "About" },
