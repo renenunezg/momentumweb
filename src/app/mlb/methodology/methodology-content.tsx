@@ -72,9 +72,9 @@ const flowNodes = [
     color: "border-blue-500/40 bg-blue-500/5",
     labelColor: "text-blue-400",
     items: [
-      { label: "Statcast pitch data", sub: "~400k PAs, 2024+25+26-YTD" },
-      { label: "MLB Stats API", sub: "Schedule, lineups, rosters, boxscores" },
-      { label: "The Odds API", sub: "ML, RL, totals" },
+      { label: "Statcast pitch data", sub: "~480k PAs, 2024+25+26-YTD" },
+      { label: "MLB Stats API", sub: "Schedule, lineups, rosters, boxscores, weather" },
+      { label: "The Odds API", sub: "ML, RL, totals across three books" },
       { label: "Active bullpen workload", sub: "pitcher_workload table (rest)" },
     ],
   },
@@ -83,8 +83,8 @@ const flowNodes = [
     color: "border-amber-500/40 bg-amber-500/5",
     labelColor: "text-amber-400",
     items: [
-      { label: "Batter D-M", sub: "812 batters × 2 platoon cells" },
-      { label: "Pitcher D-M", sub: "1074 pitchers × 2 roles (SP/RP)" },
+      { label: "Batter model", sub: "~870 batters × 2 platoon cells" },
+      { label: "Pitcher model", sub: "~1,140 pitchers × 2 roles (SP/RP)" },
       { label: "Park log-PF", sub: "30 venues, residual wOBA" },
       { label: "Sampler", sub: "NUTS via numpyro/JAX, 4 chains × 2000 draws" },
     ],
@@ -105,21 +105,21 @@ const flowNodes = [
     color: "border-purple-500/40 bg-purple-500/5",
     labelColor: "text-purple-400",
     items: [
-      { label: "Empirical win probability", sub: "p10/p50/p90 bands from posterior draws" },
-      { label: "Totals & RL distributions", sub: "Quantiles over simulated runs" },
-      { label: "Edge vs sportsbook", sub: "4.5% ML/RL, 6.5% totals" },
-      { label: "Quarter-Kelly sizing", sub: "0.25 × f*, capped" },
+      { label: "Win probability", sub: "Sim logit anchored to de-vigged market consensus" },
+      { label: "Totals & RL distributions", sub: "Pure sim quantiles" },
+      { label: "Edge vs best price", sub: "4.5% on ML and RL; totals switched off" },
+      { label: "Quarter-Kelly sizing", sub: "0.25 × f*, f clipped to [0, 1]" },
     ],
   },
 ];
 
 const pipelineSteps = [
   { num: "01", name: "Schedule & Bullpen", desc: "Refresh games, scores, pitcher_workload per pitcher per day" },
-  { num: "02", name: "Lineups & Odds", desc: "Posted lineups via Stats API; ML/RL/totals from The Odds API" },
-  { num: "03", name: "Posterior Refit", desc: "Nightly NUTS run: batter, pitcher, park (12 min on M-series)" },
+  { num: "02", name: "Lineups, Odds & Weather", desc: "Posted lineups and park weather via Stats API; ML/RL/totals from The Odds API" },
+  { num: "03", name: "Posterior Refit", desc: "Nightly NUTS run: pitcher, batter, park (about 15 min)" },
   { num: "04", name: "Score Games", desc: "K=30 posterior draws × ~333 inning sims each, ~10,000 total per matchup" },
-  { num: "05", name: "Derive Markets", desc: "Empirical win prob, totals, RL from simulated run distributions" },
-  { num: "06", name: "Verify & Publish", desc: "Anti-correlation, calibration, posterior-age checks; write to Supabase" },
+  { num: "05", name: "Derive Markets", desc: "Win prob anchored to market consensus; RL and totals from the sims" },
+  { num: "06", name: "Verify & Publish", desc: "Pairing, range, anti-correlation, posterior-age checks; write to Supabase" },
 ];
 
 const backtestRows = [
@@ -132,9 +132,9 @@ const backtestRows = [
 ];
 
 const samplerDiagnostics = [
-  { model: "Batter (812 × platoon)", rhat: "1.00", ess: "755", divergences: "0", wall: "7.1 min" },
-  { model: "Pitcher (1074 × role)", rhat: "1.00", ess: "1707", divergences: "0", wall: "4.5 min" },
-  { model: "Park (30 venues)", rhat: "1.00", ess: "15.9k", divergences: "0", wall: "6 s" },
+  { model: "Batter (869 × platoon)", rhat: "1.00", ess: "1273", divergences: "0", wall: "8.2 min" },
+  { model: "Pitcher (1142 × role)", rhat: "1.00", ess: "1724", divergences: "0", wall: "6.4 min" },
+  { model: "Park (30 venues)", rhat: "1.00", ess: "33.9k", divergences: "0", wall: "15 s" },
 ];
 
 const stack = [
@@ -144,7 +144,7 @@ const stack = [
   },
   {
     category: "Simulation & Data",
-    items: ["NumPy (vectorized)", "pandas", "pybaseball", "Statcast pitch data", "parquet cache"],
+    items: ["NumPy (vectorized)", "SciPy", "pandas", "pybaseball", "Statcast pitch data", "parquet cache"],
   },
   {
     category: "Database",
@@ -156,7 +156,7 @@ const stack = [
   },
   {
     category: "Orchestration",
-    items: ["GitHub Actions (cron + workflow_run)", "MLB Stats API", "The Odds API"],
+    items: ["GitHub Actions (cron + workflow_run)", "Supabase pg_cron dispatch", "MLB Stats API", "The Odds API"],
   },
 ];
 
@@ -175,48 +175,33 @@ export function MethodologyContent({
       >
         <div className="space-y-4 text-sm leading-relaxed">
           <p>
-            This project predicts a full distribution of runs scored per team per MLB game,
-            then derives win, run-line, and totals probabilities by simulating each matchup
-            roughly 10,000 times. Predictions are graded daily against sportsbook lines.{" "}
-            <strong>
-              Sports betting markets are used as a calibration benchmark, not as a gambling
-              application.
-            </strong>{" "}
-            Sharp market participants push lines toward true probabilities quickly, which
-            makes them a higher-quality probability signal than most independently
-            constructed models.
+            This model predicts a full distribution of runs scored per team per MLB game,
+            then derives win, run-line and totals probabilities by simulating each matchup
+            roughly 10,000 times. Predictions are graded daily against sportsbook lines,
+            because sharp bettors push lines toward true probabilities quickly and that
+            makes the closing line a better probability signal than most models built
+            from scratch, mine included. It is also why the published win probability
+            now borrows from it (more on that below).
           </p>
           <p>
-            The framework is borrowed from quantitative finance and decision theory:
-            expected value, the Kelly criterion (Kelly 1956, originally an information-theory
-            result), and probability calibration. The domain is baseball; the methods are
-            standard in applied statistics and quant analysis.
-          </p>
-          <p>
-            The pipeline covers data ingestion from multiple APIs, feature derivation from
-            pitch-level Statcast data, hierarchical Bayesian inference via NUTS, daily
-            evaluation against actual outcomes, and a production frontend that refreshes
-            each morning of the season.
-          </p>
-          <p>
-            The current model (v2, live since May 12, 2026) is a two-layer system: a{" "}
-            <strong>hierarchical Bayesian skill model</strong> (hierarchical multinomial-logit
-            over the eight plate-appearance outcomes, fit with NUTS via numpyro/JAX) followed by a{" "}
+            The current model (v2, live since May 12, 2026) has two layers: a{" "}
+            <strong>hierarchical Bayesian skill model</strong>, a multinomial-logit over
+            the eight plate-appearance outcomes fit with NUTS via numpyro/JAX, and a{" "}
             <strong>per-PA Monte Carlo simulator</strong> that plays out each inning with
-            rest-aware bullpen rules, an empirical baserunner-advancement table, and per-game
-            posterior draws to propagate parameter uncertainty. It replaced a prior XGBoost
-            regressor (v1, archived) after a 542-game head-to-head backtest in which v2 won
-            on every metric.
+            rest-aware bullpen rules, an empirical baserunner-advancement table, weather
+            effects on the outcome logits, and per-game posterior draws to carry
+            parameter uncertainty through. It replaced an XGBoost regressor (v1, archived)
+            after a 542-game head-to-head backtest in which v2 won on every metric.
           </p>
           <div className="mt-4 grid grid-cols-1 gap-3 sm:grid-cols-2">
             {[
               { label: "Prediction target", val: "Per-team run distribution per game" },
               { label: "Skill model", val: "Hierarchical multinomial-logit (8 outcomes)" },
               { label: "Sampler", val: "NUTS via numpyro / JAX" },
-              { label: "Training data", val: "401,826 PAs across 2024 + 2025 + 2026-YTD" },
+              { label: "Training data", val: "~480k PAs across 2024, 2025 and 2026 to date, growing nightly" },
               { label: "Simulator", val: "K=30 posterior draws × ~333 inning sims each (default ~10,000 sims total)" },
-              { label: "Probability output", val: "Empirical quantiles with p10/p50/p90 bands" },
-              { label: "Sizing rule", val: "Quarter-Kelly on flagged plays" },
+              { label: "Probability output", val: "Sim win prob anchored to market consensus; p10/p90 bands" },
+              { label: "Sizing rule", val: "Quarter-Kelly on flagged ML and RL plays; totals off" },
               { label: "Cutover from v1", val: "May 12, 2026" },
             ].map(({ label, val }) => (
               <Card key={label} size="sm"><CardContent>
@@ -265,6 +250,40 @@ export function MethodologyContent({
       >
         <div className="space-y-6 text-sm">
           <ChangelogEntry
+            date="August 18, 2026"
+            title="Published win probability anchored to the de-vigged market consensus"
+          >
+            The sim&apos;s moneyline probability is honest but carries less information
+            than the market, and publishing it raw flagged big underdogs +EV
+            systematically: dogs the market priced under 33% came out at 37% from the
+            sim and won 29%. The published win probability is now a logit-scale blend of
+            the sim (weight 0.2, the out-of-sample log-loss optimum on 2026 games) and
+            the de-vigged consensus across the paired moneylines, plus a +0.09 home-field
+            logit the sim lacks. Run-line and totals probabilities stay pure sim.
+          </ChangelogEntry>
+
+          <ChangelogEntry
+            date="July 18, 2026"
+            title="Weather effects in the simulator, and odds shopped across three books"
+          >
+            Temperature and wind from the MLB Stats API weather block now shift the
+            outcome logits per game, with coefficients fit on Statcast PAs controlling
+            for park, batter and pitcher rates. Two days later the odds feed started
+            pulling DraftKings, FanDuel and BetMGM and pricing each side at the best
+            available number.
+          </ChangelogEntry>
+
+          <ChangelogEntry
+            date="May 27, 2026"
+            title="Totals recommendations switched off; form noise raised to 0.18 in June"
+          >
+            Every totals edge bucket lost money on the 2026 backtest and model edge had
+            no relationship to outcome, so totals flags are disabled until there is a
+            reason to believe a fix worked. The per-game form-noise scalar was raised
+            from 0.13 to 0.18 on June 16 after a recalibration against actuals.
+          </ChangelogEntry>
+
+          <ChangelogEntry
             date="May 12, 2026"
             title="v2 cutover: hierarchical Bayesian skill model + per-PA Monte Carlo simulator"
             accent="emerald"
@@ -281,27 +300,27 @@ export function MethodologyContent({
             described in the legacy section below.
           </ChangelogEntry>
 
-          <ChangelogEntry
-            date="April 21, 2026 (v1)"
-            title="Dynamic starter/bullpen inning split in batting-split features"
-          >
-            v1 batting-split features started weighting starter vs bullpen innings by the
-            opposing starter&apos;s trailing IP per start, replacing the fixed 60/40
-            assumption. Carried forward conceptually into v2 via per-PA pitcher identity.
-          </ChangelogEntry>
-
           <details className="group">
             <summary className="cursor-pointer select-none rounded-sm border border-border bg-muted/40 px-3 py-2 text-xs uppercase tracking-wider text-muted-foreground hover:bg-muted">
-              See full changelog (2 older entries)
+              See full changelog (3 older entries)
             </summary>
             <div className="mt-6 space-y-6">
+              <ChangelogEntry
+                date="April 21, 2026 (v1)"
+                title="Dynamic starter/bullpen inning split in batting-split features"
+              >
+                v1 batting-split features started weighting starter vs bullpen innings by
+                the opposing starter&apos;s trailing IP per start instead of a fixed
+                split. v2 gets the same effect from per-PA pitcher identity.
+              </ChangelogEntry>
+
               <ChangelogEntry
                 date="April 20, 2026 (v1)"
                 title="Raised +EV thresholds from 3% to 4.5% (ML/RL) and 6.5% (totals)"
               >
                 Below the typical vig on a −110 line there is no cushion for model
-                miscalibration. v2 inherits these thresholds for apples-to-apples comparison;
-                v2.1 will retune them from edge-bucket ROI on live v2 data.
+                miscalibration. v2 inherited these thresholds so the head-to-head
+                comparison was like for like.
               </ChangelogEntry>
 
               <ChangelogEntry
@@ -326,11 +345,11 @@ export function MethodologyContent({
       >
         <div className="space-y-3">
           <p className="text-sm leading-relaxed text-muted-foreground">
-            The system is split into a skill layer (Bayesian inference, refit nightly) and a
+            The system splits into a skill layer (Bayesian inference, refit nightly) and a
             simulation layer (Monte Carlo, run per game per scoring pass). The skill layer
-            learns time-stable parameters from years of Statcast data; the simulator consumes
-            them to produce per-game run distributions that the markets layer turns into win,
-            total, and run-line probabilities with edge and sizing.
+            learns slow-moving parameters from years of Statcast data; the simulator consumes
+            them to produce per-game run distributions, and the markets layer turns those
+            into win, total and run-line probabilities with edge and sizing.
           </p>
           <div className="mt-4 flex flex-col gap-2 md:flex-row md:items-stretch md:gap-0">
             {flowNodes.map((node, i) => (
@@ -375,20 +394,24 @@ export function MethodologyContent({
             Nightly <span className="font-mono">train-v2</span> runs a full NUTS refit on a
             GitHub Actions runner (~4 AM PT). On success it triggers{" "}
             <span className="font-mono">daily-pipeline-v2</span> via{" "}
-            <span className="font-mono">workflow_run</span>, guaranteeing scoring runs against
+            <span className="font-mono">workflow_run</span>, so scoring always runs against
             fresh posteriors. A separate <span className="font-mono">refresh-lineups-v2</span>{" "}
-            cron checks every 30 minutes between 7 AM and 4 PM PT and re-scores any game
-            whose posted lineup has changed (detected via SHA-1 hash of sorted batter IDs).
+            job is dispatched by Supabase pg_cron every 20 minutes from about 5 AM to
+            7:40 PM PT (the GitHub-native schedule dropped or delayed too many fires) and
+            re-scores any game whose posted lineup changed, detected by a SHA-1 hash of
+            the sorted batter IDs.
           </p>
           <p className="leading-relaxed text-muted-foreground">
             Predictions reflect the best information available up to first pitch: lineups,
-            scratches, and late odds all feed back into the score. Once a game starts,
-            its row is frozen and the evaluation ledger uses that final pre-game value.
+            scratches and late odds all feed back into the score. Once a game starts,
+            its row is frozen and the evaluation ledger uses that final pregame value.
             A flag visible on <span className="font-mono">/games</span> in the morning can
-            disappear later if the posted lineup re-score drops the edge below threshold,
+            disappear later if the posted-lineup re-score drops the edge below threshold,
             and in that case the bet is also removed from <span className="font-mono">/history</span>{" "}
-            and from model evaluation. Posterior refits happen on their own nightly schedule,
-            independent of the intraday lineup refresh.
+            and from model evaluation. A flag also requires a known starter, a fully
+            posted lineup and enough pitching-usage evidence; a game scored on a fallback
+            lineup is a No Play regardless of edge. Posterior refits happen on their own
+            nightly schedule, independent of the intraday lineup refresh.
           </p>
 
           <div className="mt-4 flex flex-col gap-2 md:flex-row md:items-start md:gap-0">
@@ -444,14 +467,16 @@ export function MethodologyContent({
             strikeout, walk, hit-by-pitch, single, double, triple, home run, in-play out.
             Three separate hierarchical models learn the additive log-odds offsets that each
             actor (batter, pitcher, venue) contributes to those eight logits, with{" "}
-            <span className="font-mono">OUT</span> as the reference category.
+            <span className="font-mono">OUT</span> as the reference category. The pitcher
+            model fits first and sets the league intercept; the batter model then fits
+            with that intercept frozen, so there is only one free baseline rather than two
+            competing ones.
           </p>
           <p>
             Formally this is a hierarchical multinomial-logit (softmax) model: actor effects
             enter the logits with Normal priors, so each actor&apos;s outcome-probability
-            vector is logistic-normal. It is not a Dirichlet-Multinomial, which would put a
-            Dirichlet prior directly on the probability vector and has no natural way to add
-            covariate effects such as platoon, role, park, or weather on the log-odds scale.
+            vector is logistic-normal. Working on the log-odds scale is what makes platoon,
+            role, park and weather effects simple additive terms.
           </p>
 
           <p className="font-mono text-xs uppercase tracking-wider text-muted-foreground">
@@ -472,39 +497,36 @@ export function MethodologyContent({
           </FormulaBlock>
 
           <p>
-            Four implementation details that matter at this scale:
+            A few implementation choices matter at this scale. The parameterization is
+            non-centered: sampling{" "}
+            <span className="font-mono">z<sub>i</sub></span> from a unit normal and forming{" "}
+            <span className="font-mono">β<sub>i</sub> = μ + σ ⊙ z<sub>i</sub></span> avoids
+            Neal&apos;s funnel, the pathology where the posterior geometry of a
+            hierarchical model becomes too distorted for HMC to traverse efficiently.
           </p>
-          <ul className="ml-4 space-y-1 text-muted-foreground">
-            <li>
-              <strong className="text-foreground">Non-centered parameterization.</strong>{" "}
-              Sampling{" "}
-              <span className="font-mono">z<sub>i</sub></span> from a unit normal and forming{" "}
-              <span className="font-mono">β<sub>i</sub> = μ + σ ⊙ z<sub>i</sub></span> avoids
-              Neal&apos;s funnel pathology in hierarchical models, where the geometry of the
-              posterior becomes too distorted for HMC to traverse efficiently.
-            </li>
-            <li>
-              <strong className="text-foreground">Multinomial likelihood, not per-PA Categorical.</strong>{" "}
-              Aggregating each batter&apos;s PAs into outcome counts and using{" "}
-              <span className="font-mono">pm.Multinomial</span> is mathematically identical to
-              a per-PA <span className="font-mono">pm.Categorical</span> but ~400× faster on
-              400k PAs (~3 min vs ~19 h projected). Each leapfrog step evaluates a per-actor
-              log-likelihood rather than a per-row one.
-            </li>
-            <li>
-              <strong className="text-foreground">Platoon and role splits.</strong> Batters
-              are fit per <span className="font-mono">(batter, vs_LHP)</span> cell; pitchers
-              per <span className="font-mono">(pitcher, role ∈ {`{SP, RP}`})</span>.
-              Position-player pitchers are dropped from the pitcher pool.
-            </li>
-            <li>
-              <strong className="text-foreground">Park as residual log-PF.</strong> Park is
-              fit last, on the residual wOBA after batter and pitcher effects are accounted
-              for. A per-venue scalar <span className="font-mono">park_log[v]</span> shifts
-              the seven non-OUT logits additively, weighted by each outcome&apos;s wOBA
-              coefficient, so HR and 3B move most under park and K is unaffected.
-            </li>
-          </ul>
+          <p>
+            The likelihood is a Multinomial over aggregated counts rather than a per-PA
+            Categorical. Collapsing each batter&apos;s PAs into outcome counts and using{" "}
+            <span className="font-mono">pm.Multinomial</span> is mathematically identical to
+            a per-PA <span className="font-mono">pm.Categorical</span> but roughly 400× faster
+            on 400k PAs (about 3 minutes against a projected 19 hours), because each
+            leapfrog step evaluates a per-actor log-likelihood instead of a per-row one.
+          </p>
+          <p>
+            Batters are fit per <span className="font-mono">(batter, vs_LHP)</span> cell, with
+            the platoon offset given its own tighter prior (HalfNormal(0.3)); pitchers per{" "}
+            <span className="font-mono">(pitcher, role ∈ {`{SP, RP}`})</span>, and pitchers
+            carry no platoon split. Position players who pitch in blowouts are dropped from
+            the pitcher pool (111 of them at the last fit), with true two-way players
+            exempted by id.
+          </p>
+          <p>
+            Park is fit last, on the residual wOBA after batter and pitcher effects are
+            accounted for. A per-venue scalar <span className="font-mono">park_log[v]</span>{" "}
+            shifts the non-OUT logits additively, weighted by each outcome&apos;s wOBA
+            coefficient, so HR and 3B move most under park and K, whose wOBA weight is
+            zero, does not move at all.
+          </p>
 
           <p className="font-mono text-xs uppercase tracking-wider text-muted-foreground">
             Sampler diagnostics (4 chains, 2000 draws, 2500 tune)
@@ -549,22 +571,24 @@ export function MethodologyContent({
         <div className="space-y-4 text-sm leading-relaxed">
           <p>
             For each scheduled game we draw K=30 random posterior samples and run N
-            inning-level simulations per draw. N defaults to ~333 in production (10,000 total
-            sims) and 33 in the acceptance-gate test (990 total). Every draw is a coherent
-            realization of all batter, pitcher, and park parameters together, so spread
-            across draws becomes a posterior band on the win rate; the inner-loop variance is
-            the aleatoric run-scoring noise within a fixed parameter setting.
+            inning-level simulations per draw, with N about 333 in production for roughly
+            10,000 sims per matchup. Every draw is a coherent realization of all batter,
+            pitcher and park parameters together, so the spread across draws becomes a
+            posterior band on the win rate, and the inner-loop variance is the aleatoric
+            run-scoring noise within a fixed parameter setting.
           </p>
 
           <p className="font-mono text-xs uppercase tracking-wider text-muted-foreground">
             Per-PA outcome sampler (vectorized)
           </p>
           <FormulaBlock>
-            ℓ<sub>k</sub> = batter_offset[b, hand_k] + pitcher_offset[p, role, hand_k]
+            ℓ<sub>k</sub> = μ<sub>k</sub> + batter_offset[b] + vs_LHP · platoon_offset[b] + pitcher_offset[p, role]
             <br />
             {"     "}+ park_log[v] · wOBA_weight<sub>k</sub>
             <br />
-            {"     "}+ form_noise<sub>k</sub>{"  "}{"//"} sigma = 0.13, zero-sum across game
+            {"     "}+ weather_shift<sub>k</sub>(temp, wind)
+            <br />
+            {"     "}+ form_noise<sub>k</sub>{"  "}{"//"} sigma = 0.18, zero-sum across game
             <br />
             π = softmax([0, ℓ<sub>1..7</sub>])
             <br />
@@ -593,8 +617,10 @@ export function MethodologyContent({
           <p>
             Bullpen management is rest-aware in live mode. Starters are pulled at{" "}
             <span className="font-mono">pa_count ≥ 24</span> (a pitch-count proxy, roughly
-            95 pitches at 3.95 P/PA). Relievers are drawn from a queue built from the active
-            26-man roster, ordered by current rest, and any reliever with{" "}
+            95 pitches at 3.95 P/PA), or earlier after 18 outs, after 6 runs allowed, or
+            after 12 outs with 4 or more runs allowed. Relievers are drawn from a queue
+            built from the active 26-man roster, ordered by two-day workload so the most
+            rested arm goes first, and any reliever with{" "}
             <span className="font-mono">≥ 6 outs in the last 1 day</span> or{" "}
             <span className="font-mono">≥ 9 outs in the last 2 days</span> is skipped. The
             per-pitcher workload table is refreshed in the daily pipeline from MLB boxscores.
@@ -606,24 +632,27 @@ export function MethodologyContent({
           <FormulaBlock>
             Var(total_runs) = Var<sub>posterior</sub>(parameter draws)
             <br />
-            {"             "}+ Var<sub>form</sub>(per-game form noise, σ=0.13)
+            {"             "}+ Var<sub>form</sub>(per-game form noise, σ=0.18)
             <br />
             {"             "}+ Var<sub>aleatoric</sub>(inning-level sim noise)
           </FormulaBlock>
           <p className="text-xs text-muted-foreground">
-            The form-noise scalar is calibrated against 2025 actuals to narrow the residual
-            underdispersion in the empirical advancement table. It is not a tuning knob to
-            be re-fit on market backtests; doing that mixes concerns and tends to mask
-            modeling errors as noise.
+            The form-noise scalar is calibrated against actual game outcomes to narrow the
+            residual underdispersion in the empirical advancement table (it was 0.13 at
+            cutover and moved to 0.18 in June). I deliberately do not refit it on market
+            backtests; doing that mixes concerns and tends to mask modeling errors as
+            noise.
           </p>
 
           <p className="text-muted-foreground">
-            Acceptance gate (200 stratified 2025 games × 990 sims × 2 sides = 396k team-game
-            samples): simulated mean runs/team-game 4.59 vs actual 4.38 (+4.86%, clears the
-            5% mean gate); simulated variance 9.72 vs actual 10.32 (−5.86%, clears the
-            relaxed 7% variance gate, misses the original 5%). The model is mildly
-            underdispersed in the tails, so blowouts and large totals get slightly less
-            probability mass than they should. Closing that gap is a v2.1 item.
+            The pre-cutover shape check replayed 200 stratified 2025 games at 990 sims per
+            side (396k team-game samples): simulated mean runs per team-game came out 4.59
+            against an actual 4.38 (+4.86%, inside the 5% gate), and simulated variance
+            9.72 against 10.32 (−5.86%, inside a relaxed 7% gate but not the original 5%).
+            The model is mildly underdispersed in the tails, so blowouts and large totals
+            get a little less probability mass than they should, and that is part of why
+            totals are off. That replay is no longer the acceptance gate; new releases are
+            now accepted on a paired comparison of frozen forecasts instead.
           </p>
         </div>
       </SectionCard>
@@ -660,32 +689,46 @@ export function MethodologyContent({
           </FormulaBlock>
 
           <p>
+            The moneyline number that gets published is not the raw sim, though. Since
+            August 2026 the sim&apos;s home logit is blended at weight 0.2 with the
+            de-vigged consensus of the paired moneylines across the books, after a +0.09
+            home-field logit the sim does not produce on its own (batting last and walk-off
+            logic net to roughly zero). The 0.2 was the out-of-sample log-loss optimum on
+            2026 games. Publishing the raw sim probability had a specific failure: it
+            flagged big underdogs as +EV all season, and they did not win at the rate the
+            sim said. Run-line and totals probabilities are still pure sim quantities, and
+            a game without a paired moneyline publishes the home-field-shifted sim
+            probability unchanged.
+          </p>
+
+          <p>
             The <strong>p10/p90 win-probability band</strong> is computed per posterior draw,
             not from the inning-level samples. For each of the K=30 draws we compute that
             draw&apos;s win probability across its inner sims, then take p10 and p90 over
-            the K draw-level probabilities. The band is a measure of posterior parameter
-            uncertainty about the win rate, separated from the aleatoric run variance.
-            Anti-correlation is enforced by construction:{" "}
+            the K draw-level probabilities and push them through the same anchoring map.
+            The band measures posterior parameter uncertainty about the win rate, separate
+            from the aleatoric run variance. Anti-correlation holds by construction:{" "}
             <span className="font-mono">P<sub>away</sub>(p10) = 1 − P<sub>home</sub>(p90)</span>.
           </p>
 
           <p>
-            A play is flagged when the modeled probability exceeds the sportsbook&apos;s
-            de-vigged implied probability by more than 4.5% (ML, RL) or 6.5% (totals). The
-            totals bar is higher because totals markets are noisier and respond more slowly
-            to fresh information. Sizing uses the Kelly criterion:
+            A play is flagged when the modeled probability beats the implied probability of
+            the best available price by more than 4.5% (moneyline and run line). Totals
+            carried a 6.5% bar for the same reason they are noisier, but totals flags are
+            switched off entirely for now; see the changelog. Sizing uses the Kelly
+            criterion:
           </p>
           <FormulaBlock>
             f* = (p · b − q) / b{"  "}{"//"} p = model prob, q = 1−p, b = decimal odds − 1
             <br />
-            stake = clamp(0.25 · f*, 0, max_stake){"  "}{"//"} quarter-Kelly with cap
+            stake = 0.25 · clip(f*, 0, 1){"  "}{"//"} quarter-Kelly
           </FormulaBlock>
           <p className="text-muted-foreground">
-            Full Kelly is theoretically optimal for long-run log-wealth growth (Thorp,
-            Shannon, Kelly 1956) but draws down aggressively on losing streaks. Quarter-Kelly
-            trades some growth rate for a much tighter drawdown distribution. A high-variance
-            flag fires when a team&apos;s simulated runs stdev exceeds 4.0, surfacing games
-            where the model itself is unusually uncertain about scoring.
+            Full Kelly is optimal for long-run log-wealth growth (Thorp, Shannon, Kelly
+            1956) but draws down hard on losing streaks. Quarter-Kelly gives up some growth
+            rate for a much tighter drawdown distribution. A high-variance flag fires when a
+            team&apos;s simulated runs stdev exceeds 4.0, which marks the games where the
+            model itself is unusually unsure about scoring.
           </p>
         </div>
       </SectionCard>
@@ -700,10 +743,8 @@ export function MethodologyContent({
           <p>
             Before cutover, v2 was benchmarked against the frozen v1 XGBoost baseline on
             every completed 2026 game where both models had a prediction and the v2 sim used
-            a clean live-bullpen queue. v1&apos;s code is preserved verbatim at SHA{" "}
-            <span className="font-mono">a84b4dd</span> in{" "}
-            <span className="font-mono">v2/evaluation/baseline_v1/</span> so the comparison is
-            stable.
+            a clean live-bullpen queue. The comparison ran against a pinned copy of the v1
+            code so nothing could drift mid-test.
           </p>
 
           <Table>
@@ -739,16 +780,16 @@ export function MethodologyContent({
             Brier and log-loss are both proper scoring rules, so the comparison is on
             calibration and sharpness together, not just hit rate on winners. v1&apos;s
             41.9% max calibration gap is partly thin-bin variance (the worst decile had few
-            games in it), but the directional read still holds: v2 reports a tighter and
-            better-calibrated probability. v2 is also more selective on flagged plays
-            (~20-25% fewer flags) yet posts higher ROI on all three markets, which is the
-            expected pattern when a model gets sharper.
+            games in it), but the direction holds: v2 reports a tighter and better
+            calibrated probability. v2 also flagged 20 to 25% fewer plays yet posted higher
+            ROI on all three markets, which is what you expect when a model gets sharper.
+            Note that totals ROI improved on paper here and then kept losing once v2 went
+            live, which is how totals ended up switched off.
           </p>
           <p className="text-muted-foreground">
-            Backtest infrastructure is in <span className="font-mono">v2/evaluation/</span>{" "}
-            (replay populates the v2 prediction table for a date range; backtester joins v1,
-            v2, and actuals and emits the head-to-head report). Live performance, including
-            ongoing Brier and calibration, is on the{" "}
+            The head-to-head tooling was retired after cutover; the numbers above are
+            frozen from that run and the v1 predictions live on in the archive tables.
+            Live performance, including ongoing Brier and calibration, is on the{" "}
             <Link href="/mlb/performance" className="underline underline-offset-2 hover:text-foreground">
               Performance page
             </Link>
@@ -782,8 +823,8 @@ export function MethodologyContent({
           <Notice className="mt-2 bg-muted/50 text-xs text-muted-foreground leading-relaxed">
             <strong className="text-foreground">A note on the sampler stack:</strong> PyMC
             describes the model; numpyro provides the JAX-backed NUTS implementation that
-            actually samples. Pinning matters: numpyro 0.20.1 + jax 0.7.2 + jaxlib 0.7.2.
-            Newer JAX removed an internal primitive (<span className="font-mono">xla_pmap_p</span>)
+            actually samples. The pins are load-bearing: numpyro 0.20.1 + jax 0.7.2 + jaxlib
+            0.7.2. Newer JAX removed an internal primitive (<span className="font-mono">xla_pmap_p</span>)
             that numpyro depends on, which breaks sampling silently.
           </Notice>
         </div>
@@ -802,13 +843,14 @@ export function MethodologyContent({
           <div className="mt-4 space-y-4 leading-relaxed">
             <p>
               v1 was a gradient-boosted regressor (XGBoost,{" "}
-              <span className="font-mono">reg:squarederror</span>) on 14 hand-crafted features
+              <span className="font-mono">reg:squarederror</span>) on 14 hand-built features
               per team per game, trained with <span className="font-mono">TimeSeriesSplit</span>{" "}
               cross-validation and <span className="font-mono">GridSearchCV</span>, retrained
               daily on all completed games of the season. It targeted expected runs per team
-              directly; win, total, and run-line probabilities were derived afterward from a
+              directly; win, total and run-line probabilities were derived afterward from a
               negative binomial joint score distribution with dispersion r=6, with isotonic
-              regression on out-of-fold predictions for calibration.
+              regression on out-of-fold predictions for calibration. The v1 code was
+              deleted from the repo on September 1, 2026; its predictions are kept.
             </p>
 
             <p className="font-mono text-xs uppercase tracking-wider text-muted-foreground">
@@ -865,9 +907,9 @@ export function MethodologyContent({
                 but the model itself reported no confidence band.
               </li>
               <li>
-                Feature engineering was a maintenance burden. Twelve to fourteen features
-                required ongoing tuning of split blends, IP weights, and fallback rules. v2
-                replaces all of that with per-actor posteriors learned from raw PAs.
+                Feature engineering was a maintenance burden. Fourteen features meant
+                ongoing tuning of split blends, IP weights and fallback rules. v2 replaces
+                all of that with per-actor posteriors learned from raw PAs.
               </li>
             </ul>
             <p className="text-xs text-muted-foreground">
