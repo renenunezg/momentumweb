@@ -189,6 +189,11 @@ export function PickTable({
                 <div className="mt-1 max-w-64 space-y-1 break-all">
                   <p>Decision: {new Date(pick.decision_at).toISOString()}</p>
                   <p>Rule: {pick.policy_version}</p>
+                  <p>
+                    Missing inputs: home {pick.home_missing_input_count ?? "unknown"},
+                    away {pick.away_missing_input_count ?? "unknown"}.
+                    Counts include unavailable injury data.
+                  </p>
                   <p>Model: {pick.model_version}</p>
                   <p>EV {formatPct(pick.expected_value_per_unit)}</p>
                   <p>
@@ -326,11 +331,13 @@ export function PickPolicy({
         changed kickoff voids the original pick.
       </p>
       <p>
-        CFB picks v1 requires a 4.5 percentage-point advantage over the
+        CFB picks v2 requires a 4.5 percentage-point advantage over the
         price&apos;s break-even probability, conditional on no push, plus
         positive EV. Prices must come from the configured odds feed, have an
         opposing price and matching kickoff, and be captured within one hour.
-        Complete model inputs and verified game matches are also required. Each
+        Verified game matches are required. Injury availability is unavailable for
+        every team and remains flagged; any additional missing model input
+        blocks a pick. Each
         pick risks 1 unit; a push returns the stake. Picks use the model&apos;s own
         probabilities. Historical calibration is diagnostic and does not gate
         recommendations; this record measures the picks as games finish.
