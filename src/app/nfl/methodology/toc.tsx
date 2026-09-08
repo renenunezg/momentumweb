@@ -11,6 +11,10 @@ const sections = [
   { id: "preseason", label: "Preseason" },
   { id: "units", label: "Unit Ratings" },
   { id: "backtest", label: "Backtest" },
+  { id: "picks", label: "Picks" },
+  { id: "example", label: "Example" },
+  { id: "season-wins", label: "Season Wins" },
+  { id: "awards", label: "Awards" },
   { id: "limits", label: "Limits" },
   { id: "stack", label: "Tech Stack" },
 ];

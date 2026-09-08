@@ -71,7 +71,15 @@ async function fetchFeaturedGame(): Promise<DistributionGameData | null> {
 
   if (games.length === 0) return null;
 
-  for (const g of games) {
+  // Prefer the next game that has not started, so the example is never a
+  // game already in progress; fall back to the earliest game otherwise.
+  const nowMs = Date.now();
+  const ordered = [
+    ...games.filter((g) => g.start_time != null && new Date(g.start_time).getTime() > nowMs),
+    ...games.filter((g) => g.start_time == null || new Date(g.start_time).getTime() <= nowMs),
+  ];
+
+  for (const g of ordered) {
     const rows = byGame.get(g.game_pk);
     if (!rows || rows.length < 2) continue;
     const home = rows.find((r) => r.team === g.home_team);

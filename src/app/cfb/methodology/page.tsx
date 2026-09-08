@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { TableOfContents } from "./toc";
 import { MethodologyContent } from "./methodology-content";
+import { fetchCfbPickExample } from "@/lib/football-pick-example";
 
 export const revalidate = 1800;
 export const metadata: Metadata = {
@@ -9,7 +10,8 @@ export const metadata: Metadata = {
     "How the college football model works: possession-based Bayesian ratings, calibrated game distributions, market comparison, and an in-game win probability model.",
 };
 
-export default function Page() {
+export default async function Page() {
+  const example = await fetchCfbPickExample();
   return (
     <main id="main" className="mx-auto w-full max-w-6xl min-w-0 px-4 py-8">
       <div className="mb-6">
@@ -22,7 +24,7 @@ export default function Page() {
 
       <div className="lg:grid lg:grid-cols-[180px_1fr] lg:gap-8">
         <TableOfContents />
-        <MethodologyContent />
+        <MethodologyContent example={example} />
       </div>
     </main>
   );
