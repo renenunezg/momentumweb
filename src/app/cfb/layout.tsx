@@ -8,6 +8,7 @@ export const metadata: Metadata = {
 };
 
 const cfbLinks = [
+  { href: "/cfb/predictions", label: "Predictions" },
   { href: "/cfb/methodology", label: "Methodology" },
   { href: "/cfb/ratings", label: "Ratings" },
   { href: "/cfb/schedule", label: "Schedule" },

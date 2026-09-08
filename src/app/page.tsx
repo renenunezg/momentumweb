@@ -253,7 +253,7 @@ export default async function Home() {
           </Link>
 
           <Link
-            href="/cfb/ratings"
+            href="/cfb/predictions"
             className="group -mx-3 block px-3 py-5 transition-colors hover:bg-muted/50"
           >
             <div className="flex items-center justify-between gap-4">
@@ -274,12 +274,12 @@ export default async function Home() {
                 )}
               </div>
               <span className="font-mono text-xs uppercase tracking-wider text-muted-foreground group-hover:text-foreground transition-colors">
-                View ratings &rarr;
+                View predictions &rarr;
               </span>
             </div>
             <p className="mt-2 text-sm text-muted-foreground leading-relaxed">
-              Power ratings for every Division 1 program, with weekly spread
-              and total projections priced against the market.
+              Weekly spread, total, and moneyline predictions with frozen
+              lines, built on power ratings for every Division 1 program.
             </p>
             {cfb && (
               <div className="mt-4 flex flex-wrap gap-x-8 gap-y-3 border-t border-border pt-4">

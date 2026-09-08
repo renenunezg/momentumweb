@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { LastUpdated } from "@/components/last-updated";
 import { WeeklyFootballPredictions } from "@/components/weekly-football-predictions";
+import { teamBadge, weeklyGames, type WeeklyGame } from "@/lib/football-picks";
 import { fetchTeams } from "@/lib/nfl";
 import { supabaseNfl } from "@/lib/supabase";
 
@@ -42,6 +43,21 @@ export default async function PredictionsPage() {
       !latest || row.decision_at > latest ? row.decision_at : latest,
     null,
   );
+  // Decisions carry team names; identity rows are keyed by abbreviation.
+  const byName = new Map(
+    [...teams.values()].map((team) => [team.team, teamBadge(team)]),
+  );
+  const schedule = new Map<string, Omit<WeeklyGame, "rows">>();
+  for (const row of decisions)
+    if (!schedule.has(row.game_id))
+      schedule.set(row.game_id, {
+        game_id: row.game_id,
+        start_date: row.start_date,
+        home_team: row.home_team,
+        away_team: row.away_team,
+        home: byName.get(row.home_team) ?? null,
+        away: byName.get(row.away_team) ?? null,
+      });
 
   return (
     <main
@@ -82,10 +98,8 @@ export default async function PredictionsPage() {
         </p>
       ) : decisions.length ? (
         <WeeklyFootballPredictions
-          decisions={decisions}
-          teams={Object.fromEntries(
-            [...teams.values()].map((team) => [team.team, team]),
-          )}
+          league="nfl"
+          games={weeklyGames([...schedule.values()], decisions)}
         />
       ) : (
         <p

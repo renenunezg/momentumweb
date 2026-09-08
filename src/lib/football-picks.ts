@@ -16,6 +16,40 @@ export type FootballPickMetric =
     unique_games?: number | null;
   };
 export type PickMarket = "all" | "h2h" | "spreads" | "totals";
+export type WeeklyPick = Pick<
+  FootballPick,
+  | "game_id"
+  | "market"
+  | "start_date"
+  | "home_team"
+  | "away_team"
+  | "status"
+  | "selection"
+  | "point"
+  | "price"
+  | "provider"
+  | "outcome"
+  | "profit_units"
+  | "win_probability"
+  | "push_probability"
+>;
+// The identity a matchup card needs, structural so CFB rows (keyed by
+// team_id) and NFL rows (keyed by team_abbr) both satisfy it, and small
+// enough to serialize for every game of a 120 game week.
+export type TeamBadge = {
+  logo_light: string | null;
+  logo_dark: string | null;
+  color: string | null;
+};
+export type WeeklyGame = {
+  game_id: string | number;
+  start_date: string | null;
+  home_team: string;
+  away_team: string;
+  home: TeamBadge | null;
+  away: TeamBadge | null;
+  rows: WeeklyPick[];
+};
 export type PickPeriod = "7" | "14" | "all";
 export const PICK_PAGE_SIZE = 50;
 export const MARKET_LABELS = {
@@ -81,6 +115,45 @@ export function selectedPickMetric(
       ? row.segment_kind === "overall"
       : row.segment_kind === "market" && row.segment === market,
   );
+}
+
+export function teamBadge(team: TeamBadge | undefined): TeamBadge | null {
+  return team
+    ? {
+        logo_light: team.logo_light,
+        logo_dark: team.logo_dark,
+        color: team.color,
+      }
+    : null;
+}
+
+// The week's matchups come from the schedule, so a game with no recorded
+// decision still holds its place in the slate; a decision for a game the
+// schedule no longer lists is kept rather than hidden.
+export function weeklyGames(
+  schedule: Omit<WeeklyGame, "rows">[],
+  decisions: WeeklyPick[],
+): WeeklyGame[] {
+  const games = new Map<string | number, WeeklyGame>(
+    schedule.map((game) => [game.game_id, { ...game, rows: [] }]),
+  );
+  for (const row of decisions) {
+    let game = games.get(row.game_id);
+    if (!game) {
+      game = {
+        game_id: row.game_id,
+        start_date: row.start_date,
+        home_team: row.home_team,
+        away_team: row.away_team,
+        home: null,
+        away: null,
+        rows: [],
+      };
+      games.set(row.game_id, game);
+    }
+    game.rows.push(row);
+  }
+  return [...games.values()];
 }
 
 export function pickLabel(

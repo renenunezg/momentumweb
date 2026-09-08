@@ -76,3 +76,53 @@ test("separate dates and anchored windows cannot chain into one oversized slate"
     [["first", "staggered"], ["next"], ["before-midnight"], ["after-midnight"]],
   );
 });
+
+// A real CFB Saturday (2026 week 2): dense noon, 3:30, and 7:00 ET windows
+// with :15/:30/:45 stragglers between them.
+const et = (day: number, time: string) =>
+  new Date(`2026-09-${day}T${time}:00-04:00`).toISOString();
+
+test("CFB slates keep dense windows whole and split staggered starts at their widest gaps", () => {
+  const saturday = [
+    "12:00", "12:30", "12:45", "13:00", "13:30", "14:00",
+    "15:00", "15:30", "15:45", "16:00", "16:15",
+    "17:00", "17:30", "18:00", "18:30",
+    "19:00", "19:15", "19:30", "19:45", "20:00",
+    "21:00", "22:00", "22:15", "22:30", "23:00", "23:59",
+  ];
+  const games = [
+    game("thu", et(10, "20:00")),
+    game("fri-1", et(11, "19:00")),
+    game("fri-2", et(11, "19:30")),
+    game("fri-3", et(11, "20:00")),
+    ...saturday.map((time) => game(`sat-${time}`, et(12, time))),
+    game("hawaii", et(13, "00:00")),
+    game("tbd", null),
+  ];
+  const slates = groupFootballSlates(games, "cfb");
+  assert.deepEqual(
+    slates.map((slate) => slate.games.map((g) => g.id)),
+    [
+      ["thu"],
+      ["fri-1", "fri-2", "fri-3"],
+      ["sat-12:00", "sat-12:30", "sat-12:45", "sat-13:00", "sat-13:30", "sat-14:00"],
+      ["sat-15:00", "sat-15:30", "sat-15:45", "sat-16:00", "sat-16:15"],
+      ["sat-17:00", "sat-17:30", "sat-18:00", "sat-18:30"],
+      ["sat-19:00", "sat-19:15", "sat-19:30", "sat-19:45", "sat-20:00"],
+      ["sat-21:00"],
+      ["sat-22:00", "sat-22:15", "sat-22:30", "sat-23:00", "sat-23:59", "hawaii"],
+      ["tbd"],
+    ],
+  );
+  assert.ok(slates.every((slate) => slate.broadcast === null));
+  const eastern = footballSlateClock("America/New_York");
+  assert.equal(eastern.title(slates[0]), "Thursday · 8:00 PM");
+  assert.equal(eastern.title(slates[2]), "Saturday · 12:00 PM - 2:00 PM");
+  assert.equal(eastern.title(slates[7]), "Saturday · 10:00 PM - 12:00 AM");
+  const pacific = footballSlateClock("America/Los_Angeles");
+  assert.equal(pacific.title(slates[2]), "Saturday · 9:00 AM - 11:00 AM");
+  assert.equal(pacific.title(slates[7]), "Saturday · 7:00 PM - 9:00 PM");
+  const tokyo = footballSlateClock("Asia/Tokyo");
+  assert.equal(tokyo.title(slates[2]), "Sunday · 1:00 AM - 3:00 AM");
+  assert.equal(tokyo.title(slates[8]), "Kickoff TBD");
+});
