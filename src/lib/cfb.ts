@@ -99,7 +99,6 @@ export async function fetchFullBacktest(): Promise<CfbBacktestPrediction[]> {
 export interface CfbLivePerformance {
   season: number | null;
   metrics: CfbPerformanceMetric[];
-  gradedGames: number;
   lastGradedAt: string | null;
   latestKickoff: string | null;
 }
@@ -111,7 +110,6 @@ export async function fetchLivePerformance(): Promise<CfbLivePerformance> {
   const empty: CfbLivePerformance = {
     season: null,
     metrics: [],
-    gradedGames: 0,
     lastGradedAt: null,
     latestKickoff: null,
   };
@@ -124,16 +122,12 @@ export async function fetchLivePerformance(): Promise<CfbLivePerformance> {
   const latest = latestRes.data?.[0];
   if (latestRes.error || !latest) return empty;
 
-  const [metricsRes, countRes, kickoffRes] = await Promise.all([
+  const [metricsRes, kickoffRes] = await Promise.all([
     supabaseCfb
       .from("performance_metrics")
       .select("*")
       .eq("season", latest.season)
       .order("segment_order", { ascending: true }),
-    supabaseCfb
-      .from("graded_games")
-      .select("game_id", { count: "exact", head: true })
-      .eq("season", latest.season),
     supabaseCfb
       .from("graded_games")
       .select("start_date")
@@ -148,7 +142,6 @@ export async function fetchLivePerformance(): Promise<CfbLivePerformance> {
   return {
     season: latest.season,
     metrics: (metricsRes.data ?? []) as CfbPerformanceMetric[],
-    gradedGames: countRes.count ?? 0,
     lastGradedAt: latest.graded_at,
     latestKickoff: kickoffRes.data?.[0]?.start_date ?? null,
   };
