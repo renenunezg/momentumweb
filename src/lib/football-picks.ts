@@ -83,7 +83,9 @@ export function selectedPickMetric(
   );
 }
 
-export function pickLabel(pick: FootballPick): string {
+export function pickLabel(
+  pick: Pick<FootballPick, "status" | "market" | "selection" | "point">,
+): string {
   if (pick.status !== "recommended") return "No Play";
   if (pick.market === "h2h") return `${pick.selection} ML`;
   const point = pick.point;

@@ -26,13 +26,13 @@ export function Nav({
       className="relative z-10 border-b border-border bg-background"
     >
       <div className="mx-auto flex w-full max-w-7xl min-w-0 flex-col items-start gap-1 px-4 pt-3 sm:flex-row sm:items-center sm:justify-between sm:gap-0 sm:pb-0">
-        <div className="flex items-baseline gap-3 pb-2 sm:pb-3">
+        <div className="flex shrink-0 items-baseline gap-3 whitespace-nowrap pb-2 sm:pb-3">
           <Link href="/" className="font-heading text-lg tracking-tight">
             Home
           </Link>
           <HeaderDate />
         </div>
-        <div className="flex w-full items-center gap-0 overflow-x-auto pb-0 sm:w-auto sm:overflow-visible">
+        <div className="flex w-full min-w-0 items-center gap-0 overflow-x-auto pb-0 sm:w-auto">
           {links.map((link) => {
             const isActive =
               link.href === "/"

@@ -8,6 +8,7 @@ export const metadata: Metadata = {
 };
 
 const nflLinks = [
+  { href: "/nfl/predictions", label: "Predictions" },
   { href: "/nfl/methodology", label: "Methodology" },
   { href: "/nfl/ratings", label: "Ratings" },
   { href: "/nfl/schedule", label: "Schedule" },

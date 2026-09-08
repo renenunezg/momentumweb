@@ -12,6 +12,7 @@ const DATA_ROUTES = [
   "/cfb/heisman",
   "/cfb/history",
   "/cfb/performance",
+  "/nfl/predictions",
   "/nfl/ratings",
   "/nfl/schedule",
   "/nfl/season-wins",

@@ -317,7 +317,7 @@ export default async function Home() {
           </Link>
 
           <Link
-            href="/nfl/ratings"
+            href="/nfl/predictions"
             className="group -mx-3 block px-3 py-5 transition-colors hover:bg-muted/50"
           >
             <div className="flex items-center justify-between gap-4">
@@ -331,7 +331,7 @@ export default async function Home() {
                 </span>
               </div>
               <span className="font-mono text-xs uppercase tracking-wider text-muted-foreground group-hover:text-foreground transition-colors">
-                View ratings &rarr;
+                View predictions &rarr;
               </span>
             </div>
             <p className="mt-2 text-sm text-muted-foreground leading-relaxed">
