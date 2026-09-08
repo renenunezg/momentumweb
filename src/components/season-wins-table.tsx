@@ -31,6 +31,8 @@ export function SeasonWinsTable({
   teams: NflTeamIdentity[];
 }) {
   const [view, setView] = useState<View>("all");
+  const [division, setDivision] = useState("all");
+  const divisions = useMemo(() => [...new Set(rows.filter((row) => view === "all" || row.conference === view).map((row) => row.division).filter((name): name is string => Boolean(name)))].sort(), [rows, view]);
   const [sort, setSort] = useState<Sort>("projected_wins");
   const [ascending, setAscending] = useState(false);
   const identities = useMemo(
@@ -40,7 +42,7 @@ export function SeasonWinsTable({
   const visible = useMemo(
     () =>
       rows
-        .filter((row) => view === "all" || row.conference === view)
+        .filter((row) => (view === "all" || row.conference === view) && (division === "all" || row.division === division))
         .map((row) => ({
           ...row,
           difference:
@@ -59,7 +61,7 @@ export function SeasonWinsTable({
             a.team.localeCompare(b.team)
           );
         }),
-    [rows, view, sort, ascending],
+    [rows, view, division, sort, ascending],
   );
   const inSeason = rows.some((row) => row.games_played > 0);
 
@@ -102,9 +104,17 @@ export function SeasonWinsTable({
       label="Season wins conference"
       options={views}
       value={view}
-      onValueChange={setView}
+      onValueChange={(next) => { setView(next); setDivision("all"); }}
     >
       <ViewTabPanel value={view} className="space-y-3">
+        <label className="flex flex-wrap items-center gap-3 text-sm">
+          <span className="font-mono text-xs uppercase tracking-wider text-muted-foreground">Division</span>
+          <select aria-label="Season wins division" value={division} onChange={(event) => setDivision(event.target.value)}
+            className="rounded-md border bg-background px-3 py-2 text-sm text-foreground focus-visible:outline-2 focus-visible:outline-offset-2">
+            <option value="all">All divisions</option>
+            {divisions.map((name) => <option key={name} value={name}>{name}</option>)}
+          </select>
+        </label>
         <div className="flex flex-wrap items-center justify-between gap-2 text-xs text-muted-foreground">
           <p>{visible.length} teams · Sort by wins or difference.</p>
           <p className="hidden items-center gap-3 sm:flex" aria-hidden="true">

@@ -1,4 +1,4 @@
-import Link from "next/link";
+import { NavigationLink as Link } from "@/components/navigation-link";
 import { formatHomeLine } from "@/lib/football";
 import { cn, formatNumber } from "@/lib/utils";
 import {

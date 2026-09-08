@@ -37,4 +37,14 @@ export const supabaseCfb = createClient<Database, "cfb">(url, anonKey, {
 export const supabaseNfl = createClient<Database, "nfl">(url, anonKey, {
   db: { schema: "nfl" },
   auth: anonAuth("nfl"),
+  global: {
+    // Public NFL reads share the pages' five-minute freshness window, including
+    // dynamic history filters. Browser reads and mutations bypass this cache.
+    fetch: (input, init) => {
+      const method = (init?.method ?? "GET").toUpperCase();
+      const restRead = typeof window === "undefined" && method === "GET"
+        && String(input).startsWith(`${url}/rest/v1/`);
+      return fetch(input, restRead ? { ...init, next: { revalidate: 300 } } : init);
+    },
+  },
 });

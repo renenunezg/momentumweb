@@ -42,7 +42,7 @@ export default async function HistoryPage({
   const offset = (page - 1) * PAGE_SIZE;
 
   let query = relation()
-    .select("*", { count: "exact" })
+    .select("game_id,season,week,home_team,away_team,neutral_site,home_points,away_points,closing_spread,model_margin,actual_margin", { count: "exact" })
     .order("season", { ascending: false })
     .order("week", { ascending: false })
     .order("game_id", { ascending: true })
