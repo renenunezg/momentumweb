@@ -1,186 +1,109 @@
 import type { Metadata } from "next";
-import { supabaseCfb } from "@/lib/supabase";
-import { fetchLiveGradedSeason } from "@/lib/cfb";
-import type { CfbBacktestPrediction, CfbGradedGame } from "@/lib/types";
-import { pageNumber } from "@/lib/utils";
+import Link from "next/link";
+import ForecastHistory from "@/components/cfb-forecast-history";
+import { HistoryPager } from "@/components/graded-history";
 import {
-  GradedHistoryTable,
-  HistoryPager,
-  SeasonLinks,
-  type GradedRow,
-} from "@/components/graded-history";
+  PickFilters,
+  PickKpis,
+  PickPolicy,
+  PickTable,
+} from "@/components/cfb-picks";
+import {
+  fetchCfbPickHistory,
+  fetchCfbPickSummary,
+  PICK_PAGE_SIZE,
+  pickMarket,
+  selectedPickMetric,
+} from "@/lib/cfb-picks";
+import { pageNumber } from "@/lib/utils";
 
 export const revalidate = 300;
 export const metadata: Metadata = {
-  title: "College Football Forecast History",
+  title: "College Football Pick History",
   description:
-    "Every college football game forecast next to the closing spread and final margin: live graded games this season and a walk-forward backtest.",
+    "Every college football spread and total pick with the side, line, and odds recorded before kickoff and how it graded, plus forecast and backtest history.",
 };
 
-const PAGE_SIZE = 50;
-const FIRST_BACKTEST_SEASON = 2021;
-
-// The live record carries the pure projection and the blend; the history
-// table grades the pure one, which is the model's own opinion.
-function fromGraded(r: CfbGradedGame): GradedRow {
-  return {
-    game_id: r.game_id,
-    season: r.season,
-    week: r.week,
-    home_team: r.home_team,
-    away_team: r.away_team,
-    neutral_site: r.neutral_site,
-    home_points: r.home_points,
-    away_points: r.away_points,
-    closing_spread: r.closing_spread,
-    model_margin: r.pure_home_margin,
-    actual_margin: r.actual_margin,
-  };
-}
-
-function historyUrl(params: Record<string, string | number>) {
-  const sp = new URLSearchParams();
-  for (const [key, value] of Object.entries(params)) {
-    if (value !== "") sp.set(key, String(value));
-  }
-  const query = sp.toString();
-  return query ? `/cfb/history?${query}` : "/cfb/history";
-}
+type Params = {
+  season?: string;
+  market?: string;
+  page?: string;
+  view?: string;
+  team?: string;
+};
 
 export default async function HistoryPage({
   searchParams,
 }: {
-  searchParams: Promise<{ season?: string; team?: string; page?: string }>;
+  searchParams: Promise<Params>;
 }) {
   const params = await searchParams;
-  const season = params.season ?? "";
-  const team = params.team ?? "";
+  if (params.view === "accuracy" || params.season === "backtest")
+    return <ForecastHistory searchParams={searchParams} />;
+  const summary = await fetchCfbPickSummary(params.season);
+  const market = pickMarket(params.market);
   const page = pageNumber(params.page);
-  const offset = (page - 1) * PAGE_SIZE;
-
-  const [liveSeason, backtestSeasonRes] = await Promise.all([
-    fetchLiveGradedSeason(),
-    supabaseCfb
-      .from("backtest_predictions")
-      .select("season")
-      .order("season", { ascending: false })
-      .limit(1),
-  ]);
-  // With live graded games, the page opens on the live season; "backtest"
-  // selects the full frozen history and a year selects one backtest season.
-  const isLive =
-    liveSeason != null && (season === "" || season === String(liveSeason));
-  const backtestSeason = season === "" || season === "backtest" ? "" : season;
-
-  let rows: GradedRow[] = [];
-  let totalRows = 0;
-  let errorMessage: string | null = null;
-
-  if (isLive) {
-    let query = supabaseCfb
-      .from("graded_games")
-      .select("*", { count: "exact" })
-      .eq("season", liveSeason)
-      .order("start_date", { ascending: false })
-      .order("game_id", { ascending: true })
-      .range(offset, offset + PAGE_SIZE - 1);
-    if (team) query = query.or(`home_team.eq.${team},away_team.eq.${team}`);
-    const { data, count, error } = await query;
-    rows = ((data ?? []) as CfbGradedGame[]).map(fromGraded);
-    totalRows = count ?? 0;
-    errorMessage = error?.message ?? null;
-  } else {
-    let query = supabaseCfb
-      .from("backtest_predictions")
-      .select("*", { count: "exact" })
-      .order("season", { ascending: false })
-      .order("week", { ascending: false })
-      .order("game_id", { ascending: true })
-      .range(offset, offset + PAGE_SIZE - 1);
-    if (backtestSeason) query = query.eq("season", parseInt(backtestSeason, 10));
-    if (team) query = query.or(`home_team.eq.${team},away_team.eq.${team}`);
-    const { data, count, error } = await query;
-    rows = (data ?? []) as CfbBacktestPrediction[];
-    totalRows = count ?? 0;
-    errorMessage = error?.message ?? null;
-  }
-
-  const totalPages = Math.max(1, Math.ceil(totalRows / PAGE_SIZE));
-  const latestBacktestSeason = backtestSeasonRes.data?.[0]?.season ?? null;
-  const backtestSeasons =
-    latestBacktestSeason == null
-      ? []
-      : Array.from(
-          { length: latestBacktestSeason - FIRST_BACKTEST_SEASON + 1 },
-          (_, i) => String(latestBacktestSeason - i)
-        );
-
-  const seasonOptions = [
-    ...(liveSeason != null
-      ? [{ key: "live", label: `${liveSeason} live`, href: historyUrl({ team }) }]
-      : []),
-    {
-      key: "backtest",
-      label: "Backtest",
-      href: historyUrl({ season: liveSeason == null ? "" : "backtest", team }),
-    },
-    ...backtestSeasons.map((s) => ({
-      key: s,
-      label: s,
-      href: historyUrl({ season: s, team }),
-    })),
-  ];
-  const activeKey = isLive ? "live" : backtestSeason || "backtest";
-
+  const history = await fetchCfbPickHistory(summary.season, market, page);
+  const metric = selectedPickMetric(summary.metrics, market);
   return (
-    <main id="main" className="mx-auto w-full max-w-6xl min-w-0 px-4 py-8 space-y-6">
-      <div className="flex items-start justify-between gap-4">
-        <h1 className="font-heading text-2xl tracking-tight">
-          {isLive ? `${liveSeason} College Football Graded Games` : "College Football Backtest History"}
-        </h1>
-        <div className="text-xs text-muted-foreground">{totalRows} graded games</div>
+    <main
+      id="main"
+      className="mx-auto w-full max-w-6xl min-w-0 space-y-6 px-4 py-8"
+    >
+      <div className="flex flex-wrap items-start justify-between gap-3">
+        <div>
+          <h1 className="font-heading text-2xl tracking-tight">
+            College Football Pick History
+          </h1>
+          <p className="mt-1 text-sm text-muted-foreground">
+            The side, line, and odds recorded before kickoff, with each
+            pick&apos;s result.
+          </p>
+        </div>
+        <Link
+          href="/cfb/history?view=accuracy"
+          className="text-sm underline underline-offset-4"
+        >
+          Forecast &amp; backtest history
+        </Link>
       </div>
-
-      <p className="max-w-4xl text-sm text-muted-foreground leading-relaxed">
-        {isLive
-          ? "Every completed game graded live this season: the projection published before kickoff, the CFBD closing spread, and the final margin. Nothing is re-fit after a result is known. Lines are quoted for the home team."
-          : "Every graded prediction from the frozen walk-forward backtest, next to the closing spread and the final margin. Backtest seasons are historical stand-ins, not live results. Lines are quoted for the home team."}
-      </p>
-
-      <SeasonLinks
-        options={seasonOptions}
-        activeKey={activeKey}
-        team={team}
-        clearHref={historyUrl({ season })}
+      <PickFilters
+        season={summary.season}
+        latestSeason={summary.latestSeason}
+        market={market}
       />
-
-      {errorMessage ? (
-        <p className="text-sm text-destructive">Could not load history: {errorMessage}</p>
-      ) : rows.length === 0 ? (
-        <p className="text-sm text-muted-foreground">
-          {isLive
-            ? "No completed games have been graded yet this season."
-            : "No graded games match these filters."}
+      <PickKpis metric={metric} unavailable={summary.unavailable} />
+      {history.unavailable ? (
+        <p
+          role="status"
+          className="rounded-md border border-border bg-muted/30 p-4 text-sm"
+        >
+          Recommendation history is currently unavailable. Forecast history
+          remains available.
         </p>
+      ) : history.rows.length ? (
+        <>
+          <PickTable rows={history.rows} />
+          <p className="text-xs text-muted-foreground">
+            {history.count} recorded market decisions. No Play decisions are
+            shown for context and excluded from the pick record and ROI.
+          </p>
+          <HistoryPager
+            page={page}
+            totalPages={Math.max(1, Math.ceil(history.count / PICK_PAGE_SIZE))}
+            pageUrl={(p) =>
+              `/cfb/history?season=${summary.season}&market=${market}&page=${p}`
+            }
+          />
+        </>
       ) : (
-        <GradedHistoryTable
-          rows={rows}
-          caption={isLive ? `${liveSeason} graded games` : "CFB backtest history"}
-        />
+        <p className="rounded-md border border-border bg-muted/30 p-4 text-sm">
+          No recorded decisions match this selection. Recommendations will
+          appear here when the model next publishes qualifying picks or No Play
+          decisions.
+        </p>
       )}
-
-      <HistoryPager
-        page={page}
-        totalPages={totalPages}
-        pageUrl={(p) => historyUrl({ season, team, page: p })}
-      />
-
-      <p className="text-xs text-muted-foreground">
-        Model and Close are home lines; Result is the final margin on the same
-        axis. Model err is the absolute miss of the model&apos;s margin, shown
-        green when the model was closer than the closing line.
-        {isLive ? " Model is the pure projection, not the market-informed blend." : ""}
-      </p>
+      <PickPolicy firstDecision={metric?.first_decision_at} />
     </main>
   );
 }

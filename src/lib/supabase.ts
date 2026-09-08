@@ -1,5 +1,13 @@
 import { createClient } from "@supabase/supabase-js";
 import type { Database } from "@/lib/database.types";
+import type { CfbPicksDatabase } from "@/lib/cfb-picks.database.types";
+
+type CfbDatabase = Omit<Database, "cfb"> & {
+  cfb: Omit<Database["cfb"], "Tables" | "Views"> & {
+    Tables: Database["cfb"]["Tables"] & CfbPicksDatabase["cfb"]["Tables"];
+    Views: Database["cfb"]["Views"] & CfbPicksDatabase["cfb"]["Views"];
+  };
+};
 
 // These clients are anon and read-only: nothing here ever signs a user in, so
 // there is no session to persist or refresh, and no auth timers are wanted.
@@ -29,7 +37,7 @@ export const supabase = createClient<Database, "mlb">(url, anonKey, {
   auth: anonAuth("mlb"),
 });
 
-export const supabaseCfb = createClient<Database, "cfb">(url, anonKey, {
+export const supabaseCfb = createClient<CfbDatabase, "cfb">(url, anonKey, {
   db: { schema: "cfb" },
   auth: anonAuth("cfb"),
 });
@@ -42,9 +50,14 @@ export const supabaseNfl = createClient<Database, "nfl">(url, anonKey, {
     // dynamic history filters. Browser reads and mutations bypass this cache.
     fetch: (input, init) => {
       const method = (init?.method ?? "GET").toUpperCase();
-      const restRead = typeof window === "undefined" && method === "GET"
-        && String(input).startsWith(`${url}/rest/v1/`);
-      return fetch(input, restRead ? { ...init, next: { revalidate: 300 } } : init);
+      const restRead =
+        typeof window === "undefined" &&
+        method === "GET" &&
+        String(input).startsWith(`${url}/rest/v1/`);
+      return fetch(
+        input,
+        restRead ? { ...init, next: { revalidate: 300 } } : init,
+      );
     },
   },
 });

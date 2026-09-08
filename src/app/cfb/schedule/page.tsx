@@ -8,10 +8,16 @@ import {
   marketHomeLine,
 } from "@/lib/football";
 import type { CfbGameProjection, CfbMarketComparison } from "@/lib/types";
+import { pickLabel, pickReason, type CfbPick } from "@/lib/cfb-picks";
+import { formatOdds, formatPct } from "@/lib/utils";
+import Link from "next/link";
 import { formatNumber } from "@/lib/utils";
 import { LastUpdated } from "@/components/last-updated";
 import { ScheduleFilters } from "@/components/schedule-filters";
-import { ScheduleMarker, ScheduleTeamCell } from "@/components/schedule-team-cell";
+import {
+  ScheduleMarker,
+  ScheduleTeamCell,
+} from "@/components/schedule-team-cell";
 import {
   Table,
   TableBody,
@@ -24,9 +30,9 @@ import {
 
 export const revalidate = 300;
 export const metadata: Metadata = {
-  title: "College Football Spread Projections",
+  title: "College Football Spread Projections and Picks",
   description:
-    "Model spreads, projected scores, and totals for every FBS and FCS game this week, compared against the market line.",
+    "Model spreads, projected scores, and totals for every FBS and FCS game this week, compared against the market line with recorded spread and total picks.",
 };
 
 const VIEWS = [
@@ -39,7 +45,11 @@ const VIEWS = [
     // says why rather than reading as a broken filter.
     empty: "No game this week is between two top 25 teams.",
   },
-  { key: "conference", label: "Conference", empty: "No conference games this week." },
+  {
+    key: "conference",
+    label: "Conference",
+    empty: "No conference games this week.",
+  },
 ] as const;
 
 const DEGRADED: ScheduleMarker = {
@@ -63,7 +73,9 @@ export default async function SchedulePage() {
   if (!latest) {
     return (
       <main id="main" className="mx-auto w-full max-w-6xl min-w-0 px-4 py-8">
-        <h1 className="font-heading text-2xl tracking-tight">College Football Schedule and Projections</h1>
+        <h1 className="font-heading text-2xl tracking-tight">
+          College Football Schedule and Projections
+        </h1>
         <p className="mt-4 text-muted-foreground">
           No projections published yet. Run the publish pipeline to load them.
         </p>
@@ -71,7 +83,7 @@ export default async function SchedulePage() {
     );
   }
 
-  const [projRes, marketRes, teams, { ratings }] = await Promise.all([
+  const [projRes, teams, { ratings }] = await Promise.all([
     supabaseCfb
       .from("game_projections")
       .select("*")
@@ -79,7 +91,6 @@ export default async function SchedulePage() {
       .eq("week", latest.week)
       .order("start_date", { ascending: true })
       .order("game_id", { ascending: true }),
-    supabaseCfb.from("market_comparisons").select("*"),
     fetchTeams(),
     fetchLatestRatings(),
   ]);
@@ -89,24 +100,91 @@ export default async function SchedulePage() {
   const rankByTeam = new Map(ratings.map((r, i) => [r.team_id, i + 1]));
 
   const games = (projRes.data ?? []) as CfbGameProjection[];
+  const gameIds = games.map((game) => game.game_id);
+  // The frozen decision keeps its original week when the schedule moves.
+  const [marketRes, pickRes] = gameIds.length
+    ? await Promise.all([
+        supabaseCfb
+          .from("market_comparisons")
+          .select("*")
+          .in("game_id", gameIds),
+        supabaseCfb
+          .from("recommendations")
+          .select("*")
+          .eq("season", latest.season)
+          .in("game_id", gameIds),
+      ])
+    : [
+        { data: [], error: null },
+        { data: [], error: null },
+      ];
   const fbsGameCount = games.filter(
     (game) =>
-      game.away_classification === "fbs" ||
-      game.home_classification === "fbs"
+      game.away_classification === "fbs" || game.home_classification === "fbs",
   ).length;
   const marketByGame = new Map(
     ((marketRes.data ?? []) as CfbMarketComparison[]).map((m) => [
       m.game_id,
       m,
-    ])
+    ]),
   );
   const lastUpdated = games[0]?.as_of ?? null;
+  const picks = new Map(
+    (pickRes.data ?? []).map((pick: CfbPick) => [
+      `${pick.game_id}-${pick.market}`,
+      pick,
+    ]),
+  );
+  function pickCell(gameId: number, market: string) {
+    const pick = picks.get(`${gameId}-${market}`);
+    if (!pick)
+      return (
+        <span className="text-xs text-muted-foreground">
+          {pickRes.error ? "Unavailable" : "Not recorded"}
+        </span>
+      );
+    return (
+      <div
+        className="min-w-36 text-left text-xs"
+        title={`Recorded ${pick.decision_at}. ${pickReason(pick.reason)}`}
+      >
+        <div
+          className={
+            pick.status === "recommended"
+              ? "font-semibold"
+              : "text-muted-foreground"
+          }
+        >
+          {pickLabel(pick)}
+        </div>
+        {pick.outcome === "void" ? (
+          <div className="mt-1 text-muted-foreground">
+            Void: kickoff changed
+          </div>
+        ) : pick.status === "recommended" ? (
+          <div className="mt-1 font-mono text-muted-foreground">
+            {formatOdds(pick.price)} · EV{" "}
+            {formatPct(pick.expected_value_per_unit)}
+          </div>
+        ) : (
+          <div className="mt-1 max-w-44 text-[10px] text-muted-foreground">
+            {pickReason(pick.reason)}
+          </div>
+        )}
+      </div>
+    );
+  }
 
   return (
-    <main id="main" className="mx-auto w-full max-w-6xl min-w-0 px-4 py-8 space-y-6">
+    <main
+      id="main"
+      className="mx-auto w-full max-w-6xl min-w-0 px-4 py-8 space-y-6"
+    >
       <div className="flex items-start justify-between gap-4">
         <div>
-          <h1 className="font-heading text-2xl tracking-tight">College Football Schedule and Projections</h1>
+          <h1 className="font-heading text-2xl tracking-tight">
+            College Football Schedule and Projections
+          </h1>
           <p className="mt-1 font-mono text-xs uppercase tracking-wider text-muted-foreground">
             {latest.season} · Week {latest.week} · {games.length} games
           </p>
@@ -120,9 +198,18 @@ export default async function SchedulePage() {
       <p className="max-w-4xl text-sm text-muted-foreground leading-relaxed">
         Every college football game this week with the model&apos;s spread,
         projected score, and total next to the market. Model lines are quoted
-        for the home team: a negative line means the model favors the home
-        side. Market is the best priced spread offer
-        found when the forecast ran, converted to the same home axis.
+        for the home team: a negative line means the model favors the home side.
+        Market is the best priced spread offer found when the forecast ran,
+        converted to the same home axis.
+      </p>
+
+      <p className="text-xs text-muted-foreground">
+        Picks show the line and odds frozen when recommended, not a live quote.
+        No Play means the market did not qualify.{" "}
+        <Link href="/cfb/history" className="underline underline-offset-4">
+          View recorded decisions and results
+        </Link>
+        .
       </p>
 
       <ScheduleFilters
@@ -149,6 +236,8 @@ export default async function SchedulePage() {
                 <TableHead className="text-center">Market line</TableHead>
                 <TableHead className="text-center">Diff</TableHead>
                 <TableHead className="text-center">Total</TableHead>
+                <TableHead>Spread pick</TableHead>
+                <TableHead>Total pick</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
@@ -158,7 +247,7 @@ export default async function SchedulePage() {
                   market?.best_offer_market ?? null,
                   market?.best_offer_selection ?? null,
                   market?.best_offer_point ?? null,
-                  g.home_team
+                  g.home_team,
                 );
                 const diff =
                   marketLine != null && g.home_spread != null
@@ -183,18 +272,18 @@ export default async function SchedulePage() {
                     data-fbs={String(isFbsGame)}
                     data-fcs={String(
                       g.away_classification === "fcs" &&
-                        g.home_classification === "fcs"
+                        g.home_classification === "fcs",
                     )}
                     data-top25={String(
                       awayRank != null &&
                         awayRank <= 25 &&
                         homeRank != null &&
-                        homeRank <= 25
+                        homeRank <= 25,
                     )}
                     data-conference={String(
                       g.conference_game === true &&
                         g.away_classification === "fbs" &&
-                        g.home_classification === "fbs"
+                        g.home_classification === "fbs",
                     )}
                   >
                     <TableCell className="whitespace-nowrap text-center text-xs text-muted-foreground">
@@ -205,13 +294,23 @@ export default async function SchedulePage() {
                     </TableCell>
                     <ScheduleTeamCell
                       name={g.away_team}
-                      team={g.away_team_id != null ? teams.get(g.away_team_id) : undefined}
+                      team={
+                        g.away_team_id != null
+                          ? teams.get(g.away_team_id)
+                          : undefined
+                      }
                       rank={awayRank}
-                      markers={[(g.away_missing_input_count ?? 0) >= 4 && DEGRADED]}
+                      markers={[
+                        (g.away_missing_input_count ?? 0) >= 4 && DEGRADED,
+                      ]}
                     />
                     <ScheduleTeamCell
                       name={g.home_team}
-                      team={g.home_team_id != null ? teams.get(g.home_team_id) : undefined}
+                      team={
+                        g.home_team_id != null
+                          ? teams.get(g.home_team_id)
+                          : undefined
+                      }
                       rank={homeRank}
                       markers={[
                         g.neutral_site && NEUTRAL,
@@ -234,6 +333,8 @@ export default async function SchedulePage() {
                     <TableCell className="text-center font-mono tabular-nums">
                       {formatNumber(g.model_total)}
                     </TableCell>
+                    <TableCell>{pickCell(g.game_id, "spreads")}</TableCell>
+                    <TableCell>{pickCell(g.game_id, "totals")}</TableCell>
                   </TableRow>
                 );
               })}
@@ -244,9 +345,9 @@ export default async function SchedulePage() {
 
       <p className="max-w-4xl text-xs text-muted-foreground">
         Proj score is away&ndash;home expected points. Diff is model line minus
-        market line: a large gap usually reflects degraded inputs rather than
-        an edge, and nothing here is betting advice. A star marks a team whose
-        rating inputs are incomplete; N marks a neutral site.
+        market line. Picks require qualifying probabilities, prices, and input
+        flags; a large point difference alone does not qualify. A star marks a
+        team whose rating inputs are incomplete; N marks a neutral site.
       </p>
     </main>
   );
