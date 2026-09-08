@@ -27,3 +27,5 @@ export interface AwardMeta {
   };
   provenance: { cutoff: string; source_basis?: string; projection_basis?: string };
 }
+
+export type AwardLeader = Pick<AwardBoard, "season" | "week" | "candidate_name" | "team">;
