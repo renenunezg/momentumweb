@@ -28,9 +28,10 @@ const MARKETS = [
   { key: "h2h", label: "Moneylines" },
 ] as const;
 const ORDER = { spreads: 0, totals: 1, h2h: 2 };
-// A slate with nothing qualifying still lists its matchups when it is a
-// handful of games; a 40 game CFB window collapses to one summary instead of
-// 40 empty cards.
+// With every market showing, a slate with nothing qualifying still lists its
+// matchups when it is a handful of games; a 40 game CFB window collapses to
+// one summary instead of 40 empty cards. A single-market filter shows only
+// games that carry a pick in that market.
 const EMPTY_CARDS = 4;
 
 function subscribeTimezone(onChange: () => void) {
@@ -145,7 +146,7 @@ export function WeeklyFootballPredictions({
         // A searched team always shows its game, prediction or not.
         const shown = needle
           ? filtered
-          : qualified.length
+          : qualified.length || market !== "all"
             ? qualified
             : filtered.length <= EMPTY_CARDS
               ? filtered

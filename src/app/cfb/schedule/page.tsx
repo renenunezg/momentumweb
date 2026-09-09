@@ -199,7 +199,8 @@ export default async function SchedulePage() {
         Every college football game this week with the model&apos;s spread,
         projected score, and total next to the market. Model lines are quoted
         for the home team: a negative line means the model favors the home side.
-        Market is the best priced spread offer found when the forecast ran,
+        Market is the best priced spread offer found when the forecast ran, or
+        the consensus spread when the best offer was a total or moneyline,
         converted to the same home axis.
       </p>
 
@@ -244,12 +245,15 @@ export default async function SchedulePage() {
             <TableBody>
               {games.map((g) => {
                 const market = marketByGame.get(g.game_id);
-                const marketLine = marketHomeLine(
-                  market?.best_offer_market ?? null,
-                  market?.best_offer_selection ?? null,
-                  market?.best_offer_point ?? null,
-                  g.home_team,
-                );
+                // The best priced offer can be a total or moneyline; the
+                // consensus spread the forecast was shrunk toward still exists.
+                const marketLine =
+                  marketHomeLine(
+                    market?.best_offer_market ?? null,
+                    market?.best_offer_selection ?? null,
+                    market?.best_offer_point ?? null,
+                    g.home_team,
+                  ) ?? g.market_home_spread;
                 const diff =
                   marketLine != null && g.home_spread != null
                     ? g.home_spread - marketLine

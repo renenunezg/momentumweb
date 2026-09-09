@@ -444,15 +444,18 @@ export function MethodologyContent({ example }: { example: PickExample | null })
               <TableRow>
                 <TableHead>Input</TableHead>
                 <TableHead className="text-right">Points per SD</TableHead>
-                <TableHead className="whitespace-normal">Note</TableHead>
+                <TableHead className="hidden whitespace-normal sm:table-cell">Note</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
               {preseasonWeights.map((row) => (
                 <TableRow key={row.input}>
-                  <TableCell className="text-xs">{row.input}</TableCell>
-                  <TableCell className="text-right font-mono text-xs">{row.weight}</TableCell>
-                  <TableCell className="whitespace-normal text-xs text-muted-foreground">{row.note}</TableCell>
+                  <TableCell className="whitespace-normal text-xs">
+                    {row.input}
+                    <span className="mt-0.5 block text-muted-foreground sm:hidden">{row.note}</span>
+                  </TableCell>
+                  <TableCell className="text-right align-top font-mono text-xs">{row.weight}</TableCell>
+                  <TableCell className="hidden whitespace-normal text-xs text-muted-foreground sm:table-cell">{row.note}</TableCell>
                 </TableRow>
               ))}
             </TableBody>

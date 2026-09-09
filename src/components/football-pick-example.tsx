@@ -226,7 +226,13 @@ export function FootballPickExample({ example }: { example: PickExample }) {
       </p>
 
       <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
-        <Stat label="Model cover" value={formatPct(example.winProbability)} sub={example.pushProbability > 1e-6 ? `push ${formatPct(example.pushProbability)}` : "no push possible"} />
+        <Stat label="Model cover" value={formatPct(example.winProbability)} sub={
+            example.pushProbability > 1e-6
+              ? `push ${formatPct(example.pushProbability)}`
+              : example.market === "h2h"
+                ? "moneyline, no push"
+                : `half-point line, no push at ${example.point}`
+          } />
         <Stat label={`Break-even at ${formatOdds(example.price)}`} value={formatPct(breakEven)} sub="implied by the price, vig included" />
         <Stat
           label="Edge"
