@@ -193,3 +193,31 @@ export function pickReason(reason: string): string {
   };
   return reasons[reason] ?? reason.replaceAll("_", " ");
 }
+
+export const DAILY_MARKETS = ["h2h", "spreads", "totals"] as const;
+export type MarketRecord = {
+  market: (typeof DAILY_MARKETS)[number];
+  wins: number;
+  losses: number;
+  pushes: number;
+  pending: number;
+  roi: number | null;
+};
+
+// One record per market, zeroed when nothing has been decided yet, so a
+// season opens at 0-0-0 rather than with a missing column.
+export function marketRecords(metrics: FootballPickMetric[]): MarketRecord[] {
+  return DAILY_MARKETS.map((market) => {
+    const row = metrics.find(
+      (m) => m.segment_kind === "market" && m.segment === market,
+    );
+    return {
+      market,
+      wins: row?.wins ?? 0,
+      losses: row?.losses ?? 0,
+      pushes: row?.pushes ?? 0,
+      pending: row?.pending ?? 0,
+      roi: row?.roi ?? null,
+    };
+  });
+}

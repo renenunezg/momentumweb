@@ -3,7 +3,17 @@ import { SiteHeader } from "@/components/site-header";
 import { fetchFullBetLedger } from "@/lib/bet-ledger";
 import { aggregateLedger } from "@/lib/betting-aggs";
 import { supabaseCfb, supabaseNfl } from "@/lib/supabase";
-import { formatSigned } from "@/lib/utils";
+import { formatPct, formatSigned } from "@/lib/utils";
+import { fetchCfbPickSummary } from "@/lib/cfb-picks";
+import { fetchNflPickSummary } from "@/lib/nfl-picks";
+import {
+  MARKET_LABELS,
+  marketRecords,
+  type MarketRecord,
+} from "@/lib/football-picks";
+import { SITE_TIME_ZONE, siteDate } from "@/lib/daily-picks";
+import { fetchDailyPicks } from "@/lib/daily-picks-fetch";
+import { DailyPicks } from "@/components/daily-picks";
 import { posts } from "./blog/posts";
 import { JsonLd } from "@/components/json-ld";
 import { SITE_DESCRIPTION, SITE_NAME, SITE_URL } from "@/lib/site";
@@ -36,18 +46,18 @@ async function getMlbHeadline(): Promise<MlbHeadline | null> {
   }
 }
 
-type CfbHeadline = {
-  topTeam: string | null;
-  teamCount: number;
+type FootballHeadline = {
   season: number | null;
   week: number | null;
-  gameCount: number;
   // Preseason ratings carry a preseason model version; once a weekly refit
-  // has published, the card reads as in season.
-  inSeason: boolean;
+  // has published, the card reads as live.
+  live: boolean;
+  markets: MarketRecord[];
 };
 
-async function getCfbHeadline(): Promise<CfbHeadline | null> {
+const SEASON_TO_DATE = { market: "all", period: "all", from: null } as const;
+
+async function getCfbHeadline(): Promise<FootballHeadline | null> {
   try {
     const latestRes = await supabaseCfb
       .from("team_ratings")
@@ -57,33 +67,15 @@ async function getCfbHeadline(): Promise<CfbHeadline | null> {
       .limit(1);
     const latest = latestRes.data?.[0];
     if (!latest) return null;
-    const [topRes, countRes, gamesRes] = await Promise.all([
-      supabaseCfb
-        .from("team_ratings")
-        .select("team")
-        .eq("season", latest.season)
-        .eq("week", latest.week)
-        .eq("classification", "fbs")
-        .order("power_rating", { ascending: false })
-        .limit(1),
-      supabaseCfb
-        .from("team_ratings")
-        .select("team_id", { count: "exact", head: true })
-        .eq("season", latest.season)
-        .eq("week", latest.week),
-      supabaseCfb
-        .from("game_projections")
-        .select("game_id", { count: "exact", head: true })
-        .eq("season", latest.season)
-        .eq("week", latest.week),
-    ]);
+    const summary = await fetchCfbPickSummary({
+      ...SEASON_TO_DATE,
+      season: latest.season,
+    });
     return {
-      topTeam: topRes.data?.[0]?.team ?? null,
-      teamCount: countRes.count ?? 0,
       season: latest.season,
       week: latest.week,
-      gameCount: gamesRes.count ?? 0,
-      inSeason: !String(latest.model_version ?? "").startsWith("preseason"),
+      live: !String(latest.model_version ?? "").startsWith("preseason"),
+      markets: marketRecords(summary.metrics),
     };
   } catch {
     // Home should never 500 because Supabase is unreachable; the CFB card
@@ -92,49 +84,25 @@ async function getCfbHeadline(): Promise<CfbHeadline | null> {
   }
 }
 
-type NflHeadline = {
-  topTeam: string | null;
-  teamCount: number;
-  season: number | null;
-  week: number | null;
-  gameCount: number;
-};
-
-async function getNflHeadline(): Promise<NflHeadline | null> {
+async function getNflHeadline(): Promise<FootballHeadline | null> {
   try {
     const latestRes = await supabaseNfl
-      .from("team_ratings")
+      .from("game_projections")
       .select("season, week")
       .order("season", { ascending: false })
       .order("week", { ascending: false })
       .limit(1);
     const latest = latestRes.data?.[0];
     if (!latest) return null;
-    const [topRes, countRes, gamesRes] = await Promise.all([
-      supabaseNfl
-        .from("team_ratings")
-        .select("team")
-        .eq("season", latest.season)
-        .eq("week", latest.week)
-        .order("power_rating", { ascending: false })
-        .limit(1),
-      supabaseNfl
-        .from("team_ratings")
-        .select("team_abbr", { count: "exact", head: true })
-        .eq("season", latest.season)
-        .eq("week", latest.week),
-      supabaseNfl
-        .from("game_projections")
-        .select("game_id", { count: "exact", head: true })
-        .eq("season", latest.season)
-        .eq("week", latest.week),
-    ]);
+    const summary = await fetchNflPickSummary({
+      ...SEASON_TO_DATE,
+      season: latest.season,
+    });
     return {
-      topTeam: topRes.data?.[0]?.team ?? null,
-      teamCount: countRes.count ?? 0,
       season: latest.season,
       week: latest.week,
-      gameCount: gamesRes.count ?? 0,
+      live: true,
+      markets: marketRecords(summary.metrics),
     };
   } catch {
     // Home should never 500 because Supabase is unreachable; the NFL card
@@ -143,14 +111,59 @@ async function getNflHeadline(): Promise<NflHeadline | null> {
   }
 }
 
+function StatusBadge({ live }: { live: boolean }) {
+  return (
+    <span className="flex items-center gap-1.5 font-mono text-xs uppercase tracking-wider text-muted-foreground">
+      <span
+        className={`h-1.5 w-1.5 rounded-full ${live ? "bg-emerald-500" : "bg-amber-500"}`}
+      />
+      {live ? "Live" : "Preseason"}
+    </span>
+  );
+}
+
+// Record and ROI per market, never pooled: a spread edge and a total edge are
+// different claims, so each is judged on its own sample.
+function FootballStats({ headline }: { headline: FootballHeadline }) {
+  return (
+    <div className="mt-4 flex flex-wrap gap-x-8 gap-y-3 border-t border-border pt-4">
+      {headline.markets.map((record) => (
+        <div key={record.market}>
+          <p className="text-xs text-muted-foreground">
+            {MARKET_LABELS[record.market]} ROI
+          </p>
+          <p className="mt-0.5 font-mono text-sm tabular-nums">
+            {formatPct(record.roi)}
+          </p>
+          <p className="mt-0.5 font-mono text-xs text-muted-foreground tabular-nums">
+            {record.wins}&ndash;{record.losses}&ndash;{record.pushes}
+            {record.pending ? ` · ${record.pending} pending` : ""}
+          </p>
+        </div>
+      ))}
+      <p className="ml-auto self-end font-mono text-xs text-muted-foreground">
+        {headline.live
+          ? `${headline.season} week ${headline.week ?? "–"}`
+          : `${headline.season} preseason`}
+      </p>
+    </div>
+  );
+}
+
 const upcomingSports = [{ name: "NHL", label: "Hockey" }];
 
 export default async function Home() {
-  const [mlb, cfb, nfl] = await Promise.all([
+  const today = siteDate();
+  const [mlb, cfb, nfl, daily] = await Promise.all([
     getMlbHeadline(),
     getCfbHeadline(),
     getNflHeadline(),
+    fetchDailyPicks(today),
   ]);
+  const dateLabel = new Date(`${today}T12:00:00Z`).toLocaleDateString(
+    "en-US",
+    { timeZone: SITE_TIME_ZONE, weekday: "long", month: "short", day: "numeric" },
+  );
   const latestPosts = posts.slice(0, 2);
 
   return (
@@ -206,10 +219,7 @@ export default async function Home() {
                 <span className="font-heading text-lg tracking-tight group-hover:underline underline-offset-4">
                   MLB
                 </span>
-                <span className="flex items-center gap-1.5 font-mono text-xs uppercase tracking-wider text-muted-foreground">
-                  <span className="h-1.5 w-1.5 rounded-full bg-emerald-500" />
-                  Live
-                </span>
+                <StatusBadge live />
               </div>
               <span className="font-mono text-xs uppercase tracking-wider text-muted-foreground group-hover:text-foreground transition-colors">
                 View today&apos;s slate &rarr;
@@ -261,17 +271,7 @@ export default async function Home() {
                 <span className="font-heading text-lg tracking-tight group-hover:underline underline-offset-4">
                   CFB
                 </span>
-                {cfb?.inSeason ? (
-                  <span className="flex items-center gap-1.5 font-mono text-xs uppercase tracking-wider text-muted-foreground">
-                    <span className="h-1.5 w-1.5 rounded-full bg-emerald-500" />
-                    In season
-                  </span>
-                ) : (
-                  <span className="flex items-center gap-1.5 font-mono text-xs uppercase tracking-wider text-muted-foreground">
-                    <span className="h-1.5 w-1.5 rounded-full bg-amber-500" />
-                    Preseason
-                  </span>
-                )}
+                <StatusBadge live={cfb?.live ?? false} />
               </div>
               <span className="font-mono text-xs uppercase tracking-wider text-muted-foreground group-hover:text-foreground transition-colors">
                 View predictions &rarr;
@@ -281,39 +281,7 @@ export default async function Home() {
               Weekly spread, total, and moneyline predictions with frozen
               lines, built on power ratings for every Division 1 program.
             </p>
-            {cfb && (
-              <div className="mt-4 flex flex-wrap gap-x-8 gap-y-3 border-t border-border pt-4">
-                <div>
-                  <p className="text-xs text-muted-foreground">
-                    No. 1
-                  </p>
-                  <p className="mt-0.5 font-mono text-sm">
-                    {cfb.topTeam ?? "–"}
-                  </p>
-                </div>
-                <div>
-                  <p className="text-xs text-muted-foreground">
-                    Teams rated
-                  </p>
-                  <p className="mt-0.5 font-mono text-sm tabular-nums">
-                    {cfb.teamCount}
-                  </p>
-                </div>
-                <div>
-                  <p className="text-xs text-muted-foreground">
-                    Week {cfb.week ?? "–"} games
-                  </p>
-                  <p className="mt-0.5 font-mono text-sm tabular-nums">
-                    {cfb.gameCount}
-                  </p>
-                </div>
-                <p className="ml-auto self-end font-mono text-xs text-muted-foreground">
-                  {cfb.inSeason
-                    ? `${cfb.season} week ${cfb.week ?? "–"}`
-                    : `${cfb.season} preseason`}
-                </p>
-              </div>
-            )}
+            {cfb && <FootballStats headline={cfb} />}
           </Link>
 
           <Link
@@ -325,10 +293,7 @@ export default async function Home() {
                 <span className="font-heading text-lg tracking-tight group-hover:underline underline-offset-4">
                   NFL
                 </span>
-                <span className="flex items-center gap-1.5 font-mono text-xs uppercase tracking-wider text-muted-foreground">
-                  <span className="h-1.5 w-1.5 rounded-full bg-amber-500" />
-                  Preseason
-                </span>
+                <StatusBadge live={nfl?.live ?? false} />
               </div>
               <span className="font-mono text-xs uppercase tracking-wider text-muted-foreground group-hover:text-foreground transition-colors">
                 View predictions &rarr;
@@ -339,37 +304,7 @@ export default async function Home() {
               with weekly spread and total projections priced against the
               market.
             </p>
-            {nfl && (
-              <div className="mt-4 flex flex-wrap gap-x-8 gap-y-3 border-t border-border pt-4">
-                <div>
-                  <p className="text-xs text-muted-foreground">
-                    No. 1
-                  </p>
-                  <p className="mt-0.5 font-mono text-sm">
-                    {nfl.topTeam ?? "–"}
-                  </p>
-                </div>
-                <div>
-                  <p className="text-xs text-muted-foreground">
-                    Teams rated
-                  </p>
-                  <p className="mt-0.5 font-mono text-sm tabular-nums">
-                    {nfl.teamCount}
-                  </p>
-                </div>
-                <div>
-                  <p className="text-xs text-muted-foreground">
-                    Week {nfl.week ?? "–"} games
-                  </p>
-                  <p className="mt-0.5 font-mono text-sm tabular-nums">
-                    {nfl.gameCount}
-                  </p>
-                </div>
-                <p className="ml-auto self-end font-mono text-xs text-muted-foreground">
-                  {nfl.season} season
-                </p>
-              </div>
-            )}
+            {nfl && <FootballStats headline={nfl} />}
           </Link>
           </div>
 
@@ -394,6 +329,8 @@ export default async function Home() {
             ))}
           </div>
         </section>
+
+        <DailyPicks sports={daily} dateLabel={dateLabel} />
 
         <section className="mt-10">
           <div className="flex items-baseline justify-between gap-4 mb-3">
