@@ -16,6 +16,7 @@ function bet(overrides: Partial<BetLedgerRow>): BetLedgerRow {
     won: true,
     edge: 0.05,
     payout: 2,
+    push: false,
     ...overrides,
   };
 }

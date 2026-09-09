@@ -80,9 +80,11 @@ export function aggregateLedger(rows: BetLedgerRow[]): LiveKpis {
     avg_ml_line: null,
     overs_correct: 0,
     overs_predictions: 0,
+    overs_pushes: 0,
     overs_roi: null,
     unders_correct: 0,
     unders_predictions: 0,
+    unders_pushes: 0,
     unders_roi: null,
   };
   if (!rows.length) return empty;
@@ -153,9 +155,11 @@ export function aggregateLedger(rows: BetLedgerRow[]): LiveKpis {
     avg_ml_line: avgMlLine,
     overs_correct: overRows.filter((r) => r.won).length,
     overs_predictions: overRows.length,
+    overs_pushes: overRows.filter((r) => r.push).length,
     overs_roi: segRoi(overRows),
     unders_correct: underRows.filter((r) => r.won).length,
     unders_predictions: underRows.length,
+    unders_pushes: underRows.filter((r) => r.push).length,
     unders_roi: segRoi(underRows),
   };
 }

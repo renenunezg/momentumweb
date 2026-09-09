@@ -70,7 +70,7 @@ type HistoryRow = Narrow<
   }
 >;
 
-type BetRecord = { bet_type: string; wins: number; losses: number };
+type BetRecord = { bet_type: string; wins: number; losses: number; pushes: number };
 
 export default async function HistoryPage({
   searchParams,
@@ -149,7 +149,7 @@ export default async function HistoryPage({
 
   let mlWins = 0, mlLosses = 0;
   let rlWins = 0, rlLosses = 0;
-  let totalsWins = 0, totalsLosses = 0;
+  let totalsWins = 0, totalsLosses = 0, totalsPushes = 0;
   for (const r of (recordRows ?? []) as BetRecord[]) {
     if (r.bet_type === "ml") {
       mlWins = r.wins;
@@ -160,14 +160,19 @@ export default async function HistoryPage({
     } else if (r.bet_type === "total") {
       totalsWins = r.wins;
       totalsLosses = r.losses;
+      totalsPushes = r.pushes;
     }
   }
 
-  function fmtRecord(w: number, l: number) {
-    const total = w + l;
-    if (total === 0) return "0-0";
-    const pct = ((w / total) * 100).toFixed(0);
-    return `${w}-${l} (${pct}%)`;
+  // Pushes are bets with zero P&L: shown as a third number, excluded from the
+  // win percentage.
+  function fmtRecord(w: number, l: number, p = 0) {
+    const decided = w + l;
+    if (decided + p === 0) return "0-0";
+    const rec = p > 0 ? `${w}-${l}-${p}` : `${w}-${l}`;
+    if (decided === 0) return rec;
+    const pct = ((w / decided) * 100).toFixed(0);
+    return `${rec} (${pct}%)`;
   }
 
   function pageUrl(p: number) {
@@ -215,7 +220,7 @@ export default async function HistoryPage({
         <div className="flex items-center gap-2">
           <span className="text-muted-foreground">Totals:</span>
           <span className={cn("font-semibold", totalsWins + totalsLosses > 0 && totalsWins > totalsLosses ? "text-positive" : totalsWins < totalsLosses ? "text-negative" : "")}>
-            {fmtRecord(totalsWins, totalsLosses)}
+            {fmtRecord(totalsWins, totalsLosses, totalsPushes)}
           </span>
         </div>
       </div>

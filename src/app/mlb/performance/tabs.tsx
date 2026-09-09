@@ -43,6 +43,13 @@ interface PerformanceTabsProps {
   liveKpis: LiveKpis;
 }
 
+// A push is a bet that is neither a win nor a loss; show it as a third number
+// only when one exists so W-L stays compact for markets that cannot push.
+function formatRecord(wins: number, bets: number, pushes: number): string {
+  const losses = bets - wins - pushes;
+  return pushes > 0 ? `(${wins}-${losses}-${pushes})` : `(${wins}-${losses})`;
+}
+
 export function PerformanceTabs({
   evaluations,
   calibration,
@@ -256,12 +263,12 @@ export function PerformanceTabs({
           <KpiCard
             label="Overs"
             value={formatPct(liveKpis.overs_roi)}
-            sub={`(${liveKpis.overs_correct}-${liveKpis.overs_predictions - liveKpis.overs_correct})`}
+            sub={formatRecord(liveKpis.overs_correct, liveKpis.overs_predictions, liveKpis.overs_pushes)}
           />
           <KpiCard
             label="Unders"
             value={formatPct(liveKpis.unders_roi)}
-            sub={`(${liveKpis.unders_correct}-${liveKpis.unders_predictions - liveKpis.unders_correct})`}
+            sub={formatRecord(liveKpis.unders_correct, liveKpis.unders_predictions, liveKpis.unders_pushes)}
           />
         </div>
 

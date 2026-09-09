@@ -94,6 +94,7 @@ export type BetLedgerRow = Narrow<
     won: boolean;
     edge: number;
     payout: number;
+    push: boolean;
   }
 >;
 
@@ -116,9 +117,11 @@ export interface LiveKpis {
   avg_ml_line: number | null;
   overs_correct: number;
   overs_predictions: number;
+  overs_pushes: number;
   overs_roi: number | null;
   unders_correct: number;
   unders_predictions: number;
+  unders_pushes: number;
   unders_roi: number | null;
 }
 

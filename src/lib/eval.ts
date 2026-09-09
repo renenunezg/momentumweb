@@ -79,6 +79,15 @@ export function calcRunLinePick(row: EvalRow): 0 | 1 | null {
   return null;
 }
 
+export function isTotalPush(row: EvalRow): boolean {
+  return (
+    row.total != null &&
+    !Number.isNaN(row.game_total) &&
+    row.game_total === row.total &&
+    ["over", "under"].includes(row.total_play.trim().toLowerCase())
+  );
+}
+
 export function calcTotalPick(row: EvalRow): 0 | 1 | null {
   if (row.total == null) return null;
   const actual = row.game_total;
@@ -141,13 +150,18 @@ export function computeBaseRow(rows: EvalRow[]): BaseRow {
   const tot = dedupeByGamePk(
     rows.filter((r) => r.total_play === "Over" || r.total_play === "Under"),
   );
+  // A push counts as a bet but not a win; accuracy is wins over decided bets.
   let tot_correct = 0;
   let tot_total = 0;
+  let tot_decided = 0;
   for (const r of tot) {
     const v = calcTotalPick(r);
-    if (v == null) continue;
+    if (v == null && !isTotalPush(r)) continue;
     tot_total += 1;
-    tot_correct += v;
+    if (v != null) {
+      tot_decided += 1;
+      tot_correct += v;
+    }
   }
 
   return {
@@ -162,7 +176,7 @@ export function computeBaseRow(rows: EvalRow[]): BaseRow {
     run_line_accuracy: rl_total > 0 ? round4(rl_correct / rl_total) : null,
     totals_correct: tot_correct,
     totals_predictions: tot_total,
-    totals_accuracy: tot_total > 0 ? round4(tot_correct / tot_total) : null,
+    totals_accuracy: tot_decided > 0 ? round4(tot_correct / tot_decided) : null,
     average_total_diff: runs_mae != null ? round4(runs_mae) : null,
     average_win_prob: win_prob_mean != null ? round4(win_prob_mean) : null,
   };
@@ -253,21 +267,24 @@ export function computeSegmentRow(rows: EvalRow[]): SegmentRow {
   for (const r of totalBets) {
     const dir = r.total_play.toLowerCase();
     const v = calcTotalPick(r);
-    if (v == null) continue;
+    const push = v == null && isTotalPush(r);
+    if (v == null && !push) continue;
     const am = dir === "over" ? r.total_over_odds : r.total_under_odds;
     if (am == null) continue;
     const dec = americanToDecimal(am);
     let stake = r.kelly_quarter_total ?? 0;
     if (stake <= 0) stake = 0.01;
-    const payout = v === 1 ? stake * dec : 0;
+    // A push returns the stake: it counts as a bet with zero P&L.
+    const payout = push ? stake : v === 1 ? stake * dec : 0;
+    const win = v === 1 ? 1 : 0;
     if (dir === "over") {
       oN += 1;
-      oWins += v;
+      oWins += win;
       oStake += stake;
       oPayout += payout;
     } else {
       uN += 1;
-      uWins += v;
+      uWins += win;
       uStake += stake;
       uPayout += payout;
     }

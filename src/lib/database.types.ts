@@ -1274,6 +1274,7 @@ export type Database = {
           won: boolean | null
           edge: number | null
           payout: number | null
+          push: boolean | null
         }
         Relationships: []
       }
@@ -1342,6 +1343,7 @@ export type Database = {
           bet_type: string
           wins: number
           losses: number
+          pushes: number
         }[]
       }
     }
