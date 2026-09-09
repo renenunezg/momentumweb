@@ -1,15 +1,12 @@
 import type { Metadata } from "next";
 import { supabaseNfl } from "@/lib/supabase";
 import { fetchLatestRatings, fetchTeams } from "@/lib/nfl";
-import {
-  formatHomeLine,
-  formatKickoffDay,
-  formatKickoffTime,
-  marketHomeLine,
-} from "@/lib/football";
+import { formatHomeLine, marketHomeLine } from "@/lib/football";
+import { groupFootballSlates } from "@/lib/football-slates";
 import type { NflGameProjection, NflMarketComparison } from "@/lib/types";
 import { formatNumber } from "@/lib/utils";
 import { LastUpdated } from "@/components/last-updated";
+import { KickoffCells } from "@/components/kickoff-cells";
 import { ScheduleFilters } from "@/components/schedule-filters";
 import { ScheduleMarker, ScheduleTeamCell } from "@/components/schedule-team-cell";
 import {
@@ -94,6 +91,7 @@ export default async function SchedulePage() {
       m,
     ])
   );
+  const slates = groupFootballSlates(games, "nfl");
   const lastUpdated = games[0]?.as_of ?? null;
 
   return (
@@ -136,7 +134,7 @@ export default async function SchedulePage() {
             <TableHeader>
               <TableRow>
                 <TableHead className="text-center">Day</TableHead>
-                <TableHead className="text-center">Time ET</TableHead>
+                <TableHead className="text-center">Time</TableHead>
                 <TableHead>Away</TableHead>
                 <TableHead>Home</TableHead>
                 <TableHead className="text-center">Model line</TableHead>
@@ -147,75 +145,72 @@ export default async function SchedulePage() {
                 <TableHead className="text-center">Total</TableHead>
               </TableRow>
             </TableHeader>
-            <TableBody>
-              {games.map((g) => {
-                const market = marketByGame.get(g.game_id);
-                const marketLine =
-                  marketHomeLine(
-                    market?.best_offer_market ?? null,
-                    market?.best_offer_selection ?? null,
-                    market?.best_offer_point ?? null,
-                    g.home_team
-                  ) ?? g.market_home_spread;
-                const diff =
-                  marketLine != null && g.home_spread != null
-                    ? g.home_spread - marketLine
-                    : null;
-                const awayRank = g.away_team_abbr
-                  ? rankByTeam.get(g.away_team_abbr)
-                  : undefined;
-                const homeRank = g.home_team_abbr
-                  ? rankByTeam.get(g.home_team_abbr)
-                  : undefined;
-                return (
-                  // The filters read these rather than the rendered cells, so
-                  // a query cannot accidentally hit a line, total or date.
-                  <TableRow
-                    key={g.game_id}
-                    data-search={`${g.away_team} ${g.home_team} ${g.away_team_abbr ?? ""} ${g.home_team_abbr ?? ""}`.toLowerCase()}
-                    data-division={String(g.div_game === true)}
-                  >
-                    <TableCell className="whitespace-nowrap text-center text-xs text-muted-foreground">
-                      {formatKickoffDay(g.start_date)}
-                    </TableCell>
-                    <TableCell className="whitespace-nowrap text-center text-xs text-muted-foreground">
-                      {formatKickoffTime(g.start_date)}
-                    </TableCell>
-                    <ScheduleTeamCell
-                      name={g.away_team}
-                      team={g.away_team_abbr != null ? teams.get(g.away_team_abbr) : undefined}
-                      rank={awayRank}
-                      markers={[qbMarker(g.away_qb_adjustment)]}
-                    />
-                    <ScheduleTeamCell
-                      name={g.home_team}
-                      team={g.home_team_abbr != null ? teams.get(g.home_team_abbr) : undefined}
-                      rank={homeRank}
-                      markers={[g.neutral_site && NEUTRAL, qbMarker(g.home_qb_adjustment)]}
-                    />
-                    <TableCell className="text-center font-mono font-semibold tabular-nums">
-                      {formatHomeLine(g.home_spread)}
-                    </TableCell>
-                    <TableCell className="text-center font-mono tabular-nums text-muted-foreground">
-                      {formatHomeLine(g.pure_home_spread)}
-                    </TableCell>
-                    <TableCell className="whitespace-nowrap text-center font-mono tabular-nums">
-                      {formatNumber(g.expected_away_points, 0)}&ndash;
-                      {formatNumber(g.expected_home_points, 0)}
-                    </TableCell>
-                    <TableCell className="text-center font-mono tabular-nums text-muted-foreground">
-                      {marketLine != null ? formatHomeLine(marketLine) : "–"}
-                    </TableCell>
-                    <TableCell className="text-center font-mono tabular-nums">
-                      {diff != null ? formatHomeLine(diff) : "–"}
-                    </TableCell>
-                    <TableCell className="text-center font-mono tabular-nums">
-                      {formatNumber(g.model_total)}
-                    </TableCell>
-                  </TableRow>
-                );
-              })}
-            </TableBody>
+            {slates.map((slate) => (
+              <TableBody key={slate.id}>
+                {slate.games.map((g) => {
+                  const market = marketByGame.get(g.game_id);
+                  const marketLine =
+                    marketHomeLine(
+                      market?.best_offer_market ?? null,
+                      market?.best_offer_selection ?? null,
+                      market?.best_offer_point ?? null,
+                      g.home_team
+                    ) ?? g.market_home_spread;
+                  const diff =
+                    marketLine != null && g.home_spread != null
+                      ? g.home_spread - marketLine
+                      : null;
+                  const awayRank = g.away_team_abbr
+                    ? rankByTeam.get(g.away_team_abbr)
+                    : undefined;
+                  const homeRank = g.home_team_abbr
+                    ? rankByTeam.get(g.home_team_abbr)
+                    : undefined;
+                  return (
+                    // The filters read these rather than the rendered cells, so
+                    // a query cannot accidentally hit a line, total or date.
+                    <TableRow
+                      key={g.game_id}
+                      data-search={`${g.away_team} ${g.home_team} ${g.away_team_abbr ?? ""} ${g.home_team_abbr ?? ""}`.toLowerCase()}
+                      data-division={String(g.div_game === true)}
+                    >
+                      <KickoffCells start={g.start_date} />
+                      <ScheduleTeamCell
+                        name={g.away_team}
+                        team={g.away_team_abbr != null ? teams.get(g.away_team_abbr) : undefined}
+                        rank={awayRank}
+                        markers={[qbMarker(g.away_qb_adjustment)]}
+                      />
+                      <ScheduleTeamCell
+                        name={g.home_team}
+                        team={g.home_team_abbr != null ? teams.get(g.home_team_abbr) : undefined}
+                        rank={homeRank}
+                        markers={[g.neutral_site && NEUTRAL, qbMarker(g.home_qb_adjustment)]}
+                      />
+                      <TableCell className="text-center font-mono font-semibold tabular-nums">
+                        {formatHomeLine(g.home_spread)}
+                      </TableCell>
+                      <TableCell className="text-center font-mono tabular-nums text-muted-foreground">
+                        {formatHomeLine(g.pure_home_spread)}
+                      </TableCell>
+                      <TableCell className="whitespace-nowrap text-center font-mono tabular-nums">
+                        {formatNumber(g.expected_away_points, 0)}&ndash;
+                        {formatNumber(g.expected_home_points, 0)}
+                      </TableCell>
+                      <TableCell className="text-center font-mono tabular-nums text-muted-foreground">
+                        {marketLine != null ? formatHomeLine(marketLine) : "–"}
+                      </TableCell>
+                      <TableCell className="text-center font-mono tabular-nums">
+                        {diff != null ? formatHomeLine(diff) : "–"}
+                      </TableCell>
+                      <TableCell className="text-center font-mono tabular-nums">
+                        {formatNumber(g.model_total)}
+                      </TableCell>
+                    </TableRow>
+                  );
+                })}
+              </TableBody>
+            ))}
           </Table>
         </div>
       </ScheduleFilters>

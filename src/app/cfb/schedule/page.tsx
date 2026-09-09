@@ -1,18 +1,15 @@
 import type { Metadata } from "next";
 import { supabaseCfb } from "@/lib/supabase";
 import { fetchLatestRatings, fetchTeams } from "@/lib/cfb";
-import {
-  formatHomeLine,
-  formatKickoffDay,
-  formatKickoffTime,
-  marketHomeLine,
-} from "@/lib/football";
+import { formatHomeLine, marketHomeLine } from "@/lib/football";
+import { groupFootballSlates } from "@/lib/football-slates";
 import type { CfbGameProjection, CfbMarketComparison } from "@/lib/types";
 import { pickLabel, pickReason, type CfbPick } from "@/lib/cfb-picks";
 import { formatOdds, formatPct } from "@/lib/utils";
 import Link from "next/link";
 import { formatNumber } from "@/lib/utils";
 import { LastUpdated } from "@/components/last-updated";
+import { KickoffCells } from "@/components/kickoff-cells";
 import { ScheduleFilters } from "@/components/schedule-filters";
 import {
   ScheduleMarker,
@@ -34,6 +31,9 @@ export const metadata: Metadata = {
   description:
     "Model spreads, projected scores, and totals for every FBS and FCS game this week, compared against the market line with recorded moneyline, spread and total picks.",
 };
+
+const isFbs = (game: CfbGameProjection) =>
+  game.away_classification === "fbs" || game.home_classification === "fbs";
 
 const VIEWS = [
   { key: "fbs", label: "FBS", empty: "No FBS games this week." },
@@ -118,10 +118,8 @@ export default async function SchedulePage() {
         { data: [], error: null },
         { data: [], error: null },
       ];
-  const fbsGameCount = games.filter(
-    (game) =>
-      game.away_classification === "fbs" || game.home_classification === "fbs",
-  ).length;
+  const fbsGameCount = games.filter(isFbs).length;
+  const slates = groupFootballSlates(games, "cfb");
   const marketByGame = new Map(
     ((marketRes.data ?? []) as CfbMarketComparison[]).map((m) => [
       m.game_id,
@@ -229,7 +227,7 @@ export default async function SchedulePage() {
             <TableHeader>
               <TableRow>
                 <TableHead className="text-center">Day</TableHead>
-                <TableHead className="text-center">Time ET</TableHead>
+                <TableHead className="text-center">Time</TableHead>
                 <TableHead>Away</TableHead>
                 <TableHead>Home</TableHead>
                 <TableHead className="text-center">Model line</TableHead>
@@ -242,109 +240,104 @@ export default async function SchedulePage() {
                 <TableHead>Total pick</TableHead>
               </TableRow>
             </TableHeader>
-            <TableBody>
-              {games.map((g) => {
-                const market = marketByGame.get(g.game_id);
-                // The best priced offer can be a total or moneyline; the
-                // consensus spread the forecast was shrunk toward still exists.
-                const marketLine =
-                  marketHomeLine(
-                    market?.best_offer_market ?? null,
-                    market?.best_offer_selection ?? null,
-                    market?.best_offer_point ?? null,
-                    g.home_team,
-                  ) ?? g.market_home_spread;
-                const diff =
-                  marketLine != null && g.home_spread != null
-                    ? g.home_spread - marketLine
-                    : null;
-                const awayRank = g.away_team_id
-                  ? rankByTeam.get(g.away_team_id)
-                  : undefined;
-                const homeRank = g.home_team_id
-                  ? rankByTeam.get(g.home_team_id)
-                  : undefined;
-                const isFbsGame =
-                  g.away_classification === "fbs" ||
-                  g.home_classification === "fbs";
-                return (
-                  // The filters read these rather than the rendered cells, so
-                  // a query cannot accidentally hit a line, total or date.
-                  <TableRow
-                    key={g.game_id}
-                    hidden={!isFbsGame}
-                    data-search={`${g.away_team} ${g.home_team}`.toLowerCase()}
-                    data-fbs={String(isFbsGame)}
-                    data-fcs={String(
-                      g.away_classification === "fcs" &&
-                        g.home_classification === "fcs",
-                    )}
-                    data-top25={String(
-                      awayRank != null &&
-                        awayRank <= 25 &&
-                        homeRank != null &&
-                        homeRank <= 25,
-                    )}
-                    data-conference={String(
-                      g.conference_game === true &&
-                        g.away_classification === "fbs" &&
-                        g.home_classification === "fbs",
-                    )}
-                  >
-                    <TableCell className="whitespace-nowrap text-center text-xs text-muted-foreground">
-                      {formatKickoffDay(g.start_date)}
-                    </TableCell>
-                    <TableCell className="whitespace-nowrap text-center text-xs text-muted-foreground">
-                      {formatKickoffTime(g.start_date)}
-                    </TableCell>
-                    <ScheduleTeamCell
-                      name={g.away_team}
-                      team={
-                        g.away_team_id != null
-                          ? teams.get(g.away_team_id)
-                          : undefined
-                      }
-                      rank={awayRank}
-                      markers={[
-                        (g.away_missing_input_count ?? 0) >= 4 && DEGRADED,
-                      ]}
-                    />
-                    <ScheduleTeamCell
-                      name={g.home_team}
-                      team={
-                        g.home_team_id != null
-                          ? teams.get(g.home_team_id)
-                          : undefined
-                      }
-                      rank={homeRank}
-                      markers={[
-                        g.neutral_site && NEUTRAL,
-                        (g.home_missing_input_count ?? 0) >= 4 && DEGRADED,
-                      ]}
-                    />
-                    <TableCell className="text-center font-mono font-semibold tabular-nums">
-                      {formatHomeLine(g.home_spread)}
-                    </TableCell>
-                    <TableCell className="whitespace-nowrap text-center font-mono tabular-nums">
-                      {formatNumber(g.expected_away_points, 0)}&ndash;
-                      {formatNumber(g.expected_home_points, 0)}
-                    </TableCell>
-                    <TableCell className="text-center font-mono tabular-nums text-muted-foreground">
-                      {marketLine != null ? formatHomeLine(marketLine) : "–"}
-                    </TableCell>
-                    <TableCell className="text-center font-mono tabular-nums">
-                      {diff != null ? formatHomeLine(diff) : "–"}
-                    </TableCell>
-                    <TableCell className="text-center font-mono tabular-nums">
-                      {formatNumber(g.model_total)}
-                    </TableCell>
-                    <TableCell>{pickCell(g.game_id, "h2h")}</TableCell>
-                    <TableCell>{pickCell(g.game_id, "spreads")}</TableCell>
-                    <TableCell>{pickCell(g.game_id, "totals")}</TableCell>
-                  </TableRow>
-                );
-              })}
-            </TableBody>
+            {slates.map((slate) => (
+              <TableBody key={slate.id} hidden={!slate.games.some(isFbs)}>
+                {slate.games.map((g) => {
+                  const market = marketByGame.get(g.game_id);
+                  // The best priced offer can be a total or moneyline; the
+                  // consensus spread the forecast was shrunk toward still exists.
+                  const marketLine =
+                    marketHomeLine(
+                      market?.best_offer_market ?? null,
+                      market?.best_offer_selection ?? null,
+                      market?.best_offer_point ?? null,
+                      g.home_team,
+                    ) ?? g.market_home_spread;
+                  const diff =
+                    marketLine != null && g.home_spread != null
+                      ? g.home_spread - marketLine
+                      : null;
+                  const awayRank = g.away_team_id
+                    ? rankByTeam.get(g.away_team_id)
+                    : undefined;
+                  const homeRank = g.home_team_id
+                    ? rankByTeam.get(g.home_team_id)
+                    : undefined;
+                  const isFbsGame = isFbs(g);
+                  return (
+                    // The filters read these rather than the rendered cells, so
+                    // a query cannot accidentally hit a line, total or date.
+                    <TableRow
+                      key={g.game_id}
+                      hidden={!isFbsGame}
+                      data-search={`${g.away_team} ${g.home_team}`.toLowerCase()}
+                      data-fbs={String(isFbsGame)}
+                      data-fcs={String(
+                        g.away_classification === "fcs" &&
+                          g.home_classification === "fcs",
+                      )}
+                      data-top25={String(
+                        awayRank != null &&
+                          awayRank <= 25 &&
+                          homeRank != null &&
+                          homeRank <= 25,
+                      )}
+                      data-conference={String(
+                        g.conference_game === true &&
+                          g.away_classification === "fbs" &&
+                          g.home_classification === "fbs",
+                      )}
+                    >
+                      <KickoffCells start={g.start_date} />
+                      <ScheduleTeamCell
+                        name={g.away_team}
+                        team={
+                          g.away_team_id != null
+                            ? teams.get(g.away_team_id)
+                            : undefined
+                        }
+                        rank={awayRank}
+                        markers={[
+                          (g.away_missing_input_count ?? 0) >= 4 && DEGRADED,
+                        ]}
+                      />
+                      <ScheduleTeamCell
+                        name={g.home_team}
+                        team={
+                          g.home_team_id != null
+                            ? teams.get(g.home_team_id)
+                            : undefined
+                        }
+                        rank={homeRank}
+                        markers={[
+                          g.neutral_site && NEUTRAL,
+                          (g.home_missing_input_count ?? 0) >= 4 && DEGRADED,
+                        ]}
+                      />
+                      <TableCell className="text-center font-mono font-semibold tabular-nums">
+                        {formatHomeLine(g.home_spread)}
+                      </TableCell>
+                      <TableCell className="whitespace-nowrap text-center font-mono tabular-nums">
+                        {formatNumber(g.expected_away_points, 0)}&ndash;
+                        {formatNumber(g.expected_home_points, 0)}
+                      </TableCell>
+                      <TableCell className="text-center font-mono tabular-nums text-muted-foreground">
+                        {marketLine != null ? formatHomeLine(marketLine) : "–"}
+                      </TableCell>
+                      <TableCell className="text-center font-mono tabular-nums">
+                        {diff != null ? formatHomeLine(diff) : "–"}
+                      </TableCell>
+                      <TableCell className="text-center font-mono tabular-nums">
+                        {formatNumber(g.model_total)}
+                      </TableCell>
+                      <TableCell>{pickCell(g.game_id, "h2h")}</TableCell>
+                      <TableCell>{pickCell(g.game_id, "spreads")}</TableCell>
+                      <TableCell>{pickCell(g.game_id, "totals")}</TableCell>
+                    </TableRow>
+                  );
+                })}
+              </TableBody>
+            ))}
           </Table>
         </div>
       </ScheduleFilters>

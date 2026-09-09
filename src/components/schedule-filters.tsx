@@ -2,6 +2,7 @@
 
 import { useRef, useState, type ReactNode } from "react";
 import { ToggleGroup } from "@/components/toggle-group";
+import { useVisitorKickoffs } from "@/components/use-visitor-timezone";
 
 export interface ScheduleView<K extends string> {
   key: K;
@@ -17,7 +18,8 @@ export interface ScheduleView<K extends string> {
 // and out of the client payload; passing the games as props would serialize
 // the whole slate again. Each row carries the facts to match on as data
 // attributes, so filtering is one pass over the DOM and never re-renders the
-// table.
+// table. Each slate is its own <tbody>; one that the filter has emptied is
+// hidden so its rule does not stack on the next slate's.
 export function ScheduleFilters<K extends string>({
   views,
   defaultView,
@@ -35,21 +37,28 @@ export function ScheduleFilters<K extends string>({
   const [view, setView] = useState<K>(defaultView);
   const [query, setQuery] = useState("");
   const [shown, setShown] = useState(initialShown);
+  const clock = useVisitorKickoffs(container, children);
 
   function apply(nextView: K, nextQuery: string) {
     setView(nextView);
     setQuery(nextQuery);
     const needle = nextQuery.trim().toLowerCase();
     const showAll = views.find((v) => v.key === nextView)?.all === true;
-    const rows =
-      container.current?.querySelectorAll<HTMLTableRowElement>("tbody tr") ?? [];
+    const bodies =
+      container.current?.querySelectorAll<HTMLTableSectionElement>("tbody") ??
+      [];
     let visible = 0;
-    for (const row of rows) {
-      const match =
-        (!needle || (row.dataset.search ?? "").includes(needle)) &&
-        (showAll || row.dataset[nextView] === "true");
-      row.hidden = !match;
-      if (match) visible += 1;
+    for (const body of bodies) {
+      let inBody = 0;
+      for (const row of body.querySelectorAll<HTMLTableRowElement>("tr")) {
+        const match =
+          (!needle || (row.dataset.search ?? "").includes(needle)) &&
+          (showAll || row.dataset[nextView] === "true");
+        row.hidden = !match;
+        if (match) inBody += 1;
+      }
+      body.hidden = inBody === 0;
+      visible += inBody;
     }
     setShown(visible);
   }
@@ -84,6 +93,10 @@ export function ScheduleFilters<K extends string>({
           </span>
         )}
       </div>
+
+      <p className="text-xs text-muted-foreground">
+        Times shown in {clock.zone()}.
+      </p>
 
       <div ref={container}>{children}</div>
 

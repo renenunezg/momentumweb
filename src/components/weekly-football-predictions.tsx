@@ -1,12 +1,13 @@
 "use client";
 
-import { useMemo, useState, useSyncExternalStore } from "react";
+import { useMemo, useState } from "react";
 import { TeamLogo } from "@/components/team-logo";
 import { RatingsSearch } from "@/components/ratings-search";
 import { Notice } from "@/components/notice";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { teamColor } from "@/lib/team-colors";
 import { ToggleGroup } from "@/components/toggle-group";
+import { useVisitorTimeZone } from "@/components/use-visitor-timezone";
 import {
   footballSlateClock,
   groupFootballSlates,
@@ -34,17 +35,6 @@ const ORDER = { spreads: 0, totals: 1, h2h: 2 };
 // games that carry a pick in that market.
 const EMPTY_CARDS = 4;
 
-function subscribeTimezone(onChange: () => void) {
-  window.addEventListener("focus", onChange);
-  return () => window.removeEventListener("focus", onChange);
-}
-function browserTimezone() {
-  return Intl.DateTimeFormat().resolvedOptions().timeZone || "UTC";
-}
-function serverTimezone() {
-  return "UTC";
-}
-
 function plural(count: number, noun: string) {
   return `${count} ${noun}${count === 1 ? "" : "s"}`;
 }
@@ -63,13 +53,10 @@ export function WeeklyFootballPredictions({
   games: WeeklyGame[];
 }) {
   const [market, setMarket] = useState<PickMarket>("all");
+  const [slateId, setSlateId] = useState("all");
   const [query, setQuery] = useState("");
   const needle = query.trim().toLowerCase();
-  const timeZone = useSyncExternalStore(
-    subscribeTimezone,
-    browserTimezone,
-    serverTimezone,
-  );
+  const timeZone = useVisitorTimeZone("UTC");
   const clock = useMemo(() => footballSlateClock(timeZone), [timeZone]);
   const slates = useMemo(
     () => groupFootballSlates(games, league),
@@ -82,12 +69,23 @@ export function WeeklyFootballPredictions({
     !needle ||
     game.home_team.toLowerCase().includes(needle) ||
     game.away_team.toLowerCase().includes(needle);
-  const found = games.filter(searched);
-  const predictions = found.flatMap((game) => game.rows.filter(matches));
-  const gameCount = new Set(predictions.map((row) => row.game_id)).size;
-  const visible = needle
+  const searchable = needle
     ? slates.filter((slate) => slate.games.some(searched))
     : slates;
+  // A slate the search has emptied falls back to every matching slate rather
+  // than an empty page, and the chips only offer slates the search still hits.
+  const chosen = searchable.filter((slate) => slate.id === slateId);
+  const visible = chosen.length ? chosen : searchable;
+  const found = visible.flatMap((slate) => slate.games.filter(searched));
+  const predictions = found.flatMap((game) => game.rows.filter(matches));
+  const gameCount = new Set(predictions.map((row) => row.game_id)).size;
+  const slateOptions = [
+    { key: "all", label: "All slates" },
+    ...searchable.map((slate) => ({
+      key: slate.id,
+      label: clock.title(slate),
+    })),
+  ];
 
   return (
     <div className="space-y-6">
@@ -112,25 +110,21 @@ export function WeeklyFootballPredictions({
           noun="games"
         />
         <div className="space-y-1 text-xs text-muted-foreground">
-          <p>Times shown in {timeZone.replaceAll("_", " ")}.</p>
+          <p>Times shown in {clock.zone()}.</p>
           <p>
             Model probability is the model&apos;s chance that the selected side
-            wins, with pushes listed separately. It is not a confidence score
-            or a guarantee.
+            wins, with pushes listed separately. It is not a confidence score or
+            a guarantee.
           </p>
         </div>
       </div>
-      <nav aria-label="Jump to slate" className="flex flex-wrap gap-2">
-        {visible.map((slate) => (
-          <a
-            key={slate.id}
-            href={`#${slate.id}`}
-            className="rounded-md border border-border px-3 py-2 font-mono text-xs transition-colors hover:bg-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
-          >
-            {clock.title(slate)}
-          </a>
-        ))}
-      </nav>
+      <ToggleGroup
+        label="Kickoff slate"
+        variant="chip"
+        options={slateOptions}
+        value={chosen.length ? slateId : "all"}
+        onChange={setSlateId}
+      />
       {visible.map((slate) => {
         const filtered = slate.games.filter(searched).map((game) => ({
           ...game,
@@ -154,9 +148,8 @@ export function WeeklyFootballPredictions({
         return (
           <section
             key={slate.id}
-            id={slate.id}
             aria-labelledby={`${slate.id}-heading`}
-            className="scroll-mt-6 space-y-3"
+            className="space-y-3"
           >
             <div className="flex flex-wrap items-end justify-between gap-x-4 gap-y-2 border-b border-rule-strong pb-3 pt-2">
               <div>
@@ -178,8 +171,8 @@ export function WeeklyFootballPredictions({
             {shown.length === 0 && (
               <Notice role="status" className="text-muted-foreground">
                 No qualifying {marketNoun(market)} in this window.{" "}
-                {plural(filtered.length - unpublished, "game")} evaluated as
-                No Play
+                {plural(filtered.length - unpublished, "game")} evaluated as No
+                Play
                 {unpublished
                   ? `, ${plural(unpublished, "game")} without a published decision`
                   : ""}

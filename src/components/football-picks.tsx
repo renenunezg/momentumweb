@@ -16,7 +16,8 @@ import {
   formatPct,
   formatSigned,
 } from "@/lib/utils";
-import { formatKickoffDay, formatKickoffTime } from "@/lib/football";
+import { Kickoff } from "@/components/kickoff-cells";
+import { LocalKickoffs } from "@/components/local-kickoffs";
 import {
   MARKET_LABELS,
   SIDE_LABELS,
@@ -88,160 +89,167 @@ export function PickTable({
   caption?: string;
 }) {
   return (
-    <Table>
-      <TableCaption className="sr-only">{caption}</TableCaption>
-      <TableHeader>
-        <TableRow>
-          <TableHead className="hidden md:table-cell">Kickoff ET</TableHead>
-          <TableHead className="hidden md:table-cell">Matchup</TableHead>
-          <TableHead>Market / pick</TableHead>
-          <TableHead className="text-right">Odds</TableHead>
-          <TableHead className="hidden text-right sm:table-cell">EV</TableHead>
-          <TableHead>Result</TableHead>
-          <TableHead className="text-right">Profit</TableHead>
-        </TableRow>
-      </TableHeader>
-      <TableBody>
-        {rows.map((pick) => (
-          <TableRow key={`${pick.game_id}-${pick.market}`}>
-            <TableCell className="hidden whitespace-nowrap text-xs md:table-cell">
-              {formatKickoffDay(pick.start_date)}
-              <div className="text-muted-foreground">
-                {formatKickoffTime(pick.start_date)}
-              </div>
-            </TableCell>
-            <TableCell className="hidden font-medium md:table-cell">
-              <span className="whitespace-nowrap">{pick.away_team}</span>
-              <div className="whitespace-nowrap text-muted-foreground">
-                at {pick.home_team}
-              </div>
-            </TableCell>
-            <TableCell className="whitespace-normal">
-              <div className="mb-2 text-[10px] leading-relaxed text-muted-foreground md:hidden">
-                {pick.away_team} at {pick.home_team}
-                <div>
-                  {formatKickoffDay(pick.start_date)} ·{" "}
-                  {formatKickoffTime(pick.start_date)} ET
-                </div>
-              </div>
-              <div className="text-[10px] uppercase tracking-wider text-muted-foreground">
-                {MARKET_LABELS[pick.market as keyof typeof MARKET_LABELS] ??
-                  pick.market}
-              </div>
-              <div
-                className={cn(
-                  "min-w-24 max-w-56",
-                  pick.status === "recommended" && "font-semibold",
-                )}
-              >
-                {pickLabel(pick)}
-              </div>
-              <div className="max-w-64 text-xs text-muted-foreground">
-                {pick.status === "recommended"
-                  ? pick.provider
-                  : pickReason(pick.reason)}
-              </div>
-              <details className="mt-1 text-xs text-muted-foreground">
-                <summary className="cursor-pointer">Recorded details</summary>
-                <div className="mt-1 max-w-64 space-y-1 break-all">
-                  <p>Decision: {new Date(pick.decision_at).toISOString()}</p>
-                  <p>Rule: {pick.policy_version}</p>
-                  <p>
-                    Missing inputs: home{" "}
-                    {pick.home_missing_input_count ?? "unknown"}, away{" "}
-                    {pick.away_missing_input_count ?? "unknown"}.{" "}
-                    {pick.policy_version.startsWith("cfb-")
-                      ? "Counts include unavailable injury data."
-                      : "NFL counts flag missing expected-QB identities."}
-                  </p>
-                  <p>Model: {pick.model_version}</p>
-                  {pick.execution_eligibility_verified !== undefined && (
-                    <p>
-                      Bookmaker availability:{" "}
-                      {pick.execution_eligibility_verified
-                        ? "verified"
-                        : "unverified"}
-                    </p>
-                  )}
-                  <p>
-                    Provider updated:{" "}
-                    {pick.provider_last_update ?? "unavailable"}
-                  </p>
-                  {pick.source_timestamps && (
-                    <p>
-                      Source receipts: {JSON.stringify(pick.source_timestamps)}
-                    </p>
-                  )}
-                  {pick.data_flags && (
-                    <p>Data flags: {JSON.stringify(pick.data_flags)}</p>
-                  )}
-                  {pick.settlement_reason && (
-                    <p>Settlement: {pickReason(pick.settlement_reason)}</p>
-                  )}
-                  {pick.result_source_at && (
-                    <p>Result observed: {pick.result_source_at}</p>
-                  )}
-                  <p>EV {formatPct(pick.expected_value_per_unit)}</p>
-                  <p>
-                    Win {formatPct(pick.win_probability)} · Push{" "}
-                    {formatPct(pick.push_probability)}
-                  </p>
-                  <p>
-                    Edge:{" "}
-                    {pick.probability_edge == null
-                      ? "–"
-                      : formatNumber(pick.probability_edge * 100, 1)}{" "}
-                    pp
-                  </p>
-                  <p>Forecast: {new Date(pick.forecast_as_of).toISOString()}</p>
-                  <p>
-                    Price captured:{" "}
-                    {pick.market_fetched_at
-                      ? new Date(pick.market_fetched_at).toISOString()
-                      : "unavailable"}
-                  </p>
-                </div>
-              </details>
-            </TableCell>
-            <TableCell className="text-right font-mono">
-              {pick.status === "recommended" ? formatOdds(pick.price) : "–"}
-            </TableCell>
-            <TableCell className="hidden text-right font-mono sm:table-cell">
-              {pick.status === "recommended"
-                ? formatPct(pick.expected_value_per_unit)
-                : "–"}
-            </TableCell>
-            <TableCell>
-              <span
-                className={cn(
-                  "font-mono text-xs uppercase",
-                  pick.outcome === "win" && "text-positive",
-                  pick.outcome === "loss" && "text-negative",
-                )}
-              >
-                {pick.status === "no_play" ? "No Play" : pick.outcome}
-              </span>
-              {pick.home_points != null && pick.away_points != null && (
-                <div className="text-xs text-muted-foreground">
-                  {pick.away_points}-{pick.home_points}
-                </div>
-              )}
-            </TableCell>
-            <TableCell
-              className={cn(
-                "text-right font-mono",
-                (pick.profit_units ?? 0) > 0 && "text-positive",
-                (pick.profit_units ?? 0) < 0 && "text-negative",
-              )}
-            >
-              {pick.status === "recommended" && pick.profit_units != null
-                ? `${formatSigned(pick.profit_units, 2)}u`
-                : "–"}
-            </TableCell>
+    <LocalKickoffs>
+      <Table>
+        <TableCaption className="sr-only">{caption}</TableCaption>
+        <TableHeader>
+          <TableRow>
+            <TableHead className="hidden md:table-cell">Kickoff</TableHead>
+            <TableHead className="hidden md:table-cell">Matchup</TableHead>
+            <TableHead>Market / pick</TableHead>
+            <TableHead className="text-right">Odds</TableHead>
+            <TableHead className="hidden text-right sm:table-cell">
+              EV
+            </TableHead>
+            <TableHead>Result</TableHead>
+            <TableHead className="text-right">Profit</TableHead>
           </TableRow>
-        ))}
-      </TableBody>
-    </Table>
+        </TableHeader>
+        <TableBody>
+          {rows.map((pick) => (
+            <TableRow key={`${pick.game_id}-${pick.market}`}>
+              <TableCell className="hidden whitespace-nowrap text-xs md:table-cell">
+                <Kickoff start={pick.start_date} part="day" />
+                <div className="text-muted-foreground">
+                  <Kickoff start={pick.start_date} part="time" />
+                </div>
+              </TableCell>
+              <TableCell className="hidden font-medium md:table-cell">
+                <span className="whitespace-nowrap">{pick.away_team}</span>
+                <div className="whitespace-nowrap text-muted-foreground">
+                  at {pick.home_team}
+                </div>
+              </TableCell>
+              <TableCell className="whitespace-normal">
+                <div className="mb-2 text-[10px] leading-relaxed text-muted-foreground md:hidden">
+                  {pick.away_team} at {pick.home_team}
+                  <div>
+                    <Kickoff start={pick.start_date} part="day" /> ·{" "}
+                    <Kickoff start={pick.start_date} part="time" />
+                  </div>
+                </div>
+                <div className="text-[10px] uppercase tracking-wider text-muted-foreground">
+                  {MARKET_LABELS[pick.market as keyof typeof MARKET_LABELS] ??
+                    pick.market}
+                </div>
+                <div
+                  className={cn(
+                    "min-w-24 max-w-56",
+                    pick.status === "recommended" && "font-semibold",
+                  )}
+                >
+                  {pickLabel(pick)}
+                </div>
+                <div className="max-w-64 text-xs text-muted-foreground">
+                  {pick.status === "recommended"
+                    ? pick.provider
+                    : pickReason(pick.reason)}
+                </div>
+                <details className="mt-1 text-xs text-muted-foreground">
+                  <summary className="cursor-pointer">Recorded details</summary>
+                  <div className="mt-1 max-w-64 space-y-1 break-all">
+                    <p>Decision: {new Date(pick.decision_at).toISOString()}</p>
+                    <p>Rule: {pick.policy_version}</p>
+                    <p>
+                      Missing inputs: home{" "}
+                      {pick.home_missing_input_count ?? "unknown"}, away{" "}
+                      {pick.away_missing_input_count ?? "unknown"}.{" "}
+                      {pick.policy_version.startsWith("cfb-")
+                        ? "Counts include unavailable injury data."
+                        : "NFL counts flag missing expected-QB identities."}
+                    </p>
+                    <p>Model: {pick.model_version}</p>
+                    {pick.execution_eligibility_verified !== undefined && (
+                      <p>
+                        Bookmaker availability:{" "}
+                        {pick.execution_eligibility_verified
+                          ? "verified"
+                          : "unverified"}
+                      </p>
+                    )}
+                    <p>
+                      Provider updated:{" "}
+                      {pick.provider_last_update ?? "unavailable"}
+                    </p>
+                    {pick.source_timestamps && (
+                      <p>
+                        Source receipts:{" "}
+                        {JSON.stringify(pick.source_timestamps)}
+                      </p>
+                    )}
+                    {pick.data_flags && (
+                      <p>Data flags: {JSON.stringify(pick.data_flags)}</p>
+                    )}
+                    {pick.settlement_reason && (
+                      <p>Settlement: {pickReason(pick.settlement_reason)}</p>
+                    )}
+                    {pick.result_source_at && (
+                      <p>Result observed: {pick.result_source_at}</p>
+                    )}
+                    <p>EV {formatPct(pick.expected_value_per_unit)}</p>
+                    <p>
+                      Win {formatPct(pick.win_probability)} · Push{" "}
+                      {formatPct(pick.push_probability)}
+                    </p>
+                    <p>
+                      Edge:{" "}
+                      {pick.probability_edge == null
+                        ? "–"
+                        : formatNumber(pick.probability_edge * 100, 1)}{" "}
+                      pp
+                    </p>
+                    <p>
+                      Forecast: {new Date(pick.forecast_as_of).toISOString()}
+                    </p>
+                    <p>
+                      Price captured:{" "}
+                      {pick.market_fetched_at
+                        ? new Date(pick.market_fetched_at).toISOString()
+                        : "unavailable"}
+                    </p>
+                  </div>
+                </details>
+              </TableCell>
+              <TableCell className="text-right font-mono">
+                {pick.status === "recommended" ? formatOdds(pick.price) : "–"}
+              </TableCell>
+              <TableCell className="hidden text-right font-mono sm:table-cell">
+                {pick.status === "recommended"
+                  ? formatPct(pick.expected_value_per_unit)
+                  : "–"}
+              </TableCell>
+              <TableCell>
+                <span
+                  className={cn(
+                    "font-mono text-xs uppercase",
+                    pick.outcome === "win" && "text-positive",
+                    pick.outcome === "loss" && "text-negative",
+                  )}
+                >
+                  {pick.status === "no_play" ? "No Play" : pick.outcome}
+                </span>
+                {pick.home_points != null && pick.away_points != null && (
+                  <div className="text-xs text-muted-foreground">
+                    {pick.away_points}-{pick.home_points}
+                  </div>
+                )}
+              </TableCell>
+              <TableCell
+                className={cn(
+                  "text-right font-mono",
+                  (pick.profit_units ?? 0) > 0 && "text-positive",
+                  (pick.profit_units ?? 0) < 0 && "text-negative",
+                )}
+              >
+                {pick.status === "recommended" && pick.profit_units != null
+                  ? `${formatSigned(pick.profit_units, 2)}u`
+                  : "–"}
+              </TableCell>
+            </TableRow>
+          ))}
+        </TableBody>
+      </Table>
+    </LocalKickoffs>
   );
 }
 

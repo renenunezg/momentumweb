@@ -88,9 +88,7 @@ export function groupFootballSlates<T extends ScheduledFootballGame>(
     for (const window of split(starts, policy.maxSpan)) {
       const start = window[0];
       const parts = Object.fromEntries(
-        leagueClock
-          .formatToParts(start)
-          .map((part) => [part.type, part.value]),
+        leagueClock.formatToParts(start).map((part) => [part.type, part.value]),
       );
       const broadcast =
         policy.broadcast && Number(parts.hour) >= 18
@@ -118,6 +116,11 @@ export function groupFootballSlates<T extends ScheduledFootballGame>(
   return slates;
 }
 
+function parse(value: string | number | null) {
+  const start = typeof value === "string" ? Date.parse(value) : value;
+  return start == null || !Number.isFinite(start) ? null : start;
+}
+
 export function footballSlateClock(timeZone: string) {
   const options = { timeZone };
   const day = new Intl.DateTimeFormat("en-US", {
@@ -141,7 +144,19 @@ export function footballSlateClock(timeZone: string) {
     minute: "2-digit",
     timeZoneName: "short",
   });
+  const zoneName = (style: "long" | "short", at: number) =>
+    new Intl.DateTimeFormat("en-US", { ...options, timeZoneName: style })
+      .formatToParts(at)
+      .find((part) => part.type === "timeZoneName")?.value;
   return {
+    // "Pacific Daylight Time (PDT)" rather than the raw IANA id. Zones whose
+    // short form is only a GMT offset, most of Europe in en-US, keep it since
+    // the offset is still the clearest disambiguator for a reader there.
+    zone: (at: number = Date.now()) => {
+      const long = zoneName("long", at) ?? timeZone.replaceAll("_", " ");
+      const short = zoneName("short", at);
+      return short && short !== long ? `${long} (${short})` : long;
+    },
     title: (
       slate: Pick<FootballSlate<unknown>, "start" | "end" | "broadcast">,
     ) => {
@@ -154,10 +169,18 @@ export function footballSlateClock(timeZone: string) {
       return `${weekday.format(slate.start)} · ${range}`;
     },
     kickoff: (value: string | number | null) => {
-      const start = typeof value === "string" ? Date.parse(value) : value;
-      return start == null || !Number.isFinite(start)
+      const start = parse(value);
+      return start == null
         ? "Kickoff TBD"
         : `${day.format(start)} · ${kickoff.format(start)}`;
+    },
+    day: (value: string | number | null) => {
+      const start = parse(value);
+      return start == null ? "TBD" : day.format(start);
+    },
+    time: (value: string | number | null) => {
+      const start = parse(value);
+      return start == null ? "TBD" : hour.format(start);
     },
   };
 }

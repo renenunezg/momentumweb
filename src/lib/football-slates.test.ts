@@ -61,6 +61,18 @@ test("visitor timezone changes dates and DST offsets without changing slate memb
   const pacific = footballSlateClock("America/Los_Angeles");
   assert.match(pacific.kickoff("2026-10-25T17:00:00Z"), /10:00 AM PDT/);
   assert.match(pacific.kickoff("2026-11-01T18:00:00Z"), /10:00 AM PST/);
+  const sep = Date.parse("2026-09-13T17:00:00Z");
+  const nov = Date.parse("2026-11-08T18:00:00Z");
+  assert.equal(pacific.zone(sep), "Pacific Daylight Time (PDT)");
+  assert.equal(pacific.zone(nov), "Pacific Standard Time (PST)");
+  assert.equal(
+    footballSlateClock("Europe/Berlin").zone(sep),
+    "Central European Summer Time (GMT+2)",
+  );
+  assert.equal(
+    footballSlateClock("UTC").zone(sep),
+    "Coordinated Universal Time (UTC)",
+  );
 });
 
 test("separate dates and anchored windows cannot chain into one oversized slate", () => {

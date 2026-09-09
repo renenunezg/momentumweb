@@ -1,28 +1,14 @@
+import { footballSlateClock } from "@/lib/football-slates";
+
 // Helpers shared by the CFB and NFL sections: both quote lines for the home
 // team and anchor kickoffs to Eastern time.
 
-export function formatKickoffDay(startDate: string | null): string {
-  if (!startDate) return "TBD";
-  const d = new Date(startDate);
-  if (Number.isNaN(d.getTime())) return "TBD";
-  return d.toLocaleDateString("en-US", {
-    timeZone: "America/New_York",
-    weekday: "short",
-    month: "short",
-    day: "numeric",
-  });
-}
+export const LEAGUE_TIME_ZONE = "America/New_York";
 
-export function formatKickoffTime(startDate: string | null): string {
-  if (!startDate) return "TBD";
-  const d = new Date(startDate);
-  if (Number.isNaN(d.getTime())) return "TBD";
-  return d.toLocaleTimeString("en-US", {
-    timeZone: "America/New_York",
-    hour: "numeric",
-    minute: "2-digit",
-  });
-}
+const eastern = footballSlateClock(LEAGUE_TIME_ZONE);
+
+export const formatKickoffDay = eastern.day;
+export const formatKickoffTime = eastern.time;
 
 // A home line like -7.5 means the home team is favored by 7.5.
 export function formatHomeLine(homeSpread: number | null): string {
@@ -37,7 +23,7 @@ export function marketHomeLine(
   market: string | null,
   selection: string | null,
   point: number | null,
-  homeTeam: string | null
+  homeTeam: string | null,
 ): number | null {
   if (market !== "spreads" || selection == null || point == null) return null;
   if (homeTeam != null && selection === homeTeam) return point;
