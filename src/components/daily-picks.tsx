@@ -10,14 +10,14 @@ function plural(count: number, noun: string) {
 }
 
 function emptyMessage(sport: DailySport) {
-  if (sport.unavailable) return "Picks are temporarily unavailable.";
+  if (sport.unavailable) return "Predictions are temporarily unavailable.";
   if (sport.gameCount === 0) return "No games today.";
   if (!sport.published)
-    return `${plural(sport.gameCount, "game")}, picks not published yet.`;
-  return `${plural(sport.gameCount, "game")}, no qualifying picks.`;
+    return `${plural(sport.gameCount, "game")}, predictions not published yet.`;
+  return `${plural(sport.gameCount, "game")}, no qualifying predictions.`;
 }
 
-// Every model's recommended picks for the site's day. Kickoffs are rendered
+// Every model's recommended predictions for the site's day. Kickoffs are rendered
 // in Eastern and rewritten into the visitor's zone by LocalKickoffs.
 export function DailyPicks({
   sports,
@@ -33,7 +33,7 @@ export function DailyPicks({
           id="today-heading"
           className="font-mono text-xs uppercase tracking-wider text-muted-foreground"
         >
-          Today&apos;s picks
+          Today&apos;s predictions
         </h2>
         <span className="font-mono text-xs text-muted-foreground">
           {dateLabel}
@@ -58,7 +58,7 @@ export function DailyPicks({
                     </Link>
                     {sport.games.length > 0 && (
                       <span className="font-mono text-xs text-muted-foreground">
-                        {plural(pickCount, "pick")} across{" "}
+                        {plural(pickCount, "prediction")} across{" "}
                         {sport.games.length} of {plural(sport.gameCount, "game")}
                       </span>
                     )}

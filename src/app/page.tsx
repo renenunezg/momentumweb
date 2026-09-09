@@ -6,11 +6,7 @@ import { supabaseCfb, supabaseNfl } from "@/lib/supabase";
 import { formatPct, formatSigned } from "@/lib/utils";
 import { fetchCfbPickSummary } from "@/lib/cfb-picks";
 import { fetchNflPickSummary } from "@/lib/nfl-picks";
-import {
-  MARKET_LABELS,
-  marketRecords,
-  type MarketRecord,
-} from "@/lib/football-picks";
+import { marketRecords, type MarketRecord } from "@/lib/football-picks";
 import { SITE_TIME_ZONE, siteDate } from "@/lib/daily-picks";
 import { fetchDailyPicks } from "@/lib/daily-picks-fetch";
 import { DailyPicks } from "@/components/daily-picks";
@@ -123,20 +119,27 @@ function StatusBadge({ live }: { live: boolean }) {
 }
 
 // Record and ROI per market, never pooled: a spread edge and a total edge are
-// different claims, so each is judged on its own sample.
+// different claims, so each is judged on its own sample. Plural headings so
+// "Totals" cannot read as a total across markets.
+const MARKET_HEADINGS = {
+  h2h: "Moneylines",
+  spreads: "Spreads",
+  totals: "Totals",
+} as const;
+
 function FootballStats({ headline }: { headline: FootballHeadline }) {
   return (
     <div className="mt-4 flex flex-wrap gap-x-8 gap-y-3 border-t border-border pt-4">
       {headline.markets.map((record) => (
         <div key={record.market}>
           <p className="text-xs text-muted-foreground">
-            {MARKET_LABELS[record.market]} ROI
+            {MARKET_HEADINGS[record.market]}
           </p>
           <p className="mt-0.5 font-mono text-sm tabular-nums">
-            {formatPct(record.roi)}
+            {record.wins}&ndash;{record.losses}&ndash;{record.pushes}
           </p>
           <p className="mt-0.5 font-mono text-xs text-muted-foreground tabular-nums">
-            {record.wins}&ndash;{record.losses}&ndash;{record.pushes}
+            ROI {formatPct(record.roi)}
             {record.pending ? ` · ${record.pending} pending` : ""}
           </p>
         </div>
