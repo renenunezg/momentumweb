@@ -8,7 +8,7 @@ import { posts } from "./blog/posts";
 import { JsonLd } from "@/components/json-ld";
 import { SITE_DESCRIPTION, SITE_NAME, SITE_URL } from "@/lib/site";
 
-export const revalidate = 300;
+export const revalidate = 3600;
 
 type MlbHeadline = {
   roi: number | null;

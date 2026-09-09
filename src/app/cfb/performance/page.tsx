@@ -16,7 +16,7 @@ import ForecastPerformance from "@/components/cfb-forecast-performance";
 import { KpiCard } from "@/components/kpi-card";
 import { formatNumber, formatPct, formatSigned } from "@/lib/utils";
 
-export const revalidate = 300;
+export const revalidate = 3600;
 export const metadata: Metadata = {
   title: "College Football Model Performance",
   description:

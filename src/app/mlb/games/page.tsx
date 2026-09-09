@@ -6,7 +6,7 @@ import { GamesLive } from "@/components/games-live";
 import { SummaryStats } from "@/components/summary-stats";
 import { GameCardUnavailable } from "@/components/game-card-unavailable";
 import { LastUpdated } from "@/components/last-updated";
-import { RealtimeRefresh } from "@/components/realtime-refresh";
+import { latestStamp } from "@/lib/mlb-picks-version";
 import type { LiveScore } from "@/app/mlb/api/live-scores/route";
 
 // Render fresh on every request so predictions always reflect the current
@@ -99,6 +99,10 @@ export default async function Page() {
   ]);
 
   const lastUpdated: string | null = latest?.[0]?.updated_at ?? null;
+  const picksVersion = latestStamp([
+    lastUpdated,
+    ...(outputs ?? []).map((o) => o.updated_at),
+  ]);
   const predictions = (outputs ?? []).filter(isPick);
 
   // Eval-on-final (score writeback + model_evaluation upsert) runs off the
@@ -207,8 +211,11 @@ export default async function Page() {
         <SummaryStats matchups={matchups} />
       </div>
 
-      <RealtimeRefresh tables={["games", "model_outputs"]} />
-      <GamesLive initial={matchups} />
+      <GamesLive
+        key={picksVersion ?? "unpublished"}
+        initial={matchups}
+        picksVersion={picksVersion}
+      />
 
       {unavailableGames.length > 0 && (
         <div className="mt-4 space-y-3">

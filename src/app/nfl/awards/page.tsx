@@ -6,7 +6,7 @@ import { NflAwardsBoard } from "@/components/nfl-awards-board";
 import { PlayerHeadshot } from "@/components/player-headshot";
 import { LastUpdated } from "@/components/last-updated";
 
-export const revalidate = 300;
+export const revalidate = 3600;
 export const metadata: Metadata = {
   title: "NFL MVP and Awards Tracker",
   description: "Weekly forecasts for NFL MVP, Offensive and Defensive Player of the Year, Rookie of the Year, and Coach of the Year, with player performance and historical validation.",

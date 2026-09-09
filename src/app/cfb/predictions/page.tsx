@@ -5,7 +5,7 @@ import { LastUpdated } from "@/components/last-updated";
 import { WeeklyFootballPredictions } from "@/components/weekly-football-predictions";
 import { fetchCfbWeeklyPredictions, weeklyGames } from "@/lib/cfb-picks";
 
-export const revalidate = 300;
+export const revalidate = 3600;
 export const metadata: Metadata = {
   title: "This Week's College Football Predictions",
   description:

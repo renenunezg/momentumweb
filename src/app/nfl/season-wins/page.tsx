@@ -3,7 +3,7 @@ import { fetchSeasonWinTotals, fetchTeams } from "@/lib/nfl";
 import { LastUpdated } from "@/components/last-updated";
 import { SeasonWinsTable } from "@/components/season-wins-table";
 
-export const revalidate = 300;
+export const revalidate = 3600;
 export const metadata: Metadata = {
   title: "NFL Season Win Totals Projections",
   description:

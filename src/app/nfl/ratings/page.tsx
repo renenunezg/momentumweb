@@ -3,7 +3,7 @@ import { fetchLatestRatings, fetchTeams, fetchUnitRatings } from "@/lib/nfl";
 import { LastUpdated } from "@/components/last-updated";
 import NflRatings from "@/components/nfl-ratings";
 
-export const revalidate = 300;
+export const revalidate = 3600;
 
 export async function generateMetadata(): Promise<Metadata> {
   const { season, week } = await fetchLatestRatings();

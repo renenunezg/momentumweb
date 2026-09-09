@@ -17,7 +17,7 @@ import { PickFilters } from "@/components/football-pick-filters";
 import { FootballPerformanceTabs } from "@/components/football-performance-tabs";
 import ForecastPerformance from "@/components/nfl-forecast-performance";
 
-export const revalidate = 300;
+export const revalidate = 3600;
 export const metadata: Metadata = {
   title: "NFL Model Performance",
   description:

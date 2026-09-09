@@ -9,7 +9,7 @@ async function read<T>(table: string, query: Record<string, string>): Promise<T[
   if (!url || !key) throw new Error("NFL awards data connection is unavailable");
   const response = await fetch(`${url}/rest/v1/${table}?${new URLSearchParams(query)}`, {
     headers: { apikey: key, Authorization: `Bearer ${key}`, "Accept-Profile": "nfl" },
-    next: { revalidate: 300 },
+    next: { revalidate: 3600, tags: ["nfl"] },
   });
   if (!response.ok) throw new Error(`NFL awards request failed (${response.status})`);
   return response.json() as Promise<T[]>;

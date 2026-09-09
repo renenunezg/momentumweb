@@ -3,7 +3,7 @@ import { fetchLatestRatings, fetchTeams, fetchUnitRatings } from "@/lib/cfb";
 import { LastUpdated } from "@/components/last-updated";
 import CfbRatings from "@/components/cfb-ratings";
 
-export const revalidate = 300;
+export const revalidate = 3600;
 
 export async function generateMetadata(): Promise<Metadata> {
   const { season, week } = await fetchLatestRatings();

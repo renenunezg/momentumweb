@@ -7,7 +7,7 @@ import { teamBadge, weeklyGames, type WeeklyGame } from "@/lib/football-picks";
 import { fetchTeams } from "@/lib/nfl";
 import { supabaseNfl } from "@/lib/supabase";
 
-export const revalidate = 300;
+export const revalidate = 3600;
 export const metadata: Metadata = {
   title: "This Week's NFL Predictions",
   description:

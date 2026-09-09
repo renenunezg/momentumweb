@@ -7,7 +7,6 @@ import { V2_CUTOVER_DATE } from "@/lib/constants";
 import { V2Badge } from "@/components/v2-badge";
 import Filters from "@/components/filters";
 import { LastUpdated } from "@/components/last-updated";
-import { RealtimeRefresh } from "@/components/realtime-refresh";
 import {
   Table,
   TableHeader,
@@ -20,7 +19,7 @@ import { TeamLogo } from "@/components/team-logo";
 import { mlbTeamIdentity } from "@/lib/mlb-teams";
 import Link from "next/link";
 
-export const revalidate = 300;
+export const revalidate = 3600;
 export const metadata: Metadata = {
   title: "MLB Prediction History",
   description:
@@ -183,7 +182,6 @@ export default async function HistoryPage({
 
   return (
     <main id="main" className="mx-auto w-full max-w-6xl min-w-0 px-4 py-8 space-y-6">
-      <RealtimeRefresh tables={["games", "model_outputs_season"]} />
       <div className="flex items-start justify-between gap-4">
         <h1 className="font-heading text-2xl tracking-tight">MLB Prediction History</h1>
         <LastUpdated

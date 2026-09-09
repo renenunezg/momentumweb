@@ -2,6 +2,7 @@ import { NextResponse, after } from "next/server";
 import { createClient } from "@supabase/supabase-js";
 import type { Database } from "@/lib/database.types";
 import { runEvalForGame } from "@/lib/eval-game";
+import { fetchPicksVersion } from "@/lib/mlb-picks-version";
 
 // Cached proxy to the MLB Stats API: N browsers polling this route become at
 // most two upstream requests a minute, whatever the traffic.
@@ -80,11 +81,14 @@ export async function GET() {
   const url = `https://statsapi.mlb.com/api/v1/schedule?sportId=1&date=${today}&hydrate=linescore`;
 
   try {
-    const res = await fetch(url, {
-      next: { revalidate: 30 },
-      headers: { "User-Agent": "mlb-model-dashboard" },
-      signal: AbortSignal.timeout(4000),
-    });
+    const [res, picksVersion] = await Promise.all([
+      fetch(url, {
+        next: { revalidate: 30 },
+        headers: { "User-Agent": "mlb-model-dashboard" },
+        signal: AbortSignal.timeout(4000),
+      }),
+      fetchPicksVersion(today),
+    ]);
     if (!res.ok) {
       return NextResponse.json(
         { error: `MLB API ${res.status}` },
@@ -112,7 +116,7 @@ export async function GET() {
     }
 
     return NextResponse.json(
-      { scores, fetched_at: new Date().toISOString() },
+      { scores, picks_version: picksVersion, fetched_at: new Date().toISOString() },
       {
         headers: {
           "Cache-Control": "public, s-maxage=30, stale-while-revalidate=60",

@@ -14,7 +14,7 @@ import { redirect } from "next/navigation";
 import { PickFilters } from "@/components/football-pick-filters";
 import { pageNumber } from "@/lib/utils";
 
-export const revalidate = 300;
+export const revalidate = 3600;
 export const metadata: Metadata = {
   title: "NFL Pick History",
   description:

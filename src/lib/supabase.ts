@@ -49,25 +49,37 @@ export const supabase = createClient<Database, "mlb">(url, anonKey, {
   auth: anonAuth("mlb"),
 });
 
-// Query URLs include every filter, so cached pages never share different windows.
-// Public football reads refresh within five minutes; mutations bypass the cache.
-const cachedPublicFetch: typeof fetch = (input, init) => {
-  const method = (init?.method ?? "GET").toUpperCase();
-  const restRead =
-    typeof window === "undefined" &&
-    method === "GET" &&
-    String(input).startsWith(`${url}/rest/v1/`);
-  return fetch(input, restRead ? { ...init, next: { revalidate: 300 } } : init);
-};
+// Query URLs include every filter, so cached pages never share different
+// windows. Public football reads are tagged by sport and cached for an hour;
+// the revalidation webhook (/api/revalidate, fired by a Postgres trigger on
+// every pipeline write) drops the tag, so the hour is only a safety net.
+// Mutations bypass the cache.
+export const CACHE_SECONDS = 3600;
+
+function cachedPublicFetch(sport: string): typeof fetch {
+  return (input, init) => {
+    const method = (init?.method ?? "GET").toUpperCase();
+    const restRead =
+      typeof window === "undefined" &&
+      method === "GET" &&
+      String(input).startsWith(`${url}/rest/v1/`);
+    return fetch(
+      input,
+      restRead
+        ? { ...init, next: { revalidate: CACHE_SECONDS, tags: [sport] } }
+        : init,
+    );
+  };
+}
 
 export const supabaseCfb = createClient<CfbDatabase, "cfb">(url, anonKey, {
   db: { schema: "cfb" },
   auth: anonAuth("cfb"),
-  global: { fetch: cachedPublicFetch },
+  global: { fetch: cachedPublicFetch("cfb") },
 });
 
 export const supabaseNfl = createClient<NflDatabase, "nfl">(url, anonKey, {
   db: { schema: "nfl" },
   auth: anonAuth("nfl"),
-  global: { fetch: cachedPublicFetch },
+  global: { fetch: cachedPublicFetch("nfl") },
 });

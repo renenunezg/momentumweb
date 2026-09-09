@@ -1,11 +1,15 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
+import { useRouter } from "next/navigation";
 import type { GameMatchup } from "@/lib/types";
 import type { LiveScore } from "@/app/mlb/api/live-scores/route";
 import { GamesTable } from "@/components/games-table";
 
-const POLL_MS = 60_000;
+// The route caches upstream for 30s, so polling faster than that only
+// re-reads the cache; polling at exactly that cadence keeps a score within
+// about a minute of the MLB feed.
+const POLL_MS = 30_000;
 
 function mergeScores(
   matchups: GameMatchup[],
@@ -32,9 +36,20 @@ function allFinal(matchups: GameMatchup[]): boolean {
   return matchups.every((m) => m.status === "Final");
 }
 
-export function GamesLive({ initial }: { initial: GameMatchup[] }) {
+export function GamesLive({
+  initial,
+  picksVersion,
+}: {
+  initial: GameMatchup[];
+  // Newest pick or game write the server rendered from. When the poll
+  // reports a newer one the page re-renders, and the parent keys this
+  // component on the version so the fresh picks replace the merged state.
+  picksVersion: string | null;
+}) {
+  const router = useRouter();
   const [matchups, setMatchups] = useState<GameMatchup[]>(initial);
   const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const versionRef = useRef(picksVersion);
 
   useEffect(() => {
     let cancelled = false;
@@ -45,9 +60,16 @@ export function GamesLive({ initial }: { initial: GameMatchup[] }) {
       try {
         const res = await fetch("/mlb/api/live-scores", { cache: "no-store" });
         if (!res.ok) return;
-        const data = (await res.json()) as { scores?: LiveScore[] };
+        const data = (await res.json()) as {
+          scores?: LiveScore[];
+          picks_version?: string | null;
+        };
         if (cancelled || !data.scores) return;
         setMatchups((prev) => mergeScores(prev, data.scores!));
+        if (data.picks_version && data.picks_version !== versionRef.current) {
+          versionRef.current = data.picks_version;
+          router.refresh();
+        }
       } catch {
         // A failed poll waits for the next tick.
       }

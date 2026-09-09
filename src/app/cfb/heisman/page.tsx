@@ -5,7 +5,7 @@ import { KpiCard } from "@/components/kpi-card";
 import { LastUpdated } from "@/components/last-updated";
 import HeismanTracker from "@/components/heisman-tracker";
 
-export const revalidate = 300;
+export const revalidate = 3600;
 
 export async function generateMetadata(): Promise<Metadata> {
   const { season, week, board } = await fetchHeismanTracker();
