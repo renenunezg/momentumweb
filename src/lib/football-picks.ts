@@ -11,8 +11,13 @@ export type FootballPick = Omit<
   settlement_reason?: string | null;
   result_source_at?: string | null;
 };
-export type FootballPickMetric =
-  CfbPicksDatabase["cfb"]["Views"]["recommendation_performance"]["Row"] & {
+type CfbPickMetricRow =
+  CfbPicksDatabase["cfb"]["Views"]["recommendation_performance"]["Row"];
+// Closing line value is recorded by the CFB ledger only; the NFL view has
+// no closing line columns yet.
+type ClosingLineValue = "average_clv_points" | "clv_sample" | "clv_positive_share";
+export type FootballPickMetric = Omit<CfbPickMetricRow, ClosingLineValue> &
+  Partial<Pick<CfbPickMetricRow, ClosingLineValue>> & {
     unique_games?: number | null;
   };
 export type PickMarket = "all" | "h2h" | "spreads" | "totals";

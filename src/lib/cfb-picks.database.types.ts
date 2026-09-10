@@ -75,6 +75,9 @@ export type CfbPicksDatabase = {
           first_decision_at: string | null;
           last_decision_at: string | null;
           last_graded_at: string | null;
+          average_clv_points: number | null;
+          clv_sample: number | null;
+          clv_positive_share: number | null;
           roi: number | null;
           win_rate: number | null;
           thin_sample: boolean | null;
