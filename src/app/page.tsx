@@ -1,6 +1,5 @@
 import Link from "next/link";
 import { SiteHeader } from "@/components/site-header";
-import { ContactLine } from "@/components/site-footer";
 import { fetchFullBetLedger } from "@/lib/bet-ledger";
 import { aggregateLedger } from "@/lib/betting-aggs";
 import { supabaseCfb, supabaseNfl } from "@/lib/supabase";
@@ -262,7 +261,6 @@ export default async function Home() {
             Data Analyst. I build probabilistic forecasting
             models for sports and benchmark them against the market in public.
           </p>
-          <ContactLine className="mt-2 text-xs text-muted-foreground" />
         </section>
 
         <section className="mt-10">
