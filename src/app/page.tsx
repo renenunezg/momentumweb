@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { SiteHeader } from "@/components/site-header";
+import { ContactLine } from "@/components/site-footer";
 import { fetchFullBetLedger } from "@/lib/bet-ledger";
 import { aggregateLedger } from "@/lib/betting-aggs";
 import { supabaseCfb, supabaseNfl } from "@/lib/supabase";
@@ -12,7 +13,7 @@ import { fetchDailyPicks } from "@/lib/daily-picks-fetch";
 import { DailyPicks } from "@/components/daily-picks";
 import { posts } from "./blog/posts";
 import { JsonLd } from "@/components/json-ld";
-import { SITE_DESCRIPTION, SITE_NAME, SITE_URL } from "@/lib/site";
+import { SITE_DESCRIPTION, SITE_NAME, SITE_URL, SOCIAL_LINKS } from "@/lib/site";
 
 export const revalidate = 3600;
 
@@ -118,6 +119,66 @@ function StatusBadge({ live }: { live: boolean }) {
   );
 }
 
+type ModelLink = { href: string; label: string };
+
+// The header row is the card's link and its ::after box stretches over the
+// whole card, so the card stays clickable without nesting anchors; the
+// secondary links sit above that box. Hover styling keys off the header link
+// so hovering a secondary link does not light up the card.
+function ModelEntry({
+  href,
+  name,
+  live,
+  cta,
+  description,
+  links = [],
+  children,
+}: {
+  href: string;
+  name: string;
+  live: boolean;
+  cta: string;
+  description: string;
+  links?: ModelLink[];
+  children?: React.ReactNode;
+}) {
+  return (
+    <div className="relative -mx-3 px-3 py-5 transition-colors has-[>a:hover]:bg-muted/50">
+      <Link
+        href={href}
+        className="group/link flex items-center justify-between gap-4 after:absolute after:inset-0"
+      >
+        <span className="flex items-baseline gap-3">
+          <span className="font-heading text-lg tracking-tight underline-offset-4 group-hover/link:underline">
+            {name}
+          </span>
+          <StatusBadge live={live} />
+        </span>
+        <span className="font-mono text-xs uppercase tracking-wider text-muted-foreground transition-colors group-hover/link:text-foreground">
+          {cta} &rarr;
+        </span>
+      </Link>
+      <p className="mt-2 text-sm text-muted-foreground leading-relaxed">
+        {description}
+      </p>
+      {children}
+      {links.length > 0 && (
+        <div className="mt-4 flex flex-wrap gap-x-5 gap-y-1">
+          {links.map((link) => (
+            <Link
+              key={link.href}
+              href={link.href}
+              className="relative z-10 font-mono text-xs font-bold uppercase tracking-wider text-foreground underline-offset-4 hover:underline"
+            >
+              {link.label}
+            </Link>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
+
 // Record and ROI per market, never pooled: a spread edge and a total edge are
 // different claims, so each is judged on its own sample. Plural headings so
 // "Totals" cannot read as a total across markets.
@@ -186,11 +247,7 @@ export default async function Home() {
               name: SITE_NAME,
               url: SITE_URL,
               jobTitle: "Data Analyst",
-              sameAs: [
-                "https://github.com/renenunezg",
-                "https://linkedin.com/in/renenunezg",
-                "https://twitter.com/nunezanalytics",
-              ],
+              sameAs: SOCIAL_LINKS.map((link) => link.href),
             },
           ],
         }}
@@ -198,13 +255,14 @@ export default async function Home() {
       <SiteHeader />
       <main id="main" className="mx-auto w-full max-w-3xl min-w-0 px-4 py-10">
         <section>
-          <h1 className="font-heading text-3xl tracking-tight">
+          <h1 className="font-heading text-2xl tracking-tight">
             Ren&eacute; N&uacute;&ntilde;ez
           </h1>
-          <p className="mt-3 text-base text-muted-foreground leading-relaxed">
+          <p className="mt-2 text-sm text-muted-foreground leading-relaxed">
             Data Analyst. I build probabilistic forecasting
             models for sports and benchmark them against the market in public.
           </p>
+          <ContactLine className="mt-2 text-xs text-muted-foreground" />
         </section>
 
         <section className="mt-10">
@@ -213,102 +271,64 @@ export default async function Home() {
           </h2>
           {/* Entries are separated by rules, not enclosed in boxes. */}
           <div className="divide-y divide-border border-y border-rule-strong">
-          <Link
-            href="/mlb"
-            className="group -mx-3 block px-3 py-5 transition-colors hover:bg-muted/50"
-          >
-            <div className="flex items-center justify-between gap-4">
-              <div className="flex items-baseline gap-3">
-                <span className="font-heading text-lg tracking-tight group-hover:underline underline-offset-4">
-                  MLB
-                </span>
-                <StatusBadge live />
-              </div>
-              <span className="font-mono text-xs uppercase tracking-wider text-muted-foreground group-hover:text-foreground transition-colors">
-                View today&apos;s slate &rarr;
-              </span>
-            </div>
-            <p className="mt-2 text-sm text-muted-foreground leading-relaxed">
-              Hierarchical Bayesian model simulating every game one plate
-              appearance at a time.
-            </p>
-            {mlb && (
-              <div className="mt-4 flex flex-wrap gap-x-8 gap-y-3 border-t border-border pt-4">
-                <div>
-                  <p className="text-xs text-muted-foreground">
-                    ROI
-                  </p>
-                  <p className="mt-0.5 font-mono text-sm tabular-nums">
-                    {mlb.roi != null ? `${formatSigned(mlb.roi * 100, 1)}%` : "–"}
-                  </p>
-                </div>
-                <div>
-                  <p className="text-xs text-muted-foreground">
-                    Record
-                  </p>
-                  <p className="mt-0.5 font-mono text-sm tabular-nums">
-                    {mlb.wins}&ndash;{mlb.losses}
+            <ModelEntry
+              href="/mlb"
+              name="MLB"
+              live
+              cta="View today's slate"
+              description="Hierarchical Bayesian model simulating every game one plate appearance at a time."
+            >
+              {mlb && (
+                <div className="mt-4 flex flex-wrap gap-x-8 gap-y-3 border-t border-border pt-4">
+                  <div>
+                    <p className="text-xs text-muted-foreground">ROI</p>
+                    <p className="mt-0.5 font-mono text-sm tabular-nums">
+                      {mlb.roi != null ? `${formatSigned(mlb.roi * 100, 1)}%` : "–"}
+                    </p>
+                  </div>
+                  <div>
+                    <p className="text-xs text-muted-foreground">Record</p>
+                    <p className="mt-0.5 font-mono text-sm tabular-nums">
+                      {mlb.wins}&ndash;{mlb.losses}
+                    </p>
+                  </div>
+                  <div>
+                    <p className="text-xs text-muted-foreground">Net units</p>
+                    <p className="mt-0.5 font-mono text-sm tabular-nums">
+                      {formatSigned(mlb.netUnits, 1)}u
+                    </p>
+                  </div>
+                  <p className="ml-auto self-end font-mono text-xs text-muted-foreground">
+                    Updated nightly
                   </p>
                 </div>
-                <div>
-                  <p className="text-xs text-muted-foreground">
-                    Net units
-                  </p>
-                  <p className="mt-0.5 font-mono text-sm tabular-nums">
-                    {formatSigned(mlb.netUnits, 1)}u
-                  </p>
-                </div>
-                <p className="ml-auto self-end font-mono text-xs text-muted-foreground">
-                  Updated nightly
-                </p>
-              </div>
-            )}
-          </Link>
+              )}
+            </ModelEntry>
 
-          <Link
-            href="/cfb/predictions"
-            className="group -mx-3 block px-3 py-5 transition-colors hover:bg-muted/50"
-          >
-            <div className="flex items-center justify-between gap-4">
-              <div className="flex items-baseline gap-3">
-                <span className="font-heading text-lg tracking-tight group-hover:underline underline-offset-4">
-                  CFB
-                </span>
-                <StatusBadge live={cfb?.live ?? false} />
-              </div>
-              <span className="font-mono text-xs uppercase tracking-wider text-muted-foreground group-hover:text-foreground transition-colors">
-                View predictions &rarr;
-              </span>
-            </div>
-            <p className="mt-2 text-sm text-muted-foreground leading-relaxed">
-              Weekly spread, total, and moneyline predictions with frozen
-              lines, built on power ratings for every Division 1 program.
-            </p>
-            {cfb && <FootballStats headline={cfb} />}
-          </Link>
+            <ModelEntry
+              href="/cfb/predictions"
+              name="CFB"
+              live={cfb?.live ?? false}
+              cta="View predictions"
+              description="Weekly spread, total, and moneyline predictions with frozen lines, built on power ratings for every Division 1 program."
+              links={[{ href: "/cfb/heisman", label: "Heisman tracker" }]}
+            >
+              {cfb && <FootballStats headline={cfb} />}
+            </ModelEntry>
 
-          <Link
-            href="/nfl/predictions"
-            className="group -mx-3 block px-3 py-5 transition-colors hover:bg-muted/50"
-          >
-            <div className="flex items-center justify-between gap-4">
-              <div className="flex items-baseline gap-3">
-                <span className="font-heading text-lg tracking-tight group-hover:underline underline-offset-4">
-                  NFL
-                </span>
-                <StatusBadge live={nfl?.live ?? false} />
-              </div>
-              <span className="font-mono text-xs uppercase tracking-wider text-muted-foreground group-hover:text-foreground transition-colors">
-                View predictions &rarr;
-              </span>
-            </div>
-            <p className="mt-2 text-sm text-muted-foreground leading-relaxed">
-              Bayesian power ratings for all 32 teams from drive-level EPA,
-              with weekly spread and total projections priced against the
-              market.
-            </p>
-            {nfl && <FootballStats headline={nfl} />}
-          </Link>
+            <ModelEntry
+              href="/nfl/predictions"
+              name="NFL"
+              live={nfl?.live ?? false}
+              cta="View predictions"
+              description="Bayesian power ratings for all 32 teams from drive-level EPA, with weekly spread and total projections priced against the market."
+              links={[
+                { href: "/nfl/season-wins", label: "Season win projections" },
+                { href: "/nfl/awards", label: "Awards tracker" },
+              ]}
+            >
+              {nfl && <FootballStats headline={nfl} />}
+            </ModelEntry>
           </div>
 
           <div className="mt-4 grid grid-cols-1 gap-4 sm:grid-cols-2">

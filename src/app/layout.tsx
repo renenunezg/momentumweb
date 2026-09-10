@@ -3,8 +3,9 @@ import { Geist_Mono, Source_Serif_4 } from "next/font/google";
 import "./globals.css";
 import { SpeedInsights } from "@vercel/speed-insights/next";
 import { SiteAnalytics } from "@/components/site-analytics";
+import { SiteFooter } from "@/components/site-footer";
 import { ThemeProvider } from "@/components/theme-provider";
-import { SITE_DESCRIPTION, SITE_NAME, SITE_URL } from "@/lib/site";
+import { SITE_DESCRIPTION, SITE_NAME, SITE_URL, TWITTER_HANDLE } from "@/lib/site";
 
 // One text serif carries both prose and headings; Geist Mono carries numerals.
 const textSerif = Source_Serif_4({
@@ -44,7 +45,7 @@ export const metadata: Metadata = {
   },
   twitter: {
     card: "summary_large_image",
-    creator: "@nunezanalytics",
+    creator: TWITTER_HANDLE,
   },
   authors: [{ name: SITE_NAME, url: SITE_URL }],
   creator: SITE_NAME,
@@ -76,6 +77,7 @@ export default function RootLayout({
           disableTransitionOnChange
         >
           {children}
+          <SiteFooter />
           <SiteAnalytics />
           <SpeedInsights />
         </ThemeProvider>

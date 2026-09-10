@@ -3,7 +3,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import Image from "next/image";
 import Link from "next/link";
 import { JsonLd } from "@/components/json-ld";
-import { SITE_NAME, SITE_URL } from "@/lib/site";
+import { CONTACT_EMAIL, SITE_NAME, SITE_URL, SOCIAL_LINKS } from "@/lib/site";
 
 export const metadata: Metadata = {
   title: "About",
@@ -13,10 +13,8 @@ export const metadata: Metadata = {
 
 const links = [
   { label: "Resume", value: "Resume (PDF)", href: "/resume.pdf" },
-  { label: "GitHub", value: "github.com/renenunezg", href: "https://github.com/renenunezg" },
-  { label: "LinkedIn", value: "linkedin.com/in/renenunezg", href: "https://linkedin.com/in/renenunezg" },
-  { label: "Email", value: "renenunezgalaviz@gmail.com", href: "mailto:renenunezgalaviz@gmail.com" },
-  { label: "Twitter", value: "@nunezanalytics", href: "https://twitter.com/nunezanalytics" },
+  ...SOCIAL_LINKS,
+  { label: "Email", value: CONTACT_EMAIL, href: `mailto:${CONTACT_EMAIL}` },
 ];
 
 const strengths = [
