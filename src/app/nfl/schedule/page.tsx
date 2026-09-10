@@ -153,8 +153,8 @@ export default async function SchedulePage() {
                 <TableHead className="text-center">Market line</TableHead>
                 <TableHead className="text-center">Diff</TableHead>
                 <TableHead className="text-center">Proj score</TableHead>
-                <TableHead className="text-center">Market total</TableHead>
                 <TableHead className="text-center">Model total</TableHead>
+                <TableHead className="text-center">Market total</TableHead>
               </TableRow>
             </TableHeader>
             {slates.map((slate) => (
@@ -215,11 +215,11 @@ export default async function SchedulePage() {
                         {formatNumber(g.expected_away_points, 0)}&ndash;
                         {formatNumber(g.expected_home_points, 0)}
                       </TableCell>
-                      <TableCell className="text-center font-mono tabular-nums text-muted-foreground">
-                        {formatNumber(marketTotalByGame.get(g.game_id))}
-                      </TableCell>
                       <TableCell className="text-center font-mono tabular-nums">
                         {formatNumber(g.model_total)}
+                      </TableCell>
+                      <TableCell className="text-center font-mono tabular-nums text-muted-foreground">
+                        {formatNumber(marketTotalByGame.get(g.game_id))}
                       </TableCell>
                     </TableRow>
                   );
