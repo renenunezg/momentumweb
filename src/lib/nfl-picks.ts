@@ -13,7 +13,7 @@ export type NflPickMetric =
 type Summary = { metrics: NflPickMetric[]; seasons: number[] };
 type NflPickHistoryRow = Omit<NflPick, "pricing_weights">;
 const NFL_HISTORY_COLUMNS =
-  "game_id,market,season,week,start_date,home_team,away_team,model_version,forecast_as_of,home_missing_input_count,away_missing_input_count,policy_version,decision_at,published_at,status,reason,selection,side,point,price,provider,provider_key,market_fetched_at,odds_api_event_id,provider_start_date,provider_last_update,match_score,execution_eligibility_verified,win_probability,push_probability,probability_edge,expected_value_per_unit,stake_units,model_home_margin,model_total,margin_sd,total_sd,degrees_of_freedom,outcome,home_points,away_points,profit_units,graded_at,source_timestamps,data_flags,settlement_reason,result_source_at";
+  "game_id,market,season,week,start_date,home_team,away_team,model_version,forecast_as_of,home_missing_input_count,away_missing_input_count,policy_version,decision_at,published_at,status,reason,selection,side,point,price,provider,provider_key,market_fetched_at,odds_api_event_id,provider_start_date,provider_last_update,match_score,execution_eligibility_verified,win_probability,push_probability,probability_edge,expected_value_per_unit,stake_units,model_home_margin,model_total,margin_sd,total_sd,degrees_of_freedom,outcome,home_points,away_points,profit_units,graded_at,source_timestamps,data_flags,settlement_reason,result_source_at,market_total,edge_points";
 function args(filters: PickFiltersValue) {
   return {
     p_season: filters.season ?? undefined,

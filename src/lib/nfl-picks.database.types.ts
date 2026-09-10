@@ -53,6 +53,8 @@ export type NflPicksDatabase = {
           pricing_weights: Json;
           settlement_reason: string | null;
           result_source_at: string | null;
+          market_total: number | null;
+          edge_points: number | null;
     };
     Insert: Partial<NflPicksDatabase["nfl"]["Tables"]["recommendations"]["Row"]>;
     Update: Partial<NflPicksDatabase["nfl"]["Tables"]["recommendations"]["Row"]>;

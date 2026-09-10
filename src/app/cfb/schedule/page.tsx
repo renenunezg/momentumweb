@@ -197,8 +197,10 @@ export default async function SchedulePage() {
         Every college football game this week with the model&apos;s spread,
         projected score, and total next to the market. Model lines are quoted
         for the home team: a negative line means the model favors the home side.
-        Market is the best priced spread offer found when the forecast ran, or
-        the consensus spread when the best offer was a total or moneyline,
+        The published line blends the pure model with the market at a capped
+        weight; Pure is the model&apos;s own line before that blend. Market is
+        the best priced spread offer found when the forecast ran, or the
+        consensus spread when the best offer was a total or moneyline,
         converted to the same home axis.
       </p>
 
@@ -230,11 +232,13 @@ export default async function SchedulePage() {
                 <TableHead className="text-center">Time</TableHead>
                 <TableHead>Away</TableHead>
                 <TableHead>Home</TableHead>
+                <TableHead className="text-center">Pure</TableHead>
                 <TableHead className="text-center">Model line</TableHead>
-                <TableHead className="text-center">Proj score</TableHead>
                 <TableHead className="text-center">Market line</TableHead>
                 <TableHead className="text-center">Diff</TableHead>
-                <TableHead className="text-center">Total</TableHead>
+                <TableHead className="text-center">Proj score</TableHead>
+                <TableHead className="text-center">Market total</TableHead>
+                <TableHead className="text-center">Model total</TableHead>
                 <TableHead>Moneyline pick</TableHead>
                 <TableHead>Spread pick</TableHead>
                 <TableHead>Total pick</TableHead>
@@ -314,18 +318,24 @@ export default async function SchedulePage() {
                           (g.home_missing_input_count ?? 0) >= 4 && DEGRADED,
                         ]}
                       />
+                      <TableCell className="text-center font-mono tabular-nums text-muted-foreground">
+                        {formatHomeLine(g.pure_home_spread)}
+                      </TableCell>
                       <TableCell className="text-center font-mono font-semibold tabular-nums">
                         {formatHomeLine(g.home_spread)}
-                      </TableCell>
-                      <TableCell className="whitespace-nowrap text-center font-mono tabular-nums">
-                        {formatNumber(g.expected_away_points, 0)}&ndash;
-                        {formatNumber(g.expected_home_points, 0)}
                       </TableCell>
                       <TableCell className="text-center font-mono tabular-nums text-muted-foreground">
                         {marketLine != null ? formatHomeLine(marketLine) : "–"}
                       </TableCell>
                       <TableCell className="text-center font-mono tabular-nums">
                         {diff != null ? formatHomeLine(diff) : "–"}
+                      </TableCell>
+                      <TableCell className="whitespace-nowrap text-center font-mono tabular-nums">
+                        {formatNumber(g.expected_away_points, 0)}&ndash;
+                        {formatNumber(g.expected_home_points, 0)}
+                      </TableCell>
+                      <TableCell className="text-center font-mono tabular-nums text-muted-foreground">
+                        {formatNumber(picks.get(`${g.game_id}-totals`)?.market_total)}
                       </TableCell>
                       <TableCell className="text-center font-mono tabular-nums">
                         {formatNumber(g.model_total)}
@@ -344,7 +354,8 @@ export default async function SchedulePage() {
 
       <p className="max-w-4xl text-xs text-muted-foreground">
         Proj score is away&ndash;home expected points. Diff is model line minus
-        market line. Picks require qualifying probabilities, prices, and input
+        market line. Market total is the consensus total when the total pick
+        was decided. Picks require qualifying probabilities, prices, and input
         flags; a large point difference alone does not qualify. A star marks a
         team whose rating inputs are incomplete; N marks a neutral site.
       </p>

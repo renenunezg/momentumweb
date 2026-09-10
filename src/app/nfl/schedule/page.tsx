@@ -67,7 +67,7 @@ export default async function SchedulePage() {
     );
   }
 
-  const [projRes, marketRes, teams, { ratings }] = await Promise.all([
+  const [projRes, marketRes, totalRes, teams, { ratings }] = await Promise.all([
     supabaseNfl
       .from("game_projections")
       .select("*")
@@ -76,6 +76,14 @@ export default async function SchedulePage() {
       .order("start_date", { ascending: true })
       .order("game_id", { ascending: true }),
     supabaseNfl.from("market_comparisons").select("*"),
+    // The projections carry no market total; the totals decision records the
+    // consensus total it was made against.
+    supabaseNfl
+      .from("recommendations")
+      .select("game_id, market_total")
+      .eq("season", latest.season)
+      .eq("week", latest.week)
+      .eq("market", "totals"),
     fetchTeams(),
     fetchLatestRatings(),
   ]);
@@ -90,6 +98,9 @@ export default async function SchedulePage() {
       m.game_id,
       m,
     ])
+  );
+  const marketTotalByGame = new Map(
+    (totalRes.data ?? []).map((row) => [row.game_id, row.market_total])
   );
   const slates = groupFootballSlates(games, "nfl");
   const lastUpdated = games[0]?.as_of ?? null;
@@ -137,12 +148,13 @@ export default async function SchedulePage() {
                 <TableHead className="text-center">Time</TableHead>
                 <TableHead>Away</TableHead>
                 <TableHead>Home</TableHead>
-                <TableHead className="text-center">Model line</TableHead>
                 <TableHead className="text-center">Pure</TableHead>
-                <TableHead className="text-center">Proj score</TableHead>
+                <TableHead className="text-center">Model line</TableHead>
                 <TableHead className="text-center">Market line</TableHead>
                 <TableHead className="text-center">Diff</TableHead>
-                <TableHead className="text-center">Total</TableHead>
+                <TableHead className="text-center">Proj score</TableHead>
+                <TableHead className="text-center">Market total</TableHead>
+                <TableHead className="text-center">Model total</TableHead>
               </TableRow>
             </TableHeader>
             {slates.map((slate) => (
@@ -187,21 +199,24 @@ export default async function SchedulePage() {
                         rank={homeRank}
                         markers={[g.neutral_site && NEUTRAL, qbMarker(g.home_qb_adjustment)]}
                       />
-                      <TableCell className="text-center font-mono font-semibold tabular-nums">
-                        {formatHomeLine(g.home_spread)}
-                      </TableCell>
                       <TableCell className="text-center font-mono tabular-nums text-muted-foreground">
                         {formatHomeLine(g.pure_home_spread)}
                       </TableCell>
-                      <TableCell className="whitespace-nowrap text-center font-mono tabular-nums">
-                        {formatNumber(g.expected_away_points, 0)}&ndash;
-                        {formatNumber(g.expected_home_points, 0)}
+                      <TableCell className="text-center font-mono font-semibold tabular-nums">
+                        {formatHomeLine(g.home_spread)}
                       </TableCell>
                       <TableCell className="text-center font-mono tabular-nums text-muted-foreground">
                         {marketLine != null ? formatHomeLine(marketLine) : "–"}
                       </TableCell>
                       <TableCell className="text-center font-mono tabular-nums">
                         {diff != null ? formatHomeLine(diff) : "–"}
+                      </TableCell>
+                      <TableCell className="whitespace-nowrap text-center font-mono tabular-nums">
+                        {formatNumber(g.expected_away_points, 0)}&ndash;
+                        {formatNumber(g.expected_home_points, 0)}
+                      </TableCell>
+                      <TableCell className="text-center font-mono tabular-nums text-muted-foreground">
+                        {formatNumber(marketTotalByGame.get(g.game_id))}
                       </TableCell>
                       <TableCell className="text-center font-mono tabular-nums">
                         {formatNumber(g.model_total)}
@@ -217,7 +232,8 @@ export default async function SchedulePage() {
 
       <p className="max-w-4xl text-xs text-muted-foreground">
         Proj score is away&ndash;home expected points. Diff is model line minus
-        market line, and nothing here is betting advice. QB marks a projected
+        market line. Market total is the consensus total when the total pick
+        was decided, and nothing here is betting advice. QB marks a projected
         starter whose value differs meaningfully from the QB play baked into
         the team&apos;s rating; N marks a neutral site.
       </p>
