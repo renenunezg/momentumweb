@@ -15,6 +15,7 @@ export default function Filters() {
   const searchParams = useSearchParams();
 
   const team = searchParams.get("team") ?? "";
+  const market = searchParams.get("market") ?? "";
   const from = searchParams.get("from") ?? "";
   const to = searchParams.get("to") ?? "";
   const period = searchParams.get("period") ?? "7";
@@ -52,6 +53,18 @@ export default function Filters() {
             {t}
           </option>
         ))}
+      </select>
+
+      <select
+        aria-label="Filter by market"
+        value={market}
+        onChange={(e) => updateParam("market", e.target.value)}
+        className="h-8 border border-input bg-transparent px-2"
+      >
+        <option value="">All markets</option>
+        <option value="ml">Moneyline</option>
+        <option value="rl">Run line</option>
+        <option value="total">Totals</option>
       </select>
 
       <label className="flex items-center gap-1.5 text-muted-foreground">
@@ -92,7 +105,7 @@ export default function Filters() {
         ))}
       </div>
 
-      {(team || from || to) && (
+      {(team || market || from || to) && (
         <button
           type="button"
           onClick={clearAll}

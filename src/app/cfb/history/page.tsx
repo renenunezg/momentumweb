@@ -3,12 +3,18 @@ import { Notice } from "@/components/notice";
 import Link from "next/link";
 import ForecastHistory from "@/components/cfb-forecast-history";
 import { HistoryPager } from "@/components/graded-history";
-import { PickKpis, PickPolicy, PickTable } from "@/components/cfb-picks";
+import {
+  PickCountNote,
+  PickKpis,
+  PickPolicy,
+  PickTable,
+} from "@/components/cfb-picks";
 import {
   fetchCfbPickHistory,
   fetchCfbPickSummary,
   PICK_PAGE_SIZE,
   pickFilters,
+  pickHistoryCount,
   pickQuery,
   selectedPickMetric,
 } from "@/lib/cfb-picks";
@@ -48,7 +54,7 @@ export default async function HistoryPage({
     fetchCfbPickHistory(filters, page),
   ]);
   const metric = selectedPickMetric(summary.metrics, market);
-  const count = (metric?.picks ?? 0) + (metric?.no_plays ?? 0);
+  const count = pickHistoryCount(metric, market);
   const totalPages = Math.max(1, Math.ceil(count / PICK_PAGE_SIZE));
   function pageUrl(value: number) {
     const query = pickQuery(filters);
@@ -93,17 +99,14 @@ export default async function HistoryPage({
       ) : history.rows.length ? (
         <>
           <PickTable rows={history.rows} />
-          <p className="text-xs text-muted-foreground">
-            {count} recorded market decisions. No Play decisions are shown for
-            context and excluded from the pick record and ROI.
-          </p>
+          <PickCountNote count={count} market={market} metric={metric} />
           <HistoryPager page={page} totalPages={totalPages} pageUrl={pageUrl} />
         </>
       ) : (
         <Notice>
-          No recorded decisions match this selection. Recommendations will
-          appear here when the model next publishes qualifying picks or No Play
-          decisions.
+          {market === "all"
+            ? "No recorded decisions match this selection. Recommendations will appear here when the model next publishes qualifying picks or No Play decisions."
+            : "No recommended picks match this selection. No Play decisions are listed under All markets."}
         </Notice>
       )}
       <PickPolicy firstDecision={metric?.first_decision_at} />

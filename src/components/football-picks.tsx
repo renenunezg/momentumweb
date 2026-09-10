@@ -25,7 +25,38 @@ import {
   pickReason,
   type FootballPick,
   type FootballPickMetric,
+  type PickMarket,
 } from "@/lib/football-picks";
+
+export function PickCountNote({
+  count,
+  market,
+  metric,
+}: {
+  count: number;
+  market: PickMarket;
+  metric?: FootballPickMetric;
+}) {
+  const games =
+    metric?.unique_games == null
+      ? null
+      : ` ${metric.picks ?? 0} recommendations across ${metric.unique_games} unique games.`;
+  return (
+    <p className="text-xs text-muted-foreground">
+      {market === "all" ? (
+        <>
+          {count} recorded market decisions.{games} No Play decisions are shown
+          for context and excluded from the pick record and ROI.
+        </>
+      ) : (
+        <>
+          {count} recommended {MARKET_LABELS[market].toLowerCase()} picks.
+          {games} No Play decisions are listed under All markets.
+        </>
+      )}
+    </p>
+  );
+}
 
 export function PickKpis({
   metric,
@@ -107,7 +138,12 @@ export function PickTable({
         </TableHeader>
         <TableBody>
           {rows.map((pick) => (
-            <TableRow key={`${pick.game_id}-${pick.market}`}>
+            <TableRow
+              key={`${pick.game_id}-${pick.market}`}
+              // No Play rows fade so the picks carry the table, matching
+              // the MLB history treatment of rows without a pick.
+              className={cn(pick.status !== "recommended" && "[&>td]:opacity-50")}
+            >
               <TableCell className="hidden whitespace-nowrap text-xs md:table-cell">
                 <Kickoff start={pick.start_date} part="day" />
                 <div className="text-muted-foreground">

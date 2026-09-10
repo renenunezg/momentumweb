@@ -1,4 +1,5 @@
 export {
+  PickCountNote,
   PickKpis,
   PickTable,
   PickBreakdown,

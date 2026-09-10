@@ -72,14 +72,30 @@ type HistoryRow = Narrow<
 
 type BetRecord = { bet_type: string; wins: number; losses: number; pushes: number };
 
+// Keyed by the ledger's bet_type. A selected market lists only the rows where
+// that market is a play; No Play rows stay in the default All markets view.
+const MARKETS = {
+  ml: { label: "ML", play: (r: HistoryRow) => r.ev_flag !== "No Play" },
+  rl: { label: "RL", play: (r: HistoryRow) => r.run_line_ev_flag !== "No Play" },
+  total: {
+    label: "Totals",
+    play: (r: HistoryRow) => r.total_play === "Over" || r.total_play === "Under",
+  },
+} as const;
+type Market = keyof typeof MARKETS;
+
 export default async function HistoryPage({
   searchParams,
 }: {
-  searchParams: Promise<{ team?: string; from?: string; to?: string; page?: string; period?: string }>;
+  searchParams: Promise<{ team?: string; market?: string; from?: string; to?: string; page?: string; period?: string }>;
 }) {
   const params = await searchParams;
 
   const team = params.team ?? "";
+  const market: Market | "" =
+    params.market && Object.hasOwn(MARKETS, params.market)
+      ? (params.market as Market)
+      : "";
   const from = params.from ?? "";
   const to = params.to ?? "";
   const period = params.period ?? "7";
@@ -100,26 +116,47 @@ export default async function HistoryPage({
   // v2's post-cutover picks. start_time is the true chronological order;
   // date alone has no within-day granularity, and game_pk is unrelated to
   // first-pitch time, so sorting by it would scramble the daily schedule.
-  let query = supabase
-    .from("model_outputs_season_unified")
-    .select("*", { count: "exact" })
-    .order("start_time", { ascending: false })
-    .order("game_pk", { ascending: true })  // groups the two rows of a game adjacent
-    .order("team", { ascending: true })     // deterministic home/away order within a game
-    .range(offset, offset + PAGE_SIZE - 1);
+  function dated<Q extends { gte(c: "date", v: string): Q; lte(c: "date", v: string): Q }>(q: Q) {
+    if (effectiveFrom) q = q.gte("date", effectiveFrom);
+    if (to) q = q.lte("date", to);
+    return q;
+  }
+  const ordered = (count?: "exact") =>
+    dated(
+      supabase
+        .from("model_outputs_season_unified")
+        .select("*", { count })
+        .order("start_time", { ascending: false })
+        .order("game_pk", { ascending: true })  // groups the two rows of a game adjacent
+        .order("team", { ascending: true })     // deterministic home/away order within a game
+    );
+  // A side pick flags one team's row, and the opponent's row must ride along
+  // so the matchup, starter, and line stay readable. That takes two reads:
+  // the page of picked rows, then every row of those games. Total plays sit
+  // on both rows of a game, so that market pages rows directly.
+  const sidePick = market === "ml" || market === "rl";
+  let pageQuery = sidePick ? null : ordered("exact");
+  if (pageQuery) {
+    if (team) pageQuery = pageQuery.eq("team", team);
+    if (market === "total") pageQuery = pageQuery.in("total_play", ["Over", "Under"]);
+    pageQuery = pageQuery.range(offset, offset + PAGE_SIZE - 1);
+  }
+  let picksQuery = sidePick
+    ? dated(
+        supabase
+          .from("model_outputs_season_unified")
+          .select("game_pk", { count: "exact" })
+          .neq(market === "ml" ? "ev_flag" : "run_line_ev_flag", "No Play")
+          .order("start_time", { ascending: false })
+          .order("game_pk", { ascending: true })
+          .range(offset, offset + PAGE_SIZE - 1)
+      )
+    : null;
+  if (picksQuery && team) picksQuery = picksQuery.eq("team", team);
 
-  if (team) {
-    query = query.eq("team", team);
-  }
-  if (effectiveFrom) {
-    query = query.gte("date", effectiveFrom);
-  }
-  if (to) {
-    query = query.lte("date", to);
-  }
-
-  const [{ data: rows, count, error }, { data: recordRows }, { data: latest }, { data: firstV2GameRows }] = await Promise.all([
-    query,
+  const [pageRes, picked, { data: recordRows }, { data: latest }, { data: firstV2GameRows }] = await Promise.all([
+    pageQuery,
+    picksQuery,
     // Win/loss record aggregated in the database: one tiny response instead
     // of paging the full bet ledger view across sequential requests.
     supabase.rpc("bet_record_summary", {
@@ -138,30 +175,28 @@ export default async function HistoryPage({
       .order("start_time", { ascending: true })
       .limit(1),
   ]);
+  const pickedGames = [...new Set((picked?.data ?? []).map((r) => r.game_pk))];
+  const gamesRes = pickedGames.length
+    ? await ordered().in("game_pk", pickedGames)
+    : null;
+  const rows = pageRes?.data ?? gamesRes?.data;
+  const error = pageRes?.error ?? picked?.error ?? gamesRes?.error;
+  const totalRows = pageRes?.count ?? picked?.count ?? 0;
 
   const firstV2GamePk: number | null = firstV2GameRows?.[0]?.game_pk ?? null;
 
   const lastUpdated: string | null = latest?.[0]?.updated_at ?? null;
 
   const predictions = (rows ?? []) as HistoryRow[];
-  const totalRows = count ?? 0;
   const totalPages = Math.max(1, Math.ceil(totalRows / PAGE_SIZE));
 
-  let mlWins = 0, mlLosses = 0;
-  let rlWins = 0, rlLosses = 0;
-  let totalsWins = 0, totalsLosses = 0, totalsPushes = 0;
+  const records: Record<Market, { wins: number; losses: number; pushes: number }> = {
+    ml: { wins: 0, losses: 0, pushes: 0 },
+    rl: { wins: 0, losses: 0, pushes: 0 },
+    total: { wins: 0, losses: 0, pushes: 0 },
+  };
   for (const r of (recordRows ?? []) as BetRecord[]) {
-    if (r.bet_type === "ml") {
-      mlWins = r.wins;
-      mlLosses = r.losses;
-    } else if (r.bet_type === "rl") {
-      rlWins = r.wins;
-      rlLosses = r.losses;
-    } else if (r.bet_type === "total") {
-      totalsWins = r.wins;
-      totalsLosses = r.losses;
-      totalsPushes = r.pushes;
-    }
+    if (Object.hasOwn(records, r.bet_type)) records[r.bet_type as Market] = r;
   }
 
   // Pushes are bets with zero P&L: shown as a third number, excluded from the
@@ -178,6 +213,7 @@ export default async function HistoryPage({
   function pageUrl(p: number) {
     const sp = new URLSearchParams();
     if (team) sp.set("team", team);
+    if (market) sp.set("market", market);
     if (from) sp.set("from", from);
     if (to) sp.set("to", to);
     if (period) sp.set("period", period);
@@ -205,24 +241,28 @@ export default async function HistoryPage({
 
       {/* Record Summary */}
       <div className="flex flex-wrap items-center gap-4 font-mono text-sm">
-        <div className="flex items-center gap-2">
-          <span className="text-muted-foreground">ML:</span>
-          <span className={cn("font-semibold", mlWins + mlLosses > 0 && mlWins > mlLosses ? "text-positive" : mlWins < mlLosses ? "text-negative" : "")}>
-            {fmtRecord(mlWins, mlLosses)}
-          </span>
-        </div>
-        <div className="flex items-center gap-2">
-          <span className="text-muted-foreground">RL:</span>
-          <span className={cn("font-semibold", rlWins + rlLosses > 0 && rlWins > rlLosses ? "text-positive" : rlWins < rlLosses ? "text-negative" : "")}>
-            {fmtRecord(rlWins, rlLosses)}
-          </span>
-        </div>
-        <div className="flex items-center gap-2">
-          <span className="text-muted-foreground">Totals:</span>
-          <span className={cn("font-semibold", totalsWins + totalsLosses > 0 && totalsWins > totalsLosses ? "text-positive" : totalsWins < totalsLosses ? "text-negative" : "")}>
-            {fmtRecord(totalsWins, totalsLosses, totalsPushes)}
-          </span>
-        </div>
+        {(Object.keys(MARKETS) as Market[])
+          .filter((m) => !market || m === market)
+          .map((m) => {
+            const { wins, losses, pushes } = records[m];
+            return (
+              <div key={m} className="flex items-center gap-2">
+                <span className="text-muted-foreground">{MARKETS[m].label}:</span>
+                <span
+                  className={cn(
+                    "font-semibold",
+                    wins + losses > 0 && wins > losses
+                      ? "text-positive"
+                      : wins < losses
+                        ? "text-negative"
+                        : ""
+                  )}
+                >
+                  {fmtRecord(wins, losses, pushes)}
+                </span>
+              </div>
+            );
+          })}
       </div>
 
       {error ? (
@@ -262,6 +302,8 @@ export default async function HistoryPage({
                   : -1;
                 return predictions.map((row, i) => {
                 const nextRow = predictions[i + 1];
+                // The date reads once per game, on the pair's top row.
+                const sameGameAbove = predictions[i - 1]?.game_pk === row.game_pk;
                 const showV2Badge = i === firstV2Idx;
                 const isFinal = row.game_status === "Final";
                 const isHome = row.home_team === row.team;
@@ -270,13 +312,15 @@ export default async function HistoryPage({
                 const won = isFinal && teamScore != null && oppScore != null
                   ? teamScore > oppScore
                   : null;
-                const hasPlay =
-                  row.ev_flag !== "No Play" || row.run_line_ev_flag !== "No Play";
-
-                const mlIsPlay = row.ev_flag !== "No Play";
-                const rlIsPlay = row.run_line_ev_flag !== "No Play";
+                const mlIsPlay = MARKETS.ml.play(row);
+                const rlIsPlay = MARKETS.rl.play(row);
+                // A total belongs to the game, not a side, and the view stamps
+                // it on both rows. It renders on the pair's first row only:
+                // rows sort by team, so that is the alphabetically first club,
+                // a rule that holds even when a pair splits across pages.
+                const opponent = isHome ? row.away_team : row.home_team;
                 const totalsIsPlay =
-                  row.total_play === "Over" || row.total_play === "Under";
+                  MARKETS.total.play(row) && (opponent == null || row.team < opponent);
 
                 const mlWon: boolean | null =
                   mlIsPlay && won !== null ? won : null;
@@ -311,6 +355,22 @@ export default async function HistoryPage({
                     : actual < book;
                 })();
 
+                // With a market selected the row is colored by that market's
+                // result. Under All markets each pick cell carries its own
+                // color and the row stays neutral, so a team that won but did
+                // not cover reads green on ML and red on RL. Rows with nothing
+                // played fade: the opponent of a side pick, or a game with no
+                // pick at all.
+                const played = {
+                  ml: { isPlay: mlIsPlay, won: mlWon },
+                  rl: { isPlay: rlIsPlay, won: rlWon },
+                  total: { isPlay: totalsIsPlay, won: totalsWon },
+                };
+                const rowWon = market ? played[market].won : null;
+                const faded = market
+                  ? !played[market].isPlay
+                  : !(mlIsPlay || rlIsPlay || totalsIsPlay);
+
                 const cellClass = (outcome: boolean | null, isPlay: boolean) => {
                   if (!isPlay) return "text-muted-foreground";
                   if (outcome === true) return "text-positive font-semibold";
@@ -322,14 +382,20 @@ export default async function HistoryPage({
                 <TableRow
                   key={`${row.game_pk}-${row.team}`}
                   className={cn(
-                    // Suppress the divider between the two rows of the same game
-                    nextRow?.game_pk === row.game_pk && "border-b-0",
-                    hasPlay && won === true && "text-positive",
-                    hasPlay && won === false && "text-negative"
+                    // No rule between a game's two rows; a heavier one
+                    // after the pair keeps each game's rows paired.
+                    nextRow?.game_pk === row.game_pk
+                      ? "border-b-0"
+                      : "border-b-2 border-b-rule-strong",
+                    rowWon === true && "text-positive",
+                    rowWon === false && "text-negative",
+                    // Fade the cells, not the row, so the game rule keeps
+                    // its weight under an unpicked game.
+                    faded && "[&>td]:opacity-50"
                   )}
                 >
                   <TableCell>
-                    {formatDate(row.date)}
+                    {sameGameAbove ? null : formatDate(row.date)}
                     {showV2Badge ? <V2Badge /> : null}
                   </TableCell>
                   <TeamCell team={row.team} />
@@ -346,7 +412,7 @@ export default async function HistoryPage({
                       <span
                         className={cn(
                           "font-semibold",
-                          won ? "text-positive" : "text-negative"
+                          !faded && (won ? "text-positive" : "text-negative")
                         )}
                       >
                         {won ? "W" : "L"}
@@ -381,7 +447,7 @@ export default async function HistoryPage({
           <div className="flex items-center justify-between pt-2">
             <p className="text-sm text-muted-foreground">
               Showing {offset + 1}-{Math.min(offset + PAGE_SIZE, totalRows)} of{" "}
-              {totalRows} rows
+              {totalRows} {sidePick ? "picks" : "rows"}
             </p>
             <div className="flex items-center gap-2">
               {page > 1 ? (

@@ -110,7 +110,8 @@ export function PickFilters({
       </div>
       <p className="w-full text-xs text-muted-foreground">
         Date range uses the date a decision was recorded (UTC), including
-        pending games. Applies to records and history.
+        pending games. Applies to records and history. Choosing a market lists
+        its recommended picks only; No Play decisions appear under All markets.
       </p>
     </form>
   );

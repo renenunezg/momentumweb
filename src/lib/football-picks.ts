@@ -106,6 +106,25 @@ export function pickQuery(filters: PickFiltersValue): URLSearchParams {
   });
 }
 
+// A market selection lists recommended picks only; No Play decisions are
+// context for the default All markets view. Both sport tables share these
+// columns, so one match object serves either typed client.
+export function pickHistoryMatch(filters: PickFiltersValue) {
+  return {
+    ...(filters.season !== null ? { season: filters.season } : {}),
+    ...(filters.market !== "all"
+      ? { market: filters.market, status: "recommended" }
+      : {}),
+  };
+}
+
+export function pickHistoryCount(
+  metric: FootballPickMetric | undefined,
+  market: PickMarket,
+) {
+  return (metric?.picks ?? 0) + (market === "all" ? (metric?.no_plays ?? 0) : 0);
+}
+
 export function selectedPickMetric(
   metrics: FootballPickMetric[],
   market: PickMarket,

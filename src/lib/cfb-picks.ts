@@ -8,6 +8,7 @@ export type CfbPickMetric =
 import { fetchTeams } from "@/lib/cfb";
 import {
   PICK_PAGE_SIZE,
+  pickHistoryMatch,
   teamBadge,
   type PickFiltersValue,
   type WeeklyGame,
@@ -137,12 +138,11 @@ export async function fetchCfbPickHistory(
   let query = supabaseCfb
     .from("recommendations")
     .select("*")
+    .match(pickHistoryMatch(filters))
     .order("decision_at", { ascending: false })
     .order("game_id", { ascending: true })
     .order("market", { ascending: true })
     .range((page - 1) * PICK_PAGE_SIZE, page * PICK_PAGE_SIZE - 1);
-  if (filters.season !== null) query = query.eq("season", filters.season);
-  if (filters.market !== "all") query = query.eq("market", filters.market);
   if (filters.from) query = query.gte("decision_at", filters.from);
   const { data, error } = await query;
   return { rows: (data ?? []) as CfbPick[], unavailable: Boolean(error) };

@@ -3,10 +3,17 @@ import { Notice } from "@/components/notice";
 import Link from "next/link";
 import ForecastHistory from "@/components/nfl-forecast-history";
 import { HistoryPager } from "@/components/graded-history";
-import { PickKpis, PickPolicy, PickTable } from "@/components/football-picks";
+import {
+  PickCountNote,
+  PickKpis,
+  PickPolicy,
+  PickTable,
+} from "@/components/football-picks";
 import {
   fetchNflPickHistory,
+  PICK_PAGE_SIZE,
   pickFilters,
+  pickHistoryCount,
   pickQuery,
   selectedPickMetric,
 } from "@/lib/nfl-picks";
@@ -48,8 +55,8 @@ export default async function HistoryPage({
   const page = pageNumber(params.page);
   const history = await fetchNflPickHistory(filters, page);
   const metric = selectedPickMetric(history.metrics, market);
-  const count = history.count;
-  const totalPages = history.total_pages;
+  const count = pickHistoryCount(metric, market);
+  const totalPages = Math.max(1, Math.ceil(count / PICK_PAGE_SIZE));
   function pageUrl(value: number) {
     const query = pickQuery(filters);
     query.set("page", String(value));
@@ -94,19 +101,14 @@ export default async function HistoryPage({
       ) : history.rows.length ? (
         <>
           <PickTable rows={history.rows} caption="Recorded NFL decisions" />
-          <p className="text-xs text-muted-foreground">
-            {count} recorded market decisions. {metric?.picks ?? 0}{" "}
-            recommendations across {metric?.unique_games ?? 0} unique games. No
-            Play decisions are shown for context and excluded from the pick
-            record and ROI.
-          </p>
+          <PickCountNote count={count} market={market} metric={metric} />
           <HistoryPager page={page} totalPages={totalPages} pageUrl={pageUrl} />
         </>
       ) : (
         <Notice>
-          No recorded decisions match this selection. Recommendations will
-          appear here when the model next publishes qualifying picks or No Play
-          decisions.
+          {market === "all"
+            ? "No recorded decisions match this selection. Recommendations will appear here when the model next publishes qualifying picks or No Play decisions."
+            : "No recommended picks match this selection. No Play decisions are listed under All markets."}
         </Notice>
       )}
       <PickPolicy sport="nfl" firstDecision={metric?.first_decision_at} />
