@@ -1,6 +1,6 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { liveKey, pollPlan, type LiveGame } from "./football-live.ts";
+import { fieldGeometry, liveKey, pollPlan, type LiveGame } from "./football-live.ts";
 
 const MIN = 60_000;
 const game = (over: Partial<LiveGame>): LiveGame => ({
@@ -14,6 +14,8 @@ const game = (over: Partial<LiveGame>): LiveGame => ({
   detail: null,
   possession: null,
   situation: null,
+  yard_line: null,
+  distance: null,
   ...over,
 });
 
@@ -64,4 +66,18 @@ test("the provider's moved kickoff replaces the published one", () => {
   const plan = pollPlan(refs, moved, true, now);
   assert.equal(plan.action, "wait");
   assert.ok(plan.action === "wait" && plan.delay === 3 * 60 * MIN - 5 * MIN);
+});
+
+test("the field strip puts the ball on the provider's absolute yard line and points the offense the right way", () => {
+  // Rams (home) at their own 26: near the home end zone on the right, driving left.
+  const home = fieldGeometry(
+    game({ state: "in", possession: "home", yard_line: 26, distance: 7 }),
+  );
+  assert.deepEqual(home, { ball: 74, lineToGain: 67, direction: -1 });
+  // 49ers (away) at their own 39 is 61 from the home goal line, driving right.
+  const away = fieldGeometry(
+    game({ state: "in", possession: "away", yard_line: 61, distance: 10 }),
+  );
+  assert.deepEqual(away, { ball: 39, lineToGain: 49, direction: 1 });
+  assert.equal(fieldGeometry(game({ state: "post", yard_line: 26 })), null);
 });

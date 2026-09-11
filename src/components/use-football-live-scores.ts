@@ -3,6 +3,7 @@
 import { useEffect, useState, type RefObject } from "react";
 import type { FootballLeague } from "@/lib/football-slates";
 import {
+  fieldSvg,
   liveGameKey,
   liveLines,
   pollPlan,
@@ -10,6 +11,7 @@ import {
   POLL_MS,
   type LiveGame,
   type LiveGameRef,
+  type PollPlan,
 } from "@/lib/football-live";
 
 // One poll loop per page. It reads the scoreboard only when a game the page
@@ -34,6 +36,11 @@ export function useFootballLiveScores(
     if (!dates) return;
     let cancelled = false;
     let fetched = false;
+    // Development only: /cfb/schedule?simulate=1 asks the route for moving
+    // synthetic states and polls regardless of kickoffs.
+    const simulate =
+      process.env.NODE_ENV !== "production" &&
+      new URLSearchParams(window.location.search).get("simulate") === "1";
     let timer: ReturnType<typeof setTimeout> | null = null;
     // A visibility change during an in-flight read starts a fresh tick; the
     // older one must not schedule a second chain when its read returns.
@@ -43,9 +50,12 @@ export function useFootballLiveScores(
 
     async function fetchOnce() {
       try {
-        const res = await fetch(`/${league}/api/live-scores?dates=${dates}`, {
-          cache: "no-store",
-        });
+        const res = await fetch(
+          `/${league}/api/live-scores?dates=${dates}${simulate ? "&simulate=1" : ""}`,
+          {
+            cache: "no-store",
+          },
+        );
         if (!res.ok) return;
         const data = (await res.json()) as { games?: LiveGame[] };
         if (cancelled || !data.games) return;
@@ -65,7 +75,9 @@ export function useFootballLiveScores(
     async function tick() {
       clear();
       if (cancelled || document.visibilityState !== "visible") return;
-      const plan = pollPlan(refs, current, fetched, Date.now());
+      const plan: PollPlan = simulate
+        ? { action: "poll" }
+        : pollPlan(refs, current, fetched, Date.now());
       if (plan.action === "stop") return;
       if (plan.action === "wait") {
         timer = setTimeout(tick, plan.delay);
@@ -104,9 +116,10 @@ function readRows(container: RefObject<HTMLElement | null>): LiveGameRef[] {
 }
 
 const LINE_CLASSES = {
-  score: "font-mono text-lg font-bold leading-tight tabular-nums text-foreground",
-  detail: "font-mono text-xs uppercase tracking-wider",
-  situation: "text-xs text-muted-foreground",
+  score: "font-mono text-base font-bold leading-tight tabular-nums text-foreground",
+  detail: "font-mono text-[11px] uppercase tracking-wider",
+  situation: "text-[11px] text-muted-foreground",
+  field: "mt-0.5 h-2 w-24 text-muted-foreground",
 } as const;
 
 // Server-rendered schedule rows carry data-live keys; the scoreboard is
@@ -130,6 +143,10 @@ export function useLiveScoreRows(
       const time = row.querySelector<HTMLTimeElement>('time[data-kickoff="time"]');
       if (!lines || !time) continue;
       let block = row.querySelector<HTMLElement>("[data-live-block]");
+      if (block && block.childElementCount !== Object.keys(LINE_CLASSES).length) {
+        block.remove();
+        block = null;
+      }
       if (!block) {
         block = document.createElement("span");
         block.dataset.liveBlock = "";
@@ -144,11 +161,15 @@ export function useLiveScoreRows(
         time.after(block);
         time.hidden = true;
       }
-      for (const part of Object.keys(LINE_CLASSES) as (keyof typeof LINE_CLASSES)[]) {
+      for (const part of ["score", "detail", "situation"] as const) {
         const span = block.querySelector<HTMLElement>(`[data-live-part="${part}"]`)!;
         span.textContent = lines[part] ?? "";
         span.hidden = !lines[part];
       }
+      const field = block.querySelector<HTMLElement>('[data-live-part="field"]')!;
+      const svg = fieldSvg(game!);
+      field.innerHTML = svg ?? "";
+      field.hidden = !svg;
       block
         .querySelector<HTMLElement>('[data-live-part="detail"]')!
         .classList.toggle("text-positive", game!.state === "in");

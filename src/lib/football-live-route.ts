@@ -31,7 +31,12 @@ interface EspnEvent {
   competitions?: {
     status?: { type?: { state?: string; shortDetail?: string } };
     competitors?: EspnCompetitor[];
-    situation?: { possession?: string; downDistanceText?: string };
+    situation?: {
+      possession?: string;
+      downDistanceText?: string;
+      yardLine?: number;
+      distance?: number;
+    };
   }[];
 }
 
@@ -73,9 +78,51 @@ export function parseScoreboard(payload: unknown): LiveGame[] {
               : null,
       situation:
         state === "in" ? (competition?.situation?.downDistanceText ?? null) : null,
+      yard_line: state === "in" ? (competition?.situation?.yardLine ?? null) : null,
+      distance: state === "in" ? (competition?.situation?.distance ?? null) : null,
     });
   }
   return games;
+}
+
+const ORDINAL = ["1st", "2nd", "3rd", "4th"];
+
+// Development only: turns the week's real scoreboard into a moving picture
+// so the live blocks can be checked when nothing is being played. Every
+// fifth game is a final; the rest advance their clock, score, possession and
+// field position on a fixed cycle from the wall clock.
+export function simulateScoreboard(games: LiveGame[], nowSeconds: number): LiveGame[] {
+  return games.map((game, index) => {
+    const seed = Number(game.id.slice(-3)) || index;
+    if (index % 5 === 0)
+      return {
+        ...game,
+        state: "post",
+        home_score: 14 + (seed % 4) * 7,
+        away_score: 10 + (seed % 3) * 7,
+        detail: seed % 2 ? "Final" : "Final/OT",
+      };
+    const t = nowSeconds + seed * 37;
+    const period = 1 + Math.floor((t / 90) % 4);
+    const clock = 900 - (t % 90) * 10;
+    const possession = Math.floor(t / 45) % 2 === 0 ? "home" : "away";
+    const yardLine = (t * 2 + seed) % 100;
+    const distance = 1 + ((t + seed) % 10);
+    const down = 1 + (Math.floor(t / 15) % 4);
+    const spot =
+      yardLine <= 50 ? `${game.home} ${yardLine}` : `${game.away} ${100 - yardLine}`;
+    return {
+      ...game,
+      state: "in",
+      home_score: 7 * Math.floor(((t + seed) % 3600) / 400) + (seed % 3),
+      away_score: 7 * Math.floor(((t + seed * 3) % 3600) / 500),
+      detail: `${Math.floor(clock / 60)}:${String(clock % 60).padStart(2, "0")} - ${ORDINAL[period - 1]}`,
+      possession,
+      situation: `${ORDINAL[down - 1]} & ${distance} at ${spot}`,
+      yard_line: yardLine,
+      distance,
+    };
+  });
 }
 
 function spanDays(dates: string) {
@@ -86,7 +133,10 @@ function spanDays(dates: string) {
 
 export function liveScoresRoute(league: FootballLeague) {
   return async function GET(request: Request) {
-    const dates = new URL(request.url).searchParams.get("dates") ?? "";
+    const params = new URL(request.url).searchParams;
+    const dates = params.get("dates") ?? "";
+    const simulate =
+      process.env.NODE_ENV !== "production" && params.get("simulate") === "1";
     const span = /^\d{8}-\d{8}$/.test(dates) ? spanDays(dates) : NaN;
     if (!(span >= 0 && span <= MAX_SPAN_DAYS))
       return NextResponse.json({ error: "dates must be YYYYMMDD-YYYYMMDD" }, { status: 400 });
@@ -104,7 +154,10 @@ export function liveScoresRoute(league: FootballLeague) {
         }),
       );
       // A game between an FBS and an FCS team is listed under both groups.
-      const games = [...new Map(pages.flat().map((g) => [g.id, g])).values()];
+      const merged = [...new Map(pages.flat().map((g) => [g.id, g])).values()];
+      const games = simulate
+        ? simulateScoreboard(merged, Math.floor(Date.now() / 1000))
+        : merged;
       return NextResponse.json(
         { games, fetched_at: new Date().toISOString() },
         { headers: { "Cache-Control": "public, s-maxage=15, stale-while-revalidate=15" } },

@@ -21,6 +21,10 @@ export interface LiveGame {
   possession: "home" | "away" | null;
   // "2nd & 7 at LAR 26"
   situation: string | null;
+  // The provider's absolute yard line, 0 at the home goal line and 100 at
+  // the away goal line, whichever side has the ball.
+  yard_line: number | null;
+  distance: number | null;
 }
 
 export interface LiveGameRef {
@@ -98,6 +102,54 @@ export function scoreboardDates(refs: LiveGameRef[]): string | null {
   const stamp = (at: number) =>
     new Date(at).toISOString().slice(0, 10).replaceAll("-", "");
   return `${stamp(Math.min(...starts) - day)}-${stamp(Math.max(...starts) + day)}`;
+}
+
+export interface FieldGeometry {
+  // Ball and line-to-gain positions in field units, 0 at the away goal line
+  // (drawn on the left) and 100 at the home goal line.
+  ball: number;
+  lineToGain: number | null;
+  // +1 when the offense drives toward the home goal line on the right.
+  direction: 1 | -1;
+}
+
+export function fieldGeometry(game: LiveGame): FieldGeometry | null {
+  if (game.state !== "in" || game.possession == null || game.yard_line == null)
+    return null;
+  const clamp = (v: number) => Math.min(100, Math.max(0, v));
+  const ball = clamp(100 - game.yard_line);
+  const direction = game.possession === "away" ? 1 : -1;
+  const lineToGain =
+    game.distance != null ? clamp(ball + direction * game.distance) : null;
+  return { ball, lineToGain, direction };
+}
+
+// A 12:1 strip: both end zones, a tick every ten yards, the line to gain, and
+// a triangle sitting on the ball and pointing the way the offense is going.
+export function fieldSvg(game: LiveGame): string | null {
+  const field = fieldGeometry(game);
+  if (!field) return null;
+  const x = 10 + field.ball;
+  const ticks = [20, 30, 40, 50, 60, 70, 80, 90, 100]
+    .map(
+      (at) =>
+        `<line x1="${at}" y1="0" x2="${at}" y2="10" stroke="currentColor" stroke-opacity="${at === 60 ? 0.5 : 0.18}"/>`,
+    )
+    .join("");
+  const lineToGain =
+    field.lineToGain != null
+      ? `<line x1="${10 + field.lineToGain}" y1="0" x2="${10 + field.lineToGain}" y2="10" stroke="currentColor" stroke-width="1"/>`
+      : "";
+  return (
+    `<svg viewBox="0 0 120 10" aria-hidden="true">` +
+    `<rect x="0" y="0" width="10" height="10" fill="currentColor" opacity="0.35"/>` +
+    `<rect x="110" y="0" width="10" height="10" fill="currentColor" opacity="0.35"/>` +
+    `<rect x="10" y="0.5" width="100" height="9" fill="none" stroke="currentColor" stroke-opacity="0.5"/>` +
+    ticks +
+    lineToGain +
+    `<polygon points="${x},1 ${x},9 ${x + field.direction * 5},5" fill="var(--positive)"/>` +
+    `</svg>`
+  );
 }
 
 export interface LiveLines {

@@ -21,7 +21,7 @@ import {
   type WeeklyPick,
 } from "@/lib/football-picks";
 import { cn, formatOdds, formatSigned, formatPct } from "@/lib/utils";
-import { liveKey, liveLines, type LiveGame } from "@/lib/football-live";
+import { fieldSvg, liveKey, liveLines, type LiveGame } from "@/lib/football-live";
 import { useFootballLiveScores } from "@/components/use-football-live-scores";
 
 const MARKETS = [
@@ -224,6 +224,7 @@ function GamePredictions({
 }) {
   const rows = game.rows;
   const lines = live ? liveLines(live) : null;
+  const field = live ? fieldSvg(live) : null;
   const ordered = [...rows].sort(
     (a, b) =>
       ORDER[a.market as keyof typeof ORDER] -
@@ -270,13 +271,13 @@ function GamePredictions({
             aria-live="polite"
             className="flex shrink-0 flex-col items-end gap-0.5 text-xs text-muted-foreground"
           >
-            <span className="font-mono text-2xl font-bold leading-tight tabular-nums text-foreground">
+            <span className="font-mono text-lg font-bold leading-tight tabular-nums text-foreground">
               {lines.score}
             </span>
             {lines.detail && (
               <span
                 className={cn(
-                  "font-mono text-xs uppercase tracking-wider",
+                  "font-mono text-[11px] uppercase tracking-wider",
                   live?.state === "in" && "text-positive",
                 )}
               >
@@ -284,7 +285,14 @@ function GamePredictions({
               </span>
             )}
             {lines.situation && (
-              <span className="text-xs">{lines.situation}</span>
+              <span className="text-[11px]">{lines.situation}</span>
+            )}
+            {field && (
+              <span
+                className="mt-0.5 h-2 w-24 text-muted-foreground"
+                // Our own SVG built from numbers only; see fieldSvg.
+                dangerouslySetInnerHTML={{ __html: field }}
+              />
             )}
           </p>
         ) : (
