@@ -115,12 +115,19 @@ function readRows(container: RefObject<HTMLElement | null>): LiveGameRef[] {
   });
 }
 
-const LINE_CLASSES = {
+const PARTS = {
   score: "font-mono text-base font-bold leading-tight tabular-nums text-foreground",
   detail: "font-mono text-[11px] uppercase tracking-wider",
   situation: "text-[11px] text-muted-foreground",
-  field: "mt-0.5 h-2 w-24 text-muted-foreground",
+  field: "h-2 w-24 shrink-0 text-muted-foreground",
 } as const;
+// Two lines rather than four: score with the clock, then the situation with
+// the field strip beside it, so a live row stays close to a pregame row's
+// height at the cost of a wider kickoff column.
+const LINES: (keyof typeof PARTS)[][] = [
+  ["score", "detail"],
+  ["situation", "field"],
+];
 
 // Server-rendered schedule rows carry data-live keys; the scoreboard is
 // written into their kickoff cells in place, so a 170 row table never
@@ -143,7 +150,7 @@ export function useLiveScoreRows(
       const time = row.querySelector<HTMLTimeElement>('time[data-kickoff="time"]');
       if (!lines || !time) continue;
       let block = row.querySelector<HTMLElement>("[data-live-block]");
-      if (block && block.childElementCount !== Object.keys(LINE_CLASSES).length) {
+      if (block && block.querySelectorAll("[data-live-part]").length !== 4) {
         block.remove();
         block = null;
       }
@@ -152,27 +159,31 @@ export function useLiveScoreRows(
         block.dataset.liveBlock = "";
         block.className = "flex flex-col items-center gap-0.5";
         block.setAttribute("aria-live", "polite");
-        for (const part of Object.keys(LINE_CLASSES) as (keyof typeof LINE_CLASSES)[]) {
-          const span = document.createElement("span");
-          span.dataset.livePart = part;
-          span.className = LINE_CLASSES[part];
-          block.append(span);
+        for (const parts of LINES) {
+          const line = document.createElement("span");
+          line.className = "flex items-center justify-center gap-1.5 whitespace-nowrap";
+          for (const part of parts) {
+            const span = document.createElement("span");
+            span.dataset.livePart = part;
+            span.className = PARTS[part];
+            line.append(span);
+          }
+          block.append(line);
         }
         time.after(block);
         time.hidden = true;
       }
-      for (const part of ["score", "detail", "situation"] as const) {
-        const span = block.querySelector<HTMLElement>(`[data-live-part="${part}"]`)!;
-        span.textContent = lines[part] ?? "";
-        span.hidden = !lines[part];
+      const part = (name: keyof typeof PARTS) =>
+        block.querySelector<HTMLElement>(`[data-live-part="${name}"]`)!;
+      for (const name of ["score", "detail", "situation"] as const) {
+        part(name).textContent = lines[name] ?? "";
+        part(name).hidden = !lines[name];
       }
-      const field = block.querySelector<HTMLElement>('[data-live-part="field"]')!;
+      part("detail").classList.toggle("text-positive", game!.state === "in");
       const svg = fieldSvg(game!);
-      field.innerHTML = svg ?? "";
-      field.hidden = !svg;
-      block
-        .querySelector<HTMLElement>('[data-live-part="detail"]')!
-        .classList.toggle("text-positive", game!.state === "in");
+      part("field").innerHTML = svg ?? "";
+      part("field").hidden = !svg;
+      (part("situation").parentElement as HTMLElement).hidden = !lines.situation && !svg;
     }
   }, [container, live]);
 }
