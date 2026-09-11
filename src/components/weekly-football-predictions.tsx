@@ -25,7 +25,6 @@ import {
   FOOTBALL_SVG,
   fieldSvg,
   liveKey,
-  liveLines,
   type LiveGame,
 } from "@/lib/football-live";
 import { useFootballLiveScores } from "@/components/use-football-live-scores";
@@ -229,7 +228,7 @@ function GamePredictions({
   live: LiveGame | undefined;
 }) {
   const rows = game.rows;
-  const lines = live ? liveLines(live) : null;
+  const started = live != null && live.state !== "pre";
   const field = live ? fieldSvg(live) : null;
   const ordered = [...rows].sort(
     (a, b) =>
@@ -237,9 +236,9 @@ function GamePredictions({
       ORDER[b.market as keyof typeof ORDER],
   );
   const teams = [
-    { name: game.away_team, team: game.away },
-    { name: game.home_team, team: game.home },
-  ];
+    { side: "away", name: game.away_team, team: game.away },
+    { side: "home", name: game.home_team, team: game.home },
+  ] as const;
   return (
     <Card
       role="article"
@@ -249,7 +248,7 @@ function GamePredictions({
     >
       <CardHeader className="flex flex-wrap items-center justify-between gap-x-5 gap-y-1 bg-muted/35 py-2">
         <h3 className="flex min-w-0 flex-col gap-1 font-heading text-base leading-snug tracking-tight sm:flex-row sm:flex-wrap sm:items-center sm:gap-2">
-          {teams.map(({ name, team }, index) => (
+          {teams.map(({ side, name, team }, index) => (
             <span key={index} className="flex min-w-0 items-center gap-3">
               {index === 1 && (
                 <span className="w-4 shrink-0 font-sans text-xs text-muted-foreground">
@@ -269,36 +268,38 @@ function GamePredictions({
                 />
                 <span>{name}</span>
               </span>
+              {started && (
+                <span className="flex items-center gap-1.5 font-mono text-base font-bold tabular-nums">
+                  {live.state === "in" && live.possession === side && (
+                    <span
+                      className="inline-block h-[18px] w-[18px]"
+                      // Our own SVG, no external content; see FOOTBALL_SVG.
+                      dangerouslySetInnerHTML={{ __html: FOOTBALL_SVG }}
+                    />
+                  )}
+                  {live[`${side}_score`] ?? 0}
+                </span>
+              )}
             </span>
           ))}
         </h3>
-        {lines ? (
+        {started ? (
           <p
             aria-live="polite"
             className="flex shrink-0 flex-col items-end gap-0.5 text-xs text-muted-foreground"
           >
-            <span className="font-mono text-lg font-bold leading-tight tabular-nums text-foreground">
-              {lines.score}
-            </span>
-            {lines.detail && (
+            {live.detail && (
               <span
                 className={cn(
                   "font-mono text-[11px] uppercase tracking-wider",
-                  live?.state === "in" && "text-positive",
+                  live.state === "in" && "text-positive",
                 )}
               >
-                {lines.detail}
+                {live.detail}
               </span>
             )}
-            {lines.situation && (
-              <span className="flex items-center gap-1 text-[11px]">
-                <span
-                  className="inline-block h-[18px] w-[18px]"
-                  // Our own SVG, no external content; see FOOTBALL_SVG.
-                  dangerouslySetInnerHTML={{ __html: FOOTBALL_SVG }}
-                />
-                {lines.situation}
-              </span>
+            {live.state === "in" && live.situation && (
+              <span className="text-[11px]">{live.situation}</span>
             )}
             {field && (
               <span

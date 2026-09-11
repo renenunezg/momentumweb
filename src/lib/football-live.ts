@@ -160,32 +160,3 @@ export const FOOTBALL_SVG =
   `<ellipse cx="8" cy="8" rx="7.4" ry="4.4" fill="var(--positive)"/>` +
   `<path d="M4.5 8h7M6 6.5v3M8 6.5v3M10 6.5v3" stroke="var(--background)" stroke-width="1.4" fill="none"/>` +
   `</g></svg>`;
-
-export interface LiveLines {
-  score: string;
-  detail: string | null;
-  // The abbreviation of the side with the ball, when a side has it.
-  holder: string | null;
-  situation: string | null;
-}
-
-// The lines a live or finished game shows in place of its kickoff time: the
-// away-home score (the same axis as the projected score), the provider's
-// clock or final text, and who has the ball where.
-export function liveLines(game: LiveGame): LiveLines | null {
-  if (game.state === "pre") return null;
-  const score = `${game.away_score ?? 0}–${game.home_score ?? 0}`;
-  const holder =
-    game.possession === "home"
-      ? game.home
-      : game.possession === "away"
-        ? game.away
-        : null;
-  const situation =
-    game.state === "in" && holder
-      ? game.situation
-        ? `${holder} · ${game.situation}`
-        : `${holder} ball`
-      : null;
-  return { score, detail: game.detail, holder, situation };
-}
