@@ -3,6 +3,7 @@
 import { useEffect, useState, type RefObject } from "react";
 import type { FootballLeague } from "@/lib/football-slates";
 import {
+  FOOTBALL_SVG,
   fieldSvg,
   liveGameKey,
   pollPlan,
@@ -150,12 +151,17 @@ export function useLiveScoreRows(
         if (!score) {
           score = document.createElement("span");
           score.dataset.liveScore = "";
-          score.className = "ml-auto pl-3 font-mono text-sm font-bold tabular-nums";
+          score.className =
+            "ml-auto flex items-center gap-1.5 pl-3 font-mono text-sm font-bold tabular-nums";
+          const ball = document.createElement("span");
+          ball.className = "inline-block h-[18px] w-[18px]";
+          ball.innerHTML = FOOTBALL_SVG;
+          score.append(ball, document.createElement("span"));
           cell.append(score);
         }
         const ball = game.state === "in" && game.possession === side;
-        score.textContent = `${ball ? "● " : ""}${game[`${side}_score`] ?? 0}`;
-        score.classList.toggle("text-positive", ball);
+        (score.firstElementChild as HTMLElement).hidden = !ball;
+        score.lastElementChild!.textContent = String(game[`${side}_score`] ?? 0);
       }
 
       let block = row.querySelector<HTMLElement>("[data-live-block]");

@@ -21,7 +21,13 @@ import {
   type WeeklyPick,
 } from "@/lib/football-picks";
 import { cn, formatOdds, formatSigned, formatPct } from "@/lib/utils";
-import { fieldSvg, liveKey, liveLines, type LiveGame } from "@/lib/football-live";
+import {
+  FOOTBALL_SVG,
+  fieldSvg,
+  liveKey,
+  liveLines,
+  type LiveGame,
+} from "@/lib/football-live";
 import { useFootballLiveScores } from "@/components/use-football-live-scores";
 
 const MARKETS = [
@@ -285,7 +291,14 @@ function GamePredictions({
               </span>
             )}
             {lines.situation && (
-              <span className="text-[11px]">{lines.situation}</span>
+              <span className="flex items-center gap-1 text-[11px]">
+                <span
+                  className="inline-block h-[18px] w-[18px]"
+                  // Our own SVG, no external content; see FOOTBALL_SVG.
+                  dangerouslySetInnerHTML={{ __html: FOOTBALL_SVG }}
+                />
+                {lines.situation}
+              </span>
             )}
             {field && (
               <span
