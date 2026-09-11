@@ -125,7 +125,7 @@ export function fieldGeometry(game: LiveGame): FieldGeometry | null {
 }
 
 // A 12:1 strip: both end zones, a tick every ten yards, the line to gain, and
-// a triangle sitting on the ball and pointing the way the offense is going.
+// an arrow whose head sits on the ball and points the way the offense is going.
 export function fieldSvg(game: LiveGame): string | null {
   const field = fieldGeometry(game);
   if (!field) return null;
@@ -147,6 +147,7 @@ export function fieldSvg(game: LiveGame): string | null {
     `<rect x="10" y="0.5" width="100" height="9" fill="none" stroke="currentColor" stroke-opacity="0.5"/>` +
     ticks +
     lineToGain +
+    `<line x1="${x - field.direction * 7}" y1="5" x2="${x}" y2="5" stroke="var(--positive)" stroke-width="2.4"/>` +
     `<polygon points="${x},1 ${x},9 ${x + field.direction * 5},5" fill="var(--positive)"/>` +
     `</svg>`
   );
