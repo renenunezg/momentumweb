@@ -3,6 +3,8 @@
 import { useRef, useState, type ReactNode } from "react";
 import { ToggleGroup } from "@/components/toggle-group";
 import { useVisitorKickoffs } from "@/components/use-visitor-timezone";
+import { useLiveScoreRows } from "@/components/use-football-live-scores";
+import type { FootballLeague } from "@/lib/football-slates";
 
 export interface ScheduleView<K extends string> {
   key: K;
@@ -19,14 +21,17 @@ export interface ScheduleView<K extends string> {
 // the whole slate again. Each row carries the facts to match on as data
 // attributes, so filtering is one pass over the DOM and never re-renders the
 // table. Each slate is its own <tbody>; one that the filter has emptied is
-// hidden so its rule does not stack on the next slate's.
+// hidden so its rule does not stack on the next slate's. Live scores are
+// written into the rows the same way, from one poll loop per page.
 export function ScheduleFilters<K extends string>({
+  league,
   views,
   defaultView,
   total,
   initialShown,
   children,
 }: {
+  league: FootballLeague;
   views: readonly ScheduleView<K>[];
   defaultView: K;
   total: number;
@@ -38,6 +43,7 @@ export function ScheduleFilters<K extends string>({
   const [query, setQuery] = useState("");
   const [shown, setShown] = useState(initialShown);
   const clock = useVisitorKickoffs(container, children);
+  useLiveScoreRows(container, league, children);
 
   function apply(nextView: K, nextQuery: string) {
     setView(nextView);

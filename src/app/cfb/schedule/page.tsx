@@ -10,6 +10,7 @@ import Link from "next/link";
 import { formatNumber } from "@/lib/utils";
 import { LastUpdated } from "@/components/last-updated";
 import { KickoffCells } from "@/components/kickoff-cells";
+import { liveKey } from "@/lib/football-live";
 import { ScheduleFilters } from "@/components/schedule-filters";
 import {
   ScheduleMarker,
@@ -214,6 +215,7 @@ export default async function SchedulePage() {
       </p>
 
       <ScheduleFilters
+        league="cfb"
         views={VIEWS}
         defaultView="fbs"
         total={games.length}
@@ -274,6 +276,7 @@ export default async function SchedulePage() {
                     <TableRow
                       key={g.game_id}
                       hidden={!isFbsGame}
+                      data-live={liveKey("cfb", g.game_id)}
                       data-search={`${g.away_team} ${g.home_team}`.toLowerCase()}
                       data-fbs={String(isFbsGame)}
                       data-fcs={String(

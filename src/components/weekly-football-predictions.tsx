@@ -21,6 +21,8 @@ import {
   type WeeklyPick,
 } from "@/lib/football-picks";
 import { cn, formatOdds, formatSigned, formatPct } from "@/lib/utils";
+import { liveKey, liveLines, type LiveGame } from "@/lib/football-live";
+import { useFootballLiveScores } from "@/components/use-football-live-scores";
 
 const MARKETS = [
   { key: "all", label: "All" },
@@ -62,6 +64,18 @@ export function WeeklyFootballPredictions({
     () => groupFootballSlates(games, league),
     [games, league],
   );
+  const liveRefs = useMemo(
+    () =>
+      games.map((game) => {
+        const start = game.start_date ? Date.parse(game.start_date) : NaN;
+        return {
+          key: liveKey(league, game.game_id),
+          start: Number.isFinite(start) ? start : null,
+        };
+      }),
+    [games, league],
+  );
+  const live = useFootballLiveScores(league, liveRefs);
   const matches = (pick: WeeklyPick) =>
     pick.status === "recommended" &&
     (market === "all" || pick.market === market);
@@ -186,6 +200,7 @@ export function WeeklyFootballPredictions({
                   game={game}
                   clock={clock}
                   market={market}
+                  live={live.get(liveKey(league, game.game_id))}
                 />
               ))}
             </div>
@@ -200,12 +215,15 @@ function GamePredictions({
   game,
   clock,
   market,
+  live,
 }: {
   game: WeeklyGame & { evaluated: boolean };
   clock: ReturnType<typeof footballSlateClock>;
   market: PickMarket;
+  live: LiveGame | undefined;
 }) {
   const rows = game.rows;
+  const lines = live ? liveLines(live) : null;
   const ordered = [...rows].sort(
     (a, b) =>
       ORDER[a.market as keyof typeof ORDER] -
@@ -247,9 +265,33 @@ function GamePredictions({
             </span>
           ))}
         </h3>
-        <p className="shrink-0 font-mono text-xs text-muted-foreground">
-          {clock.kickoff(game.start_date)}
-        </p>
+        {lines ? (
+          <p
+            aria-live="polite"
+            className="flex shrink-0 flex-col items-end gap-0.5 text-xs text-muted-foreground"
+          >
+            <span className="font-mono text-sm font-semibold tabular-nums text-foreground">
+              {lines.score}
+            </span>
+            {lines.detail && (
+              <span
+                className={cn(
+                  "font-mono text-[10px] uppercase tracking-wider",
+                  live?.state === "in" && "text-positive",
+                )}
+              >
+                {lines.detail}
+              </span>
+            )}
+            {lines.situation && (
+              <span className="text-[10px]">{lines.situation}</span>
+            )}
+          </p>
+        ) : (
+          <p className="shrink-0 font-mono text-xs text-muted-foreground">
+            {clock.kickoff(game.start_date)}
+          </p>
+        )}
       </CardHeader>
       {rows.length === 0 && (
         <CardContent className="py-2.5 text-muted-foreground">

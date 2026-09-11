@@ -7,6 +7,7 @@ import type { NflGameProjection, NflMarketComparison } from "@/lib/types";
 import { formatNumber } from "@/lib/utils";
 import { LastUpdated } from "@/components/last-updated";
 import { KickoffCells } from "@/components/kickoff-cells";
+import { liveKey } from "@/lib/football-live";
 import { ScheduleFilters } from "@/components/schedule-filters";
 import { ScheduleMarker, ScheduleTeamCell } from "@/components/schedule-team-cell";
 import {
@@ -130,6 +131,7 @@ export default async function SchedulePage() {
       </p>
 
       <ScheduleFilters
+        league="nfl"
         views={VIEWS}
         defaultView="all"
         total={games.length}
@@ -183,6 +185,7 @@ export default async function SchedulePage() {
                     // a query cannot accidentally hit a line, total or date.
                     <TableRow
                       key={g.game_id}
+                      data-live={liveKey("nfl", g.game_id)}
                       data-search={`${g.away_team} ${g.home_team} ${g.away_team_abbr ?? ""} ${g.home_team_abbr ?? ""}`.toLowerCase()}
                       data-division={String(g.div_game === true)}
                     >
