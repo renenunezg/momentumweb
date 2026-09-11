@@ -104,9 +104,9 @@ function readRows(container: RefObject<HTMLElement | null>): LiveGameRef[] {
 }
 
 const LINE_CLASSES = {
-  score: "font-mono text-sm font-semibold tabular-nums text-foreground",
-  detail: "font-mono text-[10px] uppercase tracking-wider",
-  situation: "text-[10px] text-muted-foreground",
+  score: "font-mono text-lg font-bold leading-tight tabular-nums text-foreground",
+  detail: "font-mono text-xs uppercase tracking-wider",
+  situation: "text-xs text-muted-foreground",
 } as const;
 
 // Server-rendered schedule rows carry data-live keys; the scoreboard is

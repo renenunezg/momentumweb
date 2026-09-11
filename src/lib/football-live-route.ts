@@ -3,10 +3,13 @@ import type { FootballLeague } from "@/lib/football-slates";
 import type { LiveGame, LiveState } from "@/lib/football-live";
 
 // Cached proxy to ESPN's public scoreboard, shared by the CFB and NFL routes.
-// Every browser polling a page asks for the same date span, so the CDN cache
-// and the fetch cache collapse them to at most two upstream reads a minute
-// per league. The response carries only what the pages render; the upstream
-// payload (about 1.5 MB per CFB group) never reaches the browser.
+// Every browser polling a page asks for the same date span, so the CDN
+// collapses them to at most four upstream reads a minute per league. The
+// upstream read bypasses Next's data cache on purpose: on Vercel that cache
+// serves a stale entry while a background refresh that never completes, and
+// scores ran twenty minutes behind. The CDN window alone bounds the reads.
+// The response carries only what the pages render; the upstream payload
+// (about 1.5 MB per CFB group) never reaches the browser.
 
 const SCOREBOARD = "https://site.api.espn.com/apis/site/v2/sports/football";
 // ESPN groups FBS and FCS separately and caps a scoreboard at 400 events.
@@ -92,7 +95,7 @@ export function liveScoresRoute(league: FootballLeague) {
       const pages = await Promise.all(
         QUERIES[league].map(async (query) => {
           const res = await fetch(`${SCOREBOARD}/${query}&limit=400&dates=${dates}`, {
-            next: { revalidate: 30 },
+            cache: "no-store",
             headers: { "User-Agent": "momentum-dashboard" },
             signal: AbortSignal.timeout(4000),
           });
@@ -104,7 +107,7 @@ export function liveScoresRoute(league: FootballLeague) {
       const games = [...new Map(pages.flat().map((g) => [g.id, g])).values()];
       return NextResponse.json(
         { games, fetched_at: new Date().toISOString() },
-        { headers: { "Cache-Control": "public, s-maxage=30, stale-while-revalidate=60" } },
+        { headers: { "Cache-Control": "public, s-maxage=15, stale-while-revalidate=15" } },
       );
     } catch (err) {
       return NextResponse.json({ error: (err as Error).message }, { status: 502 });

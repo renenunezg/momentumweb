@@ -270,13 +270,13 @@ function GamePredictions({
             aria-live="polite"
             className="flex shrink-0 flex-col items-end gap-0.5 text-xs text-muted-foreground"
           >
-            <span className="font-mono text-sm font-semibold tabular-nums text-foreground">
+            <span className="font-mono text-2xl font-bold leading-tight tabular-nums text-foreground">
               {lines.score}
             </span>
             {lines.detail && (
               <span
                 className={cn(
-                  "font-mono text-[10px] uppercase tracking-wider",
+                  "font-mono text-xs uppercase tracking-wider",
                   live?.state === "in" && "text-positive",
                 )}
               >
@@ -284,7 +284,7 @@ function GamePredictions({
               </span>
             )}
             {lines.situation && (
-              <span className="text-[10px]">{lines.situation}</span>
+              <span className="text-xs">{lines.situation}</span>
             )}
           </p>
         ) : (

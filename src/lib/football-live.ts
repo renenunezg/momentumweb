@@ -43,7 +43,9 @@ export function liveGameKey(league: FootballLeague, game: LiveGame) {
   return league === "cfb" ? game.id : game.home;
 }
 
-export const POLL_MS = 30_000;
+// The CDN holds a read for 15 seconds, so a 20 second poll keeps a score
+// within about half a minute of the provider.
+export const POLL_MS = 20_000;
 // Polling starts shortly before kickoff and, for a game the provider has not
 // reported live yet, keeps going through a delay of up to 90 minutes.
 const LEAD_MS = 5 * 60_000;
