@@ -121,12 +121,12 @@ const PARTS = {
   situation: "text-[11px] text-muted-foreground",
   field: "h-2 w-24 shrink-0 text-muted-foreground",
 } as const;
-// Two lines rather than four: score with the clock, then the situation with
-// the field strip beside it, so a live row stays close to a pregame row's
-// height at the cost of a wider kickoff column.
+// The score shares a line with the clock; the situation text and the field
+// strip stack under it, so the column is never wider than the text line.
 const LINES: (keyof typeof PARTS)[][] = [
   ["score", "detail"],
-  ["situation", "field"],
+  ["situation"],
+  ["field"],
 ];
 
 // Server-rendered schedule rows carry data-live keys; the scoreboard is
@@ -146,7 +146,7 @@ export function useLiveScoreRows(
       container.current?.querySelectorAll<HTMLTableRowElement>("tr[data-live]") ?? [];
     for (const row of rows) {
       const game = live.get(row.dataset.live!);
-      const lines = game ? liveLines(game) : null;
+      const lines = game ? liveLines(game, true) : null;
       const time = row.querySelector<HTMLTimeElement>('time[data-kickoff="time"]');
       if (!lines || !time) continue;
       let block = row.querySelector<HTMLElement>("[data-live-block]");
@@ -183,7 +183,8 @@ export function useLiveScoreRows(
       const svg = fieldSvg(game!);
       part("field").innerHTML = svg ?? "";
       part("field").hidden = !svg;
-      (part("situation").parentElement as HTMLElement).hidden = !lines.situation && !svg;
+      (part("situation").parentElement as HTMLElement).hidden = !lines.situation;
+      (part("field").parentElement as HTMLElement).hidden = !svg;
     }
   }, [container, live]);
 }
