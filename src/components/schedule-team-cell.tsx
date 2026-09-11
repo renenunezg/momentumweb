@@ -13,11 +13,13 @@ export interface ScheduleMarker {
 // Diego ships the same hex twice), so text stays on the theme foreground.
 // A cell with no bar is a team with no color on file.
 export function ScheduleTeamCell({
+  side,
   name,
   team,
   rank,
   markers = [],
 }: {
+  side: "away" | "home";
   name: string;
   team: (TeamLogoSource & { color: string | null }) | undefined;
   rank: number | undefined;
@@ -37,7 +39,8 @@ export function ScheduleTeamCell({
           : undefined
       }
     >
-      <span className="flex items-center gap-2">
+      {/* The live score writer appends this side's score to the span. */}
+      <span className="flex items-center gap-2" data-team-cell={side}>
         <TeamLogo team={team} name={name} />
         <span className="font-medium">{name}</span>
         {rank != null && (

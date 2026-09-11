@@ -160,9 +160,8 @@ export interface LiveLines {
 
 // The three lines a live or finished game shows in place of its kickoff time:
 // the away-home score (the same axis as the projected score), the provider's
-// clock or final text, and who has the ball where. `compact` drops the spot
-// ("at LAR 26") where the field strip already shows it.
-export function liveLines(game: LiveGame, compact = false): LiveLines | null {
+// clock or final text, and who has the ball where.
+export function liveLines(game: LiveGame): LiveLines | null {
   if (game.state === "pre") return null;
   const score = `${game.away_score ?? 0}–${game.home_score ?? 0}`;
   const holder =
@@ -171,12 +170,10 @@ export function liveLines(game: LiveGame, compact = false): LiveLines | null {
       : game.possession === "away"
         ? game.away
         : null;
-  const downDistance =
-    compact && game.situation ? game.situation.replace(/ at .*$/, "") : game.situation;
   const situation =
     game.state === "in" && holder
-      ? downDistance
-        ? `● ${holder} · ${downDistance}`
+      ? game.situation
+        ? `● ${holder} · ${game.situation}`
         : `● ${holder} ball`
       : null;
   return { score, detail: game.detail, situation };

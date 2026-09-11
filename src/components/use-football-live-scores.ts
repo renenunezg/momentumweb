@@ -5,7 +5,6 @@ import type { FootballLeague } from "@/lib/football-slates";
 import {
   fieldSvg,
   liveGameKey,
-  liveLines,
   pollPlan,
   scoreboardDates,
   POLL_MS,
@@ -116,23 +115,18 @@ function readRows(container: RefObject<HTMLElement | null>): LiveGameRef[] {
 }
 
 const PARTS = {
-  score: "font-mono text-base font-bold leading-tight tabular-nums text-foreground",
   detail: "font-mono text-[11px] uppercase tracking-wider",
   situation: "text-[11px] text-muted-foreground",
-  field: "h-2 w-24 shrink-0 text-muted-foreground",
+  field: "h-2 w-24 text-muted-foreground",
 } as const;
-// The score shares a line with the clock; the situation text and the field
-// strip stack under it, so the column is never wider than the text line.
-const LINES: (keyof typeof PARTS)[][] = [
-  ["score", "detail"],
-  ["situation"],
-  ["field"],
-];
+const SIDES = ["away", "home"] as const;
 
 // Server-rendered schedule rows carry data-live keys; the scoreboard is
-// written into their kickoff cells in place, so a 170 row table never
-// becomes 170 client components. A live block is built the first time a
-// row needs one and only its text changes after that.
+// written into them in place, so a 170 row table never becomes 170 client
+// components. Each side's score, with a dot when it has the ball, goes at the
+// end of its team cell; the kickoff cell shows the clock, down and distance,
+// and the field strip. Elements are built the first time a row needs them
+// and only their text changes after that.
 export function useLiveScoreRows(
   container: RefObject<HTMLElement | null>,
   league: FootballLeague,
@@ -146,45 +140,51 @@ export function useLiveScoreRows(
       container.current?.querySelectorAll<HTMLTableRowElement>("tr[data-live]") ?? [];
     for (const row of rows) {
       const game = live.get(row.dataset.live!);
-      const lines = game ? liveLines(game, true) : null;
       const time = row.querySelector<HTMLTimeElement>('time[data-kickoff="time"]');
-      if (!lines || !time) continue;
-      let block = row.querySelector<HTMLElement>("[data-live-block]");
-      if (block && block.querySelectorAll("[data-live-part]").length !== 4) {
-        block.remove();
-        block = null;
+      if (!game || game.state === "pre" || !time) continue;
+
+      for (const side of SIDES) {
+        const cell = row.querySelector<HTMLElement>(`[data-team-cell="${side}"]`);
+        if (!cell) continue;
+        let score = cell.querySelector<HTMLElement>("[data-live-score]");
+        if (!score) {
+          score = document.createElement("span");
+          score.dataset.liveScore = "";
+          score.className = "ml-auto pl-3 font-mono text-sm font-bold tabular-nums";
+          cell.append(score);
+        }
+        const ball = game.state === "in" && game.possession === side;
+        score.textContent = `${ball ? "● " : ""}${game[`${side}_score`] ?? 0}`;
+        score.classList.toggle("text-positive", ball);
       }
+
+      let block = row.querySelector<HTMLElement>("[data-live-block]");
       if (!block) {
         block = document.createElement("span");
         block.dataset.liveBlock = "";
         block.className = "flex flex-col items-center gap-0.5";
         block.setAttribute("aria-live", "polite");
-        for (const parts of LINES) {
-          const line = document.createElement("span");
-          line.className = "flex items-center justify-center gap-1.5 whitespace-nowrap";
-          for (const part of parts) {
-            const span = document.createElement("span");
-            span.dataset.livePart = part;
-            span.className = PARTS[part];
-            line.append(span);
-          }
-          block.append(line);
+        for (const part of Object.keys(PARTS) as (keyof typeof PARTS)[]) {
+          const span = document.createElement("span");
+          span.dataset.livePart = part;
+          span.className = PARTS[part];
+          block.append(span);
         }
         time.after(block);
         time.hidden = true;
       }
       const part = (name: keyof typeof PARTS) =>
         block.querySelector<HTMLElement>(`[data-live-part="${name}"]`)!;
-      for (const name of ["score", "detail", "situation"] as const) {
-        part(name).textContent = lines[name] ?? "";
-        part(name).hidden = !lines[name];
-      }
-      part("detail").classList.toggle("text-positive", game!.state === "in");
-      const svg = fieldSvg(game!);
+      part("detail").textContent = game.detail ?? "";
+      part("detail").classList.toggle("text-positive", game.state === "in");
+      // The strip shows the spot, so the text keeps only the down and distance.
+      const downDistance =
+        game.state === "in" ? (game.situation?.replace(/ at .*$/, "") ?? null) : null;
+      part("situation").textContent = downDistance ?? "";
+      part("situation").hidden = !downDistance;
+      const svg = fieldSvg(game);
       part("field").innerHTML = svg ?? "";
       part("field").hidden = !svg;
-      (part("situation").parentElement as HTMLElement).hidden = !lines.situation;
-      (part("field").parentElement as HTMLElement).hidden = !svg;
     }
   }, [container, live]);
 }

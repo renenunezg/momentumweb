@@ -191,12 +191,14 @@ export default async function SchedulePage() {
                     >
                       <KickoffCells start={g.start_date} />
                       <ScheduleTeamCell
+                        side="away"
                         name={g.away_team}
                         team={g.away_team_abbr != null ? teams.get(g.away_team_abbr) : undefined}
                         rank={awayRank}
                         markers={[qbMarker(g.away_qb_adjustment)]}
                       />
                       <ScheduleTeamCell
+                        side="home"
                         name={g.home_team}
                         team={g.home_team_abbr != null ? teams.get(g.home_team_abbr) : undefined}
                         rank={homeRank}

@@ -297,6 +297,7 @@ export default async function SchedulePage() {
                     >
                       <KickoffCells start={g.start_date} />
                       <ScheduleTeamCell
+                        side="away"
                         name={g.away_team}
                         team={
                           g.away_team_id != null
@@ -309,6 +310,7 @@ export default async function SchedulePage() {
                         ]}
                       />
                       <ScheduleTeamCell
+                        side="home"
                         name={g.home_team}
                         team={
                           g.home_team_id != null
