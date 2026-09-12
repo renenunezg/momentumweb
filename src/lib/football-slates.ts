@@ -9,62 +9,22 @@ export type FootballSlate<T> = {
   games: T[];
 };
 
-// Slates are cut on the league's own schedule clock (Eastern) so that a
-// visitor's timezone changes labels but never membership. `dayStart` is the
-// hour at which the league's schedule day rolls over: NFL never kicks off
-// after midnight Eastern, while CFB's Hawaii games do and belong with the
-// preceding Saturday's late window. `maxSpan` caps a slate: NFL slates are
-// broadcast windows that fit in 90 minutes, and CFB's noon, afternoon, and
-// evening windows spread staggered starts over about two hours.
-const POLICIES = {
-  nfl: { maxSpan: 90, dayStart: 0, broadcast: true },
-  cfb: { maxSpan: 120, dayStart: 6, broadcast: false },
-} as const;
+// A slate is one kickoff time: every game that starts at that instant. NFL
+// evening slates carry their broadcast name, read on the league's own clock
+// (Eastern) so a visitor's timezone changes labels but never membership.
+const BROADCAST: Record<FootballLeague, boolean> = { nfl: true, cfb: false };
 
 const leagueClock = new Intl.DateTimeFormat("en-US", {
   timeZone: "America/New_York",
-  year: "numeric",
-  month: "2-digit",
-  day: "2-digit",
   weekday: "short",
   hour: "numeric",
   hourCycle: "h23",
 });
 
-const MINUTE = 60_000;
-
-// Games on one schedule day are split at their widest kickoff gaps until every
-// slate fits the league's span, so a dense cluster (CFB's 3:30 window, the NFL
-// late-afternoon doubleheader) stays whole and successive staggered starts can
-// never chain a whole day together. Ties go to the gap nearest the middle of
-// the span, and then to the later gap.
-function split(starts: number[], maxSpan: number): number[][] {
-  const span = starts[starts.length - 1] - starts[0];
-  if (span <= maxSpan * MINUTE) return [starts];
-  const middle = starts[0] + span / 2;
-  let at = 1;
-  let widest = -1;
-  let nearest = Infinity;
-  for (let i = 1; i < starts.length; i++) {
-    const gap = starts[i] - starts[i - 1];
-    const distance = Math.abs((starts[i] + starts[i - 1]) / 2 - middle);
-    if (gap > widest || (gap === widest && distance <= nearest)) {
-      at = i;
-      widest = gap;
-      nearest = distance;
-    }
-  }
-  return [
-    ...split(starts.slice(0, at), maxSpan),
-    ...split(starts.slice(at), maxSpan),
-  ];
-}
-
 export function groupFootballSlates<T extends ScheduledFootballGame>(
   games: T[],
   league: FootballLeague = "nfl",
 ): FootballSlate<T>[] {
-  const policy = POLICIES[league];
   const byStart = new Map<number, T[]>();
   const undated: T[] = [];
   for (const game of games) {
@@ -72,37 +32,25 @@ export function groupFootballSlates<T extends ScheduledFootballGame>(
     if (!Number.isFinite(start)) undated.push(game);
     else byStart.set(start, [...(byStart.get(start) ?? []), game]);
   }
-  const days = new Map<string, number[]>();
-  for (const start of [...byStart.keys()].sort((a, b) => a - b)) {
-    const parts = Object.fromEntries(
-      leagueClock
-        .formatToParts(start - policy.dayStart * 60 * MINUTE)
-        .map((part) => [part.type, part.value]),
-    );
-    const day = `${parts.year}-${parts.month}-${parts.day}`;
-    days.set(day, [...(days.get(day) ?? []), start]);
-  }
-  const slates: FootballSlate<T>[] = [];
-  for (const starts of days.values()) {
-    for (const window of split(starts, policy.maxSpan)) {
-      const start = window[0];
+  const slates: FootballSlate<T>[] = [...byStart.keys()]
+    .sort((a, b) => a - b)
+    .map((start) => {
       const parts = Object.fromEntries(
         leagueClock.formatToParts(start).map((part) => [part.type, part.value]),
       );
       const broadcast =
-        policy.broadcast && Number(parts.hour) >= 18
+        BROADCAST[league] && Number(parts.hour) >= 18
           ? (({ Thu: "TNF", Sun: "SNF", Mon: "MNF" } as const)[
               parts.weekday as "Thu" | "Sun" | "Mon"
             ] ?? null)
           : null;
-      slates.push({
+      return {
         id: `slate-${start}`,
         start,
         broadcast,
-        games: window.flatMap((at) => byStart.get(at) ?? []),
-      });
-    }
-  }
+        games: byStart.get(start)!,
+      };
+    });
   if (undated.length)
     slates.push({
       id: "slate-tbd",
@@ -154,8 +102,6 @@ export function footballSlateClock(timeZone: string) {
       const short = zoneName("short", at);
       return short && short !== long ? `${long} (${short})` : long;
     },
-    // A slate is named by its first kickoff; the staggered starts it
-    // absorbs are visible on the games themselves.
     title: (slate: Pick<FootballSlate<unknown>, "start" | "broadcast">) => {
       if (slate.start == null) return "Kickoff TBD";
       if (slate.broadcast) return slate.broadcast;
