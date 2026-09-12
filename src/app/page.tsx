@@ -108,7 +108,10 @@ async function getNflHeadline(): Promise<FootballHeadline | null> {
   }
 }
 
-function StatusBadge({ live }: { live: boolean }) {
+// A failed headline fetch is unknown, not preseason: the badge stays off
+// rather than claiming a status the render could not read.
+function StatusBadge({ live }: { live: boolean | null }) {
+  if (live == null) return null;
   return (
     <span className="flex items-center gap-1.5 font-mono text-xs uppercase tracking-wider text-muted-foreground">
       <span
@@ -136,7 +139,7 @@ function ModelEntry({
 }: {
   href: string;
   name: string;
-  live: boolean;
+  live: boolean | null;
   cta: string;
   description: string;
   links?: ModelLink[];
@@ -308,7 +311,7 @@ export default async function Home() {
             <ModelEntry
               href="/cfb/predictions"
               name="CFB"
-              live={cfb?.live ?? false}
+              live={cfb?.live ?? null}
               cta="View predictions"
               description="Weekly spread, total, and moneyline predictions with frozen lines, built on power ratings for every Division 1 program."
               links={[{ href: "/cfb/heisman", label: "Heisman tracker" }]}
@@ -319,7 +322,7 @@ export default async function Home() {
             <ModelEntry
               href="/nfl/predictions"
               name="NFL"
-              live={nfl?.live ?? false}
+              live={nfl?.live ?? null}
               cta="View predictions"
               description="Bayesian power ratings for all 32 teams from drive-level EPA, with weekly spread and total projections priced against the market."
               links={[
