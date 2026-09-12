@@ -5,7 +5,6 @@ export type FootballLeague = "nfl" | "cfb";
 export type FootballSlate<T> = {
   id: string;
   start: number | null;
-  end: number | null;
   broadcast: "TNF" | "SNF" | "MNF" | null;
   games: T[];
 };
@@ -99,7 +98,6 @@ export function groupFootballSlates<T extends ScheduledFootballGame>(
       slates.push({
         id: `slate-${start}`,
         start,
-        end: window[window.length - 1],
         broadcast,
         games: window.flatMap((at) => byStart.get(at) ?? []),
       });
@@ -109,7 +107,6 @@ export function groupFootballSlates<T extends ScheduledFootballGame>(
     slates.push({
       id: "slate-tbd",
       start: null,
-      end: null,
       broadcast: null,
       games: undated,
     });
@@ -157,16 +154,12 @@ export function footballSlateClock(timeZone: string) {
       const short = zoneName("short", at);
       return short && short !== long ? `${long} (${short})` : long;
     },
-    title: (
-      slate: Pick<FootballSlate<unknown>, "start" | "end" | "broadcast">,
-    ) => {
+    // A slate is named by its first kickoff; the staggered starts it
+    // absorbs are visible on the games themselves.
+    title: (slate: Pick<FootballSlate<unknown>, "start" | "broadcast">) => {
       if (slate.start == null) return "Kickoff TBD";
       if (slate.broadcast) return slate.broadcast;
-      const range =
-        slate.end != null && slate.end !== slate.start
-          ? `${hour.format(slate.start)} - ${hour.format(slate.end)}`
-          : hour.format(slate.start);
-      return `${weekday.format(slate.start)} · ${range}`;
+      return `${weekday.format(slate.start)} · ${hour.format(slate.start)}`;
     },
     kickoff: (value: string | number | null) => {
       const start = parse(value);

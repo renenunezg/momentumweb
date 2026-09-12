@@ -6,10 +6,14 @@ import { groupFootballSlates } from "@/lib/football-slates";
 import type { NflGameProjection, NflMarketComparison } from "@/lib/types";
 import { formatNumber } from "@/lib/utils";
 import { LastUpdated } from "@/components/last-updated";
-import { KickoffCells } from "@/components/kickoff-cells";
+import { KickoffCell, SlateRow } from "@/components/kickoff-cells";
 import { liveKey } from "@/lib/football-live";
 import { ScheduleFilters } from "@/components/schedule-filters";
-import { ScheduleMarker, ScheduleTeamCell } from "@/components/schedule-team-cell";
+import {
+  ScheduleMatchupCell,
+  ScheduleMatchupHead,
+  type ScheduleMarker,
+} from "@/components/schedule-matchup-cell";
 import {
   Table,
   TableBody,
@@ -31,6 +35,11 @@ const VIEWS = [
   { key: "all", label: "All", empty: "No games this week.", all: true },
   { key: "division", label: "Divisional", empty: "No divisional games this week." },
 ] as const;
+
+// A phone stacks the two teams, so games need a hairline between them; wide
+// screens keep the booktabs look with hover tracking the row.
+const ROWS =
+  "max-md:[&>tr[data-search]:not([hidden])~tr[data-search]:not([hidden])]:border-t";
 
 const NEUTRAL: ScheduleMarker = {
   label: "N",
@@ -137,102 +146,110 @@ export default async function SchedulePage() {
         total={games.length}
         initialShown={games.length}
       >
-        <div className="overflow-x-auto">
-          {/* Everything is centered except the two team columns, whose ragged
-              name lengths read badly off a center axis. */}
-          <Table>
-            <TableCaption className="sr-only">
-              Week {latest.week} projections against the market
-            </TableCaption>
-            <TableHeader>
-              <TableRow>
-                <TableHead className="text-center">Day</TableHead>
-                <TableHead className="text-center">Time</TableHead>
-                <TableHead>Away</TableHead>
-                <TableHead>Home</TableHead>
-                <TableHead className="text-center">Pure</TableHead>
-                <TableHead className="text-center">Model line</TableHead>
-                <TableHead className="text-center">Market line</TableHead>
-                <TableHead className="text-center">Diff</TableHead>
-                <TableHead className="text-center">Proj score</TableHead>
-                <TableHead className="text-center">Model total</TableHead>
-                <TableHead className="text-center">Market total</TableHead>
-              </TableRow>
-            </TableHeader>
-            {slates.map((slate) => (
-              <TableBody key={slate.id}>
-                {slate.games.map((g) => {
-                  const market = marketByGame.get(g.game_id);
-                  const marketLine =
-                    marketHomeLine(
-                      market?.best_offer_market ?? null,
-                      market?.best_offer_selection ?? null,
-                      market?.best_offer_point ?? null,
-                      g.home_team
-                    ) ?? g.market_home_spread;
-                  const diff =
-                    marketLine != null && g.home_spread != null
-                      ? g.home_spread - marketLine
-                      : null;
-                  const awayRank = g.away_team_abbr
-                    ? rankByTeam.get(g.away_team_abbr)
-                    : undefined;
-                  const homeRank = g.home_team_abbr
-                    ? rankByTeam.get(g.home_team_abbr)
-                    : undefined;
-                  return (
-                    // The filters read these rather than the rendered cells, so
-                    // a query cannot accidentally hit a line, total or date.
-                    <TableRow
-                      key={g.game_id}
-                      data-live={liveKey("nfl", g.game_id)}
-                      data-search={`${g.away_team} ${g.home_team} ${g.away_team_abbr ?? ""} ${g.home_team_abbr ?? ""}`.toLowerCase()}
-                      data-division={String(g.div_game === true)}
-                    >
-                      <KickoffCells start={g.start_date} />
-                      <ScheduleTeamCell
-                        side="away"
-                        name={g.away_team}
-                        team={g.away_team_abbr != null ? teams.get(g.away_team_abbr) : undefined}
-                        rank={awayRank}
-                        markers={[qbMarker(g.away_qb_adjustment)]}
-                      />
-                      <ScheduleTeamCell
-                        side="home"
-                        name={g.home_team}
-                        team={g.home_team_abbr != null ? teams.get(g.home_team_abbr) : undefined}
-                        rank={homeRank}
-                        markers={[g.neutral_site && NEUTRAL, qbMarker(g.home_qb_adjustment)]}
-                      />
-                      <TableCell className="text-center font-mono tabular-nums text-muted-foreground">
-                        {formatHomeLine(g.pure_home_spread)}
-                      </TableCell>
-                      <TableCell className="text-center font-mono font-semibold tabular-nums">
-                        {formatHomeLine(g.home_spread)}
-                      </TableCell>
-                      <TableCell className="text-center font-mono tabular-nums text-muted-foreground">
-                        {marketLine != null ? formatHomeLine(marketLine) : "–"}
-                      </TableCell>
-                      <TableCell className="text-center font-mono tabular-nums">
-                        {diff != null ? formatHomeLine(diff) : "–"}
-                      </TableCell>
-                      <TableCell className="whitespace-nowrap text-center font-mono tabular-nums">
-                        {formatNumber(g.expected_away_points, 0)}&ndash;
-                        {formatNumber(g.expected_home_points, 0)}
-                      </TableCell>
-                      <TableCell className="text-center font-mono tabular-nums">
-                        {formatNumber(g.model_total)}
-                      </TableCell>
-                      <TableCell className="text-center font-mono tabular-nums text-muted-foreground">
-                        {formatNumber(marketTotalByGame.get(g.game_id))}
-                      </TableCell>
-                    </TableRow>
-                  );
-                })}
-              </TableBody>
-            ))}
-          </Table>
-        </div>
+        {/* Everything is centered except the matchup column, whose ragged
+            name lengths read badly off a center axis. */}
+        <Table>
+          <TableCaption className="sr-only">
+            Week {latest.week} projections against the market
+          </TableCaption>
+          <TableHeader>
+            <TableRow>
+              <TableHead className="text-center">Time</TableHead>
+              <ScheduleMatchupHead />
+              <TableHead className="hidden text-center md:table-cell">
+                Pure
+              </TableHead>
+              <TableHead className="text-center">Model line</TableHead>
+              <TableHead className="text-center">Market line</TableHead>
+              <TableHead className="text-center">Diff</TableHead>
+              <TableHead className="text-center">Proj score</TableHead>
+              <TableHead className="text-center">Model total</TableHead>
+              <TableHead className="text-center">Market total</TableHead>
+            </TableRow>
+          </TableHeader>
+          {slates.map((slate) => (
+            <TableBody key={slate.id} className={ROWS}>
+              <SlateRow slate={slate} columns={9} />
+              {slate.games.map((g) => {
+                const market = marketByGame.get(g.game_id);
+                const marketLine =
+                  marketHomeLine(
+                    market?.best_offer_market ?? null,
+                    market?.best_offer_selection ?? null,
+                    market?.best_offer_point ?? null,
+                    g.home_team
+                  ) ?? g.market_home_spread;
+                const diff =
+                  marketLine != null && g.home_spread != null
+                    ? g.home_spread - marketLine
+                    : null;
+                const awayRank = g.away_team_abbr
+                  ? rankByTeam.get(g.away_team_abbr)
+                  : undefined;
+                const homeRank = g.home_team_abbr
+                  ? rankByTeam.get(g.home_team_abbr)
+                  : undefined;
+                return (
+                  // The filters read these rather than the rendered cells, so
+                  // a query cannot accidentally hit a line, total or date.
+                  <TableRow
+                    key={g.game_id}
+                    data-live={liveKey("nfl", g.game_id)}
+                    data-search={`${g.away_team} ${g.home_team} ${g.away_team_abbr ?? ""} ${g.home_team_abbr ?? ""}`.toLowerCase()}
+                    data-division={String(g.div_game === true)}
+                  >
+                    <KickoffCell start={g.start_date} />
+                    <ScheduleMatchupCell
+                      away={{
+                        name: g.away_team,
+                        team:
+                          g.away_team_abbr != null
+                            ? teams.get(g.away_team_abbr)
+                            : undefined,
+                        rank: awayRank,
+                        markers: [qbMarker(g.away_qb_adjustment)],
+                      }}
+                      home={{
+                        name: g.home_team,
+                        team:
+                          g.home_team_abbr != null
+                            ? teams.get(g.home_team_abbr)
+                            : undefined,
+                        rank: homeRank,
+                        markers: [
+                          g.neutral_site && NEUTRAL,
+                          qbMarker(g.home_qb_adjustment),
+                        ],
+                      }}
+                    />
+                    <TableCell className="hidden text-center font-mono tabular-nums text-muted-foreground md:table-cell">
+                      {formatHomeLine(g.pure_home_spread)}
+                    </TableCell>
+                    <TableCell className="text-center font-mono font-semibold tabular-nums">
+                      {formatHomeLine(g.home_spread)}
+                    </TableCell>
+                    <TableCell className="text-center font-mono tabular-nums text-muted-foreground">
+                      {marketLine != null ? formatHomeLine(marketLine) : "–"}
+                    </TableCell>
+                    <TableCell className="text-center font-mono tabular-nums">
+                      {diff != null ? formatHomeLine(diff) : "–"}
+                    </TableCell>
+                    <TableCell className="whitespace-nowrap text-center font-mono tabular-nums">
+                      {formatNumber(g.expected_away_points, 0)}&ndash;
+                      {formatNumber(g.expected_home_points, 0)}
+                    </TableCell>
+                    <TableCell className="text-center font-mono tabular-nums">
+                      {formatNumber(g.model_total)}
+                    </TableCell>
+                    <TableCell className="text-center font-mono tabular-nums text-muted-foreground">
+                      {formatNumber(marketTotalByGame.get(g.game_id))}
+                    </TableCell>
+                  </TableRow>
+                );
+              })}
+            </TableBody>
+          ))}
+        </Table>
       </ScheduleFilters>
 
       <p className="max-w-4xl text-xs text-muted-foreground">

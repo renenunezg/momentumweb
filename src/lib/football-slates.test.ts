@@ -35,7 +35,7 @@ test("slates follow kickoff dates, combining staggered late starts and preservin
   const pacific = footballSlateClock("America/Los_Angeles");
   assert.equal(pacific.title(slates[0]), "Wednesday · 5:20 PM");
   assert.equal(pacific.title(slates[2]), "Sunday · 10:00 AM");
-  assert.equal(pacific.title(slates[3]), "Sunday · 1:05 PM - 1:25 PM");
+  assert.equal(pacific.title(slates[3]), "Sunday · 1:05 PM");
   assert.equal(pacific.title(slates[6]), "Kickoff TBD");
   const revised = groupFootballSlates([game("opener", "2026-09-12T19:00:00Z")]);
   assert.equal(pacific.title(revised[0]), "Saturday · 12:00 PM");
@@ -129,12 +129,12 @@ test("CFB slates keep dense windows whole and split staggered starts at their wi
   assert.ok(slates.every((slate) => slate.broadcast === null));
   const eastern = footballSlateClock("America/New_York");
   assert.equal(eastern.title(slates[0]), "Thursday · 8:00 PM");
-  assert.equal(eastern.title(slates[2]), "Saturday · 12:00 PM - 2:00 PM");
-  assert.equal(eastern.title(slates[7]), "Saturday · 10:00 PM - 12:00 AM");
+  assert.equal(eastern.title(slates[2]), "Saturday · 12:00 PM");
+  assert.equal(eastern.title(slates[7]), "Saturday · 10:00 PM");
   const pacific = footballSlateClock("America/Los_Angeles");
-  assert.equal(pacific.title(slates[2]), "Saturday · 9:00 AM - 11:00 AM");
-  assert.equal(pacific.title(slates[7]), "Saturday · 7:00 PM - 9:00 PM");
+  assert.equal(pacific.title(slates[2]), "Saturday · 9:00 AM");
+  assert.equal(pacific.title(slates[7]), "Saturday · 7:00 PM");
   const tokyo = footballSlateClock("Asia/Tokyo");
-  assert.equal(tokyo.title(slates[2]), "Sunday · 1:00 AM - 3:00 AM");
+  assert.equal(tokyo.title(slates[2]), "Sunday · 1:00 AM");
   assert.equal(tokyo.title(slates[8]), "Kickoff TBD");
 });

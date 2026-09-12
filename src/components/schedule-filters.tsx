@@ -20,8 +20,9 @@ export interface ScheduleView<K extends string> {
 // and out of the client payload; passing the games as props would serialize
 // the whole slate again. Each row carries the facts to match on as data
 // attributes, so filtering is one pass over the DOM and never re-renders the
-// table. Each slate is its own <tbody>; one that the filter has emptied is
-// hidden so its rule does not stack on the next slate's. Live scores are
+// table. Each slate is its own <tbody> headed by a row without those
+// attributes; a slate the filter has emptied is hidden, heading and all, so
+// its rule does not stack on the next slate's. Live scores are
 // written into the rows the same way, from one poll loop per page.
 export function ScheduleFilters<K extends string>({
   league,
@@ -56,7 +57,9 @@ export function ScheduleFilters<K extends string>({
     let visible = 0;
     for (const body of bodies) {
       let inBody = 0;
-      for (const row of body.querySelectorAll<HTMLTableRowElement>("tr")) {
+      for (const row of body.querySelectorAll<HTMLTableRowElement>(
+        "tr[data-search]",
+      )) {
         const match =
           (!needle || (row.dataset.search ?? "").includes(needle)) &&
           (showAll || row.dataset[nextView] === "true");
