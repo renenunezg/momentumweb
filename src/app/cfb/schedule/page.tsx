@@ -201,14 +201,11 @@ export default async function SchedulePage() {
       </div>
 
       <p className="max-w-4xl text-sm text-muted-foreground leading-relaxed">
-        Every college football game this week with the model&apos;s spread,
-        projected score, and total next to the market. Model lines are quoted
-        for the home team: a negative line means the model favors the home side.
-        The published line blends the pure model with the market at a capped
-        weight; Pure is the model&apos;s own line before that blend. Market is
-        the best priced spread offer found when the forecast ran, or the
-        consensus spread when the best offer was a total or moneyline, converted
-        to the same home axis.
+        Model lines are quoted for the home team: a negative line means the
+        model favors the home side. Pure is the model&apos;s own line; the
+        published line blends it with the market at a capped weight. Market is
+        the best priced spread when the forecast ran, or the consensus spread
+        otherwise.
       </p>
 
       <p className="text-xs text-muted-foreground">
