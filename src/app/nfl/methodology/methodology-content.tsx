@@ -47,6 +47,22 @@ export function MethodologyContent({ example }: { example: PickExample | null })
         </p>
       </Section>
 
+      <Section id="example" title="Example: How a Pick Is Priced">
+        <p className={p}>
+          The next recommended pick on the slate, rebuilt from its frozen row.
+          Once every game has kicked off it shows the most recently settled
+          pick instead.
+        </p>
+        {example ? (
+          <FootballPickExample example={example} />
+        ) : (
+          <p className={p}>
+            No recommended pick is stored yet. This fills in once the Tuesday
+            run publishes a slate with a qualifying edge.
+          </p>
+        )}
+      </Section>
+
       <Section id="data" title="Data">
         <p className={p}>
           All football data comes from the open source{" "}
@@ -230,22 +246,6 @@ export function MethodologyContent({ example }: { example: PickExample | null })
           </Link>
           .
         </p>
-      </Section>
-
-      <Section id="example" title="Example: How a Pick Is Priced">
-        <p className={p}>
-          The next recommended pick on the slate, rebuilt from its frozen row.
-          Once every game has kicked off it shows the most recently settled
-          pick instead.
-        </p>
-        {example ? (
-          <FootballPickExample example={example} />
-        ) : (
-          <p className={p}>
-            No recommended pick is stored yet. This fills in once the Tuesday
-            run publishes a slate with a qualifying edge.
-          </p>
-        )}
       </Section>
 
       <Section id="season-wins" title="Season Wins">

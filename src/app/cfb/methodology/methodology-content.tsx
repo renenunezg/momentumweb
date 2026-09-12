@@ -170,7 +170,7 @@ export function MethodologyContent({ example }: { example: PickExample | null })
       {/* Overview */}
       <SectionCard
         id="overview"
-        title="Project Overview"
+        title="Overview"
         subtitle="Possession-based power ratings, calibrated score distributions, and a market-anchored in-game win probability model"
       >
         <div className="space-y-4 text-sm leading-relaxed">
@@ -224,6 +224,22 @@ export function MethodologyContent({ example }: { example: PickExample | null })
             ))}
           </div>
         </div>
+      </SectionCard>
+
+      {/* Example pick */}
+      <SectionCard
+        id="example"
+        title="Example: How a Pick Is Priced"
+        subtitle="The next recommended pick on the slate, rebuilt from its frozen row"
+      >
+        {example ? (
+          <FootballPickExample example={example} />
+        ) : (
+          <p className="text-sm text-muted-foreground">
+            No recommended pick is stored yet. This fills in once the weekly
+            update publishes a slate with a qualifying edge.
+          </p>
+        )}
       </SectionCard>
 
       {/* Architecture */}
@@ -566,22 +582,6 @@ export function MethodologyContent({ example }: { example: PickExample | null })
             .
           </p>
         </div>
-      </SectionCard>
-
-      {/* Example pick */}
-      <SectionCard
-        id="example"
-        title="Example: How a Pick Is Priced"
-        subtitle="The next recommended pick on the slate, rebuilt from its frozen row"
-      >
-        {example ? (
-          <FootballPickExample example={example} />
-        ) : (
-          <p className="text-sm text-muted-foreground">
-            No recommended pick is stored yet. This fills in once the weekly
-            update publishes a slate with a qualifying edge.
-          </p>
-        )}
       </SectionCard>
 
       {/* Backtest */}

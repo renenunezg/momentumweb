@@ -4,13 +4,13 @@ import { useEffect, useState } from "react";
 
 const sections = [
   { id: "overview", label: "Overview" },
+  { id: "example", label: "Example" },
   { id: "flow", label: "Architecture" },
   { id: "engine", label: "Rating Engine" },
   { id: "units", label: "Unit Ratings" },
   { id: "preseason", label: "Preseason" },
   { id: "projections", label: "Projections" },
   { id: "picks", label: "Picks" },
-  { id: "example", label: "Example" },
   { id: "backtest", label: "Backtest" },
   { id: "ingame", label: "In-Game" },
   { id: "anchor", label: "Market Anchor" },

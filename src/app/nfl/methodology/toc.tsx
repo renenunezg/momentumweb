@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 
 const sections = [
   { id: "overview", label: "Overview" },
+  { id: "example", label: "Example" },
   { id: "data", label: "Data" },
   { id: "engine", label: "Rating Engine" },
   { id: "adjustments", label: "QB & Rest" },
@@ -12,7 +13,6 @@ const sections = [
   { id: "units", label: "Unit Ratings" },
   { id: "backtest", label: "Backtest" },
   { id: "picks", label: "Picks" },
-  { id: "example", label: "Example" },
   { id: "season-wins", label: "Season Wins" },
   { id: "awards", label: "Awards" },
   { id: "limits", label: "Limits" },
