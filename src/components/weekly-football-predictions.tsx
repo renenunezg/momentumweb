@@ -18,7 +18,6 @@ import {
   pickLabel,
   type PickMarket,
   type WeeklyGame,
-  type WeeklyPick,
 } from "@/lib/football-picks";
 import { cn, formatOdds, formatSigned, formatPct } from "@/lib/utils";
 import {
@@ -36,11 +35,6 @@ const MARKETS = [
   { key: "h2h", label: "Moneylines" },
 ] as const;
 const ORDER = { spreads: 0, totals: 1, h2h: 2 };
-// With every market showing, a slate with nothing qualifying still lists its
-// matchups when it is a handful of games; a 40 game CFB window collapses to
-// one summary instead of 40 empty cards. A single-market filter shows only
-// games that carry a pick in that market.
-const EMPTY_CARDS = 4;
 
 function plural(count: number, noun: string) {
   return `${count} ${noun}${count === 1 ? "" : "s"}`;
@@ -52,6 +46,9 @@ function marketNoun(market: PickMarket) {
     : `${MARKET_LABELS[market].toLowerCase()} prediction`;
 }
 
+// `games` are the week's games with a recommended pick, each carrying only
+// its recommended rows; a game with nothing in the chosen market drops out,
+// and the slate chips offer only the slates the market and search still hit.
 export function WeeklyFootballPredictions({
   league,
   games,
@@ -65,10 +62,6 @@ export function WeeklyFootballPredictions({
   const needle = query.trim().toLowerCase();
   const timeZone = useVisitorTimeZone("UTC");
   const clock = useMemo(() => footballSlateClock(timeZone), [timeZone]);
-  const slates = useMemo(
-    () => groupFootballSlates(games, league),
-    [games, league],
-  );
   const liveRefs = useMemo(
     () =>
       games.map((game) => {
@@ -81,30 +74,43 @@ export function WeeklyFootballPredictions({
     [games, league],
   );
   const live = useFootballLiveScores(league, liveRefs);
-  const matches = (pick: WeeklyPick) =>
-    pick.status === "recommended" &&
-    (market === "all" || pick.market === market);
-  const searched = (game: WeeklyGame) =>
-    !needle ||
-    game.home_team.toLowerCase().includes(needle) ||
-    game.away_team.toLowerCase().includes(needle);
-  const searchable = needle
-    ? slates.filter((slate) => slate.games.some(searched))
-    : slates;
-  // A slate the search has emptied falls back to every matching slate rather
-  // than an empty page, and the chips only offer slates the search still hits.
-  const chosen = searchable.filter((slate) => slate.id === slateId);
-  const visible = chosen.length ? chosen : searchable;
-  const found = visible.flatMap((slate) => slate.games.filter(searched));
-  const predictions = found.flatMap((game) => game.rows.filter(matches));
-  const gameCount = new Set(predictions.map((row) => row.game_id)).size;
+  const found = games
+    .filter(
+      (game) =>
+        !needle ||
+        game.home_team.toLowerCase().includes(needle) ||
+        game.away_team.toLowerCase().includes(needle),
+    )
+    .map((game) => ({
+      ...game,
+      rows: game.rows.filter(
+        (pick) => market === "all" || pick.market === market,
+      ),
+    }))
+    .filter((game) => game.rows.length);
+  const slates = groupFootballSlates(found, league);
+  // A slate the filters have emptied falls back to every slate rather than
+  // an empty page.
+  const chosen = slates.filter((slate) => slate.id === slateId);
+  const visible = chosen.length ? chosen : slates;
+  const predictions = visible.flatMap((slate) =>
+    slate.games.flatMap((game) => game.rows),
+  );
+  const shownGames = visible.reduce(
+    (total, slate) => total + slate.games.length,
+    0,
+  );
   const slateOptions = [
     { key: "all", label: "All slates" },
-    ...searchable.map((slate) => ({
-      key: slate.id,
-      label: clock.title(slate),
-    })),
+    ...slates.map((slate) => ({ key: slate.id, label: clock.title(slate) })),
   ];
+
+  if (games.length === 0)
+    return (
+      <Notice role="status">
+        No qualifying predictions this week: every decision was a No Play.
+      </Notice>
+    );
 
   return (
     <div className="space-y-6">
@@ -117,8 +123,8 @@ export function WeeklyFootballPredictions({
             onChange={setMarket}
           />
           <p role="status" className="font-mono text-xs text-muted-foreground">
-            {plural(predictions.length, "prediction")} across {gameCount} of{" "}
-            {plural(found.length, "game")}
+            {plural(predictions.length, "prediction")} across{" "}
+            {plural(shownGames, "game")}
           </p>
         </div>
         <RatingsSearch
@@ -137,81 +143,61 @@ export function WeeklyFootballPredictions({
           </p>
         </div>
       </div>
-      <ToggleGroup
-        label="Kickoff slate"
-        variant="chip"
-        options={slateOptions}
-        value={chosen.length ? slateId : "all"}
-        onChange={setSlateId}
-      />
-      {visible.map((slate) => {
-        const filtered = slate.games.filter(searched).map((game) => ({
-          ...game,
-          evaluated: game.rows.length > 0,
-          rows: game.rows.filter(matches),
-        }));
-        const qualified = filtered.filter((game) => game.rows.length);
-        const count = qualified.reduce(
-          (total, game) => total + game.rows.length,
-          0,
-        );
-        const unpublished = filtered.filter((game) => !game.evaluated).length;
-        // A searched team always shows its game, prediction or not.
-        const shown = needle
-          ? filtered
-          : qualified.length || market !== "all"
-            ? qualified
-            : filtered.length <= EMPTY_CARDS
-              ? filtered
-              : [];
-        return (
-          <section
-            key={slate.id}
-            aria-labelledby={`${slate.id}-heading`}
-            className="space-y-3"
-          >
-            <div className="flex flex-wrap items-end justify-between gap-x-4 gap-y-2 border-b border-rule-strong pb-3 pt-2">
-              <div>
-                <h2
-                  id={`${slate.id}-heading`}
-                  className="font-heading text-xl tracking-tight"
-                >
-                  {clock.title(slate)}
-                </h2>
-                <p className="mt-1 text-xs text-muted-foreground">
-                  {clock.kickoff(slate.start)}
-                </p>
-              </div>
-              <p className="font-mono text-xs text-muted-foreground">
-                {plural(filtered.length, "game")} ·{" "}
-                {plural(count, "prediction")}
+      {slates.length === 0 ? (
+        <Notice role="status" className="text-muted-foreground">
+          No {marketNoun(market)}
+          {needle ? ` for a team matching "${query.trim()}"` : " this week"}.
+        </Notice>
+      ) : (
+        <ToggleGroup
+          label="Kickoff slate"
+          variant="chip"
+          options={slateOptions}
+          value={chosen.length ? slateId : "all"}
+          onChange={setSlateId}
+        />
+      )}
+      {visible.map((slate) => (
+        <section
+          key={slate.id}
+          aria-labelledby={`${slate.id}-heading`}
+          className="space-y-3"
+        >
+          <div className="flex flex-wrap items-end justify-between gap-x-4 gap-y-2 border-b border-rule-strong pb-3 pt-2">
+            <div>
+              <h2
+                id={`${slate.id}-heading`}
+                className="font-heading text-xl tracking-tight"
+              >
+                {clock.title(slate)}
+              </h2>
+              <p className="mt-1 text-xs text-muted-foreground">
+                {clock.kickoff(slate.start)}
               </p>
             </div>
-            {shown.length === 0 && (
-              <Notice role="status" className="text-muted-foreground">
-                No qualifying {marketNoun(market)} in this window.{" "}
-                {plural(filtered.length - unpublished, "game")} evaluated as No
-                Play
-                {unpublished
-                  ? `, ${plural(unpublished, "game")} without a published decision`
-                  : ""}
-                .
-              </Notice>
-            )}
-            <div className="space-y-4">
-              {shown.map((game) => (
-                <GamePredictions
-                  key={game.game_id}
-                  game={game}
-                  clock={clock}
-                  market={market}
-                  live={live.get(liveKey(league, game.game_id))}
-                />
-              ))}
-            </div>
-          </section>
-        );
-      })}
+            <p className="font-mono text-xs text-muted-foreground">
+              {plural(slate.games.length, "game")} ·{" "}
+              {plural(
+                slate.games.reduce(
+                  (total, game) => total + game.rows.length,
+                  0,
+                ),
+                "prediction",
+              )}
+            </p>
+          </div>
+          <div className="space-y-4">
+            {slate.games.map((game) => (
+              <GamePredictions
+                key={game.game_id}
+                game={game}
+                clock={clock}
+                live={live.get(liveKey(league, game.game_id))}
+              />
+            ))}
+          </div>
+        </section>
+      ))}
     </div>
   );
 }
@@ -219,12 +205,10 @@ export function WeeklyFootballPredictions({
 function GamePredictions({
   game,
   clock,
-  market,
   live,
 }: {
-  game: WeeklyGame & { evaluated: boolean };
+  game: WeeklyGame;
   clock: ReturnType<typeof footballSlateClock>;
-  market: PickMarket;
   live: LiveGame | undefined;
 }) {
   const rows = game.rows;
@@ -315,13 +299,6 @@ function GamePredictions({
           </p>
         )}
       </CardHeader>
-      {rows.length === 0 && (
-        <CardContent className="py-2.5 text-muted-foreground">
-          {game.evaluated
-            ? `No qualifying ${marketNoun(market)} for this game.`
-            : "No published decision for this game yet."}
-        </CardContent>
-      )}
       <CardContent
         className={cn(
           "grid gap-px bg-border px-0",

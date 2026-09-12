@@ -15,7 +15,8 @@ type CfbPickMetricRow =
   CfbPicksDatabase["cfb"]["Views"]["recommendation_performance"]["Row"];
 // Closing line value is recorded by the CFB ledger only; the NFL view has
 // no closing line columns yet.
-type ClosingLineValue = "average_clv_points" | "clv_sample" | "clv_positive_share";
+type ClosingLineValue =
+  "average_clv_points" | "clv_sample" | "clv_positive_share";
 export type FootballPickMetric = Omit<CfbPickMetricRow, ClosingLineValue> &
   Partial<Pick<CfbPickMetricRow, ClosingLineValue>> & {
     unique_games?: number | null;
@@ -127,7 +128,9 @@ export function pickHistoryCount(
   metric: FootballPickMetric | undefined,
   market: PickMarket,
 ) {
-  return (metric?.picks ?? 0) + (market === "all" ? (metric?.no_plays ?? 0) : 0);
+  return (
+    (metric?.picks ?? 0) + (market === "all" ? (metric?.no_plays ?? 0) : 0)
+  );
 }
 
 export function selectedPickMetric(
@@ -154,23 +157,29 @@ export function teamBadge(team: TeamBadge | undefined): TeamBadge | null {
 // The week's matchups come from the schedule, so a game with no recorded
 // decision still holds its place in the slate; a decision for a game the
 // schedule no longer lists is kept rather than hidden.
+// The week's games that carry a recommended pick, in decision order, each with
+// only its recommended rows. The schedule supplies team badges and the kickoff
+// the games page uses; a game without a pick, or a No Play decision, is not
+// shown on the predictions page.
 export function weeklyGames(
   schedule: Omit<WeeklyGame, "rows">[],
   decisions: WeeklyPick[],
 ): WeeklyGame[] {
-  const games = new Map<string | number, WeeklyGame>(
-    schedule.map((game) => [game.game_id, { ...game, rows: [] }]),
-  );
+  const known = new Map(schedule.map((game) => [game.game_id, game]));
+  const games = new Map<string | number, WeeklyGame>();
   for (const row of decisions) {
+    if (row.status !== "recommended") continue;
     let game = games.get(row.game_id);
     if (!game) {
       game = {
-        game_id: row.game_id,
-        start_date: row.start_date,
-        home_team: row.home_team,
-        away_team: row.away_team,
-        home: null,
-        away: null,
+        ...(known.get(row.game_id) ?? {
+          game_id: row.game_id,
+          start_date: row.start_date,
+          home_team: row.home_team,
+          away_team: row.away_team,
+          home: null,
+          away: null,
+        }),
         rows: [],
       };
       games.set(row.game_id, game);
