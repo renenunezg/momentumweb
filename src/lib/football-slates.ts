@@ -2,6 +2,9 @@ export type ScheduledFootballGame = { start_date: string | null };
 
 export type FootballLeague = "nfl" | "cfb";
 
+// The kickoff formats a <time data-kickoff> element can carry.
+export type KickoffPart = "day" | "time" | "hour";
+
 export type FootballSlate<T> = {
   id: string;
   start: number | null;
@@ -9,13 +12,18 @@ export type FootballSlate<T> = {
   games: T[];
 };
 
-// A slate is one kickoff time: every game that starts at that instant. NFL
-// evening slates carry their broadcast name, read on the league's own clock
-// (Eastern) so a visitor's timezone changes labels but never membership.
+// A slate is one clock hour: every game that kicks off within it, so a 12:30
+// or 12:45 straggler sits with the noon games. Hours are cut on the league's
+// own clock (Eastern) so a visitor's timezone changes labels but never
+// membership; a slate's start is its first kickoff. NFL evening slates carry
+// their broadcast name.
 const BROADCAST: Record<FootballLeague, boolean> = { nfl: true, cfb: false };
 
 const leagueClock = new Intl.DateTimeFormat("en-US", {
   timeZone: "America/New_York",
+  year: "numeric",
+  month: "2-digit",
+  day: "2-digit",
   weekday: "short",
   hour: "numeric",
   hourCycle: "h23",
@@ -25,32 +33,46 @@ export function groupFootballSlates<T extends ScheduledFootballGame>(
   games: T[],
   league: FootballLeague = "nfl",
 ): FootballSlate<T>[] {
-  const byStart = new Map<number, T[]>();
   const undated: T[] = [];
-  for (const game of games) {
-    const start = game.start_date ? Date.parse(game.start_date) : NaN;
-    if (!Number.isFinite(start)) undated.push(game);
-    else byStart.set(start, [...(byStart.get(start) ?? []), game]);
-  }
-  const slates: FootballSlate<T>[] = [...byStart.keys()]
-    .sort((a, b) => a - b)
-    .map((start) => {
-      const parts = Object.fromEntries(
-        leagueClock.formatToParts(start).map((part) => [part.type, part.value]),
-      );
-      const broadcast =
-        BROADCAST[league] && Number(parts.hour) >= 18
-          ? (({ Thu: "TNF", Sun: "SNF", Mon: "MNF" } as const)[
-              parts.weekday as "Thu" | "Sun" | "Mon"
-            ] ?? null)
-          : null;
-      return {
-        id: `slate-${start}`,
+  const hours = new Map<
+    string,
+    { start: number; weekday: string; hour: number; games: T[] }
+  >();
+  const dated = games
+    .map((game) => ({ game, start: Date.parse(game.start_date ?? "") }))
+    .sort((a, b) => a.start - b.start);
+  for (const { game, start } of dated) {
+    if (!Number.isFinite(start)) {
+      undated.push(game);
+      continue;
+    }
+    const parts = Object.fromEntries(
+      leagueClock.formatToParts(start).map((part) => [part.type, part.value]),
+    );
+    const key = `${parts.year}-${parts.month}-${parts.day}T${parts.hour}`;
+    const slot = hours.get(key);
+    if (slot) slot.games.push(game);
+    else
+      hours.set(key, {
         start,
-        broadcast,
-        games: byStart.get(start)!,
-      };
-    });
+        weekday: parts.weekday,
+        hour: Number(parts.hour),
+        games: [game],
+      });
+  }
+  const slates: FootballSlate<T>[] = [...hours.values()].map(
+    ({ start, weekday, hour, games }) => ({
+      id: `slate-${start}`,
+      start,
+      broadcast:
+        BROADCAST[league] && hour >= 18
+          ? (({ Thu: "TNF", Sun: "SNF", Mon: "MNF" } as const)[
+              weekday as "Thu" | "Sun" | "Mon"
+            ] ?? null)
+          : null,
+      games,
+    }),
+  );
   if (undated.length)
     slates.push({
       id: "slate-tbd",
@@ -83,6 +105,10 @@ export function footballSlateClock(timeZone: string) {
     hour: "numeric",
     minute: "2-digit",
   });
+  const clockHour = new Intl.DateTimeFormat("en-US", {
+    ...options,
+    hour: "numeric",
+  });
   const kickoff = new Intl.DateTimeFormat("en-US", {
     ...options,
     hour: "numeric",
@@ -105,7 +131,7 @@ export function footballSlateClock(timeZone: string) {
     title: (slate: Pick<FootballSlate<unknown>, "start" | "broadcast">) => {
       if (slate.start == null) return "Kickoff TBD";
       if (slate.broadcast) return slate.broadcast;
-      return `${weekday.format(slate.start)} · ${hour.format(slate.start)}`;
+      return `${weekday.format(slate.start)} · ${clockHour.format(slate.start)}`;
     },
     kickoff: (value: string | number | null) => {
       const start = parse(value);
@@ -120,6 +146,10 @@ export function footballSlateClock(timeZone: string) {
     time: (value: string | number | null) => {
       const start = parse(value);
       return start == null ? "TBD" : hour.format(start);
+    },
+    hour: (value: string | number | null) => {
+      const start = parse(value);
+      return start == null ? "TBD" : clockHour.format(start);
     },
   };
 }

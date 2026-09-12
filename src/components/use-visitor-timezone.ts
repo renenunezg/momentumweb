@@ -6,7 +6,7 @@ import {
   useSyncExternalStore,
   type RefObject,
 } from "react";
-import { footballSlateClock } from "@/lib/football-slates";
+import { footballSlateClock, type KickoffPart } from "@/lib/football-slates";
 import { LEAGUE_TIME_ZONE } from "@/lib/football";
 
 function subscribe(onChange: () => void) {
@@ -42,8 +42,7 @@ export function useVisitorKickoffs(
       ) ?? [];
     for (const time of times) {
       const start = time.dateTime || null;
-      time.textContent =
-        time.dataset.kickoff === "day" ? clock.day(start) : clock.time(start);
+      time.textContent = clock[time.dataset.kickoff as KickoffPart](start);
     }
   }, [container, clock, content]);
   return clock;

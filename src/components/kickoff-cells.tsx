@@ -1,5 +1,5 @@
-import { formatKickoffDay, formatKickoffTime } from "@/lib/football";
-import type { FootballSlate } from "@/lib/football-slates";
+import { formatKickoff } from "@/lib/football";
+import type { FootballSlate, KickoffPart } from "@/lib/football-slates";
 import { TableCell, TableHead } from "@/components/ui/table";
 
 // Server-rendered in Eastern so the cached HTML reads correctly without
@@ -10,11 +10,11 @@ export function Kickoff({
   part,
 }: {
   start: string | null;
-  part: "day" | "time";
+  part: KickoffPart;
 }) {
   return (
     <time dateTime={start ?? undefined} data-kickoff={part}>
-      {part === "day" ? formatKickoffDay(start) : formatKickoffTime(start)}
+      {formatKickoff[part](start)}
     </time>
   );
 }
@@ -29,7 +29,7 @@ export function KickoffCell({ start }: { start: string | null }) {
   );
 }
 
-// Heads a slate's rows with its day and first kickoff. The label is pinned to
+// Heads a slate's rows with its day and clock hour. The label is pinned to
 // the left edge so it stays readable on a phone while the numbers scroll;
 // `columns` is the table's column count so the heading spans the row. The
 // filters skip this row because it carries no data-search.
@@ -53,7 +53,7 @@ export function SlateRow({
           {start ? (
             <>
               <Kickoff start={start} part="day" /> ·{" "}
-              <Kickoff start={start} part="time" />
+              <Kickoff start={start} part="hour" />
               {slate.broadcast && ` · ${slate.broadcast}`}
             </>
           ) : (

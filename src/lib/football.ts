@@ -7,8 +7,11 @@ export const LEAGUE_TIME_ZONE = "America/New_York";
 
 const eastern = footballSlateClock(LEAGUE_TIME_ZONE);
 
-export const formatKickoffDay = eastern.day;
-export const formatKickoffTime = eastern.time;
+export const formatKickoff = {
+  day: eastern.day,
+  time: eastern.time,
+  hour: eastern.hour,
+} as const;
 
 // A home line like -7.5 means the home team is favored by 7.5.
 export function formatHomeLine(homeSpread: number | null): string {

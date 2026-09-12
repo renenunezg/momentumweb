@@ -4,7 +4,7 @@ import { footballSlateClock, groupFootballSlates } from "./football-slates.ts";
 
 const game = (id: string, start_date: string | null) => ({ id, start_date });
 
-test("each kickoff time is its own slate, and NFL evening slates carry their broadcast name", () => {
+test("slates are clock hours on the league clock, and NFL evening slates carry their broadcast name", () => {
   const games = [
     game("late-25", "2026-09-13T20:25:00Z"),
     game("opener", "2026-09-10T00:20:00Z"),
@@ -22,8 +22,7 @@ test("each kickoff time is its own slate, and NFL evening slates carry their bro
       ["opener"],
       ["tnf"],
       ["early"],
-      ["late-05"],
-      ["late-25"],
+      ["late-05", "late-25"],
       ["snf"],
       ["mnf"],
       ["unknown"],
@@ -31,16 +30,17 @@ test("each kickoff time is its own slate, and NFL evening slates carry their bro
   );
   assert.deepEqual(
     slates.map((slate) => slate.broadcast),
-    [null, "TNF", null, null, null, "SNF", "MNF", null],
+    [null, "TNF", null, null, "SNF", "MNF", null],
   );
   const pacific = footballSlateClock("America/Los_Angeles");
-  assert.equal(pacific.title(slates[0]), "Wednesday · 5:20 PM");
-  assert.equal(pacific.title(slates[2]), "Sunday · 10:00 AM");
-  assert.equal(pacific.title(slates[3]), "Sunday · 1:05 PM");
-  assert.equal(pacific.title(slates[4]), "Sunday · 1:25 PM");
-  assert.equal(pacific.title(slates[7]), "Kickoff TBD");
+  assert.equal(pacific.title(slates[0]), "Wednesday · 5 PM");
+  assert.equal(pacific.title(slates[2]), "Sunday · 10 AM");
+  assert.equal(pacific.title(slates[3]), "Sunday · 1 PM");
+  assert.equal(pacific.hour(slates[3].start), "1 PM");
+  assert.equal(pacific.time(slates[3].start), "1:05 PM");
+  assert.equal(pacific.title(slates[6]), "Kickoff TBD");
   const revised = groupFootballSlates([game("opener", "2026-09-12T19:00:00Z")]);
-  assert.equal(pacific.title(revised[0]), "Saturday · 12:00 PM");
+  assert.equal(pacific.title(revised[0]), "Saturday · 12 PM");
 });
 
 test("visitor timezone changes dates and DST offsets without changing slate membership", () => {
@@ -50,15 +50,15 @@ test("visitor timezone changes dates and DST offsets without changing slate memb
   ]);
   assert.equal(
     footballSlateClock("America/New_York").title(slates[0]),
-    "Sunday · 1:00 PM",
+    "Sunday · 1 PM",
   );
   const tokyo = footballSlateClock("Asia/Tokyo");
-  assert.equal(tokyo.title(slates[0]), "Monday · 2:00 AM");
+  assert.equal(tokyo.title(slates[0]), "Monday · 2 AM");
   assert.equal(tokyo.title(slates[1]), "SNF");
   assert.match(tokyo.kickoff(slates[1].start), /Mon, Sep 14 · 9:20 AM/);
   assert.equal(
     footballSlateClock("Asia/Kolkata").title(slates[0]),
-    "Sunday · 10:30 PM",
+    "Sunday · 10 PM",
   );
   const pacific = footballSlateClock("America/Los_Angeles");
   assert.match(pacific.kickoff("2026-10-25T17:00:00Z"), /10:00 AM PDT/);
@@ -77,23 +77,25 @@ test("visitor timezone changes dates and DST offsets without changing slate memb
   );
 });
 
-test("games at the same instant share a slate and undated games come last", () => {
+test("stragglers join their hour, the next hour starts a slate, and undated games come last", () => {
   const slates = groupFootballSlates(
     [
       game("tbd", null),
-      game("noon-b", "2026-09-12T16:00:00Z"),
-      game("later", "2026-09-12T16:30:00Z"),
-      game("noon-a", "2026-09-12T16:00:00Z"),
+      game("12:45", "2026-09-12T16:45:00Z"),
+      game("1:00", "2026-09-12T17:00:00Z"),
+      game("12:00", "2026-09-12T16:00:00Z"),
+      game("12:30", "2026-09-12T16:30:00Z"),
     ],
     "cfb",
   );
   assert.deepEqual(
     slates.map((slate) => slate.games.map((g) => g.id)),
-    [["noon-b", "noon-a"], ["later"], ["tbd"]],
+    [["12:00", "12:30", "12:45"], ["1:00"], ["tbd"]],
   );
+  assert.equal(slates[0].start, Date.parse("2026-09-12T16:00:00Z"));
   assert.ok(slates.every((slate) => slate.broadcast === null));
   const eastern = footballSlateClock("America/New_York");
-  assert.equal(eastern.title(slates[0]), "Saturday · 12:00 PM");
-  assert.equal(eastern.title(slates[1]), "Saturday · 12:30 PM");
+  assert.equal(eastern.title(slates[0]), "Saturday · 12 PM");
+  assert.equal(eastern.title(slates[1]), "Saturday · 1 PM");
   assert.equal(eastern.title(slates[2]), "Kickoff TBD");
 });
