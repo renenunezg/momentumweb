@@ -203,9 +203,7 @@ export default async function SchedulePage() {
       <p className="max-w-4xl text-sm text-muted-foreground leading-relaxed">
         Model lines are quoted for the home team: a negative line means the
         model favors the home side. Pure is the model&apos;s own line; the
-        published line blends it with the market at a capped weight. Market is
-        the best priced spread when the forecast ran, or the consensus spread
-        otherwise.
+        published line blends it with the market at a capped weight.
       </p>
 
       <p className="text-xs text-muted-foreground">

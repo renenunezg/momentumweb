@@ -134,9 +134,7 @@ export default async function SchedulePage() {
         Model lines are quoted for the home team: a negative line means the
         model favors the home side. The published line blends the pure model
         with the market at a capped weight; Pure is the model&apos;s own
-        opinion before that blend. Market is the best priced spread offer
-        found when the forecast ran, or the consensus line when no priced
-        offer was available.
+        opinion before that blend.
       </p>
 
       <ScheduleFilters
