@@ -7,6 +7,8 @@ import { supabaseCfb, supabaseNfl } from "@/lib/supabase";
 import { formatPct, formatSigned } from "@/lib/utils";
 import { fetchCfbPickSummary } from "@/lib/cfb-picks";
 import { fetchNflPickSummary } from "@/lib/nfl-picks";
+import { fetchNhlPickSummary } from "@/lib/nhl-picks";
+import { fetchLatestRatings as fetchNhlRatings } from "@/lib/nhl";
 import { marketRecords, type MarketRecord } from "@/lib/football-picks";
 import { SITE_TIME_ZONE, siteDate } from "@/lib/daily-picks";
 import { fetchDailyPicks } from "@/lib/daily-picks-fetch";
@@ -50,6 +52,8 @@ type FootballHeadline = {
   // has published, the card reads as live.
   live: boolean;
   markets: MarketRecord[];
+  // A daily model labels its period itself instead of a week number.
+  period?: string;
 };
 
 const SEASON_TO_DATE = { market: "all", period: "all", from: null } as const;
@@ -103,6 +107,30 @@ async function getNflHeadline(): Promise<FootballHeadline | null> {
     };
   } catch {
     // Home should never 500 because Supabase is unreachable; the NFL card
+    // degrades to a plain link.
+    return null;
+  }
+}
+
+// The NHL model is daily: the card reads live once ratings exist and labels
+// the season from the latest ratings date.
+async function getNhlHeadline(): Promise<FootballHeadline | null> {
+  try {
+    const { asOf } = await fetchNhlRatings();
+    if (!asOf) return null;
+    const year = Number(asOf.slice(0, 4));
+    const month = Number(asOf.slice(5, 7));
+    const season = month >= 9 ? year : year - 1;
+    const summary = await fetchNhlPickSummary({ ...SEASON_TO_DATE, season });
+    return {
+      season,
+      week: null,
+      live: true,
+      markets: marketRecords(summary.metrics).filter((m) => m.market !== "spreads"),
+      period: `${season}-${String(season + 1).slice(2)} season`,
+    };
+  } catch {
+    // Home should never 500 because Supabase is unreachable; the NHL card
     // degrades to a plain link.
     return null;
   }
@@ -209,22 +237,22 @@ function FootballStats({ headline }: { headline: FootballHeadline }) {
         </div>
       ))}
       <p className="ml-auto self-end font-mono text-xs text-muted-foreground">
-        {headline.live
-          ? `${headline.season} week ${headline.week ?? "–"}`
-          : `${headline.season} preseason`}
+        {headline.period ??
+          (headline.live
+            ? `${headline.season} week ${headline.week ?? "–"}`
+            : `${headline.season} preseason`)}
       </p>
     </div>
   );
 }
 
-const upcomingSports = [{ name: "NHL", label: "Hockey" }];
-
 export default async function Home() {
   const today = siteDate();
-  const [mlb, cfb, nfl, daily] = await Promise.all([
+  const [mlb, cfb, nfl, nhl, daily] = await Promise.all([
     getMlbHeadline(),
     getCfbHeadline(),
     getNflHeadline(),
+    getNhlHeadline(),
     fetchDailyPicks(today),
   ]);
   const dateLabel = new Date(`${today}T12:00:00Z`).toLocaleDateString(
@@ -332,27 +360,16 @@ export default async function Home() {
             >
               {nfl && <FootballStats headline={nfl} />}
             </ModelEntry>
-          </div>
 
-          <div className="mt-4 grid grid-cols-1 gap-4 sm:grid-cols-2">
-            {upcomingSports.map((sport) => (
-              <div
-                key={sport.name}
-                className="border-b border-dashed border-border py-3"
-              >
-                <div className="flex items-baseline justify-between gap-2">
-                  <span className="font-heading text-base tracking-tight text-muted-foreground">
-                    {sport.name}
-                  </span>
-                  <span className="font-mono text-xs uppercase tracking-wider text-muted-foreground/70">
-                    Planned
-                  </span>
-                </div>
-                <p className="mt-1 text-xs text-muted-foreground/70">
-                  {sport.label}
-                </p>
-              </div>
-            ))}
+            <ModelEntry
+              href="/nhl/games"
+              name="NHL"
+              live={nhl ? true : null}
+              cta="View today's slate"
+              description="Poisson goal model from last-25-game shot-quality windows, priced daily against the NHL partner sportsbooks with frozen moneyline and total picks."
+            >
+              {nhl && <FootballStats headline={nhl} />}
+            </ModelEntry>
           </div>
         </section>
 

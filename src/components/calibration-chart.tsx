@@ -1,6 +1,5 @@
 "use client";
 
-import type { CalibrationBin } from "@/lib/types";
 import {
   LineChart,
   Line,
@@ -17,8 +16,16 @@ import {
   useChartTheme,
 } from "@/lib/chart-theme";
 
+// Structural, so the MLB calibration table and the NHL accuracy function's
+// bins both render through one chart.
+export interface CalibrationPoint {
+  predicted_mean: number;
+  observed_rate: number;
+  count: number;
+}
+
 interface CalibrationChartProps {
-  data: CalibrationBin[];
+  data: CalibrationPoint[];
 }
 
 export function CalibrationChart({ data }: CalibrationChartProps) {

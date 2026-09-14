@@ -1,10 +1,41 @@
 import type { CfbPicksDatabase } from "@/lib/cfb-picks.database.types";
 import type { Json } from "@/lib/database.types";
+// The shape the shared pick components read. CFB and NFL rows carry a week
+// and per-side missing-input counts; the NHL ledger is daily with one count
+// and settles in goals, so those fields are optional here and the table
+// renders whichever a row has.
 export type FootballPick = Omit<
   CfbPicksDatabase["cfb"]["Tables"]["recommendations"]["Row"],
-  "game_id"
+  | "game_id"
+  | "week"
+  | "home_missing_input_count"
+  | "away_missing_input_count"
+  | "home_points"
+  | "away_points"
+  | "margin_sd"
+  | "total_sd"
+  | "degrees_of_freedom"
+  | "odds_api_event_id"
+  | "match_score"
+  | "pricing_weights"
+  | "model_home_margin"
 > & {
   game_id: string | number;
+  week?: number;
+  margin_sd?: number | null;
+  total_sd?: number | null;
+  degrees_of_freedom?: number | null;
+  odds_api_event_id?: string | null;
+  match_score?: number | null;
+  pricing_weights?: Json;
+  model_home_margin?: number | null;
+  home_missing_input_count?: number | null;
+  away_missing_input_count?: number | null;
+  missing_input_count?: number | null;
+  home_points?: number | null;
+  away_points?: number | null;
+  home_goals?: number | null;
+  away_goals?: number | null;
   execution_eligibility_verified?: boolean;
   source_timestamps?: Json;
   data_flags?: Json;
@@ -22,6 +53,7 @@ export type FootballPickMetric = Omit<CfbPickMetricRow, ClosingLineValue> &
     unique_games?: number | null;
   };
 export type PickMarket = "all" | "h2h" | "spreads" | "totals";
+export type PickSport = "cfb" | "nfl" | "nhl";
 export type WeeklyPick = Pick<
   FootballPick,
   | "game_id"
@@ -217,6 +249,12 @@ export function pickReason(reason: string): string {
     unverified_source: "Missing verified odds source",
     kickoff_mismatch: "Provider kickoff does not match the schedule",
     uncertain_game_match: "Game match needs verification",
+    edge_gate: "Qualifying edge",
+    "edge_below_0.13": "Below the 13-point edge threshold",
+    total_within_1_goals: "Model total within a goal of the line",
+    insufficient_window: "A team's venue window is too short",
+    no_offer: "No partner price posted",
+    stale_offer: "Partner price is stale",
     unpaired_market: "Missing opposing price",
     missing_price_timestamp: "Missing price timestamp",
     in_play_offer: "Offer was captured after kickoff",

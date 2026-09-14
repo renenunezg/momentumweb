@@ -1,6 +1,7 @@
 import { NavigationLink as Link } from "@/components/navigation-link";
 import type { ReactNode } from "react";
 import { cn } from "@/lib/utils";
+import type { PickSport } from "@/lib/football-picks";
 
 export function FootballPerformanceTabs({
   active,
@@ -11,7 +12,7 @@ export function FootballPerformanceTabs({
   active: "picks" | "accuracy";
   query: string;
   children: ReactNode;
-  sport?: "cfb" | "nfl";
+  sport?: PickSport;
 }) {
   return (
     <>

@@ -1,6 +1,6 @@
 # momentumweb
 
-The website behind [renenunez.dev](https://renenunez.dev): one frontend for a set of probabilistic sports forecasting models. MLB run-distribution forecasts are published daily and graded live, college football and NFL publish weekly power ratings and spread projections, and every model is benchmarked against the closing line in public.
+The website behind [renenunez.dev](https://renenunez.dev): one frontend for a set of probabilistic sports forecasting models. MLB run-distribution forecasts are published daily and graded live, college football and NFL publish weekly power ratings and spread projections, the NHL model prices every slate against the league's partner sportsbooks, and every model is benchmarked against the market in public.
 
 The models themselves live in separate repositories and write their outputs to Postgres. This repository only reads those tables and renders them.
 
@@ -14,10 +14,10 @@ The models themselves live in separate repositories and write their outputs to P
 
 ## Architecture
 
-Supabase is the only interface between this site and the model repositories. Each sport owns a Postgres schema (`mlb`, `cfb`, `nfl`), and each has a pinned client in `src/lib/supabase.ts` so a query cannot cross sports by accident. The site never imports model code and never calls a model repo; a schema change on the model side is an API change here, and `src/lib/database.types.ts` surfaces it at compile time.
+Supabase is the only interface between this site and the model repositories. Each sport owns a Postgres schema (`mlb`, `cfb`, `nfl`, `nhl`), and each has a pinned client in `src/lib/supabase.ts` so a query cannot cross sports by accident. The site never imports model code and never calls a model repo; a schema change on the model side is an API change here, and `src/lib/database.types.ts` surfaces it at compile time.
 
 ```
-model repos  ──write──▶  Supabase (mlb / cfb / nfl schemas)  ──read──▶  this site
+model repos  ──write──▶  Supabase (mlb / cfb / nfl / nhl schemas)  ──read──▶  this site
 ```
 
 Route tree:
@@ -32,6 +32,9 @@ Route tree:
 | `/cfb/schedule`, `/nfl/schedule` | Weekly projections priced against the market |
 | `/cfb/history`, `/nfl/history` | Graded games, live season first, frozen backtest behind it |
 | `/cfb/performance`, `/nfl/performance` | Model vs closing line, by season and by segment |
+| `/nhl/games` | Today's NHL slate with fair and partner-book prices, picks, and live scores (rendered per request) |
+| `/nhl/ratings`, `/nhl/schedule` | Venue-split expected goals and strengths; the next seven days of projections |
+| `/nhl/history`, `/nhl/performance` | Frozen NHL picks graded at the recorded price; win-probability calibration on the live season and the backtest |
 | `/*/methodology` | How each model works |
 | `/blog`, `/about` | Writing and contact |
 

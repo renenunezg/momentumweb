@@ -191,3 +191,16 @@ export type NflTeamUnitRating = Tables<"nfl", "team_unit_ratings">;
 export type NflGameProjection = Tables<"nfl", "game_projections">;
 export type NflMarketComparison = Tables<"nfl", "market_comparisons">;
 export type NflBacktestPrediction = Tables<"nfl", "backtest_predictions">;
+
+// ---------------------------------------------------------------------------
+// NHL (nhl schema)
+
+export type NhlTeamIdentity = Tables<"nhl", "teams">;
+export type NhlTeamRating = Tables<"nhl", "team_ratings">;
+export type NhlGameProjection = Tables<"nhl", "game_projections">;
+export type NhlMarketSnapshot = Tables<"nhl", "market_snapshots">;
+export type NhlGameResult = Tables<"nhl", "game_results">;
+export type NhlLivePrediction = Tables<"nhl", "live_predictions">;
+export type NhlBacktestPrediction = Tables<"nhl", "backtest_predictions">;
+export type NhlPick = Tables<"nhl", "recommendations">;
+export type NhlPickMetric = Tables<"nhl", "recommendation_performance">;

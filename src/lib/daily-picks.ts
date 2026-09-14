@@ -22,7 +22,7 @@ export type DailyGame = {
 };
 
 export type DailySport = {
-  sport: "mlb" | "cfb" | "nfl";
+  sport: "mlb" | "cfb" | "nfl" | "nhl";
   name: string;
   href: string;
   gameCount: number;

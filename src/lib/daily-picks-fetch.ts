@@ -1,4 +1,4 @@
-import { supabase, supabaseCfb, supabaseNfl } from "@/lib/supabase";
+import { supabase, supabaseCfb, supabaseNfl, supabaseNhl } from "@/lib/supabase";
 import {
   SITE_TIME_ZONE,
   footballGames,
@@ -20,7 +20,8 @@ function emptyDay(sport: DailySport["sport"]): DailySport {
   return {
     sport,
     name: sport.toUpperCase(),
-    href: sport === "mlb" ? "/mlb/games" : `/${sport}/predictions`,
+    href:
+      sport === "mlb" ? "/mlb/games" : sport === "nhl" ? "/nhl/games" : `/${sport}/predictions`,
     gameCount: 0,
     published: false,
     games: [],
@@ -67,13 +68,20 @@ async function fetchMlbDay(date: string): Promise<DailySport> {
   };
 }
 
+const LEDGER_CLIENTS = {
+  cfb: supabaseCfb,
+  nfl: supabaseNfl,
+  nhl: supabaseNhl,
+} as const;
+
 async function fetchFootballDay(
-  sport: "cfb" | "nfl",
+  sport: "cfb" | "nfl" | "nhl",
   range: { from: string; to: string },
 ): Promise<DailySport> {
-  // Both football schemas publish these two tables with the same columns, so
-  // one query path serves both; the CFB type stands in for the union.
-  const client = (sport === "cfb" ? supabaseCfb : supabaseNfl) as typeof supabaseCfb;
+  // The football and hockey schemas publish these two tables with the same
+  // columns, so one query path serves all three; the CFB type stands in for
+  // the union.
+  const client = LEDGER_CLIENTS[sport] as typeof supabaseCfb;
   const day = emptyDay(sport);
   const [countRes, decisionsRes] = await Promise.all([
     client
@@ -109,9 +117,10 @@ export async function fetchDailyPicks(date: string): Promise<DailySport[]> {
       fetchMlbDay(date),
       fetchFootballDay("cfb", range),
       fetchFootballDay("nfl", range),
+      fetchFootballDay("nhl", range),
     ].map((day, index) =>
       day.catch(() => ({
-        ...emptyDay((["mlb", "cfb", "nfl"] as const)[index]),
+        ...emptyDay((["mlb", "cfb", "nfl", "nhl"] as const)[index]),
         unavailable: true,
       })),
     ),

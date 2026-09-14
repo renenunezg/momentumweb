@@ -20,6 +20,11 @@ const DATA_ROUTES = [
   "/nfl/awards",
   "/nfl/history",
   "/nfl/performance",
+  "/nhl/games",
+  "/nhl/ratings",
+  "/nhl/schedule",
+  "/nhl/history",
+  "/nhl/performance",
 ];
 const PROSE_ROUTES = [
   "/about",
@@ -27,6 +32,7 @@ const PROSE_ROUTES = [
   "/mlb/methodology",
   "/cfb/methodology",
   "/nfl/methodology",
+  "/nhl/methodology",
 ];
 
 export default function sitemap(): MetadataRoute.Sitemap {

@@ -2994,6 +2994,674 @@ export type Database = {
       [_ in never]: never
     }
   }
+  nhl: {
+    Tables: {
+      backtest_predictions: {
+        Row: {
+          game_id: string
+          season: number
+          game_date: string
+          home_team: string
+          away_team: string
+          home_goals: number
+          away_goals: number
+          last_period_type: string | null
+          home_lambda: number
+          away_lambda: number
+          home_win_prob: number
+          model_total: number
+        }
+        Insert: {
+          game_id: string
+          season: number
+          game_date: string
+          home_team: string
+          away_team: string
+          home_goals: number
+          away_goals: number
+          last_period_type?: string | null
+          home_lambda: number
+          away_lambda: number
+          home_win_prob: number
+          model_total: number
+        }
+        Update: {
+          game_id?: string
+          season?: number
+          game_date?: string
+          home_team?: string
+          away_team?: string
+          home_goals?: number
+          away_goals?: number
+          last_period_type?: string | null
+          home_lambda?: number
+          away_lambda?: number
+          home_win_prob?: number
+          model_total?: number
+        }
+        Relationships: []
+      }
+      forecast_snapshots: {
+        Row: {
+          snapshot_id: number
+          recorded_at: string
+          game_id: string
+          season: number
+          game_date: string
+          start_date: string
+          as_of: string
+          model_version: string
+          home_team_abbr: string
+          away_team_abbr: string
+          home_team: string
+          away_team: string
+          home_lambda: number
+          away_lambda: number
+          home_win_prob: number
+          away_win_prob: number
+          model_total: number
+          home_fair_decimal: number
+          away_fair_decimal: number
+          home_fair_price: number
+          away_fair_price: number
+          home_minimum_price: number
+          away_minimum_price: number
+          missing_input_count: number
+        }
+        Insert: {
+          snapshot_id: number
+          recorded_at?: string
+          game_id: string
+          season: number
+          game_date: string
+          start_date: string
+          as_of: string
+          model_version: string
+          home_team_abbr: string
+          away_team_abbr: string
+          home_team: string
+          away_team: string
+          home_lambda: number
+          away_lambda: number
+          home_win_prob: number
+          away_win_prob: number
+          model_total: number
+          home_fair_decimal: number
+          away_fair_decimal: number
+          home_fair_price: number
+          away_fair_price: number
+          home_minimum_price: number
+          away_minimum_price: number
+          missing_input_count: number
+        }
+        Update: {
+          snapshot_id?: number
+          recorded_at?: string
+          game_id?: string
+          season?: number
+          game_date?: string
+          start_date?: string
+          as_of?: string
+          model_version?: string
+          home_team_abbr?: string
+          away_team_abbr?: string
+          home_team?: string
+          away_team?: string
+          home_lambda?: number
+          away_lambda?: number
+          home_win_prob?: number
+          away_win_prob?: number
+          model_total?: number
+          home_fair_decimal?: number
+          away_fair_decimal?: number
+          home_fair_price?: number
+          away_fair_price?: number
+          home_minimum_price?: number
+          away_minimum_price?: number
+          missing_input_count?: number
+        }
+        Relationships: []
+      }
+      game_projections: {
+        Row: {
+          game_id: string
+          season: number
+          game_date: string
+          start_date: string
+          as_of: string
+          model_version: string
+          home_team_abbr: string
+          away_team_abbr: string
+          home_team: string
+          away_team: string
+          home_lambda: number
+          away_lambda: number
+          home_win_prob: number
+          away_win_prob: number
+          model_total: number
+          home_fair_decimal: number
+          away_fair_decimal: number
+          home_fair_price: number
+          away_fair_price: number
+          home_minimum_price: number
+          away_minimum_price: number
+          missing_input_count: number
+        }
+        Insert: {
+          game_id: string
+          season: number
+          game_date: string
+          start_date: string
+          as_of: string
+          model_version: string
+          home_team_abbr: string
+          away_team_abbr: string
+          home_team: string
+          away_team: string
+          home_lambda: number
+          away_lambda: number
+          home_win_prob: number
+          away_win_prob: number
+          model_total: number
+          home_fair_decimal: number
+          away_fair_decimal: number
+          home_fair_price: number
+          away_fair_price: number
+          home_minimum_price: number
+          away_minimum_price: number
+          missing_input_count: number
+        }
+        Update: {
+          game_id?: string
+          season?: number
+          game_date?: string
+          start_date?: string
+          as_of?: string
+          model_version?: string
+          home_team_abbr?: string
+          away_team_abbr?: string
+          home_team?: string
+          away_team?: string
+          home_lambda?: number
+          away_lambda?: number
+          home_win_prob?: number
+          away_win_prob?: number
+          model_total?: number
+          home_fair_decimal?: number
+          away_fair_decimal?: number
+          home_fair_price?: number
+          away_fair_price?: number
+          home_minimum_price?: number
+          away_minimum_price?: number
+          missing_input_count?: number
+        }
+        Relationships: []
+      }
+      game_results: {
+        Row: {
+          game_id: string
+          season: number
+          game_date: string
+          start_date: string
+          home_team_abbr: string
+          away_team_abbr: string
+          home_team: string
+          away_team: string
+          home_goals: number
+          away_goals: number
+          last_period_type: string
+          source: string
+          source_fetched_at: string
+        }
+        Insert: {
+          game_id: string
+          season: number
+          game_date: string
+          start_date: string
+          home_team_abbr: string
+          away_team_abbr: string
+          home_team: string
+          away_team: string
+          home_goals: number
+          away_goals: number
+          last_period_type: string
+          source: string
+          source_fetched_at: string
+        }
+        Update: {
+          game_id?: string
+          season?: number
+          game_date?: string
+          start_date?: string
+          home_team_abbr?: string
+          away_team_abbr?: string
+          home_team?: string
+          away_team?: string
+          home_goals?: number
+          away_goals?: number
+          last_period_type?: string
+          source?: string
+          source_fetched_at?: string
+        }
+        Relationships: []
+      }
+      market_snapshots: {
+        Row: {
+          game_id: string
+          provider_key: string
+          fetched_at: string
+          provider_last_update: string | null
+          home_price: number | null
+          away_price: number | null
+          total_line: number | null
+          over_price: number | null
+          under_price: number | null
+          puck_line: number | null
+          home_puck_price: number | null
+          away_puck_price: number | null
+        }
+        Insert: {
+          game_id: string
+          provider_key: string
+          fetched_at: string
+          provider_last_update?: string | null
+          home_price?: number | null
+          away_price?: number | null
+          total_line?: number | null
+          over_price?: number | null
+          under_price?: number | null
+          puck_line?: number | null
+          home_puck_price?: number | null
+          away_puck_price?: number | null
+        }
+        Update: {
+          game_id?: string
+          provider_key?: string
+          fetched_at?: string
+          provider_last_update?: string | null
+          home_price?: number | null
+          away_price?: number | null
+          total_line?: number | null
+          over_price?: number | null
+          under_price?: number | null
+          puck_line?: number | null
+          home_puck_price?: number | null
+          away_puck_price?: number | null
+        }
+        Relationships: []
+      }
+      recommendation_schedule: {
+        Row: {
+          game_id: string
+          season: number
+          start_date: string | null
+          home_team: string
+          away_team: string
+          game_status: string
+          completed: boolean
+          home_goals: number | null
+          away_goals: number | null
+          observed_at: string
+        }
+        Insert: {
+          game_id: string
+          season: number
+          start_date?: string | null
+          home_team: string
+          away_team: string
+          game_status: string
+          completed: boolean
+          home_goals?: number | null
+          away_goals?: number | null
+          observed_at: string
+        }
+        Update: {
+          game_id?: string
+          season?: number
+          start_date?: string | null
+          home_team?: string
+          away_team?: string
+          game_status?: string
+          completed?: boolean
+          home_goals?: number | null
+          away_goals?: number | null
+          observed_at?: string
+        }
+        Relationships: []
+      }
+      recommendations: {
+        Row: {
+          game_id: string
+          market: string
+          season: number
+          game_date: string
+          start_date: string
+          home_team: string
+          away_team: string
+          model_version: string
+          forecast_as_of: string
+          missing_input_count: number
+          policy_version: string
+          decision_at: string
+          published_at: string
+          status: string
+          reason: string
+          selection: string | null
+          side: string | null
+          point: number | null
+          price: number | null
+          provider: string | null
+          provider_key: string | null
+          market_fetched_at: string | null
+          provider_event_id: string | null
+          provider_start_date: string | null
+          provider_last_update: string | null
+          win_probability: number | null
+          push_probability: number | null
+          probability_edge: number | null
+          edge_points: number | null
+          expected_value_per_unit: number | null
+          stake_units: number
+          kelly_fraction: number | null
+          minimum_price: number | null
+          home_lambda: number
+          away_lambda: number
+          model_total: number
+          market_total: number | null
+          source_timestamps: Json
+          data_flags: Json
+          pricing_weights: Json
+          outcome: string
+          home_goals: number | null
+          away_goals: number | null
+          profit_units: number | null
+          graded_at: string | null
+          settlement_reason: string | null
+          result_source_at: string | null
+        }
+        Insert: {
+          game_id: string
+          market: string
+          season: number
+          game_date: string
+          start_date: string
+          home_team: string
+          away_team: string
+          model_version: string
+          forecast_as_of: string
+          missing_input_count: number
+          policy_version: string
+          decision_at: string
+          published_at?: string
+          status: string
+          reason: string
+          selection?: string | null
+          side?: string | null
+          point?: number | null
+          price?: number | null
+          provider?: string | null
+          provider_key?: string | null
+          market_fetched_at?: string | null
+          provider_event_id?: string | null
+          provider_start_date?: string | null
+          provider_last_update?: string | null
+          win_probability?: number | null
+          push_probability?: number | null
+          probability_edge?: number | null
+          edge_points?: number | null
+          expected_value_per_unit?: number | null
+          stake_units: number
+          kelly_fraction?: number | null
+          minimum_price?: number | null
+          home_lambda: number
+          away_lambda: number
+          model_total: number
+          market_total?: number | null
+          source_timestamps: Json
+          data_flags: Json
+          pricing_weights: Json
+          outcome?: string
+          home_goals?: number | null
+          away_goals?: number | null
+          profit_units?: number | null
+          graded_at?: string | null
+          settlement_reason?: string | null
+          result_source_at?: string | null
+        }
+        Update: {
+          game_id?: string
+          market?: string
+          season?: number
+          game_date?: string
+          start_date?: string
+          home_team?: string
+          away_team?: string
+          model_version?: string
+          forecast_as_of?: string
+          missing_input_count?: number
+          policy_version?: string
+          decision_at?: string
+          published_at?: string
+          status?: string
+          reason?: string
+          selection?: string | null
+          side?: string | null
+          point?: number | null
+          price?: number | null
+          provider?: string | null
+          provider_key?: string | null
+          market_fetched_at?: string | null
+          provider_event_id?: string | null
+          provider_start_date?: string | null
+          provider_last_update?: string | null
+          win_probability?: number | null
+          push_probability?: number | null
+          probability_edge?: number | null
+          edge_points?: number | null
+          expected_value_per_unit?: number | null
+          stake_units?: number
+          kelly_fraction?: number | null
+          minimum_price?: number | null
+          home_lambda?: number
+          away_lambda?: number
+          model_total?: number
+          market_total?: number | null
+          source_timestamps?: Json
+          data_flags?: Json
+          pricing_weights?: Json
+          outcome?: string
+          home_goals?: number | null
+          away_goals?: number | null
+          profit_units?: number | null
+          graded_at?: string | null
+          settlement_reason?: string | null
+          result_source_at?: string | null
+        }
+        Relationships: []
+      }
+      team_ratings: {
+        Row: {
+          as_of: string
+          team_abbr: string
+          team: string
+          model_version: string
+          window_games_home: number
+          window_games_away: number
+          home_xgf: number
+          home_xga: number
+          away_xgf: number
+          away_xga: number
+          home_attack: number
+          home_defense: number
+          away_attack: number
+          away_defense: number
+          rating: number
+          insufficient_window: boolean
+          published_at: string
+        }
+        Insert: {
+          as_of: string
+          team_abbr: string
+          team: string
+          model_version: string
+          window_games_home: number
+          window_games_away: number
+          home_xgf: number
+          home_xga: number
+          away_xgf: number
+          away_xga: number
+          home_attack: number
+          home_defense: number
+          away_attack: number
+          away_defense: number
+          rating: number
+          insufficient_window: boolean
+          published_at?: string
+        }
+        Update: {
+          as_of?: string
+          team_abbr?: string
+          team?: string
+          model_version?: string
+          window_games_home?: number
+          window_games_away?: number
+          home_xgf?: number
+          home_xga?: number
+          away_xgf?: number
+          away_xga?: number
+          home_attack?: number
+          home_defense?: number
+          away_attack?: number
+          away_defense?: number
+          rating?: number
+          insufficient_window?: boolean
+          published_at?: string
+        }
+        Relationships: []
+      }
+      teams: {
+        Row: {
+          team_abbr: string
+          team: string
+          conference: string | null
+          division: string | null
+          color: string | null
+          logo_light: string | null
+          logo_dark: string | null
+        }
+        Insert: {
+          team_abbr: string
+          team: string
+          conference?: string | null
+          division?: string | null
+          color?: string | null
+          logo_light?: string | null
+          logo_dark?: string | null
+        }
+        Update: {
+          team_abbr?: string
+          team?: string
+          conference?: string | null
+          division?: string | null
+          color?: string | null
+          logo_light?: string | null
+          logo_dark?: string | null
+        }
+        Relationships: []
+      }
+    }
+    Views: {
+      live_predictions: {
+        Row: {
+          game_id: string | null
+          season: number | null
+          game_date: string | null
+          start_date: string | null
+          home_team: string | null
+          away_team: string | null
+          home_goals: number | null
+          away_goals: number | null
+          last_period_type: string | null
+          home_lambda: number | null
+          away_lambda: number | null
+          home_win_prob: number | null
+          model_total: number | null
+          forecast_as_of: string | null
+          forecast_recorded_at: string | null
+          model_version: string | null
+          source: string | null
+          source_fetched_at: string | null
+        }
+        Relationships: []
+      }
+      recommendation_performance: {
+        Row: {
+          season: number | null
+          segment_kind: string | null
+          segment: string | null
+          unique_games: number | null
+          picks: number | null
+          no_plays: number | null
+          pending: number | null
+          wins: number | null
+          losses: number | null
+          pushes: number | null
+          voids: number | null
+          staked_units: number | null
+          profit_units: number | null
+          average_ev: number | null
+          first_decision_at: string | null
+          last_decision_at: string | null
+          last_graded_at: string | null
+          roi: number | null
+          win_rate: number | null
+          thin_sample: boolean | null
+        }
+        Relationships: []
+      }
+    }
+    Functions: {
+      forecast_accuracy: {
+        Args: { p_source?: string }
+        Returns: Json
+      }
+      recommendation_dashboard: {
+        Args: { p_from?: string; p_market?: string; p_season?: number }
+        Returns: Json
+      }
+      recommendation_summary: {
+        Args: { p_from?: string; p_market?: string; p_season?: number }
+        Returns: {
+          season: number | null
+          segment_kind: string | null
+          segment: string | null
+          unique_games: number | null
+          picks: number | null
+          no_plays: number | null
+          pending: number | null
+          wins: number | null
+          losses: number | null
+          pushes: number | null
+          voids: number | null
+          staked_units: number | null
+          profit_units: number | null
+          average_ev: number | null
+          first_decision_at: string | null
+          last_decision_at: string | null
+          last_graded_at: string | null
+          roi: number | null
+          win_rate: number | null
+          thin_sample: boolean | null
+        }[]
+      }
+    }
+    Enums: {
+      [_ in never]: never
+    }
+    CompositeTypes: {
+      [_ in never]: never
+    }
+  }
 }
 
 type DatabaseWithoutInternals = Omit<Database, "__InternalSupabase">

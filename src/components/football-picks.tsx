@@ -26,6 +26,7 @@ import {
   type FootballPick,
   type FootballPickMetric,
   type PickMarket,
+  type PickSport,
 } from "@/lib/football-picks";
 
 export function PickCountNote({
@@ -186,14 +187,21 @@ export function PickTable({
                   <div className="mt-1 max-w-64 space-y-1 break-all">
                     <p>Decision: {new Date(pick.decision_at).toISOString()}</p>
                     <p>Rule: {pick.policy_version}</p>
-                    <p>
-                      Missing inputs: home{" "}
-                      {pick.home_missing_input_count ?? "unknown"}, away{" "}
-                      {pick.away_missing_input_count ?? "unknown"}.{" "}
-                      {pick.policy_version.startsWith("cfb-")
-                        ? "Counts include unavailable injury data."
-                        : "NFL counts flag missing expected-QB identities."}
-                    </p>
+                    {pick.missing_input_count != null ? (
+                      <p>
+                        Missing inputs: {pick.missing_input_count}. NHL counts
+                        flag a venue window under ten games.
+                      </p>
+                    ) : (
+                      <p>
+                        Missing inputs: home{" "}
+                        {pick.home_missing_input_count ?? "unknown"}, away{" "}
+                        {pick.away_missing_input_count ?? "unknown"}.{" "}
+                        {pick.policy_version.startsWith("cfb-")
+                          ? "Counts include unavailable injury data."
+                          : "NFL counts flag missing expected-QB identities."}
+                      </p>
+                    )}
                     <p>Model: {pick.model_version}</p>
                     {pick.execution_eligibility_verified !== undefined && (
                       <p>
@@ -264,11 +272,15 @@ export function PickTable({
                 >
                   {pick.status === "no_play" ? "No Play" : pick.outcome}
                 </span>
-                {pick.home_points != null && pick.away_points != null && (
-                  <div className="text-xs text-muted-foreground">
-                    {pick.away_points}-{pick.home_points}
-                  </div>
-                )}
+                {(() => {
+                  const home = pick.home_points ?? pick.home_goals;
+                  const away = pick.away_points ?? pick.away_goals;
+                  return home != null && away != null ? (
+                    <div className="text-xs text-muted-foreground">
+                      {away}-{home}
+                    </div>
+                  ) : null;
+                })()}
               </TableCell>
               <TableCell
                 className={cn(
@@ -363,7 +375,7 @@ export function PickPolicy({
   sport = "cfb",
 }: {
   firstDecision?: string | null;
-  sport?: "cfb" | "nfl";
+  sport?: PickSport;
 }) {
   return (
     <div className="space-y-2 text-xs leading-relaxed text-muted-foreground">
@@ -372,7 +384,22 @@ export function PickPolicy({
         frozen when first published. Later forecasts do not rewrite a pick. A
         changed kickoff voids the original pick.
       </p>
-      {sport === "nfl" ? (
+      {sport === "nhl" ? (
+        <p>
+          NHL picks v1 follows the original spreadsheet&apos;s rules. A
+          moneyline is recommended when the model&apos;s win probability
+          beats the posted price&apos;s break-even probability by at least 13
+          percentage points with positive estimated EV; a total when the model
+          total differs from the posted line by at least one goal. Prices come
+          from the NHL&apos;s partner sportsbook feed (DraftKings and FanDuel),
+          the better of the two, and must be dated within 24 hours of
+          publication. Each pick risks 1 unit; the fractional Kelly stake the
+          sheet computed is shown for reference only. A moved, postponed or
+          cancelled game voids its pick; totals push on the line; there are no
+          moneyline ties. Estimated EV does not establish a real betting
+          advantage.
+        </p>
+      ) : sport === "nfl" ? (
         <p>
           NFL picks v1 requires a 4.5 percentage-point advantage over the
           price&apos;s break-even probability, conditional on no push or

@@ -83,3 +83,11 @@ export const supabaseNfl = createClient<NflDatabase, "nfl">(url, anonKey, {
   auth: anonAuth("nfl"),
   global: { fetch: cachedPublicFetch("nfl") },
 });
+
+// The nhl schema's ledger types are generated with the rest of the schema,
+// so no merge is needed.
+export const supabaseNhl = createClient<Database, "nhl">(url, anonKey, {
+  db: { schema: "nhl" },
+  auth: anonAuth("nhl"),
+  global: { fetch: cachedPublicFetch("nhl") },
+});

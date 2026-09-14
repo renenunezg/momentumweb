@@ -6,6 +6,7 @@ const links = [
   { href: "/mlb", label: "MLB" },
   { href: "/cfb/predictions", label: "CFB" },
   { href: "/nfl/predictions", label: "NFL" },
+  { href: "/nhl/games", label: "NHL" },
   { href: "/blog", label: "Blog" },
   { href: "/about", label: "About" },
 ];
