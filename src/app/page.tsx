@@ -112,8 +112,8 @@ async function getNflHeadline(): Promise<FootballHeadline | null> {
   }
 }
 
-// The NHL model is daily: the card reads live once ratings exist and labels
-// the season from the latest ratings date.
+// The NHL model is daily: the card reads preseason until the first slate's
+// decisions are published, and labels the season from the ratings date.
 async function getNhlHeadline(): Promise<FootballHeadline | null> {
   try {
     const { asOf } = await fetchNhlRatings();
@@ -122,10 +122,11 @@ async function getNhlHeadline(): Promise<FootballHeadline | null> {
     const month = Number(asOf.slice(5, 7));
     const season = month >= 9 ? year : year - 1;
     const summary = await fetchNhlPickSummary({ ...SEASON_TO_DATE, season });
+    const overall = summary.metrics.find((m) => m.segment_kind === "overall");
     return {
       season,
       week: null,
-      live: true,
+      live: (overall?.picks ?? 0) + (overall?.no_plays ?? 0) > 0,
       markets: marketRecords(summary.metrics).filter((m) => m.market !== "spreads"),
       period: `${season}-${String(season + 1).slice(2)} season`,
     };
@@ -364,7 +365,7 @@ export default async function Home() {
             <ModelEntry
               href="/nhl/games"
               name="NHL"
-              live={nhl ? true : null}
+              live={nhl?.live ?? null}
               cta="View today's slate"
               description="Poisson goal model from last-25-game shot-quality windows, priced daily against the NHL partner sportsbooks with frozen moneyline and total picks."
             >
