@@ -366,6 +366,8 @@ function Trajectory({ rows }: { rows: CfbPlayerValue[] }) {
               contentStyle={chartTooltipStyle(theme)}
             />
             <Legend
+              iconType="plainline"
+              itemSorter={null}
               wrapperStyle={{
                 fontFamily: "var(--font-geist-mono)",
                 fontSize: 11,
