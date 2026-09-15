@@ -20,6 +20,7 @@ import type {
 } from "@/lib/types";
 import { chartAxisProps, chartTooltipStyle, useChartTheme } from "@/lib/chart-theme";
 import { EMPTY, formatNumber, formatPct, formatSigned } from "@/lib/utils";
+import { PlayerHeadshot } from "@/components/player-headshot";
 import { TeamLogo } from "@/components/team-logo";
 import { ToggleGroup } from "@/components/toggle-group";
 import { ViewTabPanel, ViewTabs } from "@/components/view-tabs";
@@ -92,25 +93,37 @@ function parseJson<T>(text: string | null | undefined): T | null {
   }
 }
 
+// CFBD athlete ids are ESPN ids, so ESPN's public CDN serves the headshot
+// without any backend field; FCS depth players return 404 and fall back to
+// initials inside the component.
+function headshotUrl(athleteId: string): string {
+  return `https://a.espncdn.com/i/headshots/college-football/players/full/${athleteId}.png`;
+}
+
 function PlayerCell({
+  athleteId,
   name,
   team,
   position,
   logo,
 }: {
+  athleteId: string;
   name: string;
   team: string;
   position: string | null;
   logo: CfbTeamIdentity | undefined;
 }) {
   return (
-    <div className="flex items-center gap-2">
-      <TeamLogo team={logo} name={team} />
+    <div className="flex items-center gap-2.5">
+      <PlayerHeadshot name={name} src={headshotUrl(athleteId)} className="h-9 w-9" />
       <div className="min-w-0">
         <div className="truncate font-medium">{name}</div>
-        <div className="truncate text-xs text-muted-foreground">
-          {team}
-          {position ? ` · ${position}` : ""}
+        <div className="flex items-center gap-1 truncate text-xs text-muted-foreground">
+          <TeamLogo team={logo} name={team} className="h-3.5 w-3.5" />
+          <span className="truncate">
+            {team}
+            {position ? ` · ${position}` : ""}
+          </span>
         </div>
       </div>
     </div>
@@ -189,6 +202,7 @@ function HeismanBoard({
                 <TableCell className={mutedNumCell}>{row.predicted_rank}</TableCell>
                 <TableCell>
                   <PlayerCell
+                    athleteId={row.athlete_id}
                     name={row.athlete_name}
                     team={row.team}
                     position={row.position}
@@ -284,6 +298,7 @@ function ValueBoard({
                 </TableCell>
                 <TableCell>
                   <PlayerCell
+                    athleteId={row.athlete_id}
                     name={row.athlete_name}
                     team={row.team}
                     position={row.position}
@@ -291,7 +306,7 @@ function ValueBoard({
                   />
                   {row.fcs_play_share > FCS_HEAVY_SHARE && (
                     <span
-                      className="ml-7 font-mono text-[10px] uppercase tracking-wider text-accent-amber"
+                      className="ml-[46px] font-mono text-[10px] uppercase tracking-wider text-accent-amber"
                       title="More than 30 percent of this player's credited plays came against FCS opponents, which count half."
                     >
                       FCS-heavy
