@@ -142,7 +142,9 @@ function buildExample(
     pureMean,
     marketMean,
     marketWeight: weight,
-    weights,
+    // The stored weights are key-number multipliers indexed by home margin;
+    // a total is priced on the plain Student-t, so they must not be applied.
+    weights: totals ? null : weights,
     outcome: rec.outcome,
     profitUnits: rec.profit_units,
     homePoints: rec.home_points,
