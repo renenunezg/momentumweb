@@ -48,6 +48,7 @@ export type CfbPicksDatabase = {
           graded_at: string | null;
           market_total: number | null;
           edge_points: number | null;
+          settlement_reason: string | null;
         };
         Insert: Partial<
           CfbPicksDatabase["cfb"]["Tables"]["recommendations"]["Row"]

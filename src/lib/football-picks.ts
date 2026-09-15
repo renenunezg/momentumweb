@@ -70,7 +70,7 @@ export type WeeklyPick = Pick<
   | "profit_units"
   | "win_probability"
   | "push_probability"
->;
+> & { settlement_reason?: string | null };
 // The identity a matchup card needs, structural so CFB rows (keyed by
 // team_id) and NFL rows (keyed by team_abbr) both satisfy it, and small
 // enough to serialize for every game of a 120 game week.
@@ -261,8 +261,26 @@ export function pickReason(reason: string): string {
     not_pregame: "Game has started",
     missing_provider: "Missing bookmaker",
     invalid_probability: "Invalid model probability",
+    model_withdrawn:
+      "Withdrawn before kickoff: a newer model no longer made it",
+    policy_withdrawn: "Withdrawn before kickoff: the pick policy changed",
   };
   return reasons[reason] ?? reason.replaceAll("_", " ");
+}
+
+// A withdrawn pick stays in the ledger at its recorded line and settles void
+// before kickoff; it is neither a live pick nor a kickoff change.
+type Settled = { outcome: string; settlement_reason?: string | null };
+export function isWithdrawn(pick: Settled): boolean {
+  return (
+    pick.outcome === "void" &&
+    (pick.settlement_reason === "model_withdrawn" ||
+      pick.settlement_reason === "policy_withdrawn")
+  );
+}
+
+export function outcomeLabel(pick: Settled): string {
+  return isWithdrawn(pick) ? "withdrawn" : pick.outcome;
 }
 
 export const DAILY_MARKETS = ["h2h", "spreads", "totals"] as const;

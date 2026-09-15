@@ -17,7 +17,7 @@ import {
 export * from "@/lib/football-picks";
 
 const WEEKLY_COLUMNS =
-  "game_id,market,start_date,home_team,away_team,status,selection,point,price,provider,outcome,profit_units,win_probability,push_probability,decision_at";
+  "game_id,market,start_date,home_team,away_team,status,selection,point,price,provider,outcome,profit_units,win_probability,push_probability,decision_at,settlement_reason";
 const PAGE = 1000;
 
 export interface CfbWeeklyPredictions {
@@ -71,7 +71,9 @@ export async function fetchCfbWeeklyPredictions(): Promise<CfbWeeklyPredictions>
     fetchTeams(),
     supabaseCfb
       .from("game_projections")
-      .select("game_id,start_date,home_team_id,home_team,away_team_id,away_team")
+      .select(
+        "game_id,start_date,home_team_id,home_team,away_team_id,away_team",
+      )
       .eq("season", latest.season)
       .eq("week", latest.week)
       .order("start_date", { ascending: true })
@@ -86,7 +88,12 @@ export async function fetchCfbWeeklyPredictions(): Promise<CfbWeeklyPredictions>
       "cfb weekly predictions fetch failed:",
       scheduleRes.error?.message ?? paged?.message,
     );
-    return { ...empty, season: latest.season, week: latest.week, unavailable: true };
+    return {
+      ...empty,
+      season: latest.season,
+      week: latest.week,
+      unavailable: true,
+    };
   }
   return {
     season: latest.season,

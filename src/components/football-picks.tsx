@@ -22,6 +22,7 @@ import {
   MARKET_LABELS,
   SIDE_LABELS,
   pickLabel,
+  outcomeLabel,
   pickReason,
   type FootballPick,
   type FootballPickMetric,
@@ -143,7 +144,9 @@ export function PickTable({
               key={`${pick.game_id}-${pick.market}`}
               // No Play rows fade so the picks carry the table, matching
               // the MLB history treatment of rows without a pick.
-              className={cn(pick.status !== "recommended" && "[&>td]:opacity-50")}
+              className={cn(
+                pick.status !== "recommended" && "[&>td]:opacity-50",
+              )}
             >
               <TableCell className="hidden whitespace-nowrap text-xs md:table-cell">
                 <Kickoff start={pick.start_date} part="day" />
@@ -270,7 +273,7 @@ export function PickTable({
                     pick.outcome === "loss" && "text-negative",
                   )}
                 >
-                  {pick.status === "no_play" ? "No Play" : pick.outcome}
+                  {pick.status === "no_play" ? "No Play" : outcomeLabel(pick)}
                 </span>
                 {(() => {
                   const home = pick.home_points ?? pick.home_goals;
@@ -387,8 +390,8 @@ export function PickPolicy({
       {sport === "nhl" ? (
         <p>
           NHL picks v1 follows the original spreadsheet&apos;s rules. A
-          moneyline is recommended when the model&apos;s win probability
-          beats the posted price&apos;s break-even probability by at least 13
+          moneyline is recommended when the model&apos;s win probability beats
+          the posted price&apos;s break-even probability by at least 13
           percentage points with positive estimated EV; a total when the model
           total differs from the posted line by at least one goal. Prices come
           from the NHL&apos;s partner sportsbook feed (DraftKings and FanDuel),
@@ -431,7 +434,11 @@ export function PickPolicy({
           Moneylines use the frozen margin distribution’s win probability
           without a spread; a tied final is void. Picks use the model&apos;s own
           probabilities. Historical calibration is diagnostic and does not gate
-          recommendations; this record measures the picks as games finish.
+          recommendations; this record measures the picks as games finish. When
+          a newer model version no longer makes a published pick, the pick is
+          withdrawn before kickoff: it settles void at its recorded line and
+          stays in the ledger, and only a model change withdraws, never a line
+          that moved.
         </p>
       )}
       <p>
