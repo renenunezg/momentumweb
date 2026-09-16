@@ -16,6 +16,8 @@ export interface AwardBoard {
   win_probability: number | null; probability_status: string; rank_change: number | null;
   games: number; projected_stats: Record<string, number>;
   drivers: { feature: string; contribution: number }[]; context_source: string | null; context_reason: string | null;
+  // Season-to-date totals; absent on snapshots published before migration 011.
+  season_stats?: Record<string, number> | null;
 }
 export interface AwardMeta {
   season: number; week: number; award: AwardKey; as_of: string; model_version: string;
@@ -29,3 +31,5 @@ export interface AwardMeta {
 }
 
 export type AwardLeader = Pick<AwardBoard, "season" | "week" | "candidate_name" | "team">;
+
+export type AwardTrajectoryPoint = Pick<AwardBoard, "week" | "candidate_id" | "candidate_name" | "predicted_rank">;

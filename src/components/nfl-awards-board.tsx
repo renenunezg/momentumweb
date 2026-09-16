@@ -3,6 +3,7 @@
 import { useMemo, useState } from "react";
 import { PlayerHeadshot } from "@/components/player-headshot";
 import type { AwardBoard, AwardKey } from "@/lib/nfl-awards-types";
+import { seasonLine } from "@/lib/nfl-awards-format";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 
 const LABELS: Record<string, string> = {
@@ -58,7 +59,7 @@ export function NflAwardsBoard({ rows, award }: { rows: AwardBoard[]; award: Awa
     </div>
     <p className="text-xs text-muted-foreground" aria-live="polite">{search.trim() ? `${visible.length} search result${visible.length === 1 ? "" : "s"}` : `Top ${visible.length}`} · {rows.length.toLocaleString()} candidates</p>
     <Table><TableHeader><TableRow>
-      <TableHead>Rank</TableHead><TableHead>Candidate</TableHead><TableHead className="text-right">Weekly move</TableHead>
+      <TableHead>Rank</TableHead><TableHead>Candidate</TableHead><TableHead>Season line</TableHead><TableHead className="text-right">Weekly move</TableHead>
       <TableHead className="text-right">Performance rank</TableHead><TableHead className="text-right">Win probability</TableHead>
     </TableRow></TableHeader><TableBody>
       {visible.map((row) => <TableRow key={row.candidate_id}>
@@ -73,11 +74,12 @@ export function NflAwardsBoard({ rows, award }: { rows: AwardBoard[]; award: Awa
             <p>Factors describe the fitted model, not a causal explanation of voters.</p>
           </div>
         </details></TableCell>
+        <TableCell className="min-w-44 whitespace-normal align-top text-xs text-muted-foreground">{seasonLine(row)}</TableCell>
         <TableCell className="text-right align-top font-mono tabular-nums">{row.rank_change == null ? "Unavailable" : row.rank_change === 0 ? "0" : `${row.rank_change > 0 ? "+" : ""}${row.rank_change}`}</TableCell>
         <TableCell className="text-right align-top font-mono tabular-nums">{row.performance_rank == null ? "Unavailable" : `#${row.performance_rank}`}</TableCell>
         <TableCell className="text-right align-top font-mono tabular-nums">{row.win_probability == null ? <span className="font-sans text-xs text-muted-foreground">Experimental</span> : `${(row.win_probability * 100).toFixed(1)}%`}</TableCell>
       </TableRow>)}
-      {!visible.length && <TableRow><TableCell colSpan={5} className="py-10 text-center text-muted-foreground">No candidates match your search.</TableCell></TableRow>}
+      {!visible.length && <TableRow><TableCell colSpan={6} className="py-10 text-center text-muted-foreground">No candidates match your search.</TableCell></TableRow>}
     </TableBody></Table>
     <p className="text-xs leading-relaxed text-muted-foreground">Performance ranks use {metric.toLowerCase()}. Offensive credit splits passing EPA between passer and receiver and excludes noncompetitive drives. It subtracts a positional 25th-percentile baseline and uses a 150-opportunity prior to reduce small-sample outliers. Defensive ranks use a descriptive box-stat index. These are separate measures and do not imply equal value across positions.</p>
   </section>;

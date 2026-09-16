@@ -1,8 +1,9 @@
 import { NavigationLink } from "@/components/navigation-link";
 import type { Metadata } from "next";
 import { AWARDS, type AwardKey } from "@/lib/nfl-awards-types";
-import { fetchAwards } from "@/lib/nfl-awards";
+import { fetchAwards, TRAJECTORY_LINES } from "@/lib/nfl-awards";
 import { NflAwardsBoard } from "@/components/nfl-awards-board";
+import { NflAwardsTrajectory } from "@/components/nfl-awards-trajectory";
 import { PlayerHeadshot } from "@/components/player-headshot";
 import { LastUpdated } from "@/components/last-updated";
 
@@ -20,7 +21,7 @@ export default async function AwardsPage({ searchParams }: {
   const award: AwardKey = params.award && Object.hasOwn(AWARDS, params.award) ? params.award as AwardKey : "MVP";
   const season = params.season && /^\d{4}$/.test(params.season) ? Number(params.season) : undefined;
   const week = params.week && /^\d{1,2}$/.test(params.week) ? Number(params.week) : undefined;
-  const { snapshots, meta, board, history, unavailable } = await fetchAwards(award, season, week);
+  const { snapshots, meta, board, history, trajectory, unavailable } = await fetchAwards(award, season, week);
   const query = (a: AwardKey, s?: number, w?: number) => `/nfl/awards?${new URLSearchParams({ award: a,
     ...(s == null ? {} : { season: String(s) }), ...(w == null ? {} : { week: String(w) }) })}`;
   return <main id="main" className="mx-auto w-full min-w-0 max-w-5xl space-y-6 px-4 py-8">
@@ -55,6 +56,7 @@ export default async function AwardsPage({ searchParams }: {
               <div><p className="text-xs uppercase tracking-wide text-muted-foreground">Forecast status</p><p className="mt-2 text-lg font-medium">{meta.validation.probabilities_publishable ? "Validated" : "Experimental"}</p><p className="mt-1 text-xs text-muted-foreground">{meta.validation.probabilities_publishable ? "Win probabilities available" : "Win percentages withheld pending validation"}</p></div>
             </div>
             <NflAwardsBoard rows={board} award={award} />
+            <NflAwardsTrajectory points={trajectory} leaders={board.slice(0, TRAJECTORY_LINES)} />
           </>}
         {history.length > 0 && <section className="space-y-3"><h2 className="font-heading text-lg">Weekly leaders</h2><div className="flex gap-3 overflow-x-auto pb-2">{history.map((row) => <NavigationLink prefetch={true} scroll={false} key={row.week} href={query(award, row.season, row.week)} className="min-w-44 rounded-lg border p-4 hover:bg-muted"><p className="font-mono text-xs text-muted-foreground">Week {row.week}</p><p className="mt-2 text-sm font-medium">{row.candidate_name}</p><p className="mt-1 text-xs text-muted-foreground">{row.team}</p></NavigationLink>)}</div></section>}
         <details className="border-t pt-5 text-sm"><summary className="cursor-pointer font-medium">Methodology and validation</summary><div className="mt-4 max-w-3xl space-y-3 leading-relaxed text-muted-foreground">

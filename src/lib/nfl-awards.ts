@@ -1,5 +1,7 @@
 import "server-only";
-import type { AwardBoard, AwardMeta, AwardKey, AwardLeader } from "./nfl-awards-types";
+import type { AwardBoard, AwardMeta, AwardKey, AwardLeader, AwardTrajectoryPoint } from "./nfl-awards-types";
+
+export const TRAJECTORY_LINES = 8;
 
 // The pending awards migration is a separate, schema-pinned read contract.
 // Keep REST errors distinct from a successfully published empty board.
@@ -22,7 +24,7 @@ export async function fetchAwards(award: AwardKey, season?: number, week?: numbe
     });
     const meta = snapshots.find((row) => (season == null || row.season === season)
       && (week == null || row.week === week));
-    if (!meta) return { snapshots, meta: null, board: [], history: [], unavailable: false };
+    if (!meta) return { snapshots, meta: null, board: [], history: [], trajectory: [], unavailable: false };
     const [board, history] = await Promise.all([
       readBoard(award, meta),
       read<AwardLeader>("award_boards", {
@@ -31,10 +33,17 @@ export async function fetchAwards(award: AwardKey, season?: number, week?: numbe
         predicted_rank: "eq.1", order: "week.asc", limit: "100",
       }),
     ]);
-    return { snapshots, meta, board, history, unavailable: false };
+    // The current leaders' earlier ranks, as each week's board published them.
+    const leaders = board.slice(0, TRAJECTORY_LINES).map((row) => `"${row.candidate_id}"`);
+    const trajectory = leaders.length && meta.week > 1 ? await read<AwardTrajectoryPoint>("award_boards", {
+      select: "week,candidate_id,candidate_name,predicted_rank", award: `eq.${award}`,
+      season: `eq.${meta.season}`, week: `lte.${meta.week}`, candidate_id: `in.(${leaders.join(",")})`,
+      predicted_rank: "not.is.null", order: "week.asc", limit: String(TRAJECTORY_LINES * 25),
+    }) : [];
+    return { snapshots, meta, board, history, trajectory, unavailable: false };
   } catch (error) {
     console.error("NFL awards unavailable:", error instanceof Error ? error.message : "Unknown error");
-    return { snapshots: [], meta: null, board: [], history: [], unavailable: true };
+    return { snapshots: [], meta: null, board: [], history: [], trajectory: [], unavailable: true };
   }
 }
 
