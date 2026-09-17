@@ -16,7 +16,6 @@ const sections = [
   { id: "season-wins", label: "Season Wins" },
   { id: "awards", label: "Awards" },
   { id: "limits", label: "Limits" },
-  { id: "stack", label: "Tech Stack" },
 ];
 
 export function TableOfContents() {

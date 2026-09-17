@@ -7,12 +7,10 @@ const sections = [
   { id: "example", label: "Example" },
   { id: "changelog", label: "Changelog" },
   { id: "flow", label: "Architecture" },
-  { id: "pipeline", label: "Pipeline" },
   { id: "skill", label: "Skill Layer" },
   { id: "simulator", label: "Simulator" },
   { id: "markets", label: "Markets" },
   { id: "backtest", label: "Backtest" },
-  { id: "stack", label: "Tech Stack" },
   { id: "legacy-v1", label: "Legacy v1" },
 ];
 

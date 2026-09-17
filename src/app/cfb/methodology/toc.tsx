@@ -14,7 +14,6 @@ const sections = [
   { id: "backtest", label: "Backtest" },
   { id: "ingame", label: "In-Game" },
   { id: "anchor", label: "Market Anchor" },
-  { id: "serving", label: "Serving" },
   { id: "momentum", label: "Momentum" },
   { id: "players", label: "Players" },
   { id: "limits", label: "Limits" },
