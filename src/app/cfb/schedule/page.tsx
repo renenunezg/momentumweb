@@ -4,12 +4,7 @@ import { fetchLatestRatings, fetchTeams } from "@/lib/cfb";
 import { formatHomeLine, marketHomeLine } from "@/lib/football";
 import { groupFootballSlates } from "@/lib/football-slates";
 import type { CfbGameProjection, CfbMarketComparison } from "@/lib/types";
-import {
-  isWithdrawn,
-  pickLabel,
-  pickReason,
-  type CfbPick,
-} from "@/lib/cfb-picks";
+import { pickLabel, pickReason, type CfbPick } from "@/lib/cfb-picks";
 import { formatOdds, formatPct } from "@/lib/utils";
 import Link from "next/link";
 import { formatNumber } from "@/lib/utils";
@@ -169,9 +164,7 @@ export default async function SchedulePage() {
         </div>
         {pick.outcome === "void" ? (
           <div className="mt-1 text-muted-foreground">
-            {isWithdrawn(pick)
-              ? "Withdrawn: a newer model no longer makes this pick"
-              : "Void: kickoff changed"}
+            Void: kickoff changed
           </div>
         ) : pick.status === "recommended" ? (
           <div className="mt-1 font-mono text-muted-foreground">

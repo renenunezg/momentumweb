@@ -15,8 +15,6 @@ import {
 } from "@/lib/football-slates";
 import {
   MARKET_LABELS,
-  isWithdrawn,
-  outcomeLabel,
   pickLabel,
   type PickMarket,
   type WeeklyGame,
@@ -95,16 +93,11 @@ export function WeeklyFootballPredictions({
   // an empty page.
   const chosen = slates.filter((slate) => slate.id === slateId);
   const visible = chosen.length ? chosen : slates;
-  // Withdrawn picks stay on their card for the record but are not counted
-  // as this week's predictions, nor is a game whose picks were all withdrawn.
-  const livePicks = (game: WeeklyGame) =>
-    game.rows.filter((row) => !isWithdrawn(row));
   const predictions = visible.flatMap((slate) =>
-    slate.games.flatMap(livePicks),
+    slate.games.flatMap((game) => game.rows),
   );
   const shownGames = visible.reduce(
-    (total, slate) =>
-      total + slate.games.filter((game) => livePicks(game).length).length,
+    (total, slate) => total + slate.games.length,
     0,
   );
   const slateOptions = [
@@ -183,14 +176,10 @@ export function WeeklyFootballPredictions({
               </p>
             </div>
             <p className="font-mono text-xs text-muted-foreground">
-              {plural(
-                slate.games.filter((game) => livePicks(game).length).length,
-                "game",
-              )}{" "}
-              ·{" "}
+              {plural(slate.games.length, "game")} ·{" "}
               {plural(
                 slate.games.reduce(
-                  (total, game) => total + livePicks(game).length,
+                  (total, game) => total + game.rows.length,
                   0,
                 ),
                 "prediction",
@@ -337,8 +326,8 @@ function GamePredictions({
                     pick.outcome === "loss" && "text-negative",
                   )}
                 >
-                  {outcomeLabel(pick)}
-                  {pick.profit_units != null && !isWithdrawn(pick)
+                  {pick.outcome}
+                  {pick.profit_units != null
                     ? ` · ${formatSigned(pick.profit_units, 2)}u`
                     : ""}
                 </span>
