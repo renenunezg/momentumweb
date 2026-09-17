@@ -108,7 +108,7 @@ export function GroupRatings<T extends PowerRatingRow>({
 
       <section className="space-y-2">
         <div className="flex items-baseline justify-between gap-4">
-          <h2 className="font-heading text-lg tracking-tight">{selected.name}</h2>
+          <h2 className="font-heading text-lg">{selected.name}</h2>
           <span className="font-mono text-xs uppercase tracking-wider text-muted-foreground">
             Avg {formatNumber(selected.avg)}
           </span>

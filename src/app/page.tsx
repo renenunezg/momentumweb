@@ -181,7 +181,7 @@ function ModelEntry({
         className="group/link flex items-center justify-between gap-4 after:absolute after:inset-0"
       >
         <span className="flex items-baseline gap-3">
-          <span className="font-heading text-lg tracking-tight underline-offset-4 group-hover/link:underline">
+          <span className="font-heading text-lg underline-offset-4 group-hover/link:underline">
             {name}
           </span>
           <StatusBadge live={live} />
@@ -287,7 +287,7 @@ export default async function Home() {
       <SiteHeader />
       <main id="main" className="mx-auto w-full max-w-3xl min-w-0 px-4 py-10">
         <section>
-          <h1 className="font-heading text-2xl tracking-tight">
+          <h1 className="font-heading text-2xl">
             Ren&eacute; N&uacute;&ntilde;ez
           </h1>
           <p className="mt-2 text-sm text-muted-foreground leading-relaxed">
@@ -403,7 +403,7 @@ export default async function Home() {
                   <p className="font-mono text-xs text-muted-foreground">
                     {post.date}
                   </p>
-                  <h3 className="font-heading text-base tracking-tight mt-1 group-hover:underline underline-offset-4">
+                  <h3 className="font-heading text-base mt-1 group-hover:underline underline-offset-4">
                     {post.title}
                   </h3>
                   <p className="mt-2 text-sm text-muted-foreground leading-relaxed">

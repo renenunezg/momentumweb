@@ -1,5 +1,5 @@
 import type { Metadata, Viewport } from "next";
-import { Geist_Mono, Source_Serif_4 } from "next/font/google";
+import { Oswald } from "next/font/google";
 import "./globals.css";
 import { SpeedInsights } from "@vercel/speed-insights/next";
 import { SiteAnalytics } from "@/components/site-analytics";
@@ -7,15 +7,9 @@ import { SiteFooter } from "@/components/site-footer";
 import { ThemeProvider } from "@/components/theme-provider";
 import { SITE_DESCRIPTION, SITE_NAME, SITE_URL, TWITTER_HANDLE } from "@/lib/site";
 
-// One text serif carries both prose and headings; Geist Mono carries numerals.
-const textSerif = Source_Serif_4({
-  variable: "--font-text-serif",
-  subsets: ["latin"],
-  display: "swap",
-});
-
-const geistMono = Geist_Mono({
-  variable: "--font-geist-mono",
+// Oswald carries everything: headings, prose, labels and numerals.
+const oswald = Oswald({
+  variable: "--font-oswald",
   subsets: ["latin"],
   display: "swap",
 });
@@ -61,7 +55,7 @@ export default function RootLayout({
     <html
       lang="en"
       suppressHydrationWarning
-      className={`${textSerif.variable} ${geistMono.variable} h-full overflow-x-hidden antialiased`}
+      className={`${oswald.variable} h-full overflow-x-hidden antialiased`}
     >
       <body className="min-h-full flex flex-col overflow-x-hidden">
         <a

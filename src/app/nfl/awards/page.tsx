@@ -27,7 +27,7 @@ export default async function AwardsPage({ searchParams }: {
   return <main id="main" className="mx-auto w-full min-w-0 max-w-5xl space-y-6 px-4 py-8">
     <div className="flex flex-wrap items-start justify-between gap-4"><div>
       <p className="mb-2 font-mono text-xs uppercase tracking-widest text-muted-foreground">The race, week by week</p>
-      <h1 className="font-heading text-2xl tracking-tight">NFL MVP and Awards Tracker</h1>
+      <h1 className="font-heading text-2xl">NFL MVP and Awards Tracker</h1>
       <p className="mt-2 max-w-2xl text-sm leading-relaxed text-muted-foreground">Award forecasts alongside on-field performance. Follow the leaders, see what drives their rankings, and revisit each weekly snapshot.</p>
     </div>{meta && <LastUpdated timestamp={meta.as_of} schedule="Updates after completed weekly games" />}</div>
     <nav aria-label="NFL awards" className="flex flex-wrap border-b border-rule-strong font-mono text-xs uppercase tracking-wider">

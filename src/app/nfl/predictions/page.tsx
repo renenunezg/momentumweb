@@ -70,7 +70,7 @@ export default async function PredictionsPage() {
           <p className="mb-2 font-mono text-xs uppercase tracking-wider text-muted-foreground">
             {latest ? `${latest.season} · Week ${latest.week}` : "Current week"}
           </p>
-          <h1 className="font-heading text-3xl tracking-tight">
+          <h1 className="font-heading text-3xl">
             NFL Predictions
           </h1>
           <p className="mt-2 text-sm text-muted-foreground">

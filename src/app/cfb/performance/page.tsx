@@ -43,7 +43,7 @@ export default async function PerformancePage({
         id="main"
         className="mx-auto w-full max-w-6xl min-w-0 space-y-6 px-4 py-8"
       >
-        <h1 className="font-heading text-2xl tracking-tight">
+        <h1 className="font-heading text-2xl">
           College Football Model Performance
         </h1>
         <CfbPerformanceTabs active="accuracy" query={query}>
@@ -77,7 +77,7 @@ export default async function PerformancePage({
     >
       <div className="flex flex-wrap items-start justify-between gap-3">
         <div>
-          <h1 className="font-heading text-2xl tracking-tight">
+          <h1 className="font-heading text-2xl">
             College Football Model Performance
           </h1>
           <p className="mt-1 max-w-2xl text-sm text-muted-foreground">

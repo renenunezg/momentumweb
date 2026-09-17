@@ -52,7 +52,7 @@ export function DailyPicks({
                   <div className="flex items-baseline gap-3">
                     <Link
                       href={sport.href}
-                      className="font-heading text-base tracking-tight hover:underline underline-offset-4"
+                      className="font-heading text-base hover:underline underline-offset-4"
                     >
                       {sport.name}
                     </Link>

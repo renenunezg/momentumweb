@@ -3,7 +3,7 @@
 export default function ErrorPage({ reset }: { reset: () => void }) {
   return (
     <main id="main" className="mx-auto w-full max-w-3xl min-w-0 px-4 py-16">
-      <h1 className="font-heading text-2xl tracking-tight">
+      <h1 className="font-heading text-2xl">
         Something went wrong
       </h1>
       <p className="mt-3 text-sm text-muted-foreground leading-relaxed">

@@ -50,7 +50,7 @@ export default async function HistoryPage({
       <main id="main" className="mx-auto w-full max-w-6xl min-w-0 space-y-6 px-4 py-8">
         <div className="flex flex-wrap items-start justify-between gap-3">
           <div>
-            <h1 className="font-heading text-2xl tracking-tight">NHL Forecast History</h1>
+            <h1 className="font-heading text-2xl">NHL Forecast History</h1>
             <p className="mt-1 text-sm text-muted-foreground">
               Graded games with the pregame forecast each was judged by.
             </p>
@@ -81,7 +81,7 @@ export default async function HistoryPage({
     <main id="main" className="mx-auto w-full max-w-6xl min-w-0 space-y-6 px-4 py-8">
       <div className="flex flex-wrap items-start justify-between gap-3">
         <div>
-          <h1 className="font-heading text-2xl tracking-tight">NHL Pick History</h1>
+          <h1 className="font-heading text-2xl">NHL Pick History</h1>
           <p className="mt-1 text-sm text-muted-foreground">
             The side, line, and price recorded before puck drop, with each
             pick&apos;s result.

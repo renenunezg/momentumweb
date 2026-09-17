@@ -139,7 +139,7 @@ export default async function ForecastPerformance({
   return (
     <div className="space-y-8">
       <div className="flex items-start justify-between gap-4">
-        <h2 className="font-heading text-xl tracking-tight">
+        <h2 className="font-heading text-xl">
           Forecast accuracy
         </h2>
         <div className="text-right text-xs text-muted-foreground">

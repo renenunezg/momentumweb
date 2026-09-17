@@ -162,7 +162,7 @@ export function FootballPickExample({ example }: { example: PickExample }) {
                 offset: -10,
                 fill: theme["muted-foreground"],
                 fontSize: 11,
-                fontFamily: "var(--font-geist-mono)",
+                fontFamily: "var(--font-oswald)",
               }}
               {...axis}
             />
@@ -194,7 +194,7 @@ export function FootballPickExample({ example }: { example: PickExample }) {
                 position: "top",
                 fill: theme.foreground,
                 fontSize: 11,
-                fontFamily: "var(--font-geist-mono)",
+                fontFamily: "var(--font-oswald)",
               }}
             />
             {marketTick != null && marketTick !== modelTick && (
@@ -207,7 +207,7 @@ export function FootballPickExample({ example }: { example: PickExample }) {
                   position: "insideBottom",
                   fill: theme["muted-foreground"],
                   fontSize: 11,
-                  fontFamily: "var(--font-geist-mono)",
+                  fontFamily: "var(--font-oswald)",
                 }}
               />
             )}
@@ -292,7 +292,7 @@ function ShrinkLine({
   const pad = Math.max(1, (hi - lo) * 0.25);
   const x = (v: number) => 40 + ((v - (lo - pad)) / (hi - lo + 2 * pad)) * 520;
   const fmt = (v: number) => (totals ? v.toFixed(1) : formatSigned(v, 1));
-  const mono = { fontFamily: "var(--font-geist-mono)", fontSize: 11 } as const;
+  const mono = { fontFamily: "var(--font-oswald)", fontSize: 11 } as const;
   const marks = [
     { v: pure, label: "pure model", color: theme["chart-2"], y: 18 },
     { v: market, label: "market", color: theme["muted-foreground"], y: 18 },

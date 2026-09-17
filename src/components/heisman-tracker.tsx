@@ -384,7 +384,7 @@ function Trajectory({ rows }: { rows: CfbPlayerValue[] }) {
               iconType="plainline"
               itemSorter={null}
               wrapperStyle={{
-                fontFamily: "var(--font-geist-mono)",
+                fontFamily: "var(--font-oswald)",
                 fontSize: 11,
               }}
             />

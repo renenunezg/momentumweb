@@ -119,7 +119,7 @@ export function MethodologyDistributionChart({
               offset: -10,
               fill: theme["muted-foreground"],
               fontSize: 11,
-              fontFamily: "var(--font-geist-mono)",
+              fontFamily: "var(--font-oswald)",
             }}
             {...axis}
           />
@@ -131,7 +131,7 @@ export function MethodologyDistributionChart({
               position: "insideLeft",
               fill: theme["muted-foreground"],
               fontSize: 11,
-              fontFamily: "var(--font-geist-mono)",
+              fontFamily: "var(--font-oswald)",
             }}
             {...axis}
           />
@@ -148,7 +148,7 @@ export function MethodologyDistributionChart({
             verticalAlign="top"
             height={28}
             wrapperStyle={{
-              fontFamily: "var(--font-geist-mono)",
+              fontFamily: "var(--font-oswald)",
               fontSize: "11px",
               textTransform: "uppercase",
               letterSpacing: "0.05em",
@@ -176,7 +176,7 @@ export function MethodologyDistributionChart({
               position: "top",
               fill: theme["chart-1"],
               fontSize: 10,
-              fontFamily: "var(--font-geist-mono)",
+              fontFamily: "var(--font-oswald)",
             }}
           />
           <ReferenceLine
@@ -189,7 +189,7 @@ export function MethodologyDistributionChart({
               position: "top",
               fill: theme["chart-4"],
               fontSize: 10,
-              fontFamily: "var(--font-geist-mono)",
+              fontFamily: "var(--font-oswald)",
             }}
           />
         </BarChart>

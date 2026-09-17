@@ -11,7 +11,7 @@ export const metadata: Metadata = {
 export default function BlogPage() {
   return (
     <main id="main" className="mx-auto w-full max-w-3xl min-w-0 px-4 py-8">
-      <h1 className="font-heading text-2xl tracking-tight mb-6">Blog</h1>
+      <h1 className="font-heading text-2xl mb-6">Blog</h1>
       {posts.length === 0 ? (
         <p className="text-sm text-muted-foreground">Nothing published yet.</p>
       ) : (
@@ -25,7 +25,7 @@ export default function BlogPage() {
               <p className="font-mono text-xs text-muted-foreground">
                 {post.date}
               </p>
-              <h2 className="font-heading text-base tracking-tight mt-1 group-hover:underline underline-offset-4">
+              <h2 className="font-heading text-base mt-1 group-hover:underline underline-offset-4">
                 {post.title}
               </h2>
               <p className="mt-2 text-sm text-muted-foreground leading-relaxed">

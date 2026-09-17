@@ -207,7 +207,7 @@ export function AccuracyChart({ data }: AccuracyChartProps) {
           contentStyle={chartTooltipStyle(theme)}
         />
         <Legend
-          wrapperStyle={{ fontFamily: "var(--font-geist-mono)", fontSize: "11px", cursor: "pointer" }}
+          wrapperStyle={{ fontFamily: "var(--font-oswald)", fontSize: "11px", cursor: "pointer" }}
           onClick={handleLegendClick}
         />
         {/* Coin-flip baseline: the number every accuracy series is judged against. */}
@@ -225,7 +225,7 @@ export function AccuracyChart({ data }: AccuracyChartProps) {
             position: "insideTopRight",
             fill: theme["muted-foreground"],
             fontSize: 10,
-            fontFamily: "var(--font-geist-mono)",
+            fontFamily: "var(--font-oswald)",
           }}
         />
         {SERIES.map((series) => (

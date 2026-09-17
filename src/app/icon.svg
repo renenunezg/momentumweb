@@ -1,7 +1,7 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32">
-  <rect width="32" height="32" rx="6" fill="#0b0f17"/>
+  <rect width="32" height="32" rx="6" fill="#0e0d0c"/>
   <!-- x-axis baseline -->
-  <line x1="3" y1="25" x2="29" y2="25" stroke="#3b4252" stroke-width="1"/>
+  <line x1="3" y1="25" x2="29" y2="25" stroke="#343231" stroke-width="1"/>
   <!-- Normal distribution bell curve -->
   <path
     d="M 3 25

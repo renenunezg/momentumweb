@@ -118,7 +118,7 @@ export default function AboutPage() {
         </div>
 
         <div className="flex-1 min-w-0">
-          <h1 className="font-heading text-2xl tracking-tight">
+          <h1 className="font-heading text-2xl">
             Ren&eacute; N&uacute;&ntilde;ez
           </h1>
           <p className="mt-2 text-sm text-muted-foreground leading-relaxed">

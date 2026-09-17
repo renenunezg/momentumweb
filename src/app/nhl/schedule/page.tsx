@@ -62,7 +62,7 @@ export default async function SchedulePage() {
   if (games.length === 0) {
     return (
       <main id="main" className="mx-auto w-full max-w-6xl min-w-0 px-4 py-8">
-        <h1 className="font-heading text-2xl tracking-tight">NHL Schedule and Projections</h1>
+        <h1 className="font-heading text-2xl">NHL Schedule and Projections</h1>
         <Notice className="mt-6">
           {unavailable
             ? "Projections are temporarily unavailable."
@@ -80,7 +80,7 @@ export default async function SchedulePage() {
     <main id="main" className="mx-auto w-full max-w-6xl min-w-0 space-y-6 px-4 py-8">
       <div className="flex items-start justify-between gap-4">
         <div>
-          <h1 className="font-heading text-2xl tracking-tight">NHL Schedule and Projections</h1>
+          <h1 className="font-heading text-2xl">NHL Schedule and Projections</h1>
           <p className="mt-1 font-mono text-xs uppercase tracking-wider text-muted-foreground">
             Next {DAYS} days · {games.length} games
           </p>

@@ -56,7 +56,7 @@ export function EquityCurveChart({ data }: EquityCurveChartProps) {
             position: "insideTopRight",
             fill: theme["muted-foreground"],
             fontSize: 10,
-            fontFamily: "var(--font-geist-mono)",
+            fontFamily: "var(--font-oswald)",
           }}
         />
         <Tooltip

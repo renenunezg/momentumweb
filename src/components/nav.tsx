@@ -27,7 +27,7 @@ export function Nav({
     >
       <div className="mx-auto flex w-full max-w-7xl min-w-0 flex-col items-start gap-1 px-4 pt-3 sm:flex-row sm:items-center sm:justify-between sm:gap-0 sm:pb-0">
         <div className="flex shrink-0 items-baseline gap-3 whitespace-nowrap pb-2 sm:pb-3">
-          <Link href="/" className="font-heading text-lg tracking-tight">
+          <Link href="/" className="font-heading text-lg">
             Home
           </Link>
           <HeaderDate />

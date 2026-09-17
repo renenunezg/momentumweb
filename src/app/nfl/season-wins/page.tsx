@@ -27,7 +27,7 @@ export default async function SeasonWinsPage() {
   if (!first)
     return (
       <main id="main" className="mx-auto w-full max-w-5xl min-w-0 px-4 py-8">
-        <h1 className="font-heading text-2xl tracking-tight">NFL Season Win Projections</h1>
+        <h1 className="font-heading text-2xl">NFL Season Win Projections</h1>
         <p className="mt-4 text-muted-foreground">
           {unavailable
             ? "Season projections are temporarily unavailable. Please check back shortly."
@@ -43,7 +43,7 @@ export default async function SeasonWinsPage() {
     >
       <div className="flex flex-col justify-between gap-3 sm:flex-row sm:items-start">
         <div>
-          <h1 className="font-heading text-2xl tracking-tight">NFL Season Win Projections</h1>
+          <h1 className="font-heading text-2xl">NFL Season Win Projections</h1>
           <p className="mt-1 font-mono text-xs uppercase tracking-wider text-muted-foreground">
             {first.season} · Regular season ·{" "}
             {inSeason ? "Updated outlook" : "Preseason outlook"}

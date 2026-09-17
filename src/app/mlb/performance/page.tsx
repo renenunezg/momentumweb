@@ -101,7 +101,7 @@ export default async function PerformancePage() {
   if (evaluations.length === 0) {
     return (
       <main id="main" className="mx-auto w-full max-w-5xl min-w-0 px-4 py-8">
-        <h1 className="font-heading text-2xl tracking-tight">
+        <h1 className="font-heading text-2xl">
           MLB Model Performance
         </h1>
         <p className="mt-4 text-muted-foreground">
@@ -115,7 +115,7 @@ export default async function PerformancePage() {
   return (
     <main id="main" className="mx-auto w-full max-w-5xl min-w-0 px-4 py-8 space-y-6">
       <div className="flex items-start justify-between gap-4">
-        <h1 className="font-heading text-2xl tracking-tight">
+        <h1 className="font-heading text-2xl">
           MLB Model Performance
         </h1>
         <LastUpdated

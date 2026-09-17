@@ -167,7 +167,7 @@ export function WeeklyFootballPredictions({
             <div>
               <h2
                 id={`${slate.id}-heading`}
-                className="font-heading text-xl tracking-tight"
+                className="font-heading text-xl"
               >
                 {clock.title(slate)}
               </h2>
@@ -231,7 +231,7 @@ function GamePredictions({
       className="data-[size=sm]:gap-0 data-[size=sm]:py-0"
     >
       <CardHeader className="flex flex-wrap items-center justify-between gap-x-5 gap-y-1 bg-muted/35 py-2">
-        <h3 className="flex min-w-0 flex-col gap-1 font-heading text-base leading-snug tracking-tight sm:flex-row sm:flex-wrap sm:items-center sm:gap-2">
+        <h3 className="flex min-w-0 flex-col gap-1 font-heading text-base leading-snug sm:flex-row sm:flex-wrap sm:items-center sm:gap-2">
           {teams.map(({ side, name, team }, index) => (
             <span key={index} className="flex min-w-0 items-center gap-3">
               {index === 1 && (

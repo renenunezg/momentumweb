@@ -224,7 +224,7 @@ export default async function HistoryPage({
   return (
     <main id="main" className="mx-auto w-full max-w-6xl min-w-0 px-4 py-8 space-y-6">
       <div className="flex items-start justify-between gap-4">
-        <h1 className="font-heading text-2xl tracking-tight">MLB Prediction History</h1>
+        <h1 className="font-heading text-2xl">MLB Prediction History</h1>
         <LastUpdated
           timestamp={lastUpdated}
           schedule="Predictions ~5 AM PT • Results scored overnight"

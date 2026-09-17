@@ -28,7 +28,7 @@ export function NflAwardsTrajectory({ points, leaders }: { points: AwardTrajecto
             <YAxis reversed allowDataOverflow interval={0} domain={[1, floor]} ticks={ticks} tickFormatter={(v: number) => `#${v}`} {...axis} />
             <Tooltip formatter={(value) => `#${value}`} labelFormatter={(label) => `Week ${label}`}
               itemSorter={(item) => Number(item.value)} cursor={{ stroke: theme.border, strokeWidth: 1 }} contentStyle={chartTooltipStyle(theme)} />
-            <Legend iconType="plainline" itemSorter={null} wrapperStyle={{ fontFamily: "var(--font-geist-mono)", fontSize: 11 }} />
+            <Legend iconType="plainline" itemSorter={null} wrapperStyle={{ fontFamily: "var(--font-oswald)", fontSize: 11 }} />
             {players.map((player, index) => <Line key={player.id} type="linear" dataKey={player.id} name={player.name}
               stroke={theme[LINE_TOKENS[index % LINE_TOKENS.length]]} strokeWidth={index < LINE_TOKENS.length ? 1.75 : 1}
               strokeDasharray={index < LINE_TOKENS.length ? undefined : "4 2"} dot={false} connectNulls />)}

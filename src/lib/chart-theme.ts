@@ -85,7 +85,7 @@ export function chartAxisProps(theme: ChartTheme) {
     tick: {
       fill: theme["muted-foreground"],
       fontSize: 11,
-      fontFamily: "var(--font-geist-mono)",
+      fontFamily: "var(--font-oswald)",
     },
     axisLine: false as const,
     tickLine: false as const,
@@ -98,7 +98,7 @@ export function chartTooltipStyle(theme: ChartTheme) {
     border: `1px solid ${theme.border}`,
     borderRadius: "2px",
     color: theme.foreground,
-    fontFamily: "var(--font-geist-mono)",
+    fontFamily: "var(--font-oswald)",
     fontSize: "12px",
     boxShadow: "none",
   };

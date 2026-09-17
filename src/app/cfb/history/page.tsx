@@ -69,7 +69,7 @@ export default async function HistoryPage({
     >
       <div className="flex flex-wrap items-start justify-between gap-3">
         <div>
-          <h1 className="font-heading text-2xl tracking-tight">
+          <h1 className="font-heading text-2xl">
             College Football Pick History
           </h1>
           <p className="mt-1 text-sm text-muted-foreground">

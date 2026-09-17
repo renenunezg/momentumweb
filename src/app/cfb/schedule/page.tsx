@@ -80,7 +80,7 @@ export default async function SchedulePage() {
   if (!latest) {
     return (
       <main id="main" className="mx-auto w-full max-w-6xl min-w-0 px-4 py-8">
-        <h1 className="font-heading text-2xl tracking-tight">
+        <h1 className="font-heading text-2xl">
           College Football Schedule and Projections
         </h1>
         <p className="mt-4 text-muted-foreground">
@@ -187,7 +187,7 @@ export default async function SchedulePage() {
     >
       <div className="flex items-start justify-between gap-4">
         <div>
-          <h1 className="font-heading text-2xl tracking-tight">
+          <h1 className="font-heading text-2xl">
             College Football Schedule and Projections
           </h1>
           <p className="mt-1 font-mono text-xs uppercase tracking-wider text-muted-foreground">
