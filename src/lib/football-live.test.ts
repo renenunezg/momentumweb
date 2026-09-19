@@ -1,6 +1,6 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { fieldGeometry, liveKey, pollPlan, type LiveGame } from "./football-live.ts";
+import { fieldGeometry, liveKey, pollPlan, scoreboardDays, type LiveGame } from "./football-live.ts";
 
 const MIN = 60_000;
 const game = (over: Partial<LiveGame>): LiveGame => ({
@@ -55,6 +55,19 @@ test("past kickoffs are read once for finals, then only live games keep polling"
     ["b", game({ state: "in" })],
   ]);
   assert.equal(pollPlan(refs, oneLive, true, now).action, "poll");
+});
+
+test("single-day scoreboards preserve Eastern game dates and plan each day independently", () => {
+  const thursday = { key: "BUF", start: Date.parse("2026-09-18T00:15:00Z") };
+  const sunday = { key: "ATL", start: Date.parse("2026-09-20T17:00:00Z") };
+  const sundayNight = { key: "KC", start: Date.parse("2026-09-21T00:20:00Z") };
+  const days = scoreboardDays([thursday, sunday, sundayNight, { key: "unknown", start: null }]);
+  assert.deepEqual([...days.keys()], ["20260917", "20260920"]);
+  assert.deepEqual(days.get("20260920"), [sunday, sundayNight]);
+  const now = Date.parse("2026-09-19T05:00:00Z");
+  assert.equal(pollPlan(days.get("20260917")!, new Map(), false, now).action, "poll");
+  assert.equal(pollPlan(days.get("20260917")!, new Map([["BUF", game({ state: "post" })]]), true, now).action, "stop");
+  assert.equal(pollPlan(days.get("20260920")!, new Map(), false, now).action, "wait");
 });
 
 test("the provider's moved kickoff replaces the published one", () => {

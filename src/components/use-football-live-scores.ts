@@ -7,21 +7,14 @@ import {
   fieldSvg,
   liveGameKey,
   pollPlan,
-  scoreboardDates,
+  scoreboardDays,
   POLL_MS,
   type LiveGame,
   type LiveGameRef,
   type PollPlan,
 } from "@/lib/football-live";
 
-// One poll loop per page. It reads the scoreboard only when a game the page
-// shows is live or about to kick off, sleeps until the next kickoff
-// otherwise, and stops for good once every game is final, so a page open on
-// a weekday makes no requests at all.
-//
-// `source` is the games to watch, or the container of server-rendered rows
-// that carry them as data-live keys; `content` re-runs the loop when a
-// server re-render replaced those rows.
+// `content` restarts polling when navigation replaces server-rendered rows.
 export function useFootballLiveScores(
   league: FootballLeague,
   source: LiveGameRef[] | RefObject<HTMLElement | null>,
@@ -31,39 +24,41 @@ export function useFootballLiveScores(
 
   useEffect(() => {
     const refs = Array.isArray(source) ? source : readRows(source);
-    if (refs.length === 0) return;
-    const dates = scoreboardDates(refs);
-    if (!dates) return;
-    let cancelled = false;
-    let fetched = false;
-    // Development only: /cfb/schedule?simulate=1 asks the route for moving
-    // synthetic states and polls regardless of kickoffs.
+    const days = [...scoreboardDays(refs)].map(([date, refs]) => ({
+      date,
+      refs,
+      keys: new Set(refs.map((ref) => ref.key)),
+    }));
+    if (days.length === 0) return;
+    const controller = new AbortController();
+    const fetched = new Set<string>();
     const simulate =
       process.env.NODE_ENV !== "production" &&
       new URLSearchParams(window.location.search).get("simulate") === "1";
     let timer: ReturnType<typeof setTimeout> | null = null;
-    // A visibility change during an in-flight read starts a fresh tick; the
-    // older one must not schedule a second chain when its read returns.
-    let generation = 0;
-    // The loop's own view of the scores, so planning never waits on a render.
-    let current = new Map<string, LiveGame>();
+    let fetching = false;
+    const current = new Map<string, LiveGame>();
 
-    async function fetchOnce() {
+    async function fetchDay({ date, keys }: (typeof days)[number]) {
       try {
         const res = await fetch(
-          `/${league}/api/live-scores?dates=${dates}${simulate ? "&simulate=1" : ""}`,
+          `/${league}/api/live-scores?dates=${date}${simulate ? "&simulate=1" : ""}`,
           {
             cache: "no-store",
+            signal: controller.signal,
           },
         );
-        if (!res.ok) return;
+        if (!res.ok) return false;
         const data = (await res.json()) as { games?: LiveGame[] };
-        if (cancelled || !data.games) return;
-        fetched = true;
-        current = new Map(data.games.map((g) => [liveGameKey(league, g), g]));
-        setLive(current);
+        if (controller.signal.aborted || !data.games) return false;
+        fetched.add(date);
+        for (const game of data.games) {
+          const key = liveGameKey(league, game);
+          if (keys.has(key)) current.set(key, game);
+        }
+        return true;
       } catch {
-        // A failed read waits for the next tick.
+        return false;
       }
     }
 
@@ -74,18 +69,35 @@ export function useFootballLiveScores(
 
     async function tick() {
       clear();
-      if (cancelled || document.visibilityState !== "visible") return;
-      const plan: PollPlan = simulate
-        ? { action: "poll" }
-        : pollPlan(refs, current, fetched, Date.now());
-      if (plan.action === "stop") return;
-      if (plan.action === "wait") {
-        timer = setTimeout(tick, plan.delay);
+      if (
+        controller.signal.aborted ||
+        fetching ||
+        document.visibilityState !== "visible"
+      ) return;
+      const now = Date.now();
+      const plans = days.map((day): { day: typeof day; plan: PollPlan } => ({
+        day,
+        plan: simulate
+          ? { action: "poll" }
+          : pollPlan(day.refs, current, fetched.has(day.date), now),
+      }));
+      const due = plans.filter(({ plan }) => plan.action === "poll");
+      if (due.length === 0) {
+        const delay = Math.min(
+          ...plans.map(({ plan }) =>
+            plan.action === "wait" ? plan.delay : Infinity,
+          ),
+        );
+        if (Number.isFinite(delay)) timer = setTimeout(tick, delay);
         return;
       }
-      const mine = ++generation;
-      await fetchOnce();
-      if (!cancelled && mine === generation) timer = setTimeout(tick, POLL_MS);
+      fetching = true;
+      const updated = await Promise.all(due.map(({ day }) => fetchDay(day)));
+      fetching = false;
+      if (controller.signal.aborted) return;
+      if (updated.some(Boolean)) setLive(new Map(current));
+      if (document.visibilityState === "visible")
+        timer = setTimeout(tick, POLL_MS);
     }
 
     function onVisibility() {
@@ -96,7 +108,7 @@ export function useFootballLiveScores(
     tick();
 
     return () => {
-      cancelled = true;
+      controller.abort();
       clear();
       document.removeEventListener("visibilitychange", onVisibility);
     };
@@ -122,12 +134,7 @@ const PARTS = {
 } as const;
 const SIDES = ["away", "home"] as const;
 
-// Server-rendered schedule rows carry data-live keys; the scoreboard is
-// written into them in place, so a 170 row table never becomes 170 client
-// components. Each side's score, with a dot when it has the ball, goes at the
-// end of its team cell; the kickoff cell shows the clock, down and distance,
-// and the field strip. Elements are built the first time a row needs them
-// and only their text changes after that.
+// Update server-rendered rows in place to avoid hydrating the entire table.
 export function useLiveScoreRows(
   container: RefObject<HTMLElement | null>,
   league: FootballLeague,

@@ -27,6 +27,7 @@ import {
   type LiveGame,
 } from "@/lib/football-live";
 import { useFootballLiveScores } from "@/components/use-football-live-scores";
+import { FootballPickDetails } from "@/components/football-pick-details";
 
 const MARKETS = [
   { key: "all", label: "All" },
@@ -191,6 +192,7 @@ export function WeeklyFootballPredictions({
               <GamePredictions
                 key={game.game_id}
                 game={game}
+                league={league}
                 clock={clock}
                 live={live.get(liveKey(league, game.game_id))}
               />
@@ -204,10 +206,12 @@ export function WeeklyFootballPredictions({
 
 function GamePredictions({
   game,
+  league,
   clock,
   live,
 }: {
   game: WeeklyGame;
+  league: FootballLeague;
   clock: ReturnType<typeof footballSlateClock>;
   live: LiveGame | undefined;
 }) {
@@ -310,14 +314,15 @@ function GamePredictions({
         )}
       >
         {ordered.map((pick) => (
-          <div
+          <FootballPickDetails
             key={pick.market}
-            className="flex min-w-0 flex-col gap-0.5 bg-background px-3 py-2"
+            pick={pick}
+            league={league}
           >
-            <div className="flex items-center justify-between gap-3">
-              <p className="font-mono text-[10px] uppercase tracking-wider text-muted-foreground">
+            <span className="flex items-center justify-between gap-3">
+              <span className="font-mono text-[10px] uppercase tracking-wider text-muted-foreground">
                 {MARKET_LABELS[pick.market as keyof typeof MARKET_LABELS]}
-              </p>
+              </span>
               {pick.outcome !== "pending" && (
                 <span
                   className={cn(
@@ -332,18 +337,18 @@ function GamePredictions({
                     : ""}
                 </span>
               )}
-            </div>
-            <div className="flex items-baseline justify-between gap-4">
-              <p className="text-sm font-semibold leading-snug">
+            </span>
+            <span className="flex items-baseline justify-between gap-4">
+              <span className="text-sm font-semibold leading-snug">
                 {pickLabel(pick)}
-              </p>
-              <p className="shrink-0 font-mono text-sm tabular-nums">
+              </span>
+              <span className="shrink-0 font-mono text-sm tabular-nums">
                 {formatOdds(pick.price)}
-              </p>
-            </div>
-            <div className="flex flex-wrap items-baseline justify-between gap-x-3 gap-y-0.5 text-[11px] text-muted-foreground">
-              <p>{pick.provider}</p>
-              <p
+              </span>
+            </span>
+            <span className="flex flex-wrap items-baseline justify-between gap-x-3 gap-y-0.5 text-[11px] text-muted-foreground">
+              <span>{pick.provider}</span>
+              <span
                 className="font-mono tabular-nums"
                 title="Model probability that this selection wins; pushes are separate."
               >
@@ -354,9 +359,9 @@ function GamePredictions({
                 {(pick.push_probability ?? 0) >= 0.0005 && (
                   <span> · Push {formatPct(pick.push_probability)}</span>
                 )}
-              </p>
-            </div>
-          </div>
+              </span>
+            </span>
+          </FootballPickDetails>
         ))}
       </CardContent>
     </Card>

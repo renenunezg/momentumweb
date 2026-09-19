@@ -2,22 +2,12 @@ import { NextResponse } from "next/server";
 import type { FootballLeague } from "@/lib/football-slates";
 import type { LiveGame, LiveState } from "@/lib/football-live";
 
-// Cached proxy to ESPN's public scoreboard, shared by the CFB and NFL routes.
-// Every browser polling a page asks for the same date span, so the CDN
-// collapses them to at most four upstream reads a minute per league. The
-// upstream read bypasses Next's data cache on purpose: on Vercel that cache
-// serves a stale entry while a background refresh that never completes, and
-// scores ran twenty minutes behind. The CDN window alone bounds the reads.
-// The response carries only what the pages render; the upstream payload
-// (about 1.5 MB per CFB group) never reaches the browser.
-
 const SCOREBOARD = "https://site.api.espn.com/apis/site/v2/sports/football";
 // ESPN groups FBS and FCS separately and caps a scoreboard at 400 events.
 const QUERIES: Record<FootballLeague, string[]> = {
   cfb: ["college-football/scoreboard?groups=80", "college-football/scoreboard?groups=81"],
   nfl: ["nfl/scoreboard?"],
 };
-const MAX_SPAN_DAYS = 10;
 
 interface EspnCompetitor {
   homeAway?: string;
@@ -87,10 +77,7 @@ export function parseScoreboard(payload: unknown): LiveGame[] {
 
 const ORDINAL = ["1st", "2nd", "3rd", "4th"];
 
-// Development only: turns the week's real scoreboard into a moving picture
-// so the live blocks can be checked when nothing is being played. Every
-// fifth game is a final; the rest advance their clock, score, possession and
-// field position on a fixed cycle from the wall clock.
+// Development fixture for checking live states between game days.
 export function simulateScoreboard(games: LiveGame[], nowSeconds: number): LiveGame[] {
   return games.map((game, index) => {
     const seed = Number(game.id.slice(-3)) || index;
@@ -125,26 +112,30 @@ export function simulateScoreboard(games: LiveGame[], nowSeconds: number): LiveG
   });
 }
 
-function spanDays(dates: string) {
-  const at = (stamp: string) =>
-    Date.parse(`${stamp.slice(0, 4)}-${stamp.slice(4, 6)}-${stamp.slice(6)}T00:00:00Z`);
-  return (at(dates.slice(9)) - at(dates.slice(0, 8))) / 86_400_000;
-}
-
 export function liveScoresRoute(league: FootballLeague) {
   return async function GET(request: Request) {
     const params = new URL(request.url).searchParams;
     const dates = params.get("dates") ?? "";
     const simulate =
       process.env.NODE_ENV !== "production" && params.get("simulate") === "1";
-    const span = /^\d{8}-\d{8}$/.test(dates) ? spanDays(dates) : NaN;
-    if (!(span >= 0 && span <= MAX_SPAN_DAYS))
-      return NextResponse.json({ error: "dates must be YYYYMMDD-YYYYMMDD" }, { status: 400 });
+    const parsedDate = new Date(
+      `${dates.slice(0, 4)}-${dates.slice(4, 6)}-${dates.slice(6)}T00:00:00Z`,
+    );
+    if (
+      !/^\d{8}$/.test(dates) ||
+      !Number.isFinite(parsedDate.getTime()) ||
+      parsedDate.toISOString().slice(0, 10).replaceAll("-", "") !== dates
+    )
+      return NextResponse.json(
+        { error: "dates must be a valid YYYYMMDD date" },
+        { status: 400 },
+      );
 
     try {
       const pages = await Promise.all(
         QUERIES[league].map(async (query) => {
           const res = await fetch(`${SCOREBOARD}/${query}&limit=400&dates=${dates}`, {
+            // Next's stale background refresh previously delayed scores; cache only at the CDN.
             cache: "no-store",
             headers: { "User-Agent": "momentum-dashboard" },
             signal: AbortSignal.timeout(4000),

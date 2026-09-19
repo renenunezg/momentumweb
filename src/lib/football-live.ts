@@ -1,10 +1,5 @@
 import type { FootballLeague } from "@/lib/football-slates";
 
-// Live scores for the football pages come from ESPN's public scoreboard,
-// proxied by /cfb/api/live-scores and /nfl/api/live-scores. Nothing here
-// touches Supabase: the pages keep their cached projections and the browser
-// overlays whatever the scoreboard says about the games it already shows.
-
 export type LiveState = "pre" | "in" | "post";
 
 export interface LiveGame {
@@ -63,10 +58,7 @@ export type PollPlan =
   | { action: "wait"; delay: number }
   | { action: "stop" };
 
-// Decides whether the page needs the scoreboard now, later, or not at all.
-// `fetched` is whether this page has read the scoreboard yet: games that
-// already kicked off are read once so finals show, and then only games the
-// provider reports live or inside their kickoff window keep polling.
+// Read past kickoffs once for finals; keep polling only live or imminent games.
 export function pollPlan(
   refs: LiveGameRef[],
   live: Map<string, LiveGame>,
@@ -91,17 +83,27 @@ export function pollPlan(
   return { action: "stop" };
 }
 
-// The scoreboard is asked for the page's own kickoff span, padded a day each
-// side so the provider's calendar-day cut cannot drop a late game.
-export function scoreboardDates(refs: LiveGameRef[]): string | null {
-  const starts = refs
-    .map((ref) => ref.start)
-    .filter((start): start is number => start != null);
-  if (starts.length === 0) return null;
-  const day = 86_400_000;
-  const stamp = (at: number) =>
-    new Date(at).toISOString().slice(0, 10).replaceAll("-", "");
-  return `${stamp(Math.min(...starts) - day)}-${stamp(Math.max(...starts) + day)}`;
+// ESPN expects single Eastern dates, including for games after midnight UTC.
+const scoreboardCalendar = new Intl.DateTimeFormat("en-US", {
+  timeZone: "America/New_York",
+  year: "numeric",
+  month: "2-digit",
+  day: "2-digit",
+});
+
+export function scoreboardDays(refs: LiveGameRef[]): Map<string, LiveGameRef[]> {
+  const days = new Map<string, LiveGameRef[]>();
+  for (const ref of refs) {
+    if (ref.start == null || !Number.isFinite(ref.start)) continue;
+    const parts = scoreboardCalendar.formatToParts(ref.start);
+    const stamp = ["year", "month", "day"]
+      .map((type) => parts.find((part) => part.type === type)!.value)
+      .join("");
+    const group = days.get(stamp) ?? [];
+    group.push(ref);
+    days.set(stamp, group);
+  }
+  return days;
 }
 
 export interface FieldGeometry {

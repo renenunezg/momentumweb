@@ -3,7 +3,7 @@ import { Notice } from "@/components/notice";
 import Link from "next/link";
 import { LastUpdated } from "@/components/last-updated";
 import { WeeklyFootballPredictions } from "@/components/weekly-football-predictions";
-import { teamBadge, weeklyGames, type WeeklyGame } from "@/lib/football-picks";
+import { teamBadge, weeklyGames, WEEKLY_PICK_COLUMNS, type WeeklyGame } from "@/lib/football-picks";
 import { fetchTeams } from "@/lib/nfl";
 import { supabaseNfl } from "@/lib/supabase";
 
@@ -28,9 +28,7 @@ export default async function PredictionsPage() {
   const result = latest
     ? await supabaseNfl
         .from("recommendations")
-        .select(
-          "game_id,market,season,week,start_date,home_team,away_team,status,selection,point,price,provider,outcome,profit_units,decision_at,win_probability,push_probability",
-        )
+        .select(WEEKLY_PICK_COLUMNS)
         .eq("season", latest.season)
         .eq("week", latest.week)
         .order("start_date", { ascending: true })

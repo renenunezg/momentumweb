@@ -8,6 +8,7 @@ export type CfbPickMetric =
 import { fetchTeams } from "@/lib/cfb";
 import {
   PICK_PAGE_SIZE,
+  WEEKLY_PICK_COLUMNS,
   pickHistoryMatch,
   teamBadge,
   type PickFiltersValue,
@@ -16,15 +17,13 @@ import {
 } from "@/lib/football-picks";
 export * from "@/lib/football-picks";
 
-const WEEKLY_COLUMNS =
-  "game_id,market,start_date,home_team,away_team,status,selection,point,price,provider,outcome,profit_units,win_probability,push_probability,decision_at";
 const PAGE = 1000;
 
 export interface CfbWeeklyPredictions {
   season: number | null;
   week: number | null;
   schedule: Omit<WeeklyGame, "rows">[];
-  decisions: (WeeklyPick & { decision_at: string })[];
+  decisions: WeeklyPick[];
   unavailable: boolean;
 }
 
@@ -55,7 +54,7 @@ export async function fetchCfbWeeklyPredictions(): Promise<CfbWeeklyPredictions>
     for (let offset = 0; ; offset += PAGE) {
       const { data, error } = await supabaseCfb
         .from("recommendations")
-        .select(WEEKLY_COLUMNS)
+        .select(WEEKLY_PICK_COLUMNS)
         .eq("season", latest.season)
         .eq("week", latest.week)
         .order("start_date", { ascending: true })

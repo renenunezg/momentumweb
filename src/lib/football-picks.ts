@@ -70,7 +70,18 @@ export type WeeklyPick = Pick<
   | "profit_units"
   | "win_probability"
   | "push_probability"
+  | "model_home_margin"
+  | "model_total"
+  | "expected_value_per_unit"
+  | "reason"
+  | "decision_at"
+  | "forecast_as_of"
+  | "market_fetched_at"
+  | "model_version"
+  | "policy_version"
 >;
+export const WEEKLY_PICK_COLUMNS =
+  "game_id,market,start_date,home_team,away_team,status,selection,point,price,provider,outcome,profit_units,win_probability,push_probability,model_home_margin,model_total,expected_value_per_unit,reason,decision_at,forecast_as_of,market_fetched_at,model_version,policy_version";
 // The identity a matchup card needs, structural so CFB rows (keyed by
 // team_id) and NFL rows (keyed by team_abbr) both satisfy it, and small
 // enough to serialize for every game of a 120 game week.
@@ -186,13 +197,7 @@ export function teamBadge(team: TeamBadge | undefined): TeamBadge | null {
     : null;
 }
 
-// The week's matchups come from the schedule, so a game with no recorded
-// decision still holds its place in the slate; a decision for a game the
-// schedule no longer lists is kept rather than hidden.
-// The week's games that carry a recommended pick, in decision order, each with
-// only its recommended rows. The schedule supplies team badges and the kickoff
-// the games page uses; a game without a pick, or a No Play decision, is not
-// shown on the predictions page.
+// Keep recorded picks even when the current schedule no longer lists the game.
 export function weeklyGames(
   schedule: Omit<WeeklyGame, "rows">[],
   decisions: WeeklyPick[],
@@ -239,6 +244,7 @@ export function pickLabel(
 export function pickReason(reason: string): string {
   const reasons: Record<string, string> = {
     qualifying_edge: "Qualifying edge",
+    volume_floor: "Selected to meet the weekly pick minimum",
     unverified_book_availability: "Bookmaker availability is not verified",
     stale_or_missing_expected_qb: "Expected QB information is missing or stale",
     below_edge_threshold: "Below the edge threshold",
