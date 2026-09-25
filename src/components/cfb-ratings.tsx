@@ -6,6 +6,7 @@ import type {
   CfbTeamRating,
   CfbTeamUnitRating,
 } from "@/lib/types";
+import type { ComparisonProjections } from "@/lib/football-comparison";
 import { replaceLocation, useLocationSearch } from "@/lib/use-location-search";
 import { GroupRatings } from "@/components/group-ratings";
 import {
@@ -52,10 +53,12 @@ const rowKey = (r: { team_id: number }) => r.team_id;
 export default function CfbRatings({
   ratings,
   units,
+  projections,
   teams,
 }: {
   ratings: CfbTeamRating[];
   units: CfbTeamUnitRating[];
+  projections: ComparisonProjections;
   teams: CfbTeamIdentity[];
 }) {
   // Search params are read in the browser without opting the server page into
@@ -106,6 +109,7 @@ export default function CfbRatings({
           <FootballTeamComparison
             ratings={ratings}
             units={units}
+            projections={projections}
             rowKey={rowKey}
             unitKey={rowKey}
             logo={logo}

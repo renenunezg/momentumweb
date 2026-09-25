@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { fetchLatestRatings, fetchTeams, fetchUnitRatings } from "@/lib/cfb";
+import { fetchComparisonProjections } from "@/lib/football-comparison.server";
 import { LastUpdated } from "@/components/last-updated";
 import CfbRatings from "@/components/cfb-ratings";
 
@@ -19,8 +20,13 @@ export default async function RatingsPage() {
     fetchLatestRatings(),
     fetchTeams(),
   ]);
-  const units =
-    season != null && week != null ? await fetchUnitRatings(season, week) : [];
+  const [units, projections] =
+    season != null && week != null
+      ? await Promise.all([
+          fetchUnitRatings(season, week),
+          fetchComparisonProjections("cfb", season, week),
+        ])
+      : [[], { games: [], unavailable: false }];
 
   if (ratings.length === 0) {
     return (
@@ -67,6 +73,7 @@ export default async function RatingsPage() {
       <CfbRatings
         ratings={ratings}
         units={units}
+        projections={projections}
         teams={[...teams.values()]}
       />
 

@@ -6,6 +6,7 @@ import type {
   NflTeamRating,
   NflTeamUnitRating,
 } from "@/lib/types";
+import type { ComparisonProjections } from "@/lib/football-comparison";
 import { replaceLocation, useLocationSearch } from "@/lib/use-location-search";
 import { GroupRatings } from "@/components/group-ratings";
 import {
@@ -43,10 +44,12 @@ const rowKey = (r: { team_abbr: string }) => r.team_abbr;
 export default function NflRatings({
   ratings,
   units,
+  projections,
   teams,
 }: {
   ratings: NflTeamRating[];
   units: NflTeamUnitRating[];
+  projections: ComparisonProjections;
   teams: NflTeamIdentity[];
 }) {
   // Search params are read in the browser without opting the server page into
@@ -98,6 +101,7 @@ export default function NflRatings({
           <FootballTeamComparison
             ratings={ratings}
             units={units}
+            projections={projections}
             rowKey={rowKey}
             unitKey={rowKey}
             logo={logo}

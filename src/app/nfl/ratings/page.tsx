@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { fetchLatestRatings, fetchTeams, fetchUnitRatings } from "@/lib/nfl";
+import { fetchComparisonProjections } from "@/lib/football-comparison.server";
 import { LastUpdated } from "@/components/last-updated";
 import NflRatings from "@/components/nfl-ratings";
 
@@ -19,8 +20,13 @@ export default async function RatingsPage() {
     fetchLatestRatings(),
     fetchTeams(),
   ]);
-  const units =
-    season != null && week != null ? await fetchUnitRatings(season, week) : [];
+  const [units, projections] =
+    season != null && week != null
+      ? await Promise.all([
+          fetchUnitRatings(season, week),
+          fetchComparisonProjections("nfl", season, week),
+        ])
+      : [[], { games: [], unavailable: false }];
 
   if (ratings.length === 0) {
     return (
@@ -66,6 +72,7 @@ export default async function RatingsPage() {
       <NflRatings
         ratings={ratings}
         units={units}
+        projections={projections}
         teams={[...teams.values()]}
       />
 

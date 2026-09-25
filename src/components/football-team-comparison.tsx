@@ -4,6 +4,8 @@ import { useId, useMemo } from "react";
 import { Combobox } from "@base-ui/react/combobox";
 import { ArrowLeftRight, BarChart3, Check, ChevronsUpDown } from "lucide-react";
 import { replaceLocation, useLocationSearch } from "@/lib/use-location-search";
+import type { ComparisonProjections } from "@/lib/football-comparison";
+import { FootballComparisonForecast } from "@/components/football-comparison-forecast";
 import { teamColor } from "@/lib/team-colors";
 import { cn, formatDate, formatSigned } from "@/lib/utils";
 import { TeamLogo, type TeamLogoSource } from "@/components/team-logo";
@@ -130,6 +132,7 @@ type ChartEntry = {
   value: number | null;
   color: string;
   detail?: string;
+  label?: string;
 };
 
 function RatingBars({
@@ -147,14 +150,27 @@ function RatingBars({
         <div key={index} className="space-y-1.5">
           {!compact && (
             <div className="flex flex-wrap items-baseline justify-between gap-x-3 gap-y-1 text-xs">
-              <span className="font-medium">{entry.team}</span>
+              <span className="space-y-0.5">
+                {entry.label && (
+                  <span className="block text-sm font-medium">
+                    {entry.label}
+                  </span>
+                )}
+                <span
+                  className={
+                    entry.label ? "block text-muted-foreground" : "font-medium"
+                  }
+                >
+                  {entry.team}
+                </span>
+              </span>
               <span className="text-muted-foreground">{entry.detail}</span>
             </div>
           )}
           <div
             className="flex items-center gap-3"
             role="img"
-            aria-label={`${entry.team}: ${formatSigned(entry.value)}${entry.detail ? `, ${entry.detail}` : ""}`}
+            aria-label={`${entry.team}${entry.label ? ` ${entry.label}` : ""}: ${formatSigned(entry.value)}${entry.detail ? `, ${entry.detail}` : ""}`}
           >
             {compact && (
               <span
@@ -228,15 +244,15 @@ function unitEntry(
     team,
     value,
     color,
-    detail: [label, value == null ? "Unavailable" : `#${rank} of ${count}`]
-      .filter(Boolean)
-      .join(" · "),
+    label,
+    detail: value == null ? "Unavailable" : `#${rank} of ${count}`,
   };
 }
 
 export function FootballTeamComparison<T extends RatingRow, U extends UnitRow>({
   ratings,
   units,
+  projections,
   rowKey,
   unitKey,
   logo,
@@ -245,6 +261,7 @@ export function FootballTeamComparison<T extends RatingRow, U extends UnitRow>({
 }: {
   ratings: T[];
   units: U[];
+  projections: ComparisonProjections;
   rowKey: (row: T) => string | number;
   unitKey: (row: U) => string | number;
   logo: (row: T) => (TeamLogoSource & { color: string | null }) | undefined;
@@ -261,15 +278,39 @@ export function FootballTeamComparison<T extends RatingRow, U extends UnitRow>({
     () => new Map(units.map((row) => [String(unitKey(row)), row])),
     [units, unitKey],
   );
-  const left =
+  const selectedLeft =
     ratings.find((row) => String(rowKey(row)) === params.get("team")) ??
     ratings[0];
-  const right =
+  const selectedRight =
     ratings.find(
       (row) =>
         String(rowKey(row)) === params.get("opponent") &&
-        rowKey(row) !== rowKey(left),
-    ) ?? ratings.find((row) => rowKey(row) !== rowKey(left));
+        rowKey(row) !== rowKey(selectedLeft),
+    ) ?? ratings.find((row) => rowKey(row) !== rowKey(selectedLeft));
+  const leftKey = selectedLeft ? String(rowKey(selectedLeft)) : "";
+  const rightKey = selectedRight ? String(rowKey(selectedRight)) : "";
+  const pairedGame = projections.games.find(
+    (game) =>
+      (game.awayKey === leftKey && game.homeKey === rightKey) ||
+      (game.awayKey === rightKey && game.homeKey === leftKey),
+  );
+  const useScheduledVenue = pairedGame && params.get("venue") !== "custom";
+  const left = useScheduledVenue
+    ? (ratings.find((row) => String(rowKey(row)) === pairedGame.awayKey) ??
+      selectedLeft)
+    : selectedLeft;
+  const right = useScheduledVenue
+    ? (ratings.find((row) => String(rowKey(row)) === pairedGame.homeKey) ??
+      selectedRight)
+    : selectedRight;
+  const game =
+    pairedGame &&
+    left &&
+    right &&
+    pairedGame.awayKey === String(rowKey(left)) &&
+    pairedGame.homeKey === String(rowKey(right))
+      ? pairedGame
+      : undefined;
   const mode = params.get("compare") === "units" ? "units" : "matchups";
   const scope =
     sport === "nfl"
@@ -329,18 +370,54 @@ export function FootballTeamComparison<T extends RatingRow, U extends UnitRow>({
     ),
   );
 
-  function selectTeams(a: T, b: T) {
+  function selectTeams(a: T, b: T, customVenue = false) {
     const url = new URL(window.location.href);
     url.searchParams.set("team", String(rowKey(a)));
     url.searchParams.set("opponent", String(rowKey(b)));
+    if (customVenue) url.searchParams.set("venue", "custom");
+    else url.searchParams.delete("venue");
     replaceLocation(url);
   }
 
   return (
     <div className="space-y-6">
+      {projections.games.length > 0 && (
+        <label className="block space-y-2 text-xs text-muted-foreground">
+          <span className="font-mono uppercase tracking-wider">
+            Published matchup
+          </span>
+          <select
+            aria-label="Published matchup"
+            value={game?.gameId ?? ""}
+            className="block h-11 w-full min-w-0 rounded-md border border-border bg-background px-3 text-sm text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+            onChange={(event) => {
+              const selected = projections.games.find(
+                (item) => item.gameId === event.target.value,
+              );
+              const away = ratings.find(
+                (row) => String(rowKey(row)) === selected?.awayKey,
+              );
+              const home = ratings.find(
+                (row) => String(rowKey(row)) === selected?.homeKey,
+              );
+              if (away && home) selectTeams(away, home);
+            }}
+          >
+            <option value="" disabled>
+              Choose a published game, or compare any two teams below
+            </option>
+            {projections.games.map((item) => (
+              <option key={item.gameId} value={item.gameId}>
+                {item.awayTeam} {item.neutralSite ? "vs" : "at"} {item.homeTeam}
+                {item.neutralSite ? " (neutral)" : ""}
+              </option>
+            ))}
+          </select>
+        </label>
+      )}
       <div className="grid items-end gap-3 sm:grid-cols-[1fr_auto_1fr]">
         <TeamPicker
-          label="Team A"
+          label="Away"
           rows={alphabetical}
           selected={left}
           rowKey={rowKey}
@@ -350,7 +427,7 @@ export function FootballTeamComparison<T extends RatingRow, U extends UnitRow>({
         />
         <button
           type="button"
-          onClick={() => selectTeams(right, left)}
+          onClick={() => selectTeams(right, left, true)}
           className="flex h-11 items-center justify-center gap-2 rounded-md border border-border px-3 text-xs text-muted-foreground hover:bg-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
           aria-label="Swap teams"
         >
@@ -358,7 +435,7 @@ export function FootballTeamComparison<T extends RatingRow, U extends UnitRow>({
           <span className="sm:sr-only">Swap teams</span>
         </button>
         <TeamPicker
-          label="Team B"
+          label="Home"
           rows={alphabetical}
           selected={right}
           rowKey={rowKey}
@@ -367,6 +444,37 @@ export function FootballTeamComparison<T extends RatingRow, U extends UnitRow>({
           }
         />
       </div>
+
+      {game ? (
+        <FootballComparisonForecast game={game} />
+      ) : (
+        <div
+          className="rounded-lg border border-border bg-muted/30 p-4 text-sm"
+          role="status"
+        >
+          <p>
+            {projections.unavailable
+              ? "Published game projections are temporarily unavailable."
+              : "No published game projection for this pairing and venue in the current ratings week."}
+          </p>
+          {pairedGame && (
+            <p className="mt-2 text-xs text-muted-foreground">
+              The published game is {pairedGame.awayTeam}{" "}
+              {pairedGame.neutralSite ? "vs" : "at"} {pairedGame.homeTeam}.{" "}
+              <button
+                type="button"
+                className="underline underline-offset-4 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                onClick={() => selectTeams(left, right)}
+              >
+                Use scheduled venue
+              </button>
+            </p>
+          )}
+          <p className="mt-2 text-xs text-muted-foreground">
+            Team and unit ratings remain available below.
+          </p>
+        </div>
+      )}
 
       <section
         aria-label="Overall team comparison"
@@ -461,56 +569,131 @@ export function FootballTeamComparison<T extends RatingRow, U extends UnitRow>({
           within {scope}
         </p>
         {mode === "matchups" ? (
-          <div className="grid gap-4 sm:grid-cols-2">
+          <div className="space-y-6">
             {[
               {
                 offense: left,
                 defense: right,
                 offenseUnit: leftUnit,
                 defenseUnit: rightUnit,
+                offenseColor: leftColor,
+                defenseColor: rightColor,
               },
               {
                 offense: right,
                 defense: left,
                 offenseUnit: rightUnit,
                 defenseUnit: leftUnit,
+                offenseColor: rightColor,
+                defenseColor: leftColor,
               },
-            ].flatMap(({ offense, defense, offenseUnit, defenseUnit }) =>
-              (["pass", "rush"] as const).map((play) => (
-                <article
-                  key={`${rowKey(offense)}-${play}`}
-                  className="space-y-4 rounded-lg border border-border bg-card p-4"
+            ].map(
+              ({
+                offense,
+                defense,
+                offenseUnit,
+                defenseUnit,
+                offenseColor,
+                defenseColor,
+              }) => (
+                <section
+                  key={rowKey(offense)}
+                  aria-label={`${offense.team} on offense`}
+                  className="overflow-hidden rounded-lg border border-border"
                 >
-                  <h3 className="font-heading">
-                    {offense.team} {play === "pass" ? "passing" : "rushing"}
-                  </h3>
-                  <RatingBars
-                    extent={unitExtent}
-                    entries={[
-                      unitEntry(
+                  <div
+                    className="flex items-center gap-3 border-l-4 px-4 py-4 sm:px-5"
+                    style={{
+                      borderLeftColor: offenseColor,
+                      background: `color-mix(in srgb, ${offenseColor} 9%, transparent)`,
+                    }}
+                  >
+                    <TeamLogo
+                      team={logo(offense)}
+                      name={offense.team}
+                      className="size-9"
+                    />
+                    <div className="min-w-0">
+                      <h3 className="font-heading text-lg sm:text-xl">
+                        {offense.team} on offense
+                      </h3>
+                      <p className="mt-1 text-xs text-muted-foreground">
+                        {offense.team} offense vs {defense.team} defense
+                      </p>
+                    </div>
+                  </div>
+                  <div className="grid divide-y divide-border border-t border-border sm:grid-cols-2 sm:divide-x sm:divide-y-0">
+                    {(["pass", "rush"] as const).map((play) => {
+                      const blocking = unitEntry(
                         offenseUnit,
-                        `${play}_offense`,
+                        play === "pass" ? "pass_block" : "run_block",
                         peers,
                         offense.team,
-                        rowKey(offense) === rowKey(left)
-                          ? leftColor
-                          : rightColor,
-                        "Offense",
-                      ),
-                      unitEntry(
-                        defenseUnit,
-                        `${play}_defense`,
-                        peers,
-                        defense.team,
-                        rowKey(defense) === rowKey(left)
-                          ? leftColor
-                          : rightColor,
-                        "Defense",
-                      ),
-                    ]}
-                  />
-                </article>
-              )),
+                        offenseColor,
+                      );
+
+                      return (
+                        <article key={play} className="space-y-4 p-4 sm:p-5">
+                          <h4 className="border-b border-border pb-2 font-heading text-lg">
+                            {play === "pass"
+                              ? "Through the air"
+                              : "On the ground"}
+                          </h4>
+                          <RatingBars
+                            extent={unitExtent}
+                            entries={[
+                              unitEntry(
+                                offenseUnit,
+                                `${play}_offense`,
+                                peers,
+                                offense.team,
+                                offenseColor,
+                                play === "pass"
+                                  ? "Pass offense"
+                                  : "Rush offense",
+                              ),
+                              unitEntry(
+                                defenseUnit,
+                                `${play}_defense`,
+                                peers,
+                                defense.team,
+                                defenseColor,
+                                play === "pass"
+                                  ? "Pass defense"
+                                  : "Rush defense",
+                              ),
+                            ]}
+                          />
+                          <aside
+                            aria-label={`${offense.team} ${play === "pass" ? "pass" : "run"} blocking`}
+                            className="space-y-2 rounded-sm border-l-2 bg-muted/40 px-3 py-2"
+                            style={{ borderLeftColor: offenseColor }}
+                          >
+                            <div className="flex flex-wrap items-baseline justify-between gap-2">
+                              <span className="text-xs">
+                                {offense.team} ·{" "}
+                                {play === "pass"
+                                  ? "Pass blocking"
+                                  : "Run blocking"}
+                              </span>
+                              <span className="font-mono tabular-nums">
+                                {formatSigned(blocking.value)}{" "}
+                                <span className="ml-1 text-xs text-muted-foreground">
+                                  {blocking.detail}
+                                </span>
+                              </span>
+                            </div>
+                            <p className="text-[11px] text-muted-foreground">
+                              Reflects the whole offense, including the QB and
+                              ball carrier.
+                            </p>
+                          </aside>
+                        </article>
+                      );
+                    })}
+                  </div>
+                </section>
+              ),
             )}
           </div>
         ) : (
