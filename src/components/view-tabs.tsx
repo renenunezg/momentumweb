@@ -30,7 +30,7 @@ export function ViewTabs<K extends string>({
     >
       <Tabs.List
         aria-label={label}
-        className="flex items-center font-mono text-xs uppercase tracking-wider"
+        className="flex flex-wrap items-center font-mono text-xs uppercase tracking-wider"
       >
         {options.map((option) => (
           <Tabs.Tab

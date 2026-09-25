@@ -13,6 +13,10 @@ import {
   type LimitedDataRule,
 } from "@/components/power-ratings-table";
 import { ToggleGroup } from "@/components/toggle-group";
+import {
+  FootballTeamComparison,
+  FOOTBALL_UNIT_COLUMNS as UNIT_COLUMNS,
+} from "@/components/football-team-comparison";
 import { UnitRatingsTable } from "@/components/unit-ratings-table";
 import { ViewTabPanel, ViewTabs } from "@/components/view-tabs";
 
@@ -22,18 +26,10 @@ const VIEWS = [
   { key: "fcs", label: "FCS" },
   { key: "conference", label: "Conference" },
   { key: "units", label: "Units" },
+  { key: "compare", label: "Compare" },
 ] as const;
 
 type View = (typeof VIEWS)[number]["key"];
-
-const UNIT_COLUMNS = [
-  { key: "rush_offense", label: "Rush O" },
-  { key: "pass_offense", label: "Pass O" },
-  { key: "rush_defense", label: "Rush D" },
-  { key: "pass_defense", label: "Pass D" },
-  { key: "pass_block", label: "Pass Blk" },
-  { key: "run_block", label: "Run Blk" },
-] as const;
 
 const CLASSES = [
   { key: "fbs", label: "FBS" },
@@ -106,7 +102,17 @@ export default function CfbRatings({
   return (
     <ViewTabs label="Ratings view" options={VIEWS} value={view} onValueChange={select}>
       <ViewTabPanel value={view}>
-        {view === "conference" ? (
+        {view === "compare" ? (
+          <FootballTeamComparison
+            ratings={ratings}
+            units={units}
+            rowKey={rowKey}
+            unitKey={rowKey}
+            logo={logo}
+            limited={LIMITED}
+            sport="cfb"
+          />
+        ) : view === "conference" ? (
           <GroupRatings
             ratings={ratings}
             rowKey={rowKey}
