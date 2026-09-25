@@ -202,8 +202,9 @@ export default async function SchedulePage() {
 
       <p className="max-w-4xl text-sm text-muted-foreground leading-relaxed">
         Model lines are quoted for the home team: a negative line means the
-        model favors the home side. Pure is the model&apos;s own line; the
-        published line blends it with the market at a capped weight.
+        model favors the home side. Pure is the model&apos;s own line. Model Line
+        includes historical market information and blends in the current market
+        at a capped weight when available.
       </p>
 
       <p className="text-xs text-muted-foreground">
@@ -264,9 +265,10 @@ export default async function SchedulePage() {
                     market?.best_offer_point ?? null,
                     g.home_team,
                   ) ?? g.market_home_spread;
+                const modelLine = g.market_informed_home_spread;
                 const diff =
-                  marketLine != null && g.home_spread != null
-                    ? g.home_spread - marketLine
+                  marketLine != null && modelLine != null
+                    ? modelLine - marketLine
                     : null;
                 const awayRank = g.away_team_id
                   ? rankByTeam.get(g.away_team_id)
@@ -330,7 +332,7 @@ export default async function SchedulePage() {
                       {formatHomeLine(g.pure_home_spread)}
                     </TableCell>
                     <TableCell className="text-center font-mono font-semibold tabular-nums">
-                      {formatHomeLine(g.home_spread)}
+                      {formatHomeLine(modelLine)}
                     </TableCell>
                     <TableCell className="text-center font-mono tabular-nums text-muted-foreground">
                       {marketLine != null ? formatHomeLine(marketLine) : "–"}
@@ -362,7 +364,8 @@ export default async function SchedulePage() {
       </ScheduleFilters>
 
       <p className="max-w-4xl text-xs text-muted-foreground">
-        Proj score is away&ndash;home expected points. Diff is model line minus
+        Proj score is the pure model&apos;s away&ndash;home expected points.
+        Diff is model line minus
         market line. Market total is the consensus total when the total pick was
         decided. Picks require qualifying probabilities, prices, and input
         flags; a large point difference alone does not qualify. A star marks a
