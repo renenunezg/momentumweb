@@ -11,13 +11,12 @@ import {
 } from "@/components/cfb-picks";
 import {
   fetchCfbPickHistory,
-  fetchCfbPickSummary,
   PICK_PAGE_SIZE,
-  pickFilters,
   pickHistoryCount,
   pickQuery,
   selectedPickMetric,
 } from "@/lib/cfb-picks";
+import { historyFilters } from "@/lib/pick-history";
 import { redirect } from "next/navigation";
 import { PickFilters } from "@/components/cfb-pick-filters";
 import { pageNumber } from "@/lib/utils";
@@ -46,14 +45,11 @@ export default async function HistoryPage({
   const params = await searchParams;
   if (params.view === "accuracy" || params.season === "backtest")
     return <ForecastHistory searchParams={searchParams} />;
-  const filters = pickFilters(params, "7");
+  const filters = historyFilters(params);
   const market = filters.market;
   const page = pageNumber(params.page);
-  const [summary, history] = await Promise.all([
-    fetchCfbPickSummary(filters),
-    fetchCfbPickHistory(filters, page),
-  ]);
-  const metric = selectedPickMetric(summary.metrics, market);
+  const history = await fetchCfbPickHistory(filters, page);
+  const metric = selectedPickMetric(history.metrics, market);
   const count = pickHistoryCount(metric, market);
   const totalPages = Math.max(1, Math.ceil(count / PICK_PAGE_SIZE));
   function pageUrl(value: number) {
@@ -61,7 +57,7 @@ export default async function HistoryPage({
     query.set("page", String(value));
     return `/cfb/history?${query}`;
   }
-  if (!summary.unavailable && page > totalPages) redirect(pageUrl(totalPages));
+  if (!history.unavailable && page > totalPages) redirect(pageUrl(totalPages));
   return (
     <main
       id="main"
@@ -86,12 +82,13 @@ export default async function HistoryPage({
       </div>
       <PickFilters
         season={filters.season}
-        latestSeason={summary.latestSeason}
+        latestSeason={new Date().getUTCFullYear()}
         market={market}
         period={filters.period}
+        dateBasis="kickoff"
       />
-      <PickKpis metric={metric} unavailable={summary.unavailable} />
-      {history.unavailable || summary.unavailable ? (
+      <PickKpis metric={metric} unavailable={history.unavailable} />
+      {history.unavailable ? (
         <Notice role="status">
           Recommendation history is currently unavailable. Forecast history
           remains available.

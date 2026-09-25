@@ -10,12 +10,14 @@ export function PickFilters({
   market,
   period,
   seasonOptions,
+  dateBasis = "decision",
 }: {
   season: number | null;
   latestSeason: number;
   market: PickMarket;
   period: PickPeriod;
   seasonOptions?: number[];
+  dateBasis?: "decision" | "kickoff";
 }) {
   const router = useRouter();
   const pathname = usePathname();
@@ -109,8 +111,10 @@ export function PickFilters({
         ))}
       </div>
       <p className="w-full text-xs text-muted-foreground">
-        Date range uses the date a decision was recorded (UTC), including
-        pending games. Applies to records and history. Choosing a market lists
+        {dateBasis === "kickoff"
+          ? "Date range uses kickoff dates (UTC). 7D and 14D include today and the preceding days, including pending games in that window. Future dates appear under All time."
+          : "Date range uses the date a decision was recorded (UTC), including pending games."}{" "}
+        Choosing a market lists
         its recommended picks only; No Play decisions appear under All markets.
       </p>
     </form>

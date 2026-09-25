@@ -1,6 +1,11 @@
 import { supabaseNfl } from "@/lib/supabase";
 import type { NflPicksDatabase } from "@/lib/nfl-picks.database.types";
 import {
+  fetchHistorySummary,
+  HISTORY_SUMMARY_COLUMNS,
+  type HistoryFilters,
+} from "@/lib/pick-history";
+import {
   PICK_PAGE_SIZE,
   pickHistoryMatch,
   type PickFiltersValue,
@@ -39,20 +44,33 @@ export async function fetchNflPickSummary(filters: PickFiltersValue) {
 // which lists No Play decisions for every market selection; pricing_weights
 // is the one column the history table never reads, so it stays behind.
 export async function fetchNflPickHistory(
-  filters: PickFiltersValue,
+  filters: HistoryFilters,
   page: number,
 ) {
   let query = supabaseNfl
     .from("recommendations")
     .select(NFL_HISTORY_COLUMNS)
     .match(pickHistoryMatch(filters))
-    .order("decision_at", { ascending: false })
+    .order("start_date", { ascending: false })
     .order("game_id", { ascending: true })
     .order("market", { ascending: true })
     .range((page - 1) * PICK_PAGE_SIZE, page * PICK_PAGE_SIZE - 1);
-  if (filters.from) query = query.gte("decision_at", filters.from);
+  if (filters.from) query = query.gte("start_date", filters.from);
+  if (filters.to) query = query.lt("start_date", filters.to);
   const [summary, { data, error }] = await Promise.all([
-    fetchNflPickSummary(filters),
+    filters.from && filters.to
+      ? fetchHistorySummary(filters, (from, to) =>
+          supabaseNfl
+            .from("recommendations")
+            .select(HISTORY_SUMMARY_COLUMNS)
+            .match(pickHistoryMatch(filters))
+            .gte("start_date", filters.from!)
+            .lt("start_date", filters.to!)
+            .order("game_id")
+            .order("market")
+            .range(from, to),
+        )
+      : fetchNflPickSummary(filters),
     query,
   ]);
   return {

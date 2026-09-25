@@ -7,6 +7,11 @@ export type CfbPickMetric =
   CfbPicksDatabase["cfb"]["Views"]["recommendation_performance"]["Row"];
 import { fetchTeams } from "@/lib/cfb";
 import {
+  fetchHistorySummary,
+  HISTORY_SUMMARY_COLUMNS,
+  type HistoryFilters,
+} from "@/lib/pick-history";
+import {
   PICK_PAGE_SIZE,
   WEEKLY_PICK_COLUMNS,
   pickHistoryMatch,
@@ -131,18 +136,38 @@ export async function fetchCfbPickSummary(filters: PickFiltersValue) {
 }
 
 export async function fetchCfbPickHistory(
-  filters: PickFiltersValue,
+  filters: HistoryFilters,
   page: number,
 ) {
   let query = supabaseCfb
     .from("recommendations")
     .select("*")
     .match(pickHistoryMatch(filters))
-    .order("decision_at", { ascending: false })
+    .order("start_date", { ascending: false })
     .order("game_id", { ascending: true })
     .order("market", { ascending: true })
     .range((page - 1) * PICK_PAGE_SIZE, page * PICK_PAGE_SIZE - 1);
-  if (filters.from) query = query.gte("decision_at", filters.from);
-  const { data, error } = await query;
-  return { rows: (data ?? []) as CfbPick[], unavailable: Boolean(error) };
+  if (filters.from) query = query.gte("start_date", filters.from);
+  if (filters.to) query = query.lt("start_date", filters.to);
+  const [summary, { data, error }] = await Promise.all([
+    filters.from && filters.to
+      ? fetchHistorySummary(filters, (from, to) =>
+          supabaseCfb
+            .from("recommendations")
+            .select(HISTORY_SUMMARY_COLUMNS)
+            .match(pickHistoryMatch(filters))
+            .gte("start_date", filters.from!)
+            .lt("start_date", filters.to!)
+            .order("game_id")
+            .order("market")
+            .range(from, to),
+        )
+      : fetchCfbPickSummary(filters),
+    query,
+  ]);
+  return {
+    metrics: summary.metrics,
+    rows: (data ?? []) as CfbPick[],
+    unavailable: summary.unavailable || Boolean(error),
+  };
 }

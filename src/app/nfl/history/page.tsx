@@ -12,11 +12,11 @@ import {
 import {
   fetchNflPickHistory,
   PICK_PAGE_SIZE,
-  pickFilters,
   pickHistoryCount,
   pickQuery,
   selectedPickMetric,
 } from "@/lib/nfl-picks";
+import { historyFilters } from "@/lib/pick-history";
 import { redirect } from "next/navigation";
 import { PickFilters } from "@/components/football-pick-filters";
 import { pageNumber } from "@/lib/utils";
@@ -50,7 +50,7 @@ export default async function HistoryPage({
     (Number(params.season) >= 2016 && Number(params.season) < 2026)
   )
     return <ForecastHistory searchParams={searchParams} />;
-  const filters = pickFilters(params, "7");
+  const filters = historyFilters(params);
   const market = filters.market;
   const page = pageNumber(params.page);
   const history = await fetchNflPickHistory(filters, page);
@@ -86,11 +86,16 @@ export default async function HistoryPage({
         </Link>
       </div>
       <PickFilters
-        seasonOptions={history.seasons}
+        seasonOptions={
+          history.seasons.length
+            ? history.seasons
+            : [new Date().getUTCFullYear()]
+        }
         season={filters.season}
         latestSeason={new Date().getUTCFullYear()}
         market={market}
         period={filters.period}
+        dateBasis="kickoff"
       />
       <PickKpis metric={metric} unavailable={history.unavailable} />
       {history.unavailable ? (

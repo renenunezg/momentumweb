@@ -120,14 +120,18 @@ export function PickTable({
   rows: FootballPick[];
   caption?: string;
 }) {
+  const games = new Map<FootballPick["game_id"], FootballPick[]>();
+  for (const pick of rows) {
+    const game = games.get(pick.game_id);
+    if (game) game.push(pick);
+    else games.set(pick.game_id, [pick]);
+  }
   return (
     <LocalKickoffs>
       <Table>
         <TableCaption className="sr-only">{caption}</TableCaption>
         <TableHeader>
           <TableRow>
-            <TableHead className="hidden md:table-cell">Kickoff</TableHead>
-            <TableHead className="hidden md:table-cell">Matchup</TableHead>
             <TableHead>Market / pick</TableHead>
             <TableHead className="text-right">Odds</TableHead>
             <TableHead className="hidden text-right sm:table-cell">
@@ -137,165 +141,173 @@ export function PickTable({
             <TableHead className="text-right">Profit</TableHead>
           </TableRow>
         </TableHeader>
-        <TableBody>
-          {rows.map((pick) => (
-            <TableRow
-              key={`${pick.game_id}-${pick.market}`}
-              // No Play rows fade so the picks carry the table, matching
-              // the MLB history treatment of rows without a pick.
-              className={cn(pick.status !== "recommended" && "[&>td]:opacity-50")}
-            >
-              <TableCell className="hidden whitespace-nowrap text-xs md:table-cell">
-                <Kickoff start={pick.start_date} part="day" />
-                <div className="text-muted-foreground">
-                  <Kickoff start={pick.start_date} part="time" />
-                </div>
-              </TableCell>
-              <TableCell className="hidden font-medium md:table-cell">
-                <span className="whitespace-nowrap">{pick.away_team}</span>
-                <div className="whitespace-nowrap text-muted-foreground">
-                  at {pick.home_team}
-                </div>
-              </TableCell>
-              <TableCell className="whitespace-normal">
-                <div className="mb-2 text-[10px] leading-relaxed text-muted-foreground md:hidden">
-                  {pick.away_team} at {pick.home_team}
-                  <div>
-                    <Kickoff start={pick.start_date} part="day" /> ·{" "}
-                    <Kickoff start={pick.start_date} part="time" />
-                  </div>
-                </div>
-                <div className="text-[10px] uppercase tracking-wider text-muted-foreground">
-                  {MARKET_LABELS[pick.market as keyof typeof MARKET_LABELS] ??
-                    pick.market}
-                </div>
-                <div
-                  className={cn(
-                    "min-w-24 max-w-56",
-                    pick.status === "recommended" && "font-semibold",
-                  )}
+        {[...games].map(([gameId, picks]) => {
+          const game = picks[0];
+          const scored = picks.find(
+            (pick) =>
+              (pick.home_points ?? pick.home_goals) != null &&
+              (pick.away_points ?? pick.away_goals) != null,
+          );
+          const headingId = `pick-game-${gameId}`;
+          return (
+            <TableBody key={gameId} aria-labelledby={headingId}>
+              <TableRow className="bg-muted/30 hover:bg-muted/30">
+                <th
+                  id={headingId}
+                  scope="rowgroup"
+                  colSpan={5}
+                  className="px-2 py-3 text-left font-normal"
                 >
-                  {pickLabel(pick)}
-                </div>
-                <div className="max-w-64 text-xs text-muted-foreground">
-                  {pick.status === "recommended"
-                    ? pick.provider
-                    : pickReason(pick.reason)}
-                </div>
-                <details className="mt-1 text-xs text-muted-foreground">
-                  <summary className="cursor-pointer">Recorded details</summary>
-                  <div className="mt-1 max-w-64 space-y-1 break-all">
-                    <p>Decision: {new Date(pick.decision_at).toISOString()}</p>
-                    <p>Rule: {pick.policy_version}</p>
-                    {pick.missing_input_count != null ? (
-                      <p>
-                        Missing inputs: {pick.missing_input_count}. NHL counts
-                        flag a venue window under ten games.
-                      </p>
-                    ) : (
-                      <p>
-                        Missing inputs: home{" "}
-                        {pick.home_missing_input_count ?? "unknown"}, away{" "}
-                        {pick.away_missing_input_count ?? "unknown"}.{" "}
-                        {pick.policy_version.startsWith("cfb-")
-                          ? "Counts include unavailable injury data."
-                          : "NFL counts flag missing expected-QB identities."}
-                      </p>
-                    )}
-                    <p>Model: {pick.model_version}</p>
-                    {pick.execution_eligibility_verified !== undefined && (
-                      <p>
-                        Bookmaker availability:{" "}
-                        {pick.execution_eligibility_verified
-                          ? "verified"
-                          : "unverified"}
-                      </p>
-                    )}
-                    <p>
-                      Provider updated:{" "}
-                      {pick.provider_last_update ?? "unavailable"}
-                    </p>
-                    {pick.source_timestamps && (
-                      <p>
-                        Source receipts:{" "}
-                        {JSON.stringify(pick.source_timestamps)}
-                      </p>
-                    )}
-                    {pick.data_flags && (
-                      <p>Data flags: {JSON.stringify(pick.data_flags)}</p>
-                    )}
-                    {pick.settlement_reason && (
-                      <p>Settlement: {pickReason(pick.settlement_reason)}</p>
-                    )}
-                    {pick.result_source_at && (
-                      <p>Result observed: {pick.result_source_at}</p>
-                    )}
-                    <p>EV {formatPct(pick.expected_value_per_unit)}</p>
-                    <p>
-                      Win {formatPct(pick.win_probability)} · Push{" "}
-                      {formatPct(pick.push_probability)}
-                    </p>
-                    <p>
-                      Edge:{" "}
-                      {pick.probability_edge == null
-                        ? "–"
-                        : formatNumber(pick.probability_edge * 100, 1)}{" "}
-                      pp
-                    </p>
-                    <p>
-                      Forecast: {new Date(pick.forecast_as_of).toISOString()}
-                    </p>
-                    <p>
-                      Price captured:{" "}
-                      {pick.market_fetched_at
-                        ? new Date(pick.market_fetched_at).toISOString()
-                        : "unavailable"}
-                    </p>
+                  <div className="flex flex-wrap items-baseline justify-between gap-x-4 gap-y-1">
+                    <span className="font-medium">
+                      {game.away_team} at {game.home_team}{" "}
+                      {scored && (
+                        <span className="ml-2 whitespace-nowrap font-mono text-xs text-muted-foreground">
+                          {scored.away_points ?? scored.away_goals}
+                          {" - "}
+                          {scored.home_points ?? scored.home_goals}
+                        </span>
+                      )}
+                    </span>
+                    <span className="whitespace-nowrap text-xs text-muted-foreground">
+                      <Kickoff start={game.start_date} part="day" /> ·{" "}
+                      <Kickoff start={game.start_date} part="time" />
+                    </span>
                   </div>
-                </details>
-              </TableCell>
-              <TableCell className="text-right font-mono">
-                {pick.status === "recommended" ? formatOdds(pick.price) : "–"}
-              </TableCell>
-              <TableCell className="hidden text-right font-mono sm:table-cell">
-                {pick.status === "recommended"
-                  ? formatPct(pick.expected_value_per_unit)
-                  : "–"}
-              </TableCell>
-              <TableCell>
-                <span
-                  className={cn(
-                    "font-mono text-xs uppercase",
-                    pick.outcome === "win" && "text-positive",
-                    pick.outcome === "loss" && "text-negative",
-                  )}
+                </th>
+              </TableRow>
+              {picks.map((pick) => (
+                <TableRow
+                  key={`${pick.game_id}-${pick.market}`}
+                  // No Play rows fade so the picks carry the table, matching
+                  // the MLB history treatment of rows without a pick.
+                  className={cn(pick.status !== "recommended" && "[&>td]:opacity-50")}
                 >
-                  {pick.status === "no_play" ? "No Play" : pick.outcome}
-                </span>
-                {(() => {
-                  const home = pick.home_points ?? pick.home_goals;
-                  const away = pick.away_points ?? pick.away_goals;
-                  return home != null && away != null ? (
-                    <div className="text-xs text-muted-foreground">
-                      {away}-{home}
+                  <TableCell className="whitespace-normal">
+                    <div className="text-[10px] uppercase tracking-wider text-muted-foreground">
+                      {MARKET_LABELS[pick.market as keyof typeof MARKET_LABELS] ??
+                        pick.market}
                     </div>
-                  ) : null;
-                })()}
-              </TableCell>
-              <TableCell
-                className={cn(
-                  "text-right font-mono",
-                  (pick.profit_units ?? 0) > 0 && "text-positive",
-                  (pick.profit_units ?? 0) < 0 && "text-negative",
-                )}
-              >
-                {pick.status === "recommended" && pick.profit_units != null
-                  ? `${formatSigned(pick.profit_units, 2)}u`
-                  : "–"}
-              </TableCell>
-            </TableRow>
-          ))}
-        </TableBody>
+                    <div
+                      className={cn(
+                        "min-w-24 max-w-56",
+                        pick.status === "recommended" && "font-semibold",
+                      )}
+                    >
+                      {pickLabel(pick)}
+                    </div>
+                    <div className="max-w-64 text-xs text-muted-foreground">
+                      {pick.status === "recommended"
+                        ? pick.provider
+                        : pickReason(pick.reason)}
+                    </div>
+                    <details className="mt-1 text-xs text-muted-foreground">
+                      <summary className="cursor-pointer">Recorded details</summary>
+                      <div className="mt-1 max-w-64 space-y-1 break-all">
+                        <p>Decision: {new Date(pick.decision_at).toISOString()}</p>
+                        <p>Rule: {pick.policy_version}</p>
+                        {pick.missing_input_count != null ? (
+                          <p>
+                            Missing inputs: {pick.missing_input_count}. NHL counts
+                            flag a venue window under ten games.
+                          </p>
+                        ) : (
+                          <p>
+                            Missing inputs: home{" "}
+                            {pick.home_missing_input_count ?? "unknown"}, away{" "}
+                            {pick.away_missing_input_count ?? "unknown"}.{" "}
+                            {pick.policy_version.startsWith("cfb-")
+                              ? "Counts include unavailable injury data."
+                              : "NFL counts flag missing expected-QB identities."}
+                          </p>
+                        )}
+                        <p>Model: {pick.model_version}</p>
+                        {pick.execution_eligibility_verified !== undefined && (
+                          <p>
+                            Bookmaker availability:{" "}
+                            {pick.execution_eligibility_verified
+                              ? "verified"
+                              : "unverified"}
+                          </p>
+                        )}
+                        <p>
+                          Provider updated:{" "}
+                          {pick.provider_last_update ?? "unavailable"}
+                        </p>
+                        {pick.source_timestamps && (
+                          <p>
+                            Source receipts:{" "}
+                            {JSON.stringify(pick.source_timestamps)}
+                          </p>
+                        )}
+                        {pick.data_flags && (
+                          <p>Data flags: {JSON.stringify(pick.data_flags)}</p>
+                        )}
+                        {pick.settlement_reason && (
+                          <p>Settlement: {pickReason(pick.settlement_reason)}</p>
+                        )}
+                        {pick.result_source_at && (
+                          <p>Result observed: {pick.result_source_at}</p>
+                        )}
+                        <p>EV {formatPct(pick.expected_value_per_unit)}</p>
+                        <p>
+                          Win {formatPct(pick.win_probability)} · Push{" "}
+                          {formatPct(pick.push_probability)}
+                        </p>
+                        <p>
+                          Edge:{" "}
+                          {pick.probability_edge == null
+                            ? "–"
+                            : formatNumber(pick.probability_edge * 100, 1)}{" "}
+                          pp
+                        </p>
+                        <p>
+                          Forecast: {new Date(pick.forecast_as_of).toISOString()}
+                        </p>
+                        <p>
+                          Price captured:{" "}
+                          {pick.market_fetched_at
+                            ? new Date(pick.market_fetched_at).toISOString()
+                            : "unavailable"}
+                        </p>
+                      </div>
+                    </details>
+                  </TableCell>
+                  <TableCell className="text-right font-mono">
+                    {pick.status === "recommended" ? formatOdds(pick.price) : "–"}
+                  </TableCell>
+                  <TableCell className="hidden text-right font-mono sm:table-cell">
+                    {pick.status === "recommended"
+                      ? formatPct(pick.expected_value_per_unit)
+                      : "–"}
+                  </TableCell>
+                  <TableCell>
+                    <span
+                      className={cn(
+                        "font-mono text-xs uppercase",
+                        pick.outcome === "win" && "text-positive",
+                        pick.outcome === "loss" && "text-negative",
+                      )}
+                    >
+                      {pick.status === "no_play" ? "No Play" : pick.outcome}
+                    </span>
+                  </TableCell>
+                  <TableCell
+                    className={cn(
+                      "text-right font-mono",
+                      (pick.profit_units ?? 0) > 0 && "text-positive",
+                      (pick.profit_units ?? 0) < 0 && "text-negative",
+                    )}
+                  >
+                    {pick.status === "recommended" && pick.profit_units != null
+                      ? `${formatSigned(pick.profit_units, 2)}u`
+                      : "–"}
+                  </TableCell>
+                </TableRow>
+              ))}
+            </TableBody>
+          );
+        })}
       </Table>
     </LocalKickoffs>
   );
