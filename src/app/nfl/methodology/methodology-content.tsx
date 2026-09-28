@@ -103,10 +103,15 @@ export function MethodologyContent({ example }: { example: PickExample | null })
           replacement level by sample size and decayed with two half-lives:
           1,000 dropbacks and 52 calendar weeks. The adjustment is
           the starter&apos;s value minus the value embedded in the team&apos;s
-          rating window, applied at a weight of 0.25 selected on the
-          development seasons. Starters come from depth
-          charts, skipping anyone listed Out or Doubtful, with a manual
-          override for game-day news.
+          rating window. The usual weight is 0.25; it rises to 0.50 when
+          the quarterback with the largest share of the recent rating window
+          is listed Out or Doubtful and a different player is expected to start.
+          The absence weight was selected on 2016-2021 absence games and
+          checked separately on 2022-2025 retrospective games.
+          Starters come from dated depth charts and injury reports, with a
+          manual override for game-day news.
+          Historical evaluation uses each game&apos;s pre-kickoff availability;
+          an undated prior-week chart cannot override a newer actual starter.
         </p>
         <p className={p}>
           A rest adjustment for byes and short weeks is wired in, but
