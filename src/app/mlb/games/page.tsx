@@ -119,8 +119,7 @@ export default async function Page() {
           Today&apos;s MLB Predictions
         </h1>
         <p className="mt-4 text-muted-foreground">
-          No predictions available. Run the pipeline to generate today&apos;s
-          games.
+          No predictions available.
         </p>
       </main>
     );
