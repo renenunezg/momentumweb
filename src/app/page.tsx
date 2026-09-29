@@ -1,5 +1,6 @@
 import { PageDescription, PageHeader, PageSection, PageShell, PageTitle } from "@/components/page-layout";
 import Link from "next/link";
+import { fetchHomeFeatures, HomeFeature } from "@/components/home-feature";
 import { SiteHeader } from "@/components/site-header";
 import { ContactLine } from "@/components/site-footer";
 import { fetchFullBetLedger } from "@/lib/bet-ledger";
@@ -250,12 +251,13 @@ function FootballStats({ headline }: { headline: FootballHeadline }) {
 
 export default async function Home() {
   const today = siteDate();
-  const [mlb, cfb, nfl, nhl, daily] = await Promise.all([
+  const [mlb, cfb, nfl, nhl, daily, features] = await Promise.all([
     getMlbHeadline(),
     getCfbHeadline(),
     getNflHeadline(),
     getNhlHeadline(),
     fetchDailyPicks(today),
+    fetchHomeFeatures(),
   ]);
   const dateLabel = new Date(`${today}T12:00:00Z`).toLocaleDateString(
     "en-US",
@@ -286,8 +288,8 @@ export default async function Home() {
         }}
       />
       <SiteHeader />
-      <PageShell width="reading">
-        <PageHeader>
+      <PageShell width="wide" className="max-w-[96rem] min-[1200px]:grid min-[1200px]:grid-cols-[minmax(0,1fr)_minmax(0,46rem)_minmax(0,1fr)] min-[1200px]:gap-x-6">
+        <PageHeader className="mx-auto w-full max-w-[46rem] min-[1200px]:col-start-2">
           <div>
             <PageTitle>
               Ren&eacute; N&uacute;&ntilde;ez
@@ -300,123 +302,137 @@ export default async function Home() {
           </div>
         </PageHeader>
 
-        <PageSection>
-          <h2 className="font-mono text-xs uppercase tracking-wider text-muted-foreground">
-            Models
-          </h2>
-          {/* Entries are separated by rules, not enclosed in boxes. */}
-          <div className="divide-y divide-border border-y border-rule-strong">
-            <ModelEntry
-              href="/mlb/games"
-              name="MLB"
-              live
-              cta="View today's slate"
-              description="Hierarchical Bayesian model simulating every game one plate appearance at a time."
-            >
-              {mlb && (
-                <div className="mt-4 flex flex-wrap gap-x-8 gap-y-3 border-t border-border pt-4">
-                  <div>
-                    <p className="text-xs text-muted-foreground">ROI</p>
-                    <p className="mt-0.5 font-mono text-sm tabular-nums">
-                      {mlb.roi != null ? `${formatSigned(mlb.roi * 100, 1)}%` : "–"}
-                    </p>
-                  </div>
-                  <div>
-                    <p className="text-xs text-muted-foreground">Record</p>
-                    <p className="mt-0.5 font-mono text-sm tabular-nums">
-                      {mlb.wins}&ndash;{mlb.losses}
-                    </p>
-                  </div>
-                  <div>
-                    <p className="text-xs text-muted-foreground">Net units</p>
-                    <p className="mt-0.5 font-mono text-sm tabular-nums">
-                      {formatSigned(mlb.netUnits, 1)}u
-                    </p>
-                  </div>
-                  <p className="ml-auto self-end font-mono text-xs text-muted-foreground">
-                    Updated nightly
-                  </p>
-                </div>
-              )}
-            </ModelEntry>
-
-            <ModelEntry
-              href="/cfb/predictions"
-              name="CFB"
-              live={cfb?.live ?? null}
-              cta="View predictions"
-              description="Weekly spread, total, and moneyline predictions with frozen lines, built on power ratings for every Division 1 program."
-              links={[{ href: "/cfb/heisman", label: "Heisman tracker" }]}
-            >
-              {cfb && <FootballStats headline={cfb} />}
-            </ModelEntry>
-
-            <ModelEntry
-              href="/nfl/predictions"
-              name="NFL"
-              live={nfl?.live ?? null}
-              cta="View predictions"
-              description="Bayesian power ratings for all 32 teams from drive-level EPA, with weekly spread and total projections priced against the market."
-              links={[
-                { href: "/nfl/season-wins", label: "Season win projections" },
-                { href: "/nfl/awards", label: "Awards tracker" },
-              ]}
-            >
-              {nfl && <FootballStats headline={nfl} />}
-            </ModelEntry>
-
-            <ModelEntry
-              href="/nhl/games"
-              name="NHL"
-              live={nhl?.live ?? null}
-              cta="View today's slate"
-              description="Poisson goal model from last-25-game shot-quality windows, priced daily against the NHL partner sportsbooks with frozen moneyline and total picks."
-            >
-              {nhl && <FootballStats headline={nhl} />}
-            </ModelEntry>
-          </div>
-        </PageSection>
-
-        <DailyPicks sports={daily} dateLabel={dateLabel} />
-
-        <PageSection>
-          <div className="flex items-baseline justify-between gap-4">
+        <div className="mx-auto flex w-full min-w-0 max-w-[46rem] flex-col gap-section min-[1200px]:col-start-2 min-[1200px]:row-start-2">
+          <PageSection>
             <h2 className="font-mono text-xs uppercase tracking-wider text-muted-foreground">
-              Latest writing
+              Models
             </h2>
-            <Link
-              href="/blog"
-              className="font-mono text-xs uppercase tracking-wider text-muted-foreground hover:text-foreground transition-colors"
-            >
-              All posts &rarr;
-            </Link>
-          </div>
-          {latestPosts.length === 0 ? (
-            <p className="text-sm text-muted-foreground">
-              Nothing published yet.
-            </p>
-          ) : (
+            {/* Entries are separated by rules, not enclosed in boxes. */}
             <div className="divide-y divide-border border-y border-rule-strong">
-              {latestPosts.map((post) => (
-                <Link
-                  key={post.slug}
-                  href={`/blog/${post.slug}`}
-                  className="group -mx-3 block px-3 py-5 transition-colors hover:bg-muted/50"
-                >
-                  <p className="font-mono text-xs text-muted-foreground">
-                    {post.date}
-                  </p>
-                  <h3 className="font-heading text-base mt-1 group-hover:underline underline-offset-4">
-                    {post.title}
-                  </h3>
-                  <p className="mt-2 text-sm text-muted-foreground leading-relaxed">
-                    {post.summary}
-                  </p>
-                </Link>
-              ))}
+              <ModelEntry
+                href="/mlb/games"
+                name="MLB"
+                live
+                cta="View today's slate"
+                description="Hierarchical Bayesian model simulating every game one plate appearance at a time."
+              >
+                {mlb && (
+                  <div className="mt-4 flex flex-wrap gap-x-8 gap-y-3 border-t border-border pt-4">
+                    <div>
+                      <p className="text-xs text-muted-foreground">ROI</p>
+                      <p className="mt-0.5 font-mono text-sm tabular-nums">
+                        {mlb.roi != null ? `${formatSigned(mlb.roi * 100, 1)}%` : "–"}
+                      </p>
+                    </div>
+                    <div>
+                      <p className="text-xs text-muted-foreground">Record</p>
+                      <p className="mt-0.5 font-mono text-sm tabular-nums">
+                        {mlb.wins}&ndash;{mlb.losses}
+                      </p>
+                    </div>
+                    <div>
+                      <p className="text-xs text-muted-foreground">Net units</p>
+                      <p className="mt-0.5 font-mono text-sm tabular-nums">
+                        {formatSigned(mlb.netUnits, 1)}u
+                      </p>
+                    </div>
+                    <p className="ml-auto self-end font-mono text-xs text-muted-foreground">
+                      Updated nightly
+                    </p>
+                  </div>
+                )}
+              </ModelEntry>
+
+              <ModelEntry
+                href="/cfb/predictions"
+                name="CFB"
+                live={cfb?.live ?? null}
+                cta="View predictions"
+                description="Weekly spread, total, and moneyline predictions with frozen lines, built on power ratings for every Division 1 program."
+                links={[{ href: "/cfb/heisman", label: "Heisman tracker" }]}
+              >
+                {cfb && <FootballStats headline={cfb} />}
+              </ModelEntry>
+
+              <ModelEntry
+                href="/nfl/predictions"
+                name="NFL"
+                live={nfl?.live ?? null}
+                cta="View predictions"
+                description="Bayesian power ratings for all 32 teams from drive-level EPA, with weekly spread and total projections priced against the market."
+                links={[
+                  { href: "/nfl/season-wins", label: "Season win projections" },
+                  { href: "/nfl/awards", label: "Awards tracker" },
+                ]}
+              >
+                {nfl && <FootballStats headline={nfl} />}
+              </ModelEntry>
+
+              <ModelEntry
+                href="/nhl/games"
+                name="NHL"
+                live={nhl?.live ?? null}
+                cta="View today's slate"
+                description="Poisson goal model from last-25-game shot-quality windows, priced daily against the NHL partner sportsbooks with frozen moneyline and total picks."
+              >
+                {nhl && <FootballStats headline={nhl} />}
+              </ModelEntry>
             </div>
-          )}
-        </PageSection>
+          </PageSection>
+
+          <DailyPicks sports={daily} dateLabel={dateLabel} />
+
+          <PageSection>
+            <div className="flex items-baseline justify-between gap-4">
+              <h2 className="font-mono text-xs uppercase tracking-wider text-muted-foreground">
+                Latest writing
+              </h2>
+              <Link
+                href="/blog"
+                className="font-mono text-xs uppercase tracking-wider text-muted-foreground hover:text-foreground transition-colors"
+              >
+                All posts &rarr;
+              </Link>
+            </div>
+            {latestPosts.length === 0 ? (
+              <p className="text-sm text-muted-foreground">
+                Nothing published yet.
+              </p>
+            ) : (
+              <div className="divide-y divide-border border-y border-rule-strong">
+                {latestPosts.map((post) => (
+                  <Link
+                    key={post.slug}
+                    href={`/blog/${post.slug}`}
+                    className="group -mx-3 block px-3 py-5 transition-colors hover:bg-muted/50"
+                  >
+                    <p className="font-mono text-xs text-muted-foreground">
+                      {post.date}
+                    </p>
+                    <h3 className="font-heading text-base mt-1 group-hover:underline underline-offset-4">
+                      {post.title}
+                    </h3>
+                    <p className="mt-2 text-sm text-muted-foreground leading-relaxed">
+                      {post.summary}
+                    </p>
+                  </Link>
+                ))}
+              </div>
+            )}
+          </PageSection>
+        </div>
+
+        <div className="mx-auto grid w-full max-w-[46rem] gap-section sm:grid-cols-2 min-[1200px]:contents">
+          {features.map((feature, index) => (
+            <aside
+              key={feature.href}
+              aria-label={feature.title}
+              className={`min-w-0 min-[1200px]:row-start-1 min-[1200px]:row-span-2 min-[1200px]:self-start ${index === 0 ? "min-[1200px]:col-start-1" : "min-[1200px]:col-start-3"}`}
+            >
+              <HomeFeature feature={feature} />
+            </aside>
+          ))}
+        </div>
       </PageShell>
     </>
   );

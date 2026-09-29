@@ -21,6 +21,7 @@ import type {
 import { chartAxisProps, chartTooltipStyle, useChartTheme } from "@/lib/chart-theme";
 import { EMPTY, formatNumber, formatPct, formatSigned } from "@/lib/utils";
 import { PlayerHeadshot } from "@/components/player-headshot";
+import { cfbPlayerHeadshotUrl } from "@/lib/player-headshots";
 import { TeamLogo } from "@/components/team-logo";
 import { ToggleGroup } from "@/components/toggle-group";
 import { ViewTabPanel, ViewTabs } from "@/components/view-tabs";
@@ -93,13 +94,6 @@ function parseJson<T>(text: string | null | undefined): T | null {
   }
 }
 
-// CFBD athlete ids are ESPN ids, so ESPN's public CDN serves the headshot
-// without any backend field; FCS depth players return 404 and fall back to
-// initials inside the component.
-function headshotUrl(athleteId: string): string {
-  return `https://a.espncdn.com/i/headshots/college-football/players/full/${athleteId}.png`;
-}
-
 function PlayerCell({
   athleteId,
   name,
@@ -115,7 +109,7 @@ function PlayerCell({
 }) {
   return (
     <div className="flex items-center gap-2.5">
-      <PlayerHeadshot name={name} src={headshotUrl(athleteId)} className="h-9 w-9" />
+      <PlayerHeadshot name={name} src={cfbPlayerHeadshotUrl(athleteId)} className="h-9 w-9" />
       <div className="min-w-0">
         <div className="truncate font-medium">{name}</div>
         <div className="flex items-center gap-1 truncate text-xs text-muted-foreground">
