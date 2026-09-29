@@ -73,7 +73,7 @@ function TeamRow({
       : null;
 
   return (
-    <TableRow className="h-16 [&>td]:py-2 [&>td:not([rowspan])]:align-top">
+    <TableRow className="h-12 [&>td]:py-1 [&>td]:leading-4 [&>td:not([rowspan])]:align-top">
       <TableCell className="whitespace-normal">
         <div className="flex items-center gap-2">
           <TeamLogo team={team} name={name} className="h-4 w-4 shrink-0" />
@@ -111,11 +111,11 @@ function TeamRow({
         <span className="mx-0.5 text-muted-foreground">/</span>
         <span className="text-muted-foreground">{formatOdds(price)}</span>
         {provider && (
-          <span className="block text-[10px] leading-[14px] text-muted-foreground">
+          <span className="block text-[10px] leading-3 text-muted-foreground">
             {provider}{picked && " · recorded"}
           </span>
         )}
-        <span className="block text-[10px] leading-[14px] text-muted-foreground">
+        <span className="block text-[10px] leading-3 text-muted-foreground">
           min {formatOdds(picked ? moneyline.minimum_price : minimum)}
         </span>
       </TableCell>
@@ -123,7 +123,7 @@ function TeamRow({
         {picked && moneyline ? (
           <>
             <span className="font-semibold text-positive">ML {formatOdds(moneyline.price)}</span>
-            <span className="block text-[10px] leading-[14px] text-muted-foreground">
+            <span className="block text-[10px] leading-3 text-muted-foreground">
               Kelly {formatPct(moneyline.kelly_fraction)}
             </span>
           </>
@@ -149,7 +149,7 @@ function TeamRow({
                     {total.side === "over" ? "O" : "U"} {formatNumber(total.point, 1)}
                   </span>
                   <span className="text-xs">{formatOdds(total.price)}</span>
-                  <span className="text-[10px] leading-[14px] text-muted-foreground">
+                  <span className="text-[10px] leading-3 text-muted-foreground">
                     {total.provider ?? providerName(total.provider_key ?? "")}
                   </span>
                 </>
@@ -177,6 +177,7 @@ export function NhlGamesTable({ matchups }: { matchups: NhlMatchup[] }) {
               away={projection.away_team}
               home={projection.home_team}
               columnCount={8}
+              compact
               status={live && live.state !== "pre" && (
                 <span className={cn(
                   "text-[10px] uppercase tracking-wider",

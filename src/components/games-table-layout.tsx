@@ -62,6 +62,7 @@ export function GameMatchupHeader({
   home,
   hasPlay = false,
   columnCount = 6,
+  compact = false,
   status,
   detail,
 }: {
@@ -69,12 +70,13 @@ export function GameMatchupHeader({
   home: string;
   hasPlay?: boolean;
   columnCount?: number;
+  compact?: boolean;
   status: ReactNode;
   detail: ReactNode;
 }) {
   return (
     <TableRow className="hover:bg-transparent">
-      <TableCell colSpan={columnCount} className="whitespace-normal border-t border-border pt-5 pb-1">
+      <TableCell colSpan={columnCount} className={cn("whitespace-normal border-t border-border pb-1", compact ? "pt-3" : "pt-5")}>
         {/* Keep the matchup visible while numeric columns scroll on mobile. */}
         <div className="sticky left-0 flex w-[calc(100vw-2.5rem)] max-w-full flex-wrap items-baseline justify-between gap-x-3 gap-y-1 md:w-full">
           <div className="flex flex-wrap items-center gap-2">
