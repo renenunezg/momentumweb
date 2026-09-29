@@ -102,6 +102,13 @@ export default async function Page({
       live: live.get(projection.game_id) ?? null,
     };
   });
+  const hasCorroboratedPicks = decisionsRes.decisions.some((d) => {
+    const flags = d.data_flags;
+    if (d.status !== "recommended" || !flags || typeof flags !== "object" || Array.isArray(flags)) return false;
+    const evidence = flags.quote_verification;
+    return evidence && typeof evidence === "object" && !Array.isArray(evidence) &&
+      evidence.method === "draftkings_public_listing_v1";
+  });
   const hasPlay = (m: NhlMatchup) =>
     m.moneyline?.status === "recommended" || m.total?.status === "recommended";
   matchups.sort((a, b) => {
@@ -143,10 +150,16 @@ export default async function Page({
       {decisionsRes.decisions.length > 0 &&
         decisionsRes.decisions.every((d) => d.status === "no_play" && d.reason === "stale_offer") && (
           <Notice className="mb-4">
-            All games are No Play because the partner sportsbook prices are stale.
-            Model forecasts remain available; outdated book prices and edges are hidden.
+            All games are No Play because sportsbook price freshness could not be verified.
+            Model forecasts remain available; unverified book prices and edges are hidden.
           </Notice>
         )}
+      {hasCorroboratedPicks && (
+        <Notice className="mb-4">
+          Some pick prices were matched to DraftKings&apos; public listing before publication.
+          Picks retain their recorded prices; unverified current book prices are hidden.
+        </Notice>
+      )}
       <NhlGamesLive initial={matchups} date={today} />
     </main>
   );

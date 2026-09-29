@@ -125,6 +125,9 @@ function TeamRow({
           <>
             <span className="text-positive">ML {formatOdds(moneyline.price)}</span>
             <span className="block text-[10px] font-normal text-muted-foreground">
+              {moneyline.provider ?? providerName(moneyline.provider_key ?? "")}
+            </span>
+            <span className="block text-[10px] font-normal text-muted-foreground">
               Kelly {formatPct(moneyline.kelly_fraction)}
             </span>
           </>
@@ -200,7 +203,7 @@ export function NhlGamesTable({ matchups }: { matchups: NhlMatchup[] }) {
                       {totalPicked && total && (
                         <span className="ml-2 text-accent-amber">
                           {total.side === "over" ? "O" : "U"} {formatNumber(total.point, 1)}{" "}
-                          {formatOdds(total.price)}
+                          {formatOdds(total.price)} ({total.provider ?? providerName(total.provider_key ?? "")})
                         </span>
                       )}
                       {" · "}

@@ -15,7 +15,7 @@ const NHL_HISTORY_COLUMNS =
   "game_id,market,season,game_date,start_date,home_team,away_team,model_version,forecast_as_of,missing_input_count,policy_version,decision_at,published_at,status,reason,selection,side,point,price,provider,provider_key,market_fetched_at,provider_event_id,provider_start_date,provider_last_update,win_probability,push_probability,probability_edge,edge_points,expected_value_per_unit,stake_units,kelly_fraction,minimum_price,home_lambda,away_lambda,model_total,market_total,source_timestamps,data_flags,outcome,home_goals,away_goals,profit_units,graded_at,settlement_reason,result_source_at";
 
 export const NHL_DECISION_COLUMNS =
-  "game_id,market,start_date,home_team,away_team,status,reason,selection,side,point,price,provider,provider_key,win_probability,push_probability,probability_edge,edge_points,expected_value_per_unit,kelly_fraction,minimum_price,market_total,outcome,profit_units,decision_at";
+  "game_id,market,start_date,home_team,away_team,status,reason,selection,side,point,price,provider,provider_key,win_probability,push_probability,probability_edge,edge_points,expected_value_per_unit,kelly_fraction,minimum_price,market_total,outcome,profit_units,decision_at,data_flags";
 
 export type NhlDecision = Pick<
   NhlPick,
@@ -43,6 +43,7 @@ export type NhlDecision = Pick<
   | "outcome"
   | "profit_units"
   | "decision_at"
+  | "data_flags"
 >;
 
 function args(filters: PickFiltersValue) {
