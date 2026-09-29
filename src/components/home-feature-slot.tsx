@@ -17,7 +17,7 @@ export function HomeFeatureSlot({ feature }: { feature: HomeFeature }) {
   const headingId = `home-feature-${feature.id}`;
 
   return (
-    <aside aria-labelledby={headingId} className="min-w-0 self-start max-lg:w-full max-lg:max-w-xl">
+    <aside aria-labelledby={headingId} className="min-w-0 self-start max-lg:w-full max-lg:max-w-xl lg:border-l lg:border-border lg:pl-section">
       <PageSection>
         <div className="flex items-baseline justify-between gap-heading">
           <h2 id={headingId} className="font-mono text-xs uppercase tracking-wider text-muted-foreground">
