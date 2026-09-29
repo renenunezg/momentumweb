@@ -73,7 +73,7 @@ function TeamRow({
       : null;
 
   return (
-    <TableRow className="h-16 [&>td]:py-2 [&>td]:align-top">
+    <TableRow className="h-16 [&>td]:py-2 [&>td:not([rowspan])]:align-top">
       <TableCell className="whitespace-normal">
         <div className="flex items-center gap-2">
           <TeamLogo team={team} name={name} className="h-4 w-4 shrink-0" />
@@ -87,11 +87,11 @@ function TeamRow({
           </span>
         </div>
       </TableCell>
-      <TableCell className="text-right tabular-nums">{formatNumber(lambda, 2)}</TableCell>
-      <TableCell className="text-right tabular-nums">{formatPct(win)}</TableCell>
+      <TableCell className="text-center tabular-nums">{formatNumber(lambda, 2)}</TableCell>
+      <TableCell className="text-center tabular-nums">{formatPct(win)}</TableCell>
       <TableCell
         className={cn(
-          "text-right font-semibold tabular-nums",
+          "text-center font-semibold tabular-nums",
           edge == null
             ? "text-muted-foreground"
             : edge >= 0.13
@@ -102,9 +102,11 @@ function TeamRow({
         )}
         title={edge == null ? "No verified book quote" : picked ? "Recorded edge at publication, in percentage points" : "Edge against the current book quote, in percentage points"}
       >
-        {edge == null ? "–" : `${edge > 0 ? "+" : ""}${formatPct(edge)}`}
+        {edge == null
+          ? <span className="text-xs font-normal">No quote</span>
+          : `${edge > 0 ? "+" : ""}${formatPct(edge)}`}
       </TableCell>
-      <TableCell className="text-right tabular-nums">
+      <TableCell className="text-center tabular-nums">
         <span>{formatOdds(fair)}</span>
         <span className="mx-0.5 text-muted-foreground">/</span>
         <span className="text-muted-foreground">{formatOdds(price)}</span>
@@ -117,7 +119,7 @@ function TeamRow({
           min {formatOdds(picked ? moneyline.minimum_price : minimum)}
         </span>
       </TableCell>
-      <TableCell className="text-right">
+      <TableCell className="text-center">
         {picked && moneyline ? (
           <>
             <span className="font-semibold text-positive">ML {formatOdds(moneyline.price)}</span>
@@ -129,26 +131,30 @@ function TeamRow({
       </TableCell>
       {side === "away" && (
         <>
-          <TableCell rowSpan={2} className="border-l border-border text-right">
-            <span className="font-semibold">{formatNumber(projection.model_total, 2)}</span>
-            {(totalPicked || matchup.bookTotal != null) && (
-              <span className="block text-[10px] leading-[14px] text-muted-foreground">
-                line {formatNumber(totalPicked ? total.point : matchup.bookTotal, 1)}
+          <TableCell rowSpan={2} className="border-l border-border align-middle text-center">
+            <div className="grid grid-rows-[1.25rem_1rem_0.875rem]">
+              <span className="font-semibold">{formatNumber(projection.model_total, 2)}</span>
+              <span className="text-xs text-muted-foreground">
+                {(totalPicked || matchup.bookTotal != null) && (
+                  <>line {formatNumber(totalPicked ? total.point : matchup.bookTotal, 1)}</>
+                )}
               </span>
-            )}
+            </div>
           </TableCell>
-          <TableCell rowSpan={2} className="text-right">
-            {totalPicked && total ? (
-              <>
-                <span className="font-semibold text-accent-amber">
-                  {total.side === "over" ? "O" : "U"} {formatNumber(total.point, 1)}
-                </span>
-                <span className="block text-xs">{formatOdds(total.price)}</span>
-                <span className="block text-[10px] leading-[14px] text-muted-foreground">
-                  {total.provider ?? providerName(total.provider_key ?? "")}
-                </span>
-              </>
-            ) : <span className="text-xs text-muted-foreground">No play</span>}
+          <TableCell rowSpan={2} className="align-middle text-center">
+            <div className="grid grid-rows-[1.25rem_1rem_0.875rem]">
+              {totalPicked && total ? (
+                <>
+                  <span className="font-semibold text-accent-amber">
+                    {total.side === "over" ? "O" : "U"} {formatNumber(total.point, 1)}
+                  </span>
+                  <span className="text-xs">{formatOdds(total.price)}</span>
+                  <span className="text-[10px] leading-[14px] text-muted-foreground">
+                    {total.provider ?? providerName(total.provider_key ?? "")}
+                  </span>
+                </>
+              ) : <span className="text-xs text-muted-foreground">No play</span>}
+            </div>
           </TableCell>
         </>
       )}

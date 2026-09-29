@@ -23,31 +23,31 @@ export function GamesTableLayout({
 }) {
   return (
     <Table className={showTotals ? "min-w-[48rem] table-fixed" : undefined}>
+      <TableCaption className="sr-only">{caption}</TableCaption>
       {showTotals && (
         <colgroup>
           <col className="w-[28%]" />
-          <col className="w-[7%]" />
           <col className="w-[8%]" />
           <col className="w-[8%]" />
-          <col className="w-[15%]" />
+          <col className="w-[8%]" />
           <col className="w-[12%]" />
-          <col className="w-[10%]" />
+          <col className="w-[12%]" />
+          <col className="w-[12%]" />
           <col className="w-[12%]" />
         </colgroup>
       )}
-      <TableCaption className="sr-only">{caption}</TableCaption>
       <TableHeader>
         <TableRow>
           <TableHead>Team</TableHead>
-          <TableHead className="text-right">{projectionLabel}</TableHead>
-          <TableHead className="text-right">Win</TableHead>
-          <TableHead className="text-right">Edge</TableHead>
-          <TableHead className="text-right">Model / Book</TableHead>
-          <TableHead className="text-right">{showTotals ? "ML pick" : "Play"}</TableHead>
+          <TableHead className={showTotals ? "text-center" : "text-right"}>{projectionLabel}</TableHead>
+          <TableHead className={showTotals ? "text-center" : "text-right"}>Win</TableHead>
+          <TableHead className={showTotals ? "text-center" : "text-right"}>Edge</TableHead>
+          <TableHead className={showTotals ? "text-center" : "text-right"}>Model / Book</TableHead>
+          <TableHead className={showTotals ? "text-center" : "text-right"}>{showTotals ? "ML pick" : "Play"}</TableHead>
           {showTotals && (
             <>
-              <TableHead className="border-l border-border text-right">Proj. total</TableHead>
-              <TableHead className="text-right">Total pick</TableHead>
+              <TableHead className="border-l border-border text-center">Proj. total</TableHead>
+              <TableHead className={showTotals ? "text-center" : "text-right"}>Total pick</TableHead>
             </>
           )}
         </TableRow>

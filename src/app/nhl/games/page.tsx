@@ -155,8 +155,8 @@ export default async function Page({
       {hasCorroboratedPicks && (
         <Notice className="mb-4">
           Pick prices and edges are recorded at publication. Other book prices
-          appear only when freshness is verified; a dash means no verified quote
-          is available.
+          appear only when freshness is verified. &quot;No quote&quot; means no
+          verified price is available for that team.
         </Notice>
       )}
       <NhlGamesLive initial={matchups} date={today} />
