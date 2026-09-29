@@ -10,6 +10,7 @@ import {
 } from "@/components/ui/dialog";
 import { TeamLogo } from "@/components/team-logo";
 import { mlbTeamIdentity } from "@/lib/mlb-teams";
+import { teamColor } from "@/lib/team-colors";
 import {
   chooseBracket,
   winnerProbability,
@@ -114,6 +115,7 @@ export function MlbPlayoffBracket({
   const [round, setRound] = useState<string>("WC");
   const [selected, setSelected] = useState<BracketSeries | null>(null);
   const champion = teams.get(bracket.find((s) => s.node.id === "WS")!.winner)!;
+  const championColor = teamColor(mlbTeamIdentity(champion.code)) ?? "var(--foreground)";
   const championshipChance = forecast.odds.find(
     (o) => o.team === champion.code,
   )!.champion;
@@ -161,7 +163,13 @@ export function MlbPlayoffBracket({
           aria-live="polite"
           aria-atomic="true"
         >
-          <div className="flex size-16 shrink-0 items-center justify-center rounded-full border border-amber-500/30 bg-amber-500/10">
+          <div
+            className="flex size-16 shrink-0 items-center justify-center rounded-full border"
+            style={{
+              borderColor: `color-mix(in srgb, ${championColor} 35%, transparent)`,
+              backgroundColor: `color-mix(in srgb, ${championColor} 10%, transparent)`,
+            }}
+          >
             <TeamLogo
               team={mlbTeamIdentity(champion.code)}
               name={champion.name}
@@ -308,7 +316,7 @@ export function MlbPlayoffBracket({
                 ))
               ) : (
                 <div className="flex h-full flex-col justify-center gap-6 lg:relative lg:before:absolute lg:before:-left-[15px] lg:before:top-1/4 lg:before:h-1/2 lg:before:w-[15px] lg:before:rounded-r-lg lg:before:border-y lg:before:border-r lg:before:border-border">
-                  <p className="text-center font-mono text-[10px] uppercase tracking-[.14em] text-amber-600 dark:text-amber-400">
+                  <p className="text-center font-mono text-[10px] uppercase tracking-[.14em] text-muted-foreground">
                     One champion
                   </p>
                   {bracket
@@ -327,10 +335,12 @@ export function MlbPlayoffBracket({
                       </div>
                     ))}
                   <div className="flex flex-col items-center gap-2 py-4">
-                    <Trophy
-                      className="size-8 text-amber-500"
-                      aria-hidden="true"
-                    />
+                    <span
+                      className="flex size-12 items-center justify-center rounded-full text-white"
+                      style={{ backgroundColor: championColor }}
+                    >
+                      <Trophy className="size-7" aria-hidden="true" />
+                    </span>
                     <span className="font-heading text-2xl">
                       {champion.code}
                     </span>
@@ -355,15 +365,16 @@ export function MlbPlayoffBracket({
           </p>
         </div>
         <div className="overflow-x-auto rounded-lg border border-border">
-          <table className="w-full min-w-[540px] text-sm">
+          <table className="w-full text-sm">
             <thead className="border-b border-border bg-muted/40 font-mono text-[10px] uppercase text-muted-foreground">
               <tr>
-                <th scope="col" className="px-4 py-3 text-left">
+                <th scope="col" className="px-2 py-3 text-left sm:px-4">
                   Team
                 </th>
-                {["Reach DS", "Reach LCS", "Reach WS", "Champion"].map((t) => (
-                  <th scope="col" className="px-3 py-3 text-right" key={t}>
-                    {t}
+                {[["DS", "Reach DS"], ["LCS", "Reach LCS"], ["WS", "Reach WS"], ["Title", "Champion"]].map(([short, label]) => (
+                  <th scope="col" className="px-2 py-3 text-right sm:px-3" key={label}>
+                    <span className="sm:hidden" aria-hidden="true">{short}</span>
+                    <span className="sr-only sm:not-sr-only">{label}</span>
                   </th>
                 ))}
               </tr>
@@ -376,15 +387,15 @@ export function MlbPlayoffBracket({
                     key={o.team}
                     className="border-b border-border/60 last:border-0"
                   >
-                    <th scope="row" className="px-4 py-3 text-left font-medium">
-                      <div className="flex items-center gap-2">
+                    <th scope="row" className="px-2 py-3 text-left font-medium sm:px-4">
+                      <div className="flex items-center gap-1 text-xs sm:gap-2 sm:text-sm">
                         <TeamLogo
                           team={mlbTeamIdentity(o.team)}
                           name={t.name}
-                          className="size-6"
+                          className="size-5 sm:size-6"
                         />
                         <span>{o.team}</span>
-                        <span className="font-mono text-[10px] text-muted-foreground">
+                        <span className="hidden font-mono text-[10px] text-muted-foreground sm:inline">
                           {t.league} {t.seed}
                         </span>
                       </div>
@@ -392,25 +403,26 @@ export function MlbPlayoffBracket({
                     {(["DS", "CS", "WS"] as const).map((k) => (
                       <td
                         key={k}
-                        className="px-3 py-3 text-right font-mono text-xs tabular-nums text-muted-foreground"
+                        className="px-2 py-3 text-right font-mono text-[10px] tabular-nums text-muted-foreground sm:px-3 sm:text-xs"
                       >
                         {pct(o[k])}
                       </td>
                     ))}
-                    <td className="w-[28%] px-3 py-3">
-                      <div className="flex items-center justify-end gap-3">
+                    <td className="px-2 py-3 sm:w-[28%] sm:px-3">
+                      <div className="flex flex-col-reverse items-end justify-end gap-1 sm:flex-row sm:items-center sm:gap-3">
                         <div
-                          className="h-1.5 w-full max-w-28 overflow-hidden rounded-full bg-muted"
+                          className="h-1 w-full max-w-10 overflow-hidden rounded-full bg-muted sm:h-1.5 sm:max-w-28"
                           aria-hidden="true"
                         >
                           <div
-                            className="h-full rounded-full bg-amber-500"
+                            className="h-full rounded-full"
                             style={{
+                              backgroundColor: teamColor(mlbTeamIdentity(o.team)) ?? "var(--foreground)",
                               width: `${(o.champion / forecast.odds[0].champion) * 100}%`,
                             }}
                           />
                         </div>
-                        <span className="w-14 shrink-0 text-right font-mono text-xs font-semibold tabular-nums">
+                        <span className="shrink-0 text-right font-mono text-[10px] font-semibold tabular-nums sm:w-14 sm:text-xs">
                           {pct(o.champion)}
                         </span>
                       </div>
@@ -513,8 +525,13 @@ export function MlbPlayoffBracket({
                     </span>
                     <div className="h-2 flex-1 rounded bg-muted">
                       <div
-                        className="h-full rounded bg-amber-500"
-                        style={{ width: `${o.probability * 100}%` }}
+                        className="h-full rounded"
+                        style={{
+                          width: `${o.probability * 100}%`,
+                          backgroundColor: teamColor(mlbTeamIdentity(
+                            selected.matchup.teams[o.wins[0] > o.wins[1] ? 0 : 1],
+                          )) ?? "var(--foreground)",
+                        }}
                       />
                     </div>
                     <span className="w-12 text-right font-mono">
