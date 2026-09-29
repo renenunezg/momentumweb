@@ -376,26 +376,16 @@ export function MlbPlayoffBracket({
   });
   return (
     <>
-      {(forecast.warnings.length > 0 || stale) && (
+      {stale && (
         <div
           role="status"
           className="mb-6 rounded-lg border border-amber-500/30 bg-amber-500/5 px-4 py-3 text-xs leading-relaxed"
         >
-          <strong>
-            {forecast.publishable ? "Forecast notes" : "Local model preview"}
-          </strong>
-          {stale && (
-            <p>
-              This snapshot is more than a day old. Results and pitching plans
-              may have changed.
-            </p>
-          )}
-          {forecast.warnings.slice(0, 2).map((w) => (
-            <p key={w}>{w}</p>
-          ))}
-          {forecast.warnings.length > 2 && (
-            <p>Player coverage details are listed below.</p>
-          )}
+          <strong>Outdated forecast</strong>
+          <p>
+            This snapshot is more than a day old. Results and pitching plans
+            may have changed.
+          </p>
         </div>
       )}
       <section
