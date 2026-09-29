@@ -288,7 +288,7 @@ export default async function Home() {
         }}
       />
       <SiteHeader />
-      <PageShell width="wide" className="max-w-[96rem] min-[1200px]:grid min-[1200px]:grid-cols-[minmax(0,1fr)_minmax(0,46rem)_minmax(0,1fr)] min-[1200px]:gap-x-6">
+      <PageShell width="wide" className="min-[1200px]:grid min-[1200px]:grid-cols-[minmax(0,1fr)_minmax(0,46rem)_minmax(0,1fr)] min-[1200px]:gap-x-section">
         <PageHeader className="mx-auto w-full max-w-[46rem] min-[1200px]:col-start-2">
           <div>
             <PageTitle>
