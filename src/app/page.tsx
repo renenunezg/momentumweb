@@ -1,6 +1,7 @@
 import { PageDescription, PageHeader, PageSection, PageShell, PageTitle } from "@/components/page-layout";
 import Link from "next/link";
-import { fetchHomeFeatures, HomeFeature } from "@/components/home-feature";
+import { HomeFeatureSlot } from "@/components/home-feature-slot";
+import { fetchHomeFeature } from "@/lib/home-features.server";
 import { SiteHeader } from "@/components/site-header";
 import { ContactLine } from "@/components/site-footer";
 import { fetchFullBetLedger } from "@/lib/bet-ledger";
@@ -251,13 +252,13 @@ function FootballStats({ headline }: { headline: FootballHeadline }) {
 
 export default async function Home() {
   const today = siteDate();
-  const [mlb, cfb, nfl, nhl, daily, features] = await Promise.all([
+  const [mlb, cfb, nfl, nhl, daily, feature] = await Promise.all([
     getMlbHeadline(),
     getCfbHeadline(),
     getNflHeadline(),
     getNhlHeadline(),
     fetchDailyPicks(today),
-    fetchHomeFeatures(),
+    fetchHomeFeature(),
   ]);
   const dateLabel = new Date(`${today}T12:00:00Z`).toLocaleDateString(
     "en-US",
@@ -288,8 +289,8 @@ export default async function Home() {
         }}
       />
       <SiteHeader />
-      <PageShell width="wide" className="min-[1200px]:grid min-[1200px]:grid-cols-[minmax(0,1fr)_minmax(0,46rem)_minmax(0,1fr)] min-[1200px]:gap-x-section">
-        <PageHeader className="mx-auto w-full max-w-[46rem] min-[1200px]:col-start-2">
+      <PageShell width="wide" className="lg:grid lg:grid-cols-[minmax(0,3fr)_minmax(0,2fr)]">
+        <PageHeader className="lg:col-span-2">
           <div>
             <PageTitle>
               Ren&eacute; N&uacute;&ntilde;ez
@@ -302,7 +303,7 @@ export default async function Home() {
           </div>
         </PageHeader>
 
-        <div className="mx-auto flex w-full min-w-0 max-w-[46rem] flex-col gap-section min-[1200px]:col-start-2 min-[1200px]:row-start-2">
+        <div className="flex min-w-0 flex-col gap-section">
           <PageSection>
             <h2 className="font-mono text-xs uppercase tracking-wider text-muted-foreground">
               Models
@@ -422,17 +423,7 @@ export default async function Home() {
           </PageSection>
         </div>
 
-        <div className="mx-auto grid w-full max-w-[46rem] gap-section sm:grid-cols-2 min-[1200px]:contents">
-          {features.map((feature, index) => (
-            <aside
-              key={feature.href}
-              aria-label={feature.title}
-              className={`min-w-0 min-[1200px]:row-start-1 min-[1200px]:row-span-2 min-[1200px]:self-start ${index === 0 ? "min-[1200px]:col-start-1" : "min-[1200px]:col-start-3"}`}
-            >
-              <HomeFeature feature={feature} />
-            </aside>
-          ))}
-        </div>
+        <HomeFeatureSlot feature={feature} />
       </PageShell>
     </>
   );
