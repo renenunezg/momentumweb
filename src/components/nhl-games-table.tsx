@@ -16,8 +16,7 @@ export type NhlMatchup = {
   away: NhlTeamIdentity | undefined;
   homeBook: NhlBookPrice;
   awayBook: NhlBookPrice;
-  // The latest posted total and its prices, from the same provider.
-  bookTotal: { line: number; over: number | null; under: number | null; provider: string } | null;
+  bookTotal: number | null;
   moneyline: NhlDecision | null;
   total: NhlDecision | null;
   live: NhlLiveGame | null;
@@ -55,10 +54,17 @@ function TeamRow({
   const minimum =
     side === "home" ? projection.home_minimum_price : projection.away_minimum_price;
   const book = side === "home" ? matchup.homeBook : matchup.awayBook;
-  const edge = book ? win - americanToImplied(book.price) : null;
   const picked = moneyline?.status === "recommended" && moneyline.side === side;
-  // A total belongs to the matchup; display it once in the second team's Play cell.
-  const totalPicked = side === "home" && total?.status === "recommended";
+  // The displayed pick must use its recorded price and edge, even if a newer
+  // quote exists or the current feed cannot pass freshness verification.
+  const price = picked ? moneyline.price : book?.price;
+  const edge = picked
+    ? moneyline.probability_edge
+    : book ? win - americanToImplied(book.price) : null;
+  const provider = picked
+    ? moneyline.provider ?? providerName(moneyline.provider_key ?? "")
+    : book ? providerName(book.provider) : null;
+  const totalPicked = total?.status === "recommended";
   const score =
     live && live.state !== "pre"
       ? side === "home"
@@ -67,8 +73,8 @@ function TeamRow({
       : null;
 
   return (
-    <TableRow>
-      <TableCell className="w-full min-w-40 whitespace-normal">
+    <TableRow className="h-16 [&>td]:py-2 [&>td]:align-top">
+      <TableCell className="whitespace-normal">
         <div className="flex items-center gap-2">
           <TeamLogo team={team} name={name} className="h-4 w-4 shrink-0" />
           <span className={cn("font-semibold tracking-wide", picked && "text-positive")}>
@@ -94,43 +100,58 @@ function TeamRow({
                 ? "text-negative"
                 : "",
         )}
+        title={edge == null ? "No verified book quote" : picked ? "Recorded edge at publication, in percentage points" : "Edge against the current book quote, in percentage points"}
       >
-        {edge == null ? "–" : formatPct(edge)}
+        {edge == null ? "–" : `${edge > 0 ? "+" : ""}${formatPct(edge)}`}
       </TableCell>
       <TableCell className="text-right tabular-nums">
         <span>{formatOdds(fair)}</span>
         <span className="mx-0.5 text-muted-foreground">/</span>
-        <span className="text-muted-foreground">{formatOdds(book?.price)}</span>
-        <span className="block text-[10px] text-muted-foreground">
-          min {formatOdds(minimum)}{book && <> · {providerName(book.provider)}</>}
+        <span className="text-muted-foreground">{formatOdds(price)}</span>
+        {provider && (
+          <span className="block text-[10px] leading-[14px] text-muted-foreground">
+            {provider}{picked && " · recorded"}
+          </span>
+        )}
+        <span className="block text-[10px] leading-[14px] text-muted-foreground">
+          min {formatOdds(picked ? moneyline.minimum_price : minimum)}
         </span>
       </TableCell>
       <TableCell className="text-right">
-        <div className="grid grid-cols-[4rem_5rem] justify-end gap-3 font-mono text-xs font-medium whitespace-nowrap">
-          {picked && moneyline && (
-            <div className="col-start-1">
-              <span className="text-positive">ML {formatOdds(moneyline.price)}</span>
-              <span className="block text-[10px] font-normal text-muted-foreground">
-                {moneyline.provider ?? providerName(moneyline.provider_key ?? "")}
-              </span>
-              <span className="block text-[10px] font-normal text-muted-foreground">
-                Kelly {formatPct(moneyline.kelly_fraction)}
-              </span>
-            </div>
-          )}
-          {totalPicked && total && (
-            <div className="col-start-2">
-              <span className="text-accent-amber">
-                {total.side === "over" ? "O" : "U"} {formatNumber(total.point, 1)}
-              </span>
-              <span className="block text-[10px] font-normal text-muted-foreground">Game O/U</span>
-              <span className="block text-[10px] font-normal text-muted-foreground">
-                {formatOdds(total.price)} · {total.provider ?? providerName(total.provider_key ?? "")}
-              </span>
-            </div>
-          )}
-        </div>
+        {picked && moneyline ? (
+          <>
+            <span className="font-semibold text-positive">ML {formatOdds(moneyline.price)}</span>
+            <span className="block text-[10px] leading-[14px] text-muted-foreground">
+              Kelly {formatPct(moneyline.kelly_fraction)}
+            </span>
+          </>
+        ) : <span className="text-muted-foreground">–</span>}
       </TableCell>
+      {side === "away" && (
+        <>
+          <TableCell rowSpan={2} className="border-l border-border text-right">
+            <span className="font-semibold">{formatNumber(projection.model_total, 2)}</span>
+            {(totalPicked || matchup.bookTotal != null) && (
+              <span className="block text-[10px] leading-[14px] text-muted-foreground">
+                line {formatNumber(totalPicked ? total.point : matchup.bookTotal, 1)}
+              </span>
+            )}
+          </TableCell>
+          <TableCell rowSpan={2} className="text-right">
+            {totalPicked && total ? (
+              <>
+                <span className="font-semibold text-accent-amber">
+                  {total.side === "over" ? "O" : "U"} {formatNumber(total.point, 1)}
+                </span>
+                <span className="block text-xs">{formatOdds(total.price)}</span>
+                <span className="block text-[10px] leading-[14px] text-muted-foreground">
+                  {total.provider ?? providerName(total.provider_key ?? "")}
+                </span>
+              </>
+            ) : <span className="text-xs text-muted-foreground">No play</span>}
+          </TableCell>
+        </>
+      )}
     </TableRow>
   );
 }
@@ -140,16 +161,16 @@ export function NhlGamesTable({ matchups }: { matchups: NhlMatchup[] }) {
     <GamesTableLayout
       caption="Today's NHL games with model prices, partner-book prices, and live scores"
       projectionLabel="xG"
+      showTotals
     >
       {matchups.map((matchup) => {
-        const { projection, live, total, bookTotal } = matchup;
-        const hasPlay = matchup.moneyline?.status === "recommended" || total?.status === "recommended";
+        const { projection, live } = matchup;
         return (
           <Fragment key={projection.game_id}>
             <GameMatchupHeader
               away={projection.away_team}
               home={projection.home_team}
-              hasPlay={hasPlay}
+              columnCount={8}
               status={live && live.state !== "pre" && (
                 <span className={cn(
                   "text-[10px] uppercase tracking-wider",
@@ -158,15 +179,7 @@ export function NhlGamesTable({ matchups }: { matchups: NhlMatchup[] }) {
                   {live.detail}
                 </span>
               )}
-              detail={
-                <>
-                  Total {formatNumber(projection.model_total, 2)}
-                  {bookTotal && (
-                    <> · book {formatNumber(bookTotal.line, 1)} ({providerName(bookTotal.provider)} O {formatOdds(bookTotal.over)} / U {formatOdds(bookTotal.under)})</>
-                  )}
-                  {" · "}{startLabel(projection.start_date)}
-                </>
-              }
+              detail={startLabel(projection.start_date)}
             />
             <TeamRow matchup={matchup} side="away" />
             <TeamRow matchup={matchup} side="home" />

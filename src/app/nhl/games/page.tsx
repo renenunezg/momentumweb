@@ -90,14 +90,7 @@ export default async function Page({
       away: teams.get(projection.away_team_abbr),
       homeBook: bestMoneyline(rows, "home"),
       awayBook: bestMoneyline(rows, "away"),
-      bookTotal: withTotal
-        ? {
-            line: withTotal.total_line as number,
-            over: withTotal.over_price,
-            under: withTotal.under_price,
-            provider: withTotal.provider_key,
-          }
-        : null,
+      bookTotal: withTotal?.total_line ?? null,
       moneyline: decisions.find((d) => d.market === "h2h") ?? null,
       total: decisions.find((d) => d.market === "totals") ?? null,
       live: live.get(projection.game_id) ?? null,
@@ -161,8 +154,9 @@ export default async function Page({
         )}
       {hasCorroboratedPicks && (
         <Notice className="mb-4">
-          Some pick prices were matched to DraftKings&apos; public listing before publication.
-          Picks retain their recorded prices; unverified current book prices are hidden.
+          Pick prices and edges are recorded at publication. Other book prices
+          appear only when freshness is verified; a dash means no verified quote
+          is available.
         </Notice>
       )}
       <NhlGamesLive initial={matchups} date={today} />
