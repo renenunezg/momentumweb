@@ -1,4 +1,5 @@
 import type { Tables } from "@/lib/database.types";
+import type { CfbRatingsDatabase } from "@/lib/cfb-ratings.database.types";
 
 // Row types come from the generated schema so a column change in a model repo
 // fails the build here. Where the site relies on a column the pipeline always
@@ -148,7 +149,7 @@ export interface GameMatchup {
 // cfb.teams carries identity only; conference and classification come from
 // team_ratings, which every consumer already loads.
 export type CfbTeamIdentity = Tables<"cfb", "teams">;
-export type CfbTeamRating = Tables<"cfb", "team_ratings">;
+export type CfbTeamRating = CfbRatingsDatabase["cfb"]["Tables"]["team_ratings"]["Row"];
 export type CfbTeamUnitRating = Tables<"cfb", "team_unit_ratings">;
 export type CfbGameProjection = Tables<"cfb", "game_projections">;
 export type CfbMarketComparison = Tables<"cfb", "market_comparisons">;

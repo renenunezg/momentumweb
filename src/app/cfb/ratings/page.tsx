@@ -63,11 +63,9 @@ export default async function RatingsPage() {
       </div>
 
       <p className="max-w-4xl text-sm text-muted-foreground leading-relaxed">
-        Power ratings for every Division 1 college football team, refit each
-        week from play-by-play data. A team&apos;s rating is its expected
-        scoring margin against an average opponent on a neutral field, split
-        into offense and defense points per game. Ratings are model output,
-        not a poll.
+        Model and market-implied strength, in points above an average FBS team
+        on a neutral field. Rankings follow the model. Tap a rating for its
+        uncertainty and source.
       </p>
 
       <CfbRatings
@@ -78,8 +76,9 @@ export default async function RatingsPage() {
       />
 
       <p className="text-xs text-muted-foreground">
-        Off and Def are points per game above an average opponent; Rating is
-        their sum. SD is the model&apos;s uncertainty about the rating.
+        Off and Def split the model rating into offense and defense.
+        Market is fitted to earlier closing spreads with a prior-season market
+        baseline; it does not include season win totals.
       </p>
     </main>
   );

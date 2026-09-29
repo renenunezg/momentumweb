@@ -40,6 +40,13 @@ const CLASSES = [
 
 type ClassKey = (typeof CLASSES)[number]["key"];
 
+const marketStrength = (row: CfbTeamRating) => ({
+  rating: row.market_rating,
+  sd: row.market_rating_sd,
+  games: row.market_rating_games,
+  asOf: row.as_of,
+});
+
 const LIMITED: LimitedDataRule = {
   isLimited: (r) => (r.missing_input_count ?? 0) >= 4,
   rowNote:
@@ -128,6 +135,7 @@ export default function CfbRatings({
             overallRankLabel="D1 Rk"
             initialGroup={initialConference}
             onSelect={selectConference}
+            market={marketStrength}
             limited={LIMITED}
           />
         ) : view === "units" ? (
@@ -141,7 +149,7 @@ export default function CfbRatings({
             logo={logo}
             caption={`${VIEWS.find((v) => v.key === view)?.label} power ratings`}
             group={{ label: "Conference", value: (r) => r.conference }}
-            showSd
+            market={marketStrength}
             tag={(r) =>
               view === "top25" && r.classification !== "fbs" ? (
                 <span className="ml-2 font-mono text-[10px] uppercase tracking-wider text-muted-foreground">

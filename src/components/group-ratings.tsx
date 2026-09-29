@@ -7,6 +7,7 @@ import { ToggleGroup } from "@/components/toggle-group";
 import {
   PowerRatingsTable,
   type LimitedDataRule,
+  type MarketStrength,
   type PowerRatingRow,
 } from "@/components/power-ratings-table";
 
@@ -32,6 +33,7 @@ export function GroupRatings<T extends PowerRatingRow>({
   initialGroup,
   onSelect,
   limited,
+  market,
 }: {
   ratings: T[];
   rowKey: (row: T) => string | number;
@@ -44,6 +46,7 @@ export function GroupRatings<T extends PowerRatingRow>({
   initialGroup?: string;
   onSelect: (name: string) => void;
   limited: LimitedDataRule;
+  market?: (row: T) => MarketStrength;
 }) {
   const { groups, overallRank } = useMemo(() => {
     const byName = new Map<string, T[]>();
@@ -123,6 +126,7 @@ export function GroupRatings<T extends PowerRatingRow>({
             value: (row) => overallRank.get(rowKey(row)),
           }}
           limited={limited}
+          market={market}
         />
       </section>
     </div>

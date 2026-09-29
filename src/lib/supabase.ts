@@ -2,10 +2,12 @@ import { createClient } from "@supabase/supabase-js";
 import type { NflPicksDatabase } from "@/lib/nfl-picks.database.types";
 import type { Database } from "@/lib/database.types";
 import type { CfbPicksDatabase } from "@/lib/cfb-picks.database.types";
+import type { CfbRatingsDatabase } from "@/lib/cfb-ratings.database.types";
 
 type CfbDatabase = Omit<Database, "cfb"> & {
   cfb: Omit<Database["cfb"], "Tables" | "Views" | "Functions"> & {
-    Tables: Database["cfb"]["Tables"] & CfbPicksDatabase["cfb"]["Tables"];
+    Tables: Omit<Database["cfb"]["Tables"], "team_ratings"> &
+      CfbRatingsDatabase["cfb"]["Tables"] & CfbPicksDatabase["cfb"]["Tables"];
     Views: Database["cfb"]["Views"] & CfbPicksDatabase["cfb"]["Views"];
     Functions: Database["cfb"]["Functions"] &
       CfbPicksDatabase["cfb"]["Functions"];
