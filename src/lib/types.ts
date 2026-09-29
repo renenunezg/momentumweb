@@ -1,3 +1,4 @@
+import type { NhlMarketDatabase } from "@/lib/nhl-market.database.types";
 import type { Tables } from "@/lib/database.types";
 import type { CfbRatingsDatabase } from "@/lib/cfb-ratings.database.types";
 
@@ -199,7 +200,7 @@ export type NflBacktestPrediction = Tables<"nfl", "backtest_predictions">;
 export type NhlTeamIdentity = Tables<"nhl", "teams">;
 export type NhlTeamRating = Tables<"nhl", "team_ratings">;
 export type NhlGameProjection = Tables<"nhl", "game_projections">;
-export type NhlMarketSnapshot = Tables<"nhl", "market_snapshots">;
+export type NhlMarketSnapshot = NhlMarketDatabase["nhl"]["Tables"]["market_snapshots"]["Row"];
 export type NhlGameResult = Tables<"nhl", "game_results">;
 export type NhlLivePrediction = Tables<"nhl", "live_predictions">;
 export type NhlBacktestPrediction = Tables<"nhl", "backtest_predictions">;

@@ -56,7 +56,7 @@ function TeamRow({
   const book = side === "home" ? matchup.homeBook : matchup.awayBook;
   const picked = moneyline?.status === "recommended" && moneyline.side === side;
   // The displayed pick must use its recorded price and edge, even if a newer
-  // quote exists or the current feed cannot pass freshness verification.
+  // quote exists or the latest feed cannot pass freshness verification.
   const price = picked ? moneyline.price : book?.price;
   const edge = picked
     ? moneyline.probability_edge
@@ -100,7 +100,7 @@ function TeamRow({
                 ? "text-negative"
                 : "",
         )}
-        title={edge == null ? "No verified book quote" : picked ? "Recorded edge at publication, in percentage points" : "Edge against the current book quote, in percentage points"}
+        title={edge == null ? "No verified book quote" : picked ? "Recorded edge at publication, in percentage points" : "Edge against the recorded pregame quote, in percentage points"}
       >
         {edge == null
           ? <span className="text-xs font-normal">No quote</span>
@@ -112,7 +112,7 @@ function TeamRow({
         <span className="text-muted-foreground">{formatOdds(price)}</span>
         {provider && (
           <span className="block text-[10px] leading-3 text-muted-foreground">
-            {provider}{picked && " · recorded"}
+            {provider} · recorded
           </span>
         )}
         <span className="block text-[10px] leading-3 text-muted-foreground">

@@ -1,4 +1,5 @@
 import { cache } from "react";
+import { quotesAtForecast } from "@/lib/nhl-quote-history";
 import { supabaseNhl } from "@/lib/supabase";
 import type {
   NhlGameProjection,
@@ -60,14 +61,8 @@ export async function fetchProjections(
   return { games: data ?? [], unavailable: false };
 }
 
-// The newest snapshot per game and provider. The feed is read once a day,
-// so a game rarely has more than a few rows; newest-first with a client
-// dedupe avoids a lateral join the anon role cannot express through REST.
-export async function fetchLatestSnapshots(
-  gameIds: string[],
-): Promise<Map<string, NhlMarketSnapshot[]>> {
-  const byGame = new Map<string, NhlMarketSnapshot[]>();
-  if (gameIds.length === 0) return byGame;
+async function fetchSnapshotRows(gameIds: string[]): Promise<NhlMarketSnapshot[]> {
+  if (gameIds.length === 0) return [];
   const { data, error } = await supabaseNhl
     .from("market_snapshots")
     .select("*")
@@ -75,12 +70,21 @@ export async function fetchLatestSnapshots(
     .order("fetched_at", { ascending: false });
   if (error) {
     console.error("nhl snapshots fetch failed:", error.message);
-    return byGame;
+    return [];
   }
+  return data ?? [];
+}
+
+// Current quotes used on the schedule page.
+export async function fetchLatestSnapshots(
+  gameIds: string[],
+): Promise<Map<string, NhlMarketSnapshot[]>> {
+  const byGame = new Map<string, NhlMarketSnapshot[]>();
+  const rows = await fetchSnapshotRows(gameIds);
   const now = Date.now();
   const maxAge = 24 * 60 * 60 * 1000;
   const seen = new Set<string>();
-  for (const row of data ?? []) {
+  for (const row of rows) {
     const key = `${row.game_id}:${row.provider_key}`;
     if (seen.has(key)) continue;
     seen.add(key);
@@ -89,6 +93,26 @@ export async function fetchLatestSnapshots(
     const fetched = Date.parse(row.fetched_at);
     if (!(updated <= fetched && fetched <= now && now - updated <= maxAge)) continue;
     byGame.set(row.game_id, [...(byGame.get(row.game_id) ?? []), row]);
+  }
+  return byGame;
+}
+
+// Games compares both sides with the prices available at its forecast cutoff.
+// Later fetches cannot replace the historical comparison for a started game.
+export async function fetchForecastSnapshots(
+  games: NhlGameProjection[],
+): Promise<Map<string, NhlMarketSnapshot[]>> {
+  const forecasts = new Map(games.map((game) => [game.game_id, game]));
+  const byGame = new Map<string, NhlMarketSnapshot[]>();
+  const seen = new Set<string>();
+  for (const row of await fetchSnapshotRows([...forecasts.keys()])) {
+    const forecast = forecasts.get(row.game_id);
+    if (!forecast || Date.parse(row.fetched_at) > Date.parse(forecast.as_of)) continue;
+    const key = `${row.game_id}:${row.provider_key}`;
+    if (seen.has(key)) continue;
+    seen.add(key);
+    const verified = quotesAtForecast(row, forecast);
+    if (verified) byGame.set(row.game_id, [...(byGame.get(row.game_id) ?? []), verified]);
   }
   return byGame;
 }

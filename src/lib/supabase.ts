@@ -1,3 +1,4 @@
+import type { NhlMarketDatabase } from "@/lib/nhl-market.database.types";
 import { createClient } from "@supabase/supabase-js";
 import type { NflPicksDatabase } from "@/lib/nfl-picks.database.types";
 import type { Database } from "@/lib/database.types";
@@ -86,9 +87,13 @@ export const supabaseNfl = createClient<NflDatabase, "nfl">(url, anonKey, {
   global: { fetch: cachedPublicFetch("nfl") },
 });
 
-// The nhl schema's ledger types are generated with the rest of the schema,
-// so no merge is needed.
-export const supabaseNhl = createClient<Database, "nhl">(url, anonKey, {
+type NhlDatabase = Omit<Database, "nhl"> & {
+  nhl: Omit<Database["nhl"], "Tables"> & {
+    Tables: Omit<Database["nhl"]["Tables"], "market_snapshots"> & NhlMarketDatabase["nhl"]["Tables"];
+  };
+};
+
+export const supabaseNhl = createClient<NhlDatabase, "nhl">(url, anonKey, {
   db: { schema: "nhl" },
   auth: anonAuth("nhl"),
   global: { fetch: cachedPublicFetch("nhl") },

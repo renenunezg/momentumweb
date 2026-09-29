@@ -8,7 +8,7 @@ import { Notice } from "@/components/notice";
 import { SITE_TIME_ZONE, siteDate, zonedDayRange } from "@/lib/daily-picks";
 import {
   bestMoneyline,
-  fetchLatestSnapshots,
+  fetchForecastSnapshots,
   fetchProjections,
   fetchTeams,
 } from "@/lib/nhl";
@@ -57,7 +57,7 @@ export default async function Page({
     fetchTeams(),
     fetchLiveScores(today),
   ]);
-  const snapshots = await fetchLatestSnapshots(games.map((g) => g.game_id));
+  const snapshots = await fetchForecastSnapshots(games);
   const displayDate = new Date(`${today}T12:00:00Z`).toLocaleDateString("en-US", {
     timeZone: SITE_TIME_ZONE,
     month: "short",
@@ -157,9 +157,9 @@ export default async function Page({
         )}
       {hasCorroboratedPicks && (
         <Notice>
-          Pick prices and edges are recorded at publication. Other book prices
-          appear only when freshness is verified. &quot;No quote&quot; means no
-          verified price is available for that team.
+          Both teams&apos; book prices and edges use verified pregame quotes from
+          the forecast time. Picks retain their published prices. &quot;No quote&quot;
+          means no verified pregame price is available for that team.
         </Notice>
       )}
       <NhlGamesLive initial={matchups} date={today} />
