@@ -1,12 +1,13 @@
 "use client";
 
 import { useMemo, useState } from "react";
-import { ArrowRight, RotateCcw, Shuffle, Trophy } from "lucide-react";
+import { ArrowRight, Shuffle, Trophy } from "lucide-react";
 import {
   Dialog,
   DialogContent,
   DialogDescription,
   DialogTitle,
+  DialogTrigger,
 } from "@/components/ui/dialog";
 import { TeamLogo } from "@/components/team-logo";
 import { mlbTeamIdentity } from "@/lib/mlb-teams";
@@ -99,138 +100,21 @@ function SeriesCard({
   );
 }
 
-export function MlbPlayoffBracket({
-  forecast,
-  stale,
+function BracketView({
+  bracket,
+  teams,
+  sampled = false,
 }: {
-  forecast: PlayoffForecast;
-  stale: boolean;
+  bracket: BracketSeries[];
+  teams: Map<string, PlayoffTeam>;
+  sampled?: boolean;
 }) {
-  const teams = useMemo(
-    () => new Map(forecast.teams.map((t) => [t.code, t])),
-    [forecast],
-  );
-  const [bracket, setBracket] = useState(() => chooseBracket(forecast));
-  const [simulation, setSimulation] = useState(0);
   const [round, setRound] = useState<string>("WC");
   const [selected, setSelected] = useState<BracketSeries | null>(null);
   const champion = teams.get(bracket.find((s) => s.node.id === "WS")!.winner)!;
   const championColor = teamColor(mlbTeamIdentity(champion.code)) ?? "var(--foreground)";
-  const championshipChance = forecast.odds.find(
-    (o) => o.team === champion.code,
-  )!.champion;
-  const stamp = new Date(forecast.generated_at).toLocaleString("en-US", {
-    month: "short",
-    day: "numeric",
-    hour: "numeric",
-    minute: "2-digit",
-    timeZone: "America/New_York",
-  });
-  const reset = () => {
-    setBracket(chooseBracket(forecast));
-    setSimulation(0);
-  };
   return (
     <>
-      {(forecast.warnings.length > 0 || stale) && (
-        <div
-          role="status"
-          className="mb-6 rounded-lg border border-amber-500/30 bg-amber-500/5 px-4 py-3 text-xs leading-relaxed"
-        >
-          <strong>
-            {forecast.publishable ? "Forecast notes" : "Local model preview"}
-          </strong>
-          {stale && (
-            <p>
-              This snapshot is more than a day old. Results and pitching plans
-              may have changed.
-            </p>
-          )}
-          {forecast.warnings.slice(0, 2).map((w) => (
-            <p key={w}>{w}</p>
-          ))}
-          {forecast.warnings.length > 2 && (
-            <p>Player coverage details are listed below.</p>
-          )}
-        </div>
-      )}
-      <section
-        className="mb-7 grid gap-5 rounded-xl border border-border bg-card p-5 sm:grid-cols-[1fr_auto] sm:items-center sm:p-6"
-        aria-label="Bracket outcome"
-      >
-        <div
-          className="flex items-center gap-4"
-          aria-live="polite"
-          aria-atomic="true"
-        >
-          <div
-            className="flex size-16 shrink-0 items-center justify-center rounded-full border"
-            style={{
-              borderColor: `color-mix(in srgb, ${championColor} 35%, transparent)`,
-              backgroundColor: `color-mix(in srgb, ${championColor} 10%, transparent)`,
-            }}
-          >
-            <TeamLogo
-              team={mlbTeamIdentity(champion.code)}
-              name={champion.name}
-              className="size-11"
-            />
-          </div>
-          <div>
-            <p className="font-mono text-[10px] uppercase tracking-wider text-muted-foreground">
-              {simulation
-                ? `Simulation ${simulation} champion`
-                : "Projected champion"}
-            </p>
-            <h2 className="mt-1 font-heading text-2xl sm:text-3xl">
-              {champion.name}
-            </h2>
-            <p className="mt-1 text-xs text-muted-foreground">
-              <strong className="text-foreground">
-                {pct(championshipChance)}
-              </strong>{" "}
-              overall title chance
-            </p>
-          </div>
-        </div>
-        <div className="flex flex-wrap gap-2">
-          <button
-            className={cn(
-              control,
-              "border-foreground bg-foreground text-background hover:bg-foreground/85",
-            )}
-            onClick={() => {
-              setBracket(chooseBracket(forecast, Math.random));
-              setSimulation((s) => s + 1);
-            }}
-          >
-            <Shuffle className="size-3.5" aria-hidden="true" />
-            {simulation ? "Simulate again" : "Simulate postseason"}
-          </button>
-          <button
-            className={control}
-            onClick={reset}
-            disabled={simulation === 0}
-            style={{ opacity: simulation === 0 ? 0.45 : 1 }}
-          >
-            <RotateCcw className="size-3.5" aria-hidden="true" />
-            Model path
-          </button>
-        </div>
-      </section>
-      <div className="mb-4 flex flex-wrap items-baseline justify-between gap-2">
-        <h2 className="font-heading text-xl">
-          {simulation
-            ? "One possible postseason"
-            : "The model’s projected path"}
-        </h2>
-        <p className="text-[11px] text-muted-foreground">
-          {simulation
-            ? "Sampled results. Overall odds stay the same."
-            : "Series favorite + its most likely winning score."}{" "}
-          Tap a series for details.
-        </p>
-      </div>
       <div
         className="mb-4 grid grid-cols-4 gap-1 lg:hidden"
         aria-label="Bracket round"
@@ -251,7 +135,7 @@ export function MlbPlayoffBracket({
         ))}
       </div>
       <section
-        aria-label="Postseason bracket"
+        aria-label={sampled ? "Random scenario bracket" : "Postseason bracket"}
         className="rounded-xl border border-border bg-muted/20 p-3 sm:p-5"
       >
         <div className="hidden grid-cols-4 gap-7 border-b border-border pb-4 lg:grid">
@@ -306,7 +190,7 @@ export function MlbPlayoffBracket({
                             <SeriesCard
                               series={s}
                               teams={teams}
-                              sampled={simulation > 0}
+                              sampled={sampled}
                               onSelect={() => setSelected(s)}
                             />
                           </div>
@@ -329,7 +213,7 @@ export function MlbPlayoffBracket({
                         <SeriesCard
                           series={s}
                           teams={teams}
-                          sampled={simulation > 0}
+                          sampled={sampled}
                           onSelect={() => setSelected(s)}
                         />
                       </div>
@@ -345,7 +229,7 @@ export function MlbPlayoffBracket({
                       {champion.code}
                     </span>
                     <span className="text-[10px] text-muted-foreground">
-                      {simulation ? "Simulated" : "Projected"} World Series
+                      {sampled ? "Scenario" : "Projected"} World Series
                       winner
                     </span>
                   </div>
@@ -355,6 +239,210 @@ export function MlbPlayoffBracket({
           ))}
         </div>
       </section>
+      <Dialog
+        open={selected !== null}
+        onOpenChange={(open) => {
+          if (!open) setSelected(null);
+        }}
+      >
+        <DialogContent className="max-h-[90dvh] space-y-4 overflow-y-auto sm:max-w-lg">
+          {selected && (
+            <>
+              <div className="space-y-2 pr-7">
+                <DialogTitle className="font-heading text-xl">
+                  {selected.matchup.teams.join(" vs ")} · {selected.node.id}
+                </DialogTitle>
+                <DialogDescription className="text-sm leading-relaxed text-muted-foreground">
+                  Series win probabilities conditional on this matchup.{" "}
+                  {selected.matchup.home_field} has home field.
+                </DialogDescription>
+              </div>
+              <div className="mt-3 flex gap-3">
+                {selected.matchup.teams.map((code, i) => (
+                  <div className="flex-1 rounded-lg bg-muted p-4" key={code}>
+                    <div className="flex items-center gap-2">
+                      <TeamLogo team={mlbTeamIdentity(code)} name={code} />
+                      <strong>{code}</strong>
+                    </div>
+                    <p className="mt-2 font-mono text-2xl">
+                      {pct(winnerProbability(selected.matchup, i))}
+                    </p>
+                  </div>
+                ))}
+              </div>
+              <h3 className="mt-3 text-sm font-semibold">
+                Final series score distribution
+              </h3>
+              <div className="space-y-2">
+                {selected.matchup.outcomes.map((o) => (
+                  <div
+                    key={o.wins.join(":")}
+                    className="flex items-center gap-3 text-xs"
+                  >
+                    <span className="w-24 shrink-0 font-mono">
+                      {selected.matchup.teams[o.wins[0] > o.wins[1] ? 0 : 1]}{" "}
+                      {Math.max(...o.wins)} - {Math.min(...o.wins)}
+                    </span>
+                    <div className="h-2 flex-1 rounded bg-muted">
+                      <div
+                        className="h-full rounded"
+                        style={{
+                          width: `${o.probability * 100}%`,
+                          backgroundColor: teamColor(mlbTeamIdentity(
+                            selected.matchup.teams[o.wins[0] > o.wins[1] ? 0 : 1],
+                          )) ?? "var(--foreground)",
+                        }}
+                      />
+                    </div>
+                    <span className="w-12 text-right font-mono">
+                      {pct(o.probability)}
+                    </span>
+                  </div>
+                ))}
+              </div>
+              <p className="text-xs text-muted-foreground">
+                Current score: {selected.matchup.teams[0]}{" "}
+                {selected.matchup.current_wins[0]} -{" "}
+                {selected.matchup.current_wins[1]} {selected.matchup.teams[1]}.
+                Future games use the projected pitching and lineup assumptions
+                below the bracket.
+              </p>
+            </>
+          )}
+        </DialogContent>
+      </Dialog>
+    </>
+  );
+}
+
+function RandomScenarioExplorer({
+  forecast,
+  teams,
+}: {
+  forecast: PlayoffForecast;
+  teams: Map<string, PlayoffTeam>;
+}) {
+  const [scenario, setScenario] = useState<BracketSeries[] | null>(null);
+  const generateScenario = () => setScenario(chooseBracket(forecast, Math.random));
+  return (
+    <Dialog>
+      <DialogTrigger className={control} onClick={generateScenario}>
+        <Shuffle className="size-3.5" aria-hidden="true" />
+        Explore a random scenario
+      </DialogTrigger>
+      <DialogContent className="space-y-5 sm:max-w-[85rem]">
+        <div className="space-y-2 pr-8">
+          <DialogTitle className="font-heading text-2xl">
+            One random postseason scenario
+          </DialogTitle>
+          <DialogDescription className="max-w-2xl text-sm leading-relaxed text-muted-foreground">
+            A possible outcome drawn from the model’s probabilities. Underdogs can
+            win here. Your projected bracket and championship chances stay unchanged.
+          </DialogDescription>
+        </div>
+        <button className={control} onClick={generateScenario}>
+          <Shuffle className="size-3.5" aria-hidden="true" />
+          Generate another scenario
+        </button>
+        {scenario && <BracketView bracket={scenario} teams={teams} sampled />}
+      </DialogContent>
+    </Dialog>
+  );
+}
+
+export function MlbPlayoffBracket({
+  forecast,
+  stale,
+}: {
+  forecast: PlayoffForecast;
+  stale: boolean;
+}) {
+  const teams = useMemo(
+    () => new Map(forecast.teams.map((t) => [t.code, t])),
+    [forecast],
+  );
+  const bracket = useMemo(() => chooseBracket(forecast), [forecast]);
+  const champion = teams.get(bracket.find((s) => s.node.id === "WS")!.winner)!;
+  const championColor = teamColor(mlbTeamIdentity(champion.code)) ?? "var(--foreground)";
+  const championshipChance = forecast.odds.find(
+    (o) => o.team === champion.code,
+  )!.champion;
+  const stamp = new Date(forecast.generated_at).toLocaleString("en-US", {
+    month: "short",
+    day: "numeric",
+    hour: "numeric",
+    minute: "2-digit",
+    timeZone: "America/New_York",
+  });
+  return (
+    <>
+      {(forecast.warnings.length > 0 || stale) && (
+        <div
+          role="status"
+          className="mb-6 rounded-lg border border-amber-500/30 bg-amber-500/5 px-4 py-3 text-xs leading-relaxed"
+        >
+          <strong>
+            {forecast.publishable ? "Forecast notes" : "Local model preview"}
+          </strong>
+          {stale && (
+            <p>
+              This snapshot is more than a day old. Results and pitching plans
+              may have changed.
+            </p>
+          )}
+          {forecast.warnings.slice(0, 2).map((w) => (
+            <p key={w}>{w}</p>
+          ))}
+          {forecast.warnings.length > 2 && (
+            <p>Player coverage details are listed below.</p>
+          )}
+        </div>
+      )}
+      <section
+        className="mb-7 grid gap-5 rounded-xl border border-border bg-card p-5 sm:grid-cols-[1fr_auto] sm:items-center sm:p-6"
+        aria-label="Bracket outcome"
+      >
+        <div className="flex items-center gap-4">
+          <div
+            className="flex size-16 shrink-0 items-center justify-center rounded-full border"
+            style={{
+              borderColor: `color-mix(in srgb, ${championColor} 35%, transparent)`,
+              backgroundColor: `color-mix(in srgb, ${championColor} 10%, transparent)`,
+            }}
+          >
+            <TeamLogo
+              team={mlbTeamIdentity(champion.code)}
+              name={champion.name}
+              className="size-11"
+            />
+          </div>
+          <div>
+            <p className="font-mono text-[10px] uppercase tracking-wider text-muted-foreground">
+              Projected champion
+            </p>
+            <h2 className="mt-1 font-heading text-2xl sm:text-3xl">
+              {champion.name}
+            </h2>
+            <p className="mt-1 text-xs text-muted-foreground">
+              <strong className="text-foreground">
+                {pct(championshipChance)}
+              </strong>{" "}
+              overall title chance
+            </p>
+          </div>
+        </div>
+        <RandomScenarioExplorer forecast={forecast} teams={teams} />
+      </section>
+      <div className="mb-4 flex flex-wrap items-baseline justify-between gap-2">
+        <h2 className="font-heading text-xl">
+          The model’s projected path
+        </h2>
+        <p className="text-[11px] text-muted-foreground">
+          Series favorite + its most likely winning score.{" "}
+          Tap a series for details.
+        </p>
+      </div>
+      <BracketView bracket={bracket} teams={teams} />
       <section className="mt-10" aria-labelledby="odds-title">
         <div className="mb-5 flex flex-wrap items-baseline justify-between gap-2">
           <h2 id="odds-title" className="font-heading text-2xl">
@@ -479,78 +567,6 @@ export function MlbPlayoffBracket({
           ))}
         </div>
       </details>
-      <Dialog
-        open={selected !== null}
-        onOpenChange={(open) => {
-          if (!open) setSelected(null);
-        }}
-      >
-        <DialogContent className="max-h-[90dvh] space-y-4 overflow-y-auto sm:max-w-lg">
-          {selected && (
-            <>
-              <div className="space-y-2 pr-7">
-                <DialogTitle className="font-heading text-xl">
-                  {selected.matchup.teams.join(" vs ")} · {selected.node.id}
-                </DialogTitle>
-                <DialogDescription className="text-sm leading-relaxed text-muted-foreground">
-                  Series win probabilities conditional on this matchup.{" "}
-                  {selected.matchup.home_field} has home field.
-                </DialogDescription>
-              </div>
-              <div className="mt-3 flex gap-3">
-                {selected.matchup.teams.map((code, i) => (
-                  <div className="flex-1 rounded-lg bg-muted p-4" key={code}>
-                    <div className="flex items-center gap-2">
-                      <TeamLogo team={mlbTeamIdentity(code)} name={code} />
-                      <strong>{code}</strong>
-                    </div>
-                    <p className="mt-2 font-mono text-2xl">
-                      {pct(winnerProbability(selected.matchup, i))}
-                    </p>
-                  </div>
-                ))}
-              </div>
-              <h3 className="mt-3 text-sm font-semibold">
-                Final series score distribution
-              </h3>
-              <div className="space-y-2">
-                {selected.matchup.outcomes.map((o) => (
-                  <div
-                    key={o.wins.join(":")}
-                    className="flex items-center gap-3 text-xs"
-                  >
-                    <span className="w-24 shrink-0 font-mono">
-                      {selected.matchup.teams[o.wins[0] > o.wins[1] ? 0 : 1]}{" "}
-                      {Math.max(...o.wins)} - {Math.min(...o.wins)}
-                    </span>
-                    <div className="h-2 flex-1 rounded bg-muted">
-                      <div
-                        className="h-full rounded"
-                        style={{
-                          width: `${o.probability * 100}%`,
-                          backgroundColor: teamColor(mlbTeamIdentity(
-                            selected.matchup.teams[o.wins[0] > o.wins[1] ? 0 : 1],
-                          )) ?? "var(--foreground)",
-                        }}
-                      />
-                    </div>
-                    <span className="w-12 text-right font-mono">
-                      {pct(o.probability)}
-                    </span>
-                  </div>
-                ))}
-              </div>
-              <p className="text-xs text-muted-foreground">
-                Current score: {selected.matchup.teams[0]}{" "}
-                {selected.matchup.current_wins[0]} -{" "}
-                {selected.matchup.current_wins[1]} {selected.matchup.teams[1]}.
-                Future games use the projected pitching and lineup assumptions
-                below the bracket.
-              </p>
-            </>
-          )}
-        </DialogContent>
-      </Dialog>
     </>
   );
 }
