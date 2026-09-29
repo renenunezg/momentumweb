@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { Nav } from "@/components/nav";
+import { SiteFooter } from "@/components/site-footer";
 
 export const metadata: Metadata = {
   title: "CFB Model Ratings",
@@ -26,7 +27,8 @@ export default function CfbLayout({
   return (
     <>
       <Nav links={cfbLinks} />
-      {children}
+      <div className="flex min-w-0 flex-1 flex-col">{children}</div>
+      <SiteFooter />
     </>
   );
 }

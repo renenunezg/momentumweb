@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { Nav } from "@/components/nav";
+import { SiteFooter } from "@/components/site-footer";
 
 export const metadata: Metadata = {
   title: "NHL Model Predictions",
@@ -25,7 +26,8 @@ export default function NhlLayout({
   return (
     <>
       <Nav links={nhlLinks} />
-      {children}
+      <div className="flex min-w-0 flex-1 flex-col">{children}</div>
+      <SiteFooter />
     </>
   );
 }

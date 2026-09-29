@@ -1,6 +1,3 @@
-"use client";
-
-import { usePathname } from "next/navigation";
 import { CONTACT_EMAIL, SOCIAL_LINKS } from "@/lib/site";
 
 export function ContactLine({ className }: { className?: string }) {
@@ -18,9 +15,6 @@ export function ContactLine({ className }: { className?: string }) {
 }
 
 export function SiteFooter() {
-  // The hub carries the contact line in its hero, so the footer would repeat it.
-  const pathname = usePathname();
-  if (pathname === "/") return null;
   return (
     <footer className="mt-auto border-t border-border">
       <div className="mx-auto flex w-full max-w-7xl min-w-0 flex-col gap-3 px-page-gutter py-section text-sm sm:flex-row sm:items-center sm:justify-between">

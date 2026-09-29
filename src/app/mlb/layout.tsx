@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { Nav } from "@/components/nav";
+import { SiteFooter } from "@/components/site-footer";
 
 export const metadata: Metadata = {
   title: "MLB Model Predictions",
@@ -15,7 +16,8 @@ export default function MlbLayout({
   return (
     <>
       <Nav />
-      {children}
+      <div className="flex min-w-0 flex-1 flex-col">{children}</div>
+      <SiteFooter />
     </>
   );
 }

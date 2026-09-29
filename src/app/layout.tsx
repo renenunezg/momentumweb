@@ -3,7 +3,6 @@ import { Oswald } from "next/font/google";
 import "./globals.css";
 import { SpeedInsights } from "@vercel/speed-insights/next";
 import { SiteAnalytics } from "@/components/site-analytics";
-import { SiteFooter } from "@/components/site-footer";
 import { ThemeProvider } from "@/components/theme-provider";
 import { SITE_DESCRIPTION, SITE_NAME, SITE_URL, TWITTER_HANDLE } from "@/lib/site";
 
@@ -70,9 +69,7 @@ export default function RootLayout({
           enableSystem
           disableTransitionOnChange
         >
-          {/* Keep changing route nodes inside a stable sibling of the footer. */}
           <div className="flex min-w-0 flex-1 flex-col">{children}</div>
-          <SiteFooter />
           <SiteAnalytics />
           <SpeedInsights />
         </ThemeProvider>
