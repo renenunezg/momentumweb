@@ -2,15 +2,8 @@ import { Fragment } from "react";
 import { cn, formatNumber, formatOdds, formatPct } from "@/lib/utils";
 import type { GameMatchup, ModelOutput } from "@/lib/types";
 import { gameStatus } from "@/lib/game-status";
-import {
-  Table,
-  TableHeader,
-  TableBody,
-  TableHead,
-  TableRow,
-  TableCell,
-  TableCaption,
-} from "@/components/ui/table";
+import { TableRow, TableCell } from "@/components/ui/table";
+import { GamesTableLayout, GameMatchupHeader } from "@/components/games-table-layout";
 import { EvBadge } from "@/components/ev-badge";
 import { TeamLogo } from "@/components/team-logo";
 import { mlbTeamIdentity } from "@/lib/mlb-teams";
@@ -87,82 +80,44 @@ function TeamRow({
 
 export function GamesTable({ matchups }: { matchups: GameMatchup[] }) {
   return (
-    <Table>
-      <TableCaption className="sr-only">
-        Today&apos;s games with model picks and live scores
-      </TableCaption>
-      <TableHeader>
-        <TableRow>
-          <TableHead>Team</TableHead>
-          <TableHead className="text-right">xR</TableHead>
-          <TableHead className="text-right">Win</TableHead>
-          <TableHead className="text-right">Edge</TableHead>
-          <TableHead className="text-right">Model / Book</TableHead>
-          <TableHead className="text-right">Play</TableHead>
-        </TableRow>
-      </TableHeader>
-      <TableBody>
-        {matchups.map((matchup) => {
-          const status = gameStatus(matchup);
-          return (
-            <Fragment key={matchup.game_pk}>
-              <TableRow className="hover:bg-transparent">
-                <TableCell
-                  colSpan={6}
-                  className="whitespace-normal border-t border-border pt-5 pb-1"
-                >
-                  {/* On narrow screens the header block is pinned to the left
-                      edge and sized to the visible area (backing out the page
-                      gutters and this cell's left padding) so the matchup and
-                      venue stay readable while the numeric columns scroll.
-                      From md up the table fits, so it spans the full row. */}
-                  <div className="sticky left-0 flex w-[calc(100vw-2.5rem)] max-w-full flex-wrap items-baseline justify-between gap-x-3 gap-y-1 md:w-full">
-                    <div className="flex items-center gap-2">
-                      <span
-                        className={cn(
-                          "text-sm font-semibold",
-                          status.hasEvPlay && "text-positive"
-                        )}
-                      >
-                        {matchup.away_team} @ {matchup.home_team}
-                      </span>
-                      <span aria-live="polite" className="contents">
-                        {status.isFinal && (
-                          <span className="text-[10px] uppercase tracking-wider text-muted-foreground">
-                            Final
-                          </span>
-                        )}
-                        {status.isLive && (
-                          <span className="text-[10px] uppercase tracking-wider text-positive">
-                            {status.liveLabel}
-                          </span>
-                        )}
-                        {status.lineupsPending && (
-                          <span className="text-[10px] uppercase tracking-wider text-muted-foreground">
-                            Lineups pending
-                          </span>
-                        )}
-                      </span>
-                    </div>
-                    <span className="min-w-0 text-xs font-normal text-muted-foreground">
-                      {matchup.venue && <>{matchup.venue} &middot; </>}
-                      {status.startTime}
-                    </span>
-                  </div>
-                </TableCell>
-              </TableRow>
-              <TeamRow
-                prediction={matchup.away}
-                score={status.showScores ? matchup.away_score : null}
-              />
-              <TeamRow
-                prediction={matchup.home}
-                score={status.showScores ? matchup.home_score : null}
-              />
-            </Fragment>
-          );
-        })}
-      </TableBody>
-    </Table>
+    <GamesTableLayout
+      caption="Today's games with model picks and live scores"
+      projectionLabel="xR"
+    >
+      {matchups.map((matchup) => {
+        const status = gameStatus(matchup);
+        return (
+          <Fragment key={matchup.game_pk}>
+            <GameMatchupHeader
+              away={matchup.away_team}
+              home={matchup.home_team}
+              hasPlay={status.hasEvPlay}
+              status={
+                <>
+                  {status.isFinal && (
+                    <span className="text-[10px] uppercase tracking-wider text-muted-foreground">Final</span>
+                  )}
+                  {status.isLive && (
+                    <span className="text-[10px] uppercase tracking-wider text-positive">{status.liveLabel}</span>
+                  )}
+                  {status.lineupsPending && (
+                    <span className="text-[10px] uppercase tracking-wider text-muted-foreground">Lineups pending</span>
+                  )}
+                </>
+              }
+              detail={<>{matchup.venue && <>{matchup.venue} &middot; </>}{status.startTime}</>}
+            />
+            <TeamRow
+              prediction={matchup.away}
+              score={status.showScores ? matchup.away_score : null}
+            />
+            <TeamRow
+              prediction={matchup.home}
+              score={status.showScores ? matchup.home_score : null}
+            />
+          </Fragment>
+        );
+      })}
+    </GamesTableLayout>
   );
 }

@@ -1,14 +1,7 @@
 import { Fragment } from "react";
 import { TeamLogo } from "@/components/team-logo";
-import {
-  Table,
-  TableBody,
-  TableCaption,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table";
+import { TableCell, TableRow } from "@/components/ui/table";
+import { GamesTableLayout, GameMatchupHeader } from "@/components/games-table-layout";
 import { cn, formatNumber, formatOdds, formatPct } from "@/lib/utils";
 import { americanToImplied, PROVIDER_NAMES } from "@/lib/nhl";
 import type { NhlDecision } from "@/lib/nhl-picks";
@@ -53,7 +46,7 @@ function TeamRow({
   matchup: NhlMatchup;
   side: "home" | "away";
 }) {
-  const { projection, moneyline, live } = matchup;
+  const { projection, moneyline, total, live } = matchup;
   const team = side === "home" ? matchup.home : matchup.away;
   const name = side === "home" ? projection.home_team : projection.away_team;
   const lambda = side === "home" ? projection.home_lambda : projection.away_lambda;
@@ -64,6 +57,8 @@ function TeamRow({
   const book = side === "home" ? matchup.homeBook : matchup.awayBook;
   const edge = book ? win - americanToImplied(book.price) : null;
   const picked = moneyline?.status === "recommended" && moneyline.side === side;
+  // A total belongs to the matchup; display it once in the second team's Play cell.
+  const totalPicked = side === "home" && total?.status === "recommended";
   const score =
     live && live.state !== "pre"
       ? side === "home"
@@ -88,24 +83,6 @@ function TeamRow({
       </TableCell>
       <TableCell className="text-right tabular-nums">{formatNumber(lambda, 2)}</TableCell>
       <TableCell className="text-right tabular-nums">{formatPct(win)}</TableCell>
-      <TableCell className="text-right tabular-nums">
-        <span>{formatOdds(fair)}</span>
-        <span className="block text-[10px] text-muted-foreground">
-          min {formatOdds(minimum)}
-        </span>
-      </TableCell>
-      <TableCell className="text-right tabular-nums">
-        {book ? (
-          <>
-            <span>{formatOdds(book.price)}</span>
-            <span className="block text-[10px] text-muted-foreground">
-              {providerName(book.provider)}
-            </span>
-          </>
-        ) : (
-          <span className="text-muted-foreground">–</span>
-        )}
-      </TableCell>
       <TableCell
         className={cn(
           "text-right font-semibold tabular-nums",
@@ -120,104 +97,82 @@ function TeamRow({
       >
         {edge == null ? "–" : formatPct(edge)}
       </TableCell>
-      <TableCell className="text-right font-mono text-xs whitespace-nowrap">
-        {picked && moneyline ? (
-          <>
-            <span className="text-positive">ML {formatOdds(moneyline.price)}</span>
-            <span className="block text-[10px] font-normal text-muted-foreground">
-              {moneyline.provider ?? providerName(moneyline.provider_key ?? "")}
-            </span>
-            <span className="block text-[10px] font-normal text-muted-foreground">
-              Kelly {formatPct(moneyline.kelly_fraction)}
-            </span>
-          </>
-        ) : (
-          <span className="invisible">-</span>
-        )}
+      <TableCell className="text-right tabular-nums">
+        <span>{formatOdds(fair)}</span>
+        <span className="mx-0.5 text-muted-foreground">/</span>
+        <span className="text-muted-foreground">{formatOdds(book?.price)}</span>
+        <span className="block text-[10px] text-muted-foreground">
+          min {formatOdds(minimum)}{book && <> · {providerName(book.provider)}</>}
+        </span>
+      </TableCell>
+      <TableCell className="text-right">
+        <div className="grid grid-cols-[4rem_5rem] justify-end gap-3 font-mono text-xs font-medium whitespace-nowrap">
+          {picked && moneyline && (
+            <div className="col-start-1">
+              <span className="text-positive">ML {formatOdds(moneyline.price)}</span>
+              <span className="block text-[10px] font-normal text-muted-foreground">
+                {moneyline.provider ?? providerName(moneyline.provider_key ?? "")}
+              </span>
+              <span className="block text-[10px] font-normal text-muted-foreground">
+                Kelly {formatPct(moneyline.kelly_fraction)}
+              </span>
+            </div>
+          )}
+          {totalPicked && total && (
+            <div className="col-start-2">
+              <span className="text-accent-amber">
+                {total.side === "over" ? "O" : "U"} {formatNumber(total.point, 1)}
+              </span>
+              <span className="block text-[10px] font-normal text-muted-foreground">Game O/U</span>
+              <span className="block text-[10px] font-normal text-muted-foreground">
+                {formatOdds(total.price)} · {total.provider ?? providerName(total.provider_key ?? "")}
+              </span>
+            </div>
+          )}
+        </div>
       </TableCell>
     </TableRow>
   );
 }
 
-// The whole slate as one table: a titled two-row group per game, the total
-// and its play in the title row so the team rows carry only their own
-// numbers.
 export function NhlGamesTable({ matchups }: { matchups: NhlMatchup[] }) {
   return (
-    <Table>
-      <TableCaption className="sr-only">
-        Today&apos;s NHL games with model prices, partner-book prices, and live scores
-      </TableCaption>
-      <TableHeader>
-        <TableRow>
-          <TableHead>Team</TableHead>
-          <TableHead className="text-right">xG</TableHead>
-          <TableHead className="text-right">Win</TableHead>
-          <TableHead className="text-right">Fair</TableHead>
-          <TableHead className="text-right">Book</TableHead>
-          <TableHead className="text-right">Edge</TableHead>
-          <TableHead className="text-right">Play</TableHead>
-        </TableRow>
-      </TableHeader>
-      <TableBody>
-        {matchups.map((matchup) => {
-          const { projection, live, total, bookTotal } = matchup;
-          const totalPicked = total?.status === "recommended";
-          const hasPlay =
-            matchup.moneyline?.status === "recommended" || totalPicked;
-          return (
-            <Fragment key={projection.game_id}>
-              <TableRow className="hover:bg-transparent">
-                <TableCell
-                  colSpan={7}
-                  className="whitespace-normal border-t border-border pt-5 pb-1"
-                >
-                  <div className="sticky left-0 flex w-[calc(100vw-2.5rem)] max-w-full flex-wrap items-baseline justify-between gap-x-3 gap-y-1 md:w-full">
-                    <div className="flex items-center gap-2">
-                      <span className={cn("text-sm font-semibold", hasPlay && "text-positive")}>
-                        {projection.away_team} @ {projection.home_team}
-                      </span>
-                      <span aria-live="polite" className="contents">
-                        {live?.state === "post" && (
-                          <span className="text-[10px] uppercase tracking-wider text-muted-foreground">
-                            {live.detail}
-                          </span>
-                        )}
-                        {live?.state === "in" && (
-                          <span className="text-[10px] uppercase tracking-wider text-positive">
-                            {live.detail}
-                          </span>
-                        )}
-                      </span>
-                    </div>
-                    <span className="min-w-0 font-mono text-xs font-normal text-muted-foreground">
-                      Total {formatNumber(projection.model_total, 2)}
-                      {bookTotal && (
-                        <>
-                          {" "}
-                          · book {formatNumber(bookTotal.line, 1)} (
-                          {providerName(bookTotal.provider)} O {formatOdds(bookTotal.over)} / U{" "}
-                          {formatOdds(bookTotal.under)})
-                        </>
-                      )}
-                      {totalPicked && total && (
-                        <span className="ml-2 text-accent-amber">
-                          {total.side === "over" ? "O" : "U"} {formatNumber(total.point, 1)}{" "}
-                          {formatOdds(total.price)} ({total.provider ?? providerName(total.provider_key ?? "")})
-                        </span>
-                      )}
-                      {" · "}
-                      {startLabel(projection.start_date)}
-                    </span>
-                  </div>
-                </TableCell>
-              </TableRow>
-              <TeamRow matchup={matchup} side="away" />
-              <TeamRow matchup={matchup} side="home" />
-            </Fragment>
-          );
-        })}
-      </TableBody>
-    </Table>
+    <GamesTableLayout
+      caption="Today's NHL games with model prices, partner-book prices, and live scores"
+      projectionLabel="xG"
+    >
+      {matchups.map((matchup) => {
+        const { projection, live, total, bookTotal } = matchup;
+        const hasPlay = matchup.moneyline?.status === "recommended" || total?.status === "recommended";
+        return (
+          <Fragment key={projection.game_id}>
+            <GameMatchupHeader
+              away={projection.away_team}
+              home={projection.home_team}
+              hasPlay={hasPlay}
+              status={live && live.state !== "pre" && (
+                <span className={cn(
+                  "text-[10px] uppercase tracking-wider",
+                  live.state === "in" ? "text-positive" : "text-muted-foreground",
+                )}>
+                  {live.detail}
+                </span>
+              )}
+              detail={
+                <>
+                  Total {formatNumber(projection.model_total, 2)}
+                  {bookTotal && (
+                    <> · book {formatNumber(bookTotal.line, 1)} ({providerName(bookTotal.provider)} O {formatOdds(bookTotal.over)} / U {formatOdds(bookTotal.under)})</>
+                  )}
+                  {" · "}{startLabel(projection.start_date)}
+                </>
+              }
+            />
+            <TeamRow matchup={matchup} side="away" />
+            <TeamRow matchup={matchup} side="home" />
+          </Fragment>
+        );
+      })}
+    </GamesTableLayout>
   );
 }

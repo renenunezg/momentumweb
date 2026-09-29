@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { LastUpdated } from "@/components/last-updated";
 import { NhlGamesLive } from "@/components/nhl-games-live";
 import type { NhlMatchup } from "@/components/nhl-games-table";
+import { SlateSummary } from "@/components/summary-stats";
 import { Notice } from "@/components/notice";
 import { SITE_TIME_ZONE, siteDate, zonedDayRange } from "@/lib/daily-picks";
 import {
@@ -133,14 +134,18 @@ export default async function Page({
           schedule="Predictions ~7 AM PT • Scores live"
         />
       </div>
-      <p className="mb-4 max-w-4xl text-sm leading-relaxed text-muted-foreground">
-        Expected goals and win probabilities from the Poisson model, the fair
-        price and the minimum acceptable price beneath it, the better partner
-        sportsbook price, and the edge over that price&apos;s implied
-        probability. A moneyline play needs 13 points of edge; a total play
-        needs a full goal between the model total and the posted line.
-        Decisions are frozen when first published.
+      <p className="mb-6 max-w-4xl text-sm leading-relaxed text-muted-foreground">
+        Win probabilities, expected goals, and picks for every NHL game today,
+        from a Poisson model. Model and partner-book prices are shown side by
+        side. Picks retain their frozen prices from publication.
       </p>
+      <div className="mb-6">
+        <SlateSummary stats={[
+          { label: "Games", value: matchups.length },
+          { label: "ML", value: matchups.filter((m) => m.moneyline?.status === "recommended").length },
+          { label: "Totals", value: matchups.filter((m) => m.total?.status === "recommended").length },
+        ]} />
+      </div>
       {decisionsRes.decisions.length === 0 && (
         <Notice className="mb-4">
           Decisions for today have not been published yet; prices and plays

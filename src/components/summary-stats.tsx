@@ -27,6 +27,10 @@ export function SummaryStats({ matchups }: SummaryStatsProps) {
     { label: "Totals", value: totalsGames.size },
   ];
 
+  return <SlateSummary stats={stats} />;
+}
+
+export function SlateSummary({ stats }: { stats: { label: string; value: number }[] }) {
   return (
     <div className="flex items-baseline gap-6 font-mono text-sm">
       {stats.map((stat) => (
