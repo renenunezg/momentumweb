@@ -140,6 +140,13 @@ export default async function Page({
           appear after the morning run.
         </Notice>
       )}
+      {decisionsRes.decisions.length > 0 &&
+        decisionsRes.decisions.every((d) => d.status === "no_play" && d.reason === "stale_offer") && (
+          <Notice className="mb-4">
+            All games are No Play because the partner sportsbook prices are stale.
+            Model forecasts remain available; outdated book prices and edges are hidden.
+          </Notice>
+        )}
       <NhlGamesLive initial={matchups} date={today} />
     </main>
   );

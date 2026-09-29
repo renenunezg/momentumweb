@@ -8,7 +8,7 @@ import { revalidatePath, revalidateTag } from "next/cache";
 // instead of regenerating on a timer: the next visit after a publish renders
 // fresh, and a quiet day costs no renders at all.
 
-const SPORTS = new Set(["mlb", "cfb", "nfl"]);
+const SPORTS = new Set(["mlb", "cfb", "nfl", "nhl"]);
 
 function authorized(request: Request) {
   const expected = process.env.REVALIDATE_SECRET;
@@ -30,8 +30,8 @@ export async function POST(request: Request) {
   if (!SPORTS.has(sport)) {
     return NextResponse.json({ error: "unknown schema" }, { status: 400 });
   }
-  // "max" expires the tag with no stale window so the next visit reads fresh.
-  revalidateTag(sport, "max");
+  // A published decision must be visible on the next visit, with no stale window.
+  revalidateTag(sport, { expire: 0 });
   revalidatePath(`/${sport}`, "layout");
   // The home page shows each sport's headline numbers.
   revalidatePath("/");

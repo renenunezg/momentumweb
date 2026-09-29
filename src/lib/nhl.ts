@@ -77,11 +77,17 @@ export async function fetchLatestSnapshots(
     console.error("nhl snapshots fetch failed:", error.message);
     return byGame;
   }
+  const now = Date.now();
+  const maxAge = 24 * 60 * 60 * 1000;
   const seen = new Set<string>();
   for (const row of data ?? []) {
     const key = `${row.game_id}:${row.provider_key}`;
     if (seen.has(key)) continue;
     seen.add(key);
+    // Fetching an old quote again does not make it a current book price.
+    const updated = Date.parse(row.provider_last_update ?? "");
+    const fetched = Date.parse(row.fetched_at);
+    if (!(updated <= fetched && fetched <= now && now - updated <= maxAge)) continue;
     byGame.set(row.game_id, [...(byGame.get(row.game_id) ?? []), row]);
   }
   return byGame;
