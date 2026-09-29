@@ -26,7 +26,7 @@ export function ViewTabs<K extends string>({
     <Tabs.Root
       value={value}
       onValueChange={(next) => onValueChange(next as K)}
-      className={cn("space-y-6", className)}
+      className={cn("space-y-section", className)}
     >
       <Tabs.List
         aria-label={label}

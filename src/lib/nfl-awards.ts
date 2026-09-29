@@ -49,15 +49,17 @@ export async function fetchAwards(award: AwardKey, season?: number, week?: numbe
 
 async function readBoard(award: AwardKey, meta: AwardMeta): Promise<AwardBoard[]> {
   if (!["ready", "watchlist"].includes(meta.status)) return [];
+  // Candidate stats and drivers can push 1,000 rows past Next's 2 MB cache limit.
+  const pageSize = 250;
   const board: AwardBoard[] = [];
-  for (let offset = 0; ; offset += 1000) {
+  for (let offset = 0; ; offset += pageSize) {
     const rows = await read<AwardBoard>("award_boards", {
       select: "*", award: `eq.${award}`, season: `eq.${meta.season}`,
       week: `eq.${meta.week}`, order: "predicted_rank.asc,candidate_id.asc",
-      limit: "1000", offset: String(offset),
+      limit: String(pageSize), offset: String(offset),
     });
     board.push(...rows);
-    if (rows.length < 1000) break;
+    if (rows.length < pageSize) break;
   }
   if (board.length !== meta.candidate_count || new Set(board.map((r) => r.candidate_id)).size !== board.length
     || board.some((r) => r.as_of !== meta.as_of || r.model_version !== meta.model_version)) {

@@ -1,3 +1,4 @@
+import { PageHeader, PageShell, PageTitle } from "@/components/page-layout";
 import { NflForecastSource } from "@/components/nfl-forecast-source";
 import { supabaseNfl } from "@/lib/supabase";
 import type { NflBacktestPrediction } from "@/lib/types";
@@ -78,18 +79,15 @@ export default async function NflForecastHistory({
         );
 
   return (
-    <main
-      id="main"
-      className="mx-auto w-full max-w-6xl min-w-0 px-4 py-8 space-y-6"
-    >
-      <div className="flex items-start justify-between gap-4">
-        <h1 className="font-heading text-2xl">
+    <PageShell>
+      <PageHeader>
+        <PageTitle>
           NFL Forecast History
-        </h1>
+        </PageTitle>
         <div className="text-xs text-muted-foreground">
           {totalRows} completed games
         </div>
-      </div>
+      </PageHeader>
 
       <NflForecastSource source={source} page="history" />
 
@@ -142,6 +140,6 @@ export default async function NflForecastHistory({
         axis. Model err is the absolute miss of the model&apos;s margin, shown
         green when the model was closer than the closing line.
       </p>
-    </main>
+    </PageShell>
   );
 }

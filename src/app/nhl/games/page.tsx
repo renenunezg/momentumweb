@@ -1,3 +1,4 @@
+import { PageDescription, PageHeader, PageShell, PageTitle } from "@/components/page-layout";
 import type { Metadata } from "next";
 import { LastUpdated } from "@/components/last-updated";
 import { NhlGamesLive } from "@/components/nhl-games-live";
@@ -66,15 +67,19 @@ export default async function Page({
 
   if (games.length === 0) {
     return (
-      <main id="main" className="mx-auto w-full min-w-0 max-w-6xl px-4 py-8">
-        <h1 className="font-heading text-2xl">Today&apos;s NHL Predictions</h1>
-        <p className="mt-1 text-sm text-muted-foreground">{displayDate}</p>
-        <Notice className="mt-6">
+      <PageShell>
+        <PageHeader>
+          <div>
+            <PageTitle>Today&apos;s NHL Predictions</PageTitle>
+            <PageDescription>{displayDate}</PageDescription>
+          </div>
+        </PageHeader>
+        <Notice>
           {unavailable
             ? "Predictions are temporarily unavailable."
             : "No NHL games today. Projections for the next week are on the schedule page."}
         </Notice>
-      </main>
+      </PageShell>
     );
   }
 
@@ -116,50 +121,48 @@ export default async function Page({
   );
 
   return (
-    <main id="main" className="mx-auto w-full min-w-0 max-w-6xl px-4 py-8">
-      <div className="mb-6 flex items-start justify-between gap-4">
+    <PageShell>
+      <PageHeader>
         <div>
-          <h1 className="font-heading text-2xl">Today&apos;s NHL Predictions</h1>
-          <p className="mt-1 text-sm text-muted-foreground">{displayDate}</p>
+          <PageTitle>Today&apos;s NHL Predictions</PageTitle>
+          <PageDescription>{displayDate}</PageDescription>
         </div>
         <LastUpdated
           timestamp={lastUpdated}
           schedule="Predictions ~7 AM PT • Scores live"
         />
-      </div>
-      <p className="mb-6 max-w-4xl text-sm leading-relaxed text-muted-foreground">
+      </PageHeader>
+      <p className="max-w-4xl text-sm leading-relaxed text-muted-foreground">
         Win probabilities, expected goals, and picks for every NHL game today,
         from a Poisson model. Model and partner-book prices are shown side by
         side. Picks retain their frozen prices from publication.
       </p>
-      <div className="mb-6">
-        <SlateSummary stats={[
-          { label: "Games", value: matchups.length },
-          { label: "ML", value: matchups.filter((m) => m.moneyline?.status === "recommended").length },
-          { label: "Totals", value: matchups.filter((m) => m.total?.status === "recommended").length },
-        ]} />
-      </div>
+      <SlateSummary stats={[
+        { label: "Games", value: matchups.length },
+        { label: "ML", value: matchups.filter((m) => m.moneyline?.status === "recommended").length },
+        { label: "Totals", value: matchups.filter((m) => m.total?.status === "recommended").length },
+      ]} />
       {decisionsRes.decisions.length === 0 && (
-        <Notice className="mb-4">
+        <Notice>
           Decisions for today have not been published yet; prices and plays
           appear after the morning run.
         </Notice>
       )}
       {decisionsRes.decisions.length > 0 &&
         decisionsRes.decisions.every((d) => d.status === "no_play" && d.reason === "stale_offer") && (
-          <Notice className="mb-4">
+          <Notice>
             All games are No Play because sportsbook price freshness could not be verified.
             Model forecasts remain available; unverified book prices and edges are hidden.
           </Notice>
         )}
       {hasCorroboratedPicks && (
-        <Notice className="mb-4">
+        <Notice>
           Pick prices and edges are recorded at publication. Other book prices
           appear only when freshness is verified. &quot;No quote&quot; means no
           verified price is available for that team.
         </Notice>
       )}
       <NhlGamesLive initial={matchups} date={today} />
-    </main>
+    </PageShell>
   );
 }

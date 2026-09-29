@@ -1,3 +1,4 @@
+import { PageShell, PageTitle } from "@/components/page-layout";
 import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
@@ -50,7 +51,7 @@ export default async function BlogPostPage({
   if (!post) notFound();
 
   return (
-    <main id="main" className="mx-auto w-full max-w-3xl min-w-0 px-4 py-8">
+    <PageShell width="reading">
       <Link
         href="/blog"
         className="font-mono text-xs uppercase tracking-wider text-muted-foreground hover:text-foreground transition-colors"
@@ -68,11 +69,11 @@ export default async function BlogPostPage({
           mainEntityOfPage: `${SITE_URL}/blog/${post.slug}`,
         }}
       />
-      <article className="mt-6">
+      <article>
         <p className="font-mono text-xs text-muted-foreground">{post.date}</p>
-        <h1 className="font-heading text-3xl mt-1">
+        <PageTitle className="mt-heading">
           {post.title}
-        </h1>
+        </PageTitle>
         <p className="mt-4 max-w-[68ch] text-base text-muted-foreground leading-relaxed border-l border-rule-strong pl-4">
           {post.summary}
         </p>
@@ -82,6 +83,6 @@ export default async function BlogPostPage({
           <ReactMarkdown remarkPlugins={[remarkGfm]}>{post.body}</ReactMarkdown>
         </div>
       </article>
-    </main>
+    </PageShell>
   );
 }

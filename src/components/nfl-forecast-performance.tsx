@@ -30,7 +30,7 @@ export default async function NflForecastPerformance({
     accuracy;
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-section">
       <NflForecastSource source={source} page="performance" />
       <p className="max-w-4xl text-sm text-muted-foreground leading-relaxed">
         {source === "live"

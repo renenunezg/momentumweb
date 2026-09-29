@@ -3,6 +3,11 @@
 @import "shadcn/tailwind.css";
 
 @theme inline {
+  --spacing-page-gutter: 1rem;
+  --spacing-page-block: 2rem;
+  --spacing-section: 1.5rem;
+  --spacing-content: 0.75rem;
+  --spacing-heading: 0.5rem;
   --color-background: var(--background);
   --color-foreground: var(--foreground);
   /* One face sitewide. The mono and heading utilities stay as semantic hooks

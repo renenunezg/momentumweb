@@ -1,3 +1,4 @@
+import { PageDescription, PageHeader, PageSection, PageShell, PageTitle } from "@/components/page-layout";
 import type { Metadata } from "next";
 import { Notice } from "@/components/notice";
 import Link from "next/link";
@@ -39,17 +40,14 @@ export default async function PerformancePage({
   if (params.view === "accuracy") {
     const live = await fetchLivePerformance();
     return (
-      <main
-        id="main"
-        className="mx-auto w-full max-w-6xl min-w-0 space-y-6 px-4 py-8"
-      >
-        <h1 className="font-heading text-2xl">
+      <PageShell>
+        <PageTitle>
           College Football Model Performance
-        </h1>
+        </PageTitle>
         <CfbPerformanceTabs active="accuracy" query={query}>
           <ForecastPerformance live={live} />
         </CfbPerformanceTabs>
-      </main>
+      </PageShell>
     );
   }
   const [summary, live] = await Promise.all([
@@ -71,20 +69,17 @@ export default async function PerformancePage({
   const historyUrl = `/cfb/history?${query}`;
 
   return (
-    <main
-      id="main"
-      className="mx-auto w-full max-w-6xl min-w-0 space-y-6 px-4 py-8"
-    >
-      <div className="flex flex-wrap items-start justify-between gap-3">
+    <PageShell>
+      <PageHeader>
         <div>
-          <h1 className="font-heading text-2xl">
+          <PageTitle>
             College Football Model Performance
-          </h1>
-          <p className="mt-1 max-w-2xl text-sm text-muted-foreground">
+          </PageTitle>
+          <PageDescription className="max-w-2xl">
             How the college football model&apos;s moneyline, spread and total
             picks have done: recommended picks, the prices recorded at the time,
             and graded results.
-          </p>
+          </PageDescription>
         </div>
         <Link
           href={historyUrl}
@@ -92,9 +87,9 @@ export default async function PerformancePage({
         >
           View pick history
         </Link>
-      </div>
+      </PageHeader>
       <CfbPerformanceTabs active="picks" query={query}>
-        <div className="space-y-7">
+        <div className="space-y-section">
           <PickFilters
             season={filters.season}
             latestSeason={summary.latestSeason}
@@ -184,7 +179,7 @@ export default async function PerformancePage({
             />
           </>
           {pure && (
-            <section className="space-y-3">
+            <PageSection>
               <h2 className="font-heading text-lg">
                 Forecast accuracy at a glance
               </h2>
@@ -215,11 +210,11 @@ export default async function PerformancePage({
                   sub="target 80%"
                 />
               </div>
-            </section>
+            </PageSection>
           )}
           <PickPolicy firstDecision={metric?.first_decision_at} />
         </div>
       </CfbPerformanceTabs>
-    </main>
+    </PageShell>
   );
 }

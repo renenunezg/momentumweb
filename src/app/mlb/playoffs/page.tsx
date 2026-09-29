@@ -1,3 +1,4 @@
+import { PageDescription, PageHeader, PageShell, PageTitle } from "@/components/page-layout";
 import type { Metadata } from "next";
 import { Trophy } from "lucide-react";
 import { MlbPlayoffBracket } from "@/components/mlb-playoff-bracket";
@@ -13,25 +14,25 @@ export const metadata: Metadata = {
 export default async function PlayoffsPage() {
   const forecast = await fetchPlayoffForecast();
   return (
-    <main id="main" className="mx-auto w-full max-w-7xl px-4 py-8 sm:py-12">
-      <div className="mb-7 flex items-end justify-between gap-4 border-b border-border pb-6">
+    <PageShell width="wide">
+      <PageHeader className="border-b border-border pb-section">
         <div>
           <p className="mb-2 font-mono text-[11px] uppercase tracking-[0.2em] text-muted-foreground">
             MLB / Postseason
           </p>
-          <h1 className="font-heading text-4xl tracking-tight sm:text-5xl">
+          <PageTitle>
             The road to the World Series
-          </h1>
-          <p className="mt-3 max-w-2xl text-sm text-muted-foreground">
+          </PageTitle>
+          <PageDescription className="max-w-2xl">
             Every series. Every possible path. Powered by our plate-appearance
             model.
-          </p>
+          </PageDescription>
         </div>
         <Trophy
           className="hidden size-12 shrink-0 text-amber-500 sm:block"
           aria-hidden="true"
         />
-      </div>
+      </PageHeader>
       {forecast ? (
         <MlbPlayoffBracket
           forecast={forecast}
@@ -55,6 +56,6 @@ export default async function PlayoffsPage() {
           </p>
         </div>
       )}
-    </main>
+    </PageShell>
   );
 }

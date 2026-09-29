@@ -1,7 +1,8 @@
+import { PageShell, PageTitle } from "@/components/page-layout";
 export default function Loading() {
   return (
-    <main id="main" className="mx-auto w-full max-w-6xl min-w-0 px-4 py-8 space-y-6">
-      <h1 className="font-heading text-2xl">MLB Prediction History</h1>
+    <PageShell>
+      <PageTitle>MLB Prediction History</PageTitle>
 
       {/* Filter skeleton */}
       <div className="flex flex-wrap gap-2">
@@ -31,6 +32,6 @@ export default function Loading() {
       <p className="text-center text-xs text-muted-foreground font-mono">
         Loading history…
       </p>
-    </main>
+    </PageShell>
   );
 }

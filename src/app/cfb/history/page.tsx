@@ -1,3 +1,4 @@
+import { PageDescription, PageHeader, PageShell, PageTitle } from "@/components/page-layout";
 import type { Metadata } from "next";
 import { Notice } from "@/components/notice";
 import Link from "next/link";
@@ -59,19 +60,16 @@ export default async function HistoryPage({
   }
   if (!history.unavailable && page > totalPages) redirect(pageUrl(totalPages));
   return (
-    <main
-      id="main"
-      className="mx-auto w-full max-w-6xl min-w-0 space-y-6 px-4 py-8"
-    >
-      <div className="flex flex-wrap items-start justify-between gap-3">
+    <PageShell>
+      <PageHeader>
         <div>
-          <h1 className="font-heading text-2xl">
+          <PageTitle>
             College Football Pick History
-          </h1>
-          <p className="mt-1 text-sm text-muted-foreground">
+          </PageTitle>
+          <PageDescription>
             The side, line, and odds recorded before kickoff, with each
             pick&apos;s result.
-          </p>
+          </PageDescription>
         </div>
         <Link
           href="/cfb/history?view=accuracy"
@@ -79,7 +77,7 @@ export default async function HistoryPage({
         >
           Forecast &amp; backtest history
         </Link>
-      </div>
+      </PageHeader>
       <PickFilters
         season={filters.season}
         latestSeason={new Date().getUTCFullYear()}
@@ -107,6 +105,6 @@ export default async function HistoryPage({
         </Notice>
       )}
       <PickPolicy firstDecision={metric?.first_decision_at} />
-    </main>
+    </PageShell>
   );
 }

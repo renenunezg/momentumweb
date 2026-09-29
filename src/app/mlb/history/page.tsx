@@ -1,3 +1,4 @@
+import { PageHeader, PageShell, PageTitle } from "@/components/page-layout";
 import type { Metadata } from "next";
 import { supabase } from "@/lib/supabase";
 import type { Tables } from "@/lib/database.types";
@@ -222,14 +223,14 @@ export default async function HistoryPage({
   }
 
   return (
-    <main id="main" className="mx-auto w-full max-w-6xl min-w-0 px-4 py-8 space-y-6">
-      <div className="flex items-start justify-between gap-4">
-        <h1 className="font-heading text-2xl">MLB Prediction History</h1>
+    <PageShell>
+      <PageHeader>
+        <PageTitle>MLB Prediction History</PageTitle>
         <LastUpdated
           timestamp={lastUpdated}
           schedule="Predictions ~5 AM PT • Results scored overnight"
         />
-      </div>
+      </PageHeader>
 
       <p className="max-w-4xl text-sm text-muted-foreground leading-relaxed">
         Every MLB prediction this season next to the final score: the
@@ -481,6 +482,6 @@ export default async function HistoryPage({
           </div>
         </>
       )}
-    </main>
+    </PageShell>
   );
 }

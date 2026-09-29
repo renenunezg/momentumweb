@@ -1,3 +1,4 @@
+import { PageDescription, PageHeader, PageShell, PageTitle } from "@/components/page-layout";
 import type { Metadata } from "next";
 import { Notice } from "@/components/notice";
 import Link from "next/link";
@@ -59,21 +60,18 @@ export default async function PredictionsPage() {
       });
 
   return (
-    <main
-      id="main"
-      className="mx-auto w-full max-w-6xl min-w-0 space-y-6 px-4 py-8"
-    >
-      <div className="flex flex-wrap items-start justify-between gap-4">
+    <PageShell>
+      <PageHeader>
         <div>
           <p className="mb-2 font-mono text-xs uppercase tracking-wider text-muted-foreground">
             {latest ? `${latest.season} · Week ${latest.week}` : "Current week"}
           </p>
-          <h1 className="font-heading text-3xl">
+          <PageTitle>
             NFL Predictions
-          </h1>
-          <p className="mt-2 text-sm text-muted-foreground">
+          </PageTitle>
+          <PageDescription>
             This week&apos;s predictions, organized by kickoff slate.
-          </p>
+          </PageDescription>
         </div>
         <div className="space-y-2 text-sm sm:text-right">
           <Link href="/nfl/history" className="underline underline-offset-4">
@@ -86,7 +84,7 @@ export default async function PredictionsPage() {
             />
           )}
         </div>
-      </div>
+      </PageHeader>
       {unavailable ? (
         <Notice role="status">
           Weekly predictions are temporarily unavailable. Please try again
@@ -112,6 +110,6 @@ export default async function PredictionsPage() {
           Results and No Play decisions
         </Link>
       </div>
-    </main>
+    </PageShell>
   );
 }

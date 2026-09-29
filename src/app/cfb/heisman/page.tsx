@@ -1,3 +1,4 @@
+import { PageDescription, PageHeader, PageShell, PageTitle } from "@/components/page-layout";
 import type { Metadata } from "next";
 import { fetchHeismanTracker, fetchTeams } from "@/lib/cfb";
 import { formatNumber, formatPct } from "@/lib/utils";
@@ -23,13 +24,13 @@ export default async function HeismanPage() {
 
   if (season == null || values.length === 0) {
     return (
-      <main id="main" className="mx-auto w-full max-w-5xl min-w-0 px-4 py-8">
-        <h1 className="font-heading text-2xl">Heisman Trophy Tracker</h1>
-        <p className="mt-4 text-muted-foreground">
+      <PageShell>
+        <PageTitle>Heisman Trophy Tracker</PageTitle>
+        <p className="text-muted-foreground">
           No player value snapshots have been published yet. The tracker
           appears once the first week of the season is final.
         </p>
-      </main>
+      </PageShell>
     );
   }
 
@@ -40,19 +41,19 @@ export default async function HeismanPage() {
   const winnersHit = history.filter((h) => h.winner_hit).length;
 
   return (
-    <main id="main" className="mx-auto w-full max-w-5xl min-w-0 px-4 py-8 space-y-6">
-      <div className="flex items-start justify-between gap-4">
+    <PageShell>
+      <PageHeader>
         <div>
-          <h1 className="font-heading text-2xl">Heisman Trophy Tracker</h1>
-          <p className="mt-1 font-mono text-xs uppercase tracking-wider text-muted-foreground">
+          <PageTitle>Heisman Trophy Tracker</PageTitle>
+          <PageDescription className="font-mono text-xs uppercase tracking-wider">
             {season} · Through week {week}
-          </p>
+          </PageDescription>
         </div>
         <LastUpdated
           timestamp={tracker.asOf}
           schedule="Updates after each Monday refresh"
         />
-      </div>
+      </PageHeader>
 
       <p className="max-w-4xl text-sm text-muted-foreground leading-relaxed">
         A weekly Heisman Trophy forecast in two boards that are meant to
@@ -105,6 +106,6 @@ export default async function HeismanPage() {
         meta={meta}
         teams={[...teams.values()]}
       />
-    </main>
+    </PageShell>
   );
 }

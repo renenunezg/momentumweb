@@ -481,7 +481,7 @@ function Method({ meta }: { meta: CfbPlayerModelMeta | null }) {
       })
     : [];
   return (
-    <div className="max-w-4xl space-y-6 text-sm leading-relaxed">
+    <div className="max-w-4xl space-y-section text-sm leading-relaxed">
       <section className="space-y-2">
         <h3 className="font-heading text-base">Play credit</h3>
         <p className="text-muted-foreground">

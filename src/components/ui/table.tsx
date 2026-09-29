@@ -4,7 +4,13 @@ import * as React from "react"
 
 import { cn } from "@/lib/utils"
 
-function Table({ className, ...props }: React.ComponentProps<"table">) {
+function Table({
+  className,
+  density = "default",
+  ...props
+}: React.ComponentProps<"table"> & {
+  density?: "default" | "compact" | "comfortable"
+}) {
   return (
     <div
       data-slot="table-container"
@@ -12,8 +18,11 @@ function Table({ className, ...props }: React.ComponentProps<"table">) {
     >
       <table
         data-slot="table"
+        data-density={density}
         className={cn(
-          "w-full caption-bottom border-collapse text-sm tabular-nums",
+          "w-full caption-bottom border-collapse text-sm tabular-nums [--table-cell-x:0.5rem] [--table-cell-y:0.375rem] [--table-group-gap:0.75rem]",
+          density === "compact" && "[--table-cell-x:0.25rem] sm:[--table-cell-x:0.5rem]",
+          density === "comfortable" && "[--table-cell-y:0.75rem]",
           className
         )}
         {...props}
@@ -80,7 +89,7 @@ function TableHead({
       data-slot="table-head"
       scope={scope}
       className={cn(
-        "h-8 px-2 py-2 text-left align-middle font-mono text-xs font-normal uppercase tracking-wider whitespace-nowrap text-muted-foreground [&:has([role=checkbox])]:pr-0",
+        "h-8 px-[var(--table-cell-x)] py-2 text-left align-middle font-mono text-xs font-normal uppercase tracking-wider whitespace-nowrap text-muted-foreground [&:has([role=checkbox])]:pr-0",
         className
       )}
       {...props}
@@ -93,7 +102,7 @@ function TableCell({ className, ...props }: React.ComponentProps<"td">) {
     <td
       data-slot="table-cell"
       className={cn(
-        "px-2 py-1.5 align-middle whitespace-nowrap font-mono text-sm [&:has([role=checkbox])]:pr-0",
+        "px-[var(--table-cell-x)] py-[var(--table-cell-y)] align-middle whitespace-nowrap font-mono text-sm [&:has([role=checkbox])]:pr-0",
         className
       )}
       {...props}

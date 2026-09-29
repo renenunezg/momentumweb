@@ -1,3 +1,4 @@
+import { PageDescription, PageHeader, PageShell, PageTitle } from "@/components/page-layout";
 import type { Metadata } from "next";
 import { fetchLatestRatings, fetchTeams, fetchUnitRatings } from "@/lib/cfb";
 import { fetchComparisonProjections } from "@/lib/football-comparison.server";
@@ -30,12 +31,12 @@ export default async function RatingsPage() {
 
   if (ratings.length === 0) {
     return (
-      <main id="main" className="mx-auto w-full max-w-5xl min-w-0 px-4 py-8">
-        <h1 className="font-heading text-2xl">College Football Power Ratings</h1>
-        <p className="mt-4 text-muted-foreground">
+      <PageShell>
+        <PageTitle>College Football Power Ratings</PageTitle>
+        <p className="text-muted-foreground">
           No ratings published yet. Run the publish pipeline to load them.
         </p>
-      </main>
+      </PageShell>
     );
   }
 
@@ -44,23 +45,23 @@ export default async function RatingsPage() {
     season != null && week != null ? `${season} · Week ${week}` : "";
 
   return (
-    <main id="main" className="mx-auto w-full max-w-5xl min-w-0 px-4 py-8 space-y-6">
-      <div className="flex items-start justify-between gap-4">
+    <PageShell>
+      <PageHeader>
         <div>
-          <h1 className="font-heading text-2xl">
+          <PageTitle>
             College Football Power Ratings
-          </h1>
+          </PageTitle>
           {weekLabel && (
-            <p className="mt-1 font-mono text-xs uppercase tracking-wider text-muted-foreground">
+            <PageDescription className="font-mono text-xs uppercase tracking-wider">
               {weekLabel}
-            </p>
+            </PageDescription>
           )}
         </div>
         <LastUpdated
           timestamp={lastUpdated}
           schedule="Updates when a new forecast is published"
         />
-      </div>
+      </PageHeader>
 
       <p className="max-w-4xl text-sm text-muted-foreground leading-relaxed">
         Model and market-implied strength, in points above an average FBS team
@@ -80,6 +81,6 @@ export default async function RatingsPage() {
         Market is fitted to earlier closing spreads with a prior-season market
         baseline; it does not include season win totals.
       </p>
-    </main>
+    </PageShell>
   );
 }

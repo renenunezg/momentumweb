@@ -1,3 +1,4 @@
+import { PageDescription, PageHeader, PageShell, PageTitle } from "@/components/page-layout";
 import type { Metadata } from "next";
 import { Notice } from "@/components/notice";
 import Link from "next/link";
@@ -40,17 +41,14 @@ export default async function PerformancePage({
   const query = pickQuery(filters).toString();
   if (params.view === "accuracy" || params.source) {
     return (
-      <main
-        id="main"
-        className="mx-auto w-full max-w-6xl min-w-0 space-y-6 px-4 py-8"
-      >
-        <h1 className="font-heading text-2xl">
+      <PageShell>
+        <PageTitle>
           NFL Model Performance
-        </h1>
+        </PageTitle>
         <FootballPerformanceTabs sport="nfl" active="accuracy" query={query}>
           <ForecastPerformance searchParams={Promise.resolve(params)} />
         </FootballPerformanceTabs>
-      </main>
+      </PageShell>
     );
   }
   const summary = await fetchNflPickSummary(filters);
@@ -61,20 +59,17 @@ export default async function PerformancePage({
   const historyUrl = `/nfl/history?${query}`;
 
   return (
-    <main
-      id="main"
-      className="mx-auto w-full max-w-6xl min-w-0 space-y-6 px-4 py-8"
-    >
-      <div className="flex flex-wrap items-start justify-between gap-3">
+    <PageShell>
+      <PageHeader>
         <div>
-          <h1 className="font-heading text-2xl">
+          <PageTitle>
             NFL Model Performance
-          </h1>
-          <p className="mt-1 max-w-2xl text-sm text-muted-foreground">
+          </PageTitle>
+          <PageDescription className="max-w-2xl">
             How the NFL model&apos;s moneyline, spread and total picks have
             done: recommended picks, the prices recorded at the time, and graded
             results.
-          </p>
+          </PageDescription>
         </div>
         <Link
           href={historyUrl}
@@ -82,9 +77,9 @@ export default async function PerformancePage({
         >
           View pick history
         </Link>
-      </div>
+      </PageHeader>
       <FootballPerformanceTabs sport="nfl" active="picks" query={query}>
-        <div className="space-y-7">
+        <div className="space-y-section">
           <PickFilters
             seasonOptions={summary.seasons}
             season={filters.season}
@@ -179,6 +174,6 @@ export default async function PerformancePage({
           <PickPolicy sport="nfl" firstDecision={metric?.first_decision_at} />
         </div>
       </FootballPerformanceTabs>
-    </main>
+    </PageShell>
   );
 }

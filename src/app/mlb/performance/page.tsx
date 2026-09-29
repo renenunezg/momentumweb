@@ -1,3 +1,4 @@
+import { PageHeader, PageShell, PageTitle } from "@/components/page-layout";
 import type { Metadata } from "next";
 import { supabase } from "@/lib/supabase";
 import type {
@@ -100,29 +101,29 @@ export default async function PerformancePage() {
 
   if (evaluations.length === 0) {
     return (
-      <main id="main" className="mx-auto w-full max-w-5xl min-w-0 px-4 py-8">
-        <h1 className="font-heading text-2xl">
+      <PageShell>
+        <PageTitle>
           MLB Model Performance
-        </h1>
-        <p className="mt-4 text-muted-foreground">
+        </PageTitle>
+        <p className="text-muted-foreground">
           No evaluation data available yet. Run the pipeline to generate
           performance metrics.
         </p>
-      </main>
+      </PageShell>
     );
   }
 
   return (
-    <main id="main" className="mx-auto w-full max-w-5xl min-w-0 px-4 py-8 space-y-6">
-      <div className="flex items-start justify-between gap-4">
-        <h1 className="font-heading text-2xl">
+    <PageShell>
+      <PageHeader>
+        <PageTitle>
           MLB Model Performance
-        </h1>
+        </PageTitle>
         <LastUpdated
           timestamp={lastUpdated}
           schedule="Updates nightly ~midnight PT"
         />
-      </div>
+      </PageHeader>
       <p className="max-w-4xl text-sm text-muted-foreground leading-relaxed">
         How the MLB model&apos;s win probabilities and run totals have held
         up: calibration, Brier score, and betting results against the closing
@@ -137,6 +138,6 @@ export default async function PerformancePage() {
         posteriorSigmas={posteriorSigmas}
         liveKpis={liveKpis}
       />
-    </main>
+    </PageShell>
   );
 }

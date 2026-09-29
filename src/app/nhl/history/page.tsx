@@ -1,3 +1,4 @@
+import { PageDescription, PageHeader, PageShell, PageTitle } from "@/components/page-layout";
 import type { Metadata } from "next";
 import Link from "next/link";
 import { redirect } from "next/navigation";
@@ -47,21 +48,21 @@ export default async function HistoryPage({
   if (params.view === "accuracy" || params.source) {
     const source = params.source === "backtest" ? "backtest" : "live";
     return (
-      <main id="main" className="mx-auto w-full max-w-6xl min-w-0 space-y-6 px-4 py-8">
-        <div className="flex flex-wrap items-start justify-between gap-3">
+      <PageShell>
+        <PageHeader>
           <div>
-            <h1 className="font-heading text-2xl">NHL Forecast History</h1>
-            <p className="mt-1 text-sm text-muted-foreground">
+            <PageTitle>NHL Forecast History</PageTitle>
+            <PageDescription>
               Graded games with the pregame forecast each was judged by.
-            </p>
+            </PageDescription>
           </div>
           <Link href="/nhl/history" className="text-sm underline underline-offset-4">
             Pick history
           </Link>
-        </div>
+        </PageHeader>
         <NhlForecastAccuracy source={source} page="history" />
         {source === "live" && <NhlForecastHistory />}
-      </main>
+      </PageShell>
     );
   }
   const filters = pickFilters(params, "7");
@@ -78,19 +79,19 @@ export default async function HistoryPage({
   }
   if (!history.unavailable && page > totalPages) redirect(pageUrl(totalPages));
   return (
-    <main id="main" className="mx-auto w-full max-w-6xl min-w-0 space-y-6 px-4 py-8">
-      <div className="flex flex-wrap items-start justify-between gap-3">
+    <PageShell>
+      <PageHeader>
         <div>
-          <h1 className="font-heading text-2xl">NHL Pick History</h1>
-          <p className="mt-1 text-sm text-muted-foreground">
+          <PageTitle>NHL Pick History</PageTitle>
+          <PageDescription>
             The side, line, and price recorded before puck drop, with each
             pick&apos;s result.
-          </p>
+          </PageDescription>
         </div>
         <Link href="/nhl/history?view=accuracy" className="text-sm underline underline-offset-4">
           Forecast &amp; backtest history
         </Link>
-      </div>
+      </PageHeader>
       <PickFilters
         seasonOptions={history.seasons}
         season={filters.season}
@@ -118,6 +119,6 @@ export default async function HistoryPage({
         </Notice>
       )}
       <PickPolicy sport="nhl" firstDecision={metric?.first_decision_at} />
-    </main>
+    </PageShell>
   );
 }

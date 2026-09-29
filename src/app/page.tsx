@@ -1,3 +1,4 @@
+import { PageDescription, PageHeader, PageSection, PageShell, PageTitle } from "@/components/page-layout";
 import Link from "next/link";
 import { SiteHeader } from "@/components/site-header";
 import { ContactLine } from "@/components/site-footer";
@@ -285,26 +286,28 @@ export default async function Home() {
         }}
       />
       <SiteHeader />
-      <main id="main" className="mx-auto w-full max-w-3xl min-w-0 px-4 py-10">
-        <section>
-          <h1 className="font-heading text-2xl">
-            Ren&eacute; N&uacute;&ntilde;ez
-          </h1>
-          <p className="mt-2 text-sm text-muted-foreground leading-relaxed">
-            Data Analyst. I build probabilistic forecasting
-            models for sports and benchmark them against the market in public.
-          </p>
-          <ContactLine className="mt-2 text-xs text-muted-foreground" />
-        </section>
+      <PageShell width="reading">
+        <PageHeader>
+          <div>
+            <PageTitle>
+              Ren&eacute; N&uacute;&ntilde;ez
+            </PageTitle>
+            <PageDescription>
+              Data Analyst. I build probabilistic forecasting
+              models for sports and benchmark them against the market in public.
+            </PageDescription>
+            <ContactLine className="mt-heading text-xs text-muted-foreground" />
+          </div>
+        </PageHeader>
 
-        <section className="mt-10">
-          <h2 className="font-mono text-xs uppercase tracking-wider text-muted-foreground mb-3">
+        <PageSection>
+          <h2 className="font-mono text-xs uppercase tracking-wider text-muted-foreground">
             Models
           </h2>
           {/* Entries are separated by rules, not enclosed in boxes. */}
           <div className="divide-y divide-border border-y border-rule-strong">
             <ModelEntry
-              href="/mlb"
+              href="/mlb/games"
               name="MLB"
               live
               cta="View today's slate"
@@ -372,12 +375,12 @@ export default async function Home() {
               {nhl && <FootballStats headline={nhl} />}
             </ModelEntry>
           </div>
-        </section>
+        </PageSection>
 
         <DailyPicks sports={daily} dateLabel={dateLabel} />
 
-        <section className="mt-10">
-          <div className="flex items-baseline justify-between gap-4 mb-3">
+        <PageSection>
+          <div className="flex items-baseline justify-between gap-4">
             <h2 className="font-mono text-xs uppercase tracking-wider text-muted-foreground">
               Latest writing
             </h2>
@@ -413,8 +416,8 @@ export default async function Home() {
               ))}
             </div>
           )}
-        </section>
-      </main>
+        </PageSection>
+      </PageShell>
     </>
   );
 }

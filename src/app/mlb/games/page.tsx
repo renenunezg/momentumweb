@@ -1,3 +1,4 @@
+import { PageDescription, PageHeader, PageShell, PageTitle } from "@/components/page-layout";
 import type { Metadata } from "next";
 import { supabase } from "@/lib/supabase";
 import type { Tables } from "@/lib/database.types";
@@ -82,23 +83,17 @@ export default async function Page() {
     timeZone: "America/Los_Angeles",
   });
 
-  const [{ data: outputs }, { data: allGames }, { data: latest }, liveScores] = await Promise.all([
+  const [{ data: outputs }, { data: allGames }, liveScores] = await Promise.all([
     supabase.from("model_outputs").select("*").eq("date", today).order("game_pk"),
     supabase
       .from("games")
-      .select("game_pk, game_date, home_team, away_team, venue, start_time, home_score, away_score, status")
+      .select("game_pk, game_date, home_team, away_team, venue, start_time, home_score, away_score, status, updated_at")
       .eq("game_date", today)
       .order("start_time"),
-    supabase
-      .from("games")
-      .select("updated_at")
-      .eq("game_date", today)
-      .order("updated_at", { ascending: false })
-      .limit(1),
     fetchLiveScores(),
   ]);
 
-  const lastUpdated: string | null = latest?.[0]?.updated_at ?? null;
+  const lastUpdated = latestStamp((allGames ?? []).map((game) => game.updated_at));
   const picksVersion = latestStamp([
     lastUpdated,
     ...(outputs ?? []).map((o) => o.updated_at),
@@ -114,14 +109,14 @@ export default async function Page() {
 
   if (predictions.length === 0 && (!allGames || allGames.length === 0)) {
     return (
-      <main id="main" className="mx-auto w-full min-w-0 max-w-6xl px-4 py-8">
-        <h1 className="font-heading text-2xl">
+      <PageShell>
+        <PageTitle>
           Today&apos;s MLB Predictions
-        </h1>
-        <p className="mt-4 text-muted-foreground">
+        </PageTitle>
+        <p className="text-muted-foreground">
           No predictions available.
         </p>
-      </main>
+      </PageShell>
     );
   }
 
@@ -186,29 +181,27 @@ export default async function Page() {
   });
 
   return (
-    <main id="main" className="mx-auto w-full min-w-0 max-w-6xl px-4 py-8">
-      <div className="mb-6 flex items-start justify-between gap-4">
+    <PageShell>
+      <PageHeader>
         <div>
-          <h1 className="font-heading text-2xl">
+          <PageTitle>
             Today&apos;s MLB Predictions
-          </h1>
-          <p className="mt-1 text-sm text-muted-foreground">{displayDate}</p>
+          </PageTitle>
+          <PageDescription>{displayDate}</PageDescription>
         </div>
         <LastUpdated
           timestamp={lastUpdated}
           schedule="Predictions ~5 AM PT • Scores live"
         />
-      </div>
+      </PageHeader>
 
-      <p className="mb-6 max-w-4xl text-sm text-muted-foreground leading-relaxed">
+      <p className="max-w-4xl text-sm text-muted-foreground leading-relaxed">
         Win probabilities, projected run totals, and picks for every MLB game
         today, from a Bayesian model that simulates each plate appearance.
         Picks freeze at first pitch and are graded against the closing line.
       </p>
 
-      <div className="mb-6">
-        <SummaryStats matchups={matchups} />
-      </div>
+      <SummaryStats matchups={matchups} />
 
       <GamesLive
         key={picksVersion ?? "unpublished"}
@@ -217,12 +210,12 @@ export default async function Page() {
       />
 
       {unavailableGames.length > 0 && (
-        <div className="mt-4 space-y-3">
+        <div className="space-y-3">
           {unavailableGames.map((game) => (
             <GameCardUnavailable key={game.game_pk} game={game} />
           ))}
         </div>
       )}
-    </main>
+    </PageShell>
   );
 }

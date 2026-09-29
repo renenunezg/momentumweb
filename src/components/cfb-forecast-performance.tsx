@@ -151,7 +151,7 @@ export default async function ForecastPerformance({
         </div>
       </div>
 
-      <section className="space-y-6">
+      <section className="space-y-section">
         <div className="space-y-2">
           <h2 className="font-heading text-lg">
             {live.season ?? "Live"} season, graded as played
@@ -361,7 +361,7 @@ async function HistoricalBacktest() {
 
   const { overall, bySeason, seasons } = metricsBySeason(backtest);
   return (
-    <section className="space-y-6">
+    <section className="space-y-section">
       <div className="flex items-start justify-between gap-4">
         <h2 className="font-heading text-lg">
           Historical walk-forward backtest

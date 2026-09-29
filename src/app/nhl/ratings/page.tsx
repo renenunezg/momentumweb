@@ -1,3 +1,4 @@
+import { PageDescription, PageHeader, PageShell, PageTitle } from "@/components/page-layout";
 import type { Metadata } from "next";
 import { LastUpdated } from "@/components/last-updated";
 import { NhlRatingsTable } from "@/components/nhl-ratings";
@@ -23,29 +24,29 @@ export default async function RatingsPage() {
 
   if (ratings.length === 0) {
     return (
-      <main id="main" className="mx-auto w-full max-w-6xl min-w-0 px-4 py-8">
-        <h1 className="font-heading text-2xl">NHL Model Ratings</h1>
-        <p className="mt-4 text-muted-foreground">
+      <PageShell>
+        <PageTitle>NHL Model Ratings</PageTitle>
+        <p className="text-muted-foreground">
           No ratings published yet. Run the daily pipeline to load them.
         </p>
-      </main>
+      </PageShell>
     );
   }
 
   return (
-    <main id="main" className="mx-auto w-full max-w-6xl min-w-0 space-y-6 px-4 py-8">
-      <div className="flex items-start justify-between gap-4">
+    <PageShell>
+      <PageHeader>
         <div>
-          <h1 className="font-heading text-2xl">NHL Model Ratings</h1>
-          <p className="mt-1 font-mono text-xs uppercase tracking-wider text-muted-foreground">
+          <PageTitle>NHL Model Ratings</PageTitle>
+          <PageDescription className="font-mono text-xs uppercase tracking-wider">
             As of {formatDate(asOf)}
-          </p>
+          </PageDescription>
         </div>
         <LastUpdated
           timestamp={ratings[0]?.published_at ?? null}
           schedule="Updates every morning in season"
         />
-      </div>
+      </PageHeader>
       <p className="max-w-4xl text-sm leading-relaxed text-muted-foreground">
         Expected goals for and against per game come from each team&apos;s
         last 25 games at that venue, by situation. Attack and defense
@@ -55,6 +56,6 @@ export default async function RatingsPage() {
         window column counts the home and away games behind the numbers.
       </p>
       <NhlRatingsTable ratings={ratings} teams={teams} />
-    </main>
+    </PageShell>
   );
 }

@@ -1,9 +1,9 @@
-import Link from "next/link";
+import { NavigationLink as Link } from "@/components/navigation-link";
 import { HeaderDate } from "@/components/header-date";
 import { ThemeToggle } from "@/components/theme-toggle";
 
 const links = [
-  { href: "/mlb", label: "MLB" },
+  { href: "/mlb/games", label: "MLB" },
   { href: "/cfb/predictions", label: "CFB" },
   { href: "/nfl/predictions", label: "NFL" },
   { href: "/nhl/games", label: "NHL" },
@@ -14,7 +14,7 @@ const links = [
 export function SiteHeader() {
   return (
     <header className="relative z-10 border-b border-border bg-background">
-      <div className="mx-auto flex w-full max-w-7xl min-w-0 flex-col items-start gap-1 px-4 pt-3 sm:flex-row sm:items-center sm:justify-between sm:gap-0 sm:py-3">
+      <div className="mx-auto flex w-full max-w-7xl min-w-0 flex-col items-start gap-1 px-page-gutter pt-3 sm:flex-row sm:items-center sm:justify-between sm:gap-0 sm:py-3">
         <div className="flex items-baseline gap-3 pb-2 sm:pb-0">
           <Link href="/" className="font-heading text-lg">
             Home

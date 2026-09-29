@@ -132,7 +132,7 @@ export function SeasonWinsTable({
             </span>
           </p>
         </div>
-        <Table>
+        <Table density="comfortable">
           <TableCaption className="sr-only">
             NFL projected regular-season wins, 80 percent model ranges, and
             frozen preseason sportsbook totals
@@ -159,7 +159,7 @@ export function SeasonWinsTable({
           <TableBody>
             {visible.map((row) => (
               <TableRow key={row.team_abbr}>
-                <TableCell className="py-3">
+                <TableCell>
                   <span className="inline-flex items-center gap-2 align-middle">
                     <TeamLogo
                       team={identities.get(row.team_abbr)}

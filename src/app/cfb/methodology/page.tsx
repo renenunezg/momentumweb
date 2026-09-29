@@ -1,3 +1,4 @@
+import { PageDescription, PageHeader, PageShell, PageTitle } from "@/components/page-layout";
 import type { Metadata } from "next";
 import { TableOfContents } from "./toc";
 import { MethodologyContent } from "./methodology-content";
@@ -13,19 +14,21 @@ export const metadata: Metadata = {
 export default async function Page() {
   const example = await fetchCfbPickExample();
   return (
-    <main id="main" className="mx-auto w-full max-w-6xl min-w-0 px-4 py-8">
-      <div className="mb-6">
-        <h1 className="font-heading text-2xl">College Football Model Methodology</h1>
-        <p className="mt-1 text-sm text-muted-foreground">
-          Possession-based ratings, calibrated game distributions, and a
-          market-anchored in-game win probability model
-        </p>
-      </div>
+    <PageShell>
+      <PageHeader>
+        <div>
+          <PageTitle>College Football Model Methodology</PageTitle>
+          <PageDescription>
+            Possession-based ratings, calibrated game distributions, and a
+            market-anchored in-game win probability model
+          </PageDescription>
+        </div>
+      </PageHeader>
 
       <div className="lg:grid lg:grid-cols-[180px_1fr] lg:gap-8">
         <TableOfContents />
         <MethodologyContent example={example} />
       </div>
-    </main>
+    </PageShell>
   );
 }

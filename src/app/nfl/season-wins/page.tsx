@@ -1,3 +1,4 @@
+import { PageDescription, PageHeader, PageShell, PageTitle } from "@/components/page-layout";
 import type { Metadata } from "next";
 import { fetchSeasonWinTotals, fetchTeams } from "@/lib/nfl";
 import { LastUpdated } from "@/components/last-updated";
@@ -26,34 +27,31 @@ export default async function SeasonWinsPage() {
   const first = rows[0];
   if (!first)
     return (
-      <main id="main" className="mx-auto w-full max-w-5xl min-w-0 px-4 py-8">
-        <h1 className="font-heading text-2xl">NFL Season Win Projections</h1>
-        <p className="mt-4 text-muted-foreground">
+      <PageShell>
+        <PageTitle>NFL Season Win Projections</PageTitle>
+        <p className="text-muted-foreground">
           {unavailable
             ? "Season projections are temporarily unavailable. Please check back shortly."
             : "Season projections will appear here once the full forecast is published."}
         </p>
-      </main>
+      </PageShell>
     );
   const inSeason = rows.some((row) => row.games_played > 0);
   return (
-    <main
-      id="main"
-      className="mx-auto w-full max-w-5xl min-w-0 space-y-6 px-4 py-8"
-    >
-      <div className="flex flex-col justify-between gap-3 sm:flex-row sm:items-start">
+    <PageShell>
+      <PageHeader>
         <div>
-          <h1 className="font-heading text-2xl">NFL Season Win Projections</h1>
-          <p className="mt-1 font-mono text-xs uppercase tracking-wider text-muted-foreground">
+          <PageTitle>NFL Season Win Projections</PageTitle>
+          <PageDescription className="font-mono text-xs uppercase tracking-wider">
             {first.season} · Regular season ·{" "}
             {inSeason ? "Updated outlook" : "Preseason outlook"}
-          </p>
+          </PageDescription>
         </div>
         <LastUpdated
           timestamp={first.as_of}
           schedule="Updates with each projection refresh"
         />
-      </div>
+      </PageHeader>
       <p className="max-w-3xl text-sm leading-relaxed text-muted-foreground">
         Projected regular-season win totals for all 32 NFL teams, next to the
         preseason sportsbook line. Expected wins cover the full 17-game schedule. The range shows the
@@ -120,6 +118,6 @@ export default async function SeasonWinsPage() {
           </p>
         </div>
       </div>
-    </main>
+    </PageShell>
   );
 }

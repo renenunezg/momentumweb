@@ -99,7 +99,7 @@ export function PowerRatingsTable<T extends PowerRatingRow>({
       />
       {allLimited && <p className="text-xs text-accent-amber">{limited.allNote}</p>}
       <div className="overflow-x-auto">
-        <Table className={market ? "[&_td]:px-1 [&_th]:px-1 sm:[&_td]:px-2 sm:[&_th]:px-2" : undefined}>
+        <Table density={market ? "compact" : "default"}>
           <TableCaption className="sr-only">
             {query.trim() && searchRows ? "Team search power ratings" : caption}
           </TableCaption>

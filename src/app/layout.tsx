@@ -70,7 +70,8 @@ export default function RootLayout({
           enableSystem
           disableTransitionOnChange
         >
-          {children}
+          {/* Keep changing route nodes inside a stable sibling of the footer. */}
+          <div className="flex min-w-0 flex-1 flex-col">{children}</div>
           <SiteFooter />
           <SiteAnalytics />
           <SpeedInsights />

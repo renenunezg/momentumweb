@@ -1,3 +1,4 @@
+import { PageShell, PageTitle } from "@/components/page-layout";
 import type { Metadata } from "next";
 import Link from "next/link";
 import { posts } from "./posts";
@@ -10,8 +11,8 @@ export const metadata: Metadata = {
 
 export default function BlogPage() {
   return (
-    <main id="main" className="mx-auto w-full max-w-3xl min-w-0 px-4 py-8">
-      <h1 className="font-heading text-2xl mb-6">Blog</h1>
+    <PageShell width="reading">
+      <PageTitle>Blog</PageTitle>
       {posts.length === 0 ? (
         <p className="text-sm text-muted-foreground">Nothing published yet.</p>
       ) : (
@@ -35,6 +36,6 @@ export default function BlogPage() {
           ))}
         </div>
       )}
-    </main>
+    </PageShell>
   );
 }

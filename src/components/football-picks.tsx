@@ -1,3 +1,4 @@
+import { PageSection } from "@/components/page-layout";
 import Link from "next/link";
 import { KpiCard } from "@/components/kpi-card";
 import {
@@ -322,7 +323,7 @@ export function PickBreakdown({
 }) {
   if (!rows.length) return null;
   return (
-    <section className="space-y-3">
+    <PageSection>
       <h2 className="font-heading text-lg">{title}</h2>
       <Table>
         <TableCaption className="sr-only">{title}</TableCaption>
@@ -378,7 +379,7 @@ export function PickBreakdown({
           ))}
         </TableBody>
       </Table>
-    </section>
+    </PageSection>
   );
 }
 

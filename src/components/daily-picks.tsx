@@ -1,3 +1,4 @@
+import { PageSection } from "@/components/page-layout";
 import Link from "next/link";
 import { Kickoff } from "@/components/kickoff-cells";
 import { LocalKickoffs } from "@/components/local-kickoffs";
@@ -27,8 +28,8 @@ export function DailyPicks({
   dateLabel: string;
 }) {
   return (
-    <section className="mt-10" aria-labelledby="today-heading">
-      <div className="mb-3 flex items-baseline justify-between gap-4">
+    <PageSection aria-labelledby="today-heading">
+      <div className="flex items-baseline justify-between gap-4">
         <h2
           id="today-heading"
           className="font-mono text-xs uppercase tracking-wider text-muted-foreground"
@@ -123,6 +124,6 @@ export function DailyPicks({
           })}
         </div>
       </LocalKickoffs>
-    </section>
+    </PageSection>
   );
 }

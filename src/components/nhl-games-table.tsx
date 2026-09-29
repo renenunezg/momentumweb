@@ -177,7 +177,6 @@ export function NhlGamesTable({ matchups }: { matchups: NhlMatchup[] }) {
               away={projection.away_team}
               home={projection.home_team}
               columnCount={8}
-              compact
               status={live && live.state !== "pre" && (
                 <span className={cn(
                   "text-[10px] uppercase tracking-wider",

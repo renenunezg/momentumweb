@@ -1,3 +1,4 @@
+import { PageDescription, PageHeader, PageShell, PageTitle } from "@/components/page-layout";
 import type { Metadata } from "next";
 import { Fragment } from "react";
 import { Kickoff } from "@/components/kickoff-cells";
@@ -61,14 +62,14 @@ export default async function SchedulePage() {
 
   if (games.length === 0) {
     return (
-      <main id="main" className="mx-auto w-full max-w-6xl min-w-0 px-4 py-8">
-        <h1 className="font-heading text-2xl">NHL Schedule and Projections</h1>
-        <Notice className="mt-6">
+      <PageShell>
+        <PageTitle>NHL Schedule and Projections</PageTitle>
+        <Notice>
           {unavailable
             ? "Projections are temporarily unavailable."
             : "No projected games in the next seven days."}
         </Notice>
-      </main>
+      </PageShell>
     );
   }
 
@@ -77,19 +78,19 @@ export default async function SchedulePage() {
     byDate.set(game.game_date, [...(byDate.get(game.game_date) ?? []), game]);
 
   return (
-    <main id="main" className="mx-auto w-full max-w-6xl min-w-0 space-y-6 px-4 py-8">
-      <div className="flex items-start justify-between gap-4">
+    <PageShell>
+      <PageHeader>
         <div>
-          <h1 className="font-heading text-2xl">NHL Schedule and Projections</h1>
-          <p className="mt-1 font-mono text-xs uppercase tracking-wider text-muted-foreground">
+          <PageTitle>NHL Schedule and Projections</PageTitle>
+          <PageDescription className="font-mono text-xs uppercase tracking-wider">
             Next {DAYS} days · {games.length} games
-          </p>
+          </PageDescription>
         </div>
         <LastUpdated
           timestamp={games[0]?.as_of ?? null}
           schedule="Updates every morning in season"
         />
-      </div>
+      </PageHeader>
       <p className="max-w-4xl text-sm leading-relaxed text-muted-foreground">
         Projections use the ratings as of the morning run. The partner
         sportsbooks post lines only for the current slate, so book columns fill
@@ -116,7 +117,7 @@ export default async function SchedulePage() {
             {[...byDate.entries()].map(([date, slate]) => (
               <Fragment key={date}>
                 <TableRow className="hover:bg-transparent">
-                  <TableHead scope="rowgroup" colSpan={10} className="h-auto px-2 pt-4 pb-1">
+                  <TableHead scope="rowgroup" colSpan={10} className="h-auto pt-[var(--table-group-gap)] pb-1">
                     <Kickoff start={slate[0].start_date} part="day" />
                   </TableHead>
                 </TableRow>
@@ -168,6 +169,6 @@ export default async function SchedulePage() {
           </TableBody>
         </Table>
       </LocalKickoffs>
-    </main>
+    </PageShell>
   );
 }

@@ -67,7 +67,7 @@ export async function NhlForecastAccuracy({
   }
   const overall = accuracy?.overall ?? null;
   return (
-    <div className="space-y-6">
+    <div className="space-y-section">
       <SourceToggle source={source} page={page} />
       <p className="max-w-4xl text-sm leading-relaxed text-muted-foreground">
         {source === "live"

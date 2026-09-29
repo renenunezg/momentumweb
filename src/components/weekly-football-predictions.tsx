@@ -1,5 +1,7 @@
 "use client";
 
+import { PageSection } from "@/components/page-layout";
+
 import { useMemo, useState } from "react";
 import { TeamLogo } from "@/components/team-logo";
 import { RatingsSearch } from "@/components/ratings-search";
@@ -114,7 +116,7 @@ export function WeeklyFootballPredictions({
     );
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-section">
       <div className="space-y-3 border-y border-rule-strong py-4">
         <div className="flex flex-wrap items-center justify-between gap-3">
           <ToggleGroup
@@ -159,10 +161,9 @@ export function WeeklyFootballPredictions({
         />
       )}
       {visible.map((slate) => (
-        <section
+        <PageSection
           key={slate.id}
           aria-labelledby={`${slate.id}-heading`}
-          className="space-y-3"
         >
           <div className="flex flex-wrap items-end justify-between gap-x-4 gap-y-2 border-b border-rule-strong pb-3 pt-2">
             <div>
@@ -198,7 +199,7 @@ export function WeeklyFootballPredictions({
               />
             ))}
           </div>
-        </section>
+        </PageSection>
       ))}
     </div>
   );

@@ -1,3 +1,4 @@
+import { PageDescription, PageHeader, PageShell, PageTitle } from "@/components/page-layout";
 import type { Metadata } from "next";
 import { supabaseCfb } from "@/lib/supabase";
 import { fetchLatestRatings, fetchTeams } from "@/lib/cfb";
@@ -79,14 +80,14 @@ export default async function SchedulePage() {
 
   if (!latest) {
     return (
-      <main id="main" className="mx-auto w-full max-w-6xl min-w-0 px-4 py-8">
-        <h1 className="font-heading text-2xl">
+      <PageShell>
+        <PageTitle>
           College Football Schedule and Projections
-        </h1>
-        <p className="mt-4 text-muted-foreground">
+        </PageTitle>
+        <p className="text-muted-foreground">
           No projections published yet. Run the publish pipeline to load them.
         </p>
-      </main>
+      </PageShell>
     );
   }
 
@@ -181,24 +182,21 @@ export default async function SchedulePage() {
   }
 
   return (
-    <main
-      id="main"
-      className="mx-auto w-full max-w-6xl min-w-0 px-4 py-8 space-y-6"
-    >
-      <div className="flex items-start justify-between gap-4">
+    <PageShell>
+      <PageHeader>
         <div>
-          <h1 className="font-heading text-2xl">
+          <PageTitle>
             College Football Schedule and Projections
-          </h1>
-          <p className="mt-1 font-mono text-xs uppercase tracking-wider text-muted-foreground">
+          </PageTitle>
+          <PageDescription className="font-mono text-xs uppercase tracking-wider">
             {latest.season} · Week {latest.week} · {games.length} games
-          </p>
+          </PageDescription>
         </div>
         <LastUpdated
           timestamp={lastUpdated}
           schedule="Updates when a new forecast is published"
         />
-      </div>
+      </PageHeader>
 
       <p className="max-w-4xl text-sm text-muted-foreground leading-relaxed">
         Model lines are quoted for the home team: a negative line means the
@@ -371,6 +369,6 @@ export default async function SchedulePage() {
         flags; a large point difference alone does not qualify. A star marks a
         team whose rating inputs are incomplete; N marks a neutral site.
       </p>
-    </main>
+    </PageShell>
   );
 }

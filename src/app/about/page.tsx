@@ -1,3 +1,4 @@
+import { PageSection, PageShell, PageTitle } from "@/components/page-layout";
 import type { Metadata } from "next";
 import { Card, CardContent } from "@/components/ui/card";
 import Image from "next/image";
@@ -83,7 +84,7 @@ const models = [
 
 function SectionLabel({ children }: { children: React.ReactNode }) {
   return (
-    <h2 className="font-mono text-xs uppercase tracking-wider text-muted-foreground mb-3">
+    <h2 className="font-mono text-xs uppercase tracking-wider text-muted-foreground">
       {children}
     </h2>
   );
@@ -91,7 +92,7 @@ function SectionLabel({ children }: { children: React.ReactNode }) {
 
 export default function AboutPage() {
   return (
-    <main id="main" className="mx-auto w-full max-w-3xl min-w-0 px-4 py-8">
+    <PageShell width="reading">
       <JsonLd
         data={{
           "@context": "https://schema.org",
@@ -112,15 +113,15 @@ export default function AboutPage() {
             alt="René Núñez"
             width={96}
             height={96}
-            className="rounded-full object-cover"
+            className="size-24 rounded-full object-cover"
             priority
           />
         </div>
 
         <div className="flex-1 min-w-0">
-          <h1 className="font-heading text-2xl">
+          <PageTitle>
             Ren&eacute; N&uacute;&ntilde;ez
-          </h1>
+          </PageTitle>
           <p className="mt-2 text-sm text-muted-foreground leading-relaxed">
             Data Analyst in the San Diego&ndash;Tijuana area, with a
             background in behavioral neuroscience research, municipal government, and
@@ -152,16 +153,16 @@ export default function AboutPage() {
         </div>
       </div>
 
-      <section className="mt-10">
+      <PageSection>
         <SectionLabel>Looking for</SectionLabel>
         <p className="text-sm text-muted-foreground leading-relaxed">
           Data scientist, analytics engineer, and applied statistics or forecasting
           roles where calibrated probabilities and honest evaluation matter more than a
           point estimate. San Diego, Tijuana, or remote.
         </p>
-      </section>
+      </PageSection>
 
-      <section className="mt-10">
+      <PageSection>
         <SectionLabel>Strengths</SectionLabel>
         <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
           {strengths.map(({ title, body }) => (
@@ -171,9 +172,9 @@ export default function AboutPage() {
             </CardContent></Card>
           ))}
         </div>
-      </section>
+      </PageSection>
 
-      <section className="mt-10">
+      <PageSection>
         <SectionLabel>Experience</SectionLabel>
         <div className="divide-y divide-border border-y border-rule-strong">
           {experience.map(({ role, org, when, body }) => (
@@ -194,9 +195,9 @@ export default function AboutPage() {
           Sobresaliente distinction in Intelligent Computing, and an exchange semester
           at Universit&agrave; di Bergamo focused on data science and machine learning.
         </p>
-      </section>
+      </PageSection>
 
-      <section className="mt-10">
+      <PageSection>
         <SectionLabel>Models on this site</SectionLabel>
         <div className="divide-y divide-border border-y border-rule-strong">
           {models.map(({ name, href, body }) => (
@@ -212,7 +213,7 @@ export default function AboutPage() {
             </Link>
           ))}
         </div>
-      </section>
-    </main>
+      </PageSection>
+    </PageShell>
   );
 }

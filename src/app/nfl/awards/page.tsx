@@ -1,3 +1,4 @@
+import { PageDescription, PageHeader, PageSection, PageShell, PageTitle } from "@/components/page-layout";
 import { NavigationLink } from "@/components/navigation-link";
 import type { Metadata } from "next";
 import { AWARDS, type AwardKey } from "@/lib/nfl-awards-types";
@@ -24,12 +25,12 @@ export default async function AwardsPage({ searchParams }: {
   const { snapshots, meta, board, history, trajectory, unavailable } = await fetchAwards(award, season, week);
   const query = (a: AwardKey, s?: number, w?: number) => `/nfl/awards?${new URLSearchParams({ award: a,
     ...(s == null ? {} : { season: String(s) }), ...(w == null ? {} : { week: String(w) }) })}`;
-  return <main id="main" className="mx-auto w-full min-w-0 max-w-5xl space-y-6 px-4 py-8">
-    <div className="flex flex-wrap items-start justify-between gap-4"><div>
+  return <PageShell>
+    <PageHeader><div>
       <p className="mb-2 font-mono text-xs uppercase tracking-widest text-muted-foreground">The race, week by week</p>
-      <h1 className="font-heading text-2xl">NFL MVP and Awards Tracker</h1>
-      <p className="mt-2 max-w-2xl text-sm leading-relaxed text-muted-foreground">Award forecasts alongside on-field performance. Follow the leaders, see what drives their rankings, and revisit each weekly snapshot.</p>
-    </div>{meta && <LastUpdated timestamp={meta.as_of} schedule="Updates after completed weekly games" />}</div>
+      <PageTitle>NFL MVP and Awards Tracker</PageTitle>
+      <PageDescription className="max-w-2xl">Award forecasts alongside on-field performance. Follow the leaders, see what drives their rankings, and revisit each weekly snapshot.</PageDescription>
+    </div>{meta && <LastUpdated timestamp={meta.as_of} schedule="Updates after completed weekly games" />}</PageHeader>
     <nav aria-label="NFL awards" className="flex flex-wrap border-b border-rule-strong font-mono text-xs uppercase tracking-wider">
       {(Object.keys(AWARDS) as AwardKey[]).map((key) => <NavigationLink prefetch={true} scroll={false} key={key} href={query(key, season, week)} aria-current={award === key ? "page" : undefined}
         className={`border-b-2 px-2 py-2 transition-colors sm:px-3 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring ${award === key ? "border-foreground text-foreground" : "border-transparent text-muted-foreground hover:text-foreground"}`}>{key}</NavigationLink>)}
@@ -39,13 +40,13 @@ export default async function AwardsPage({ searchParams }: {
       : !meta ? <p className="rounded-lg border p-5 text-sm text-muted-foreground">No snapshot has been published for this selection yet. Forecasts appear after completed regular-season games.</p>
       : <>
         <details className="text-sm"><summary className="cursor-pointer text-muted-foreground">Choose a historical snapshot</summary><div className="mt-3 flex max-h-48 flex-wrap gap-2 overflow-y-auto">{snapshots.map((s) => <NavigationLink prefetch={true} scroll={false} key={`${s.season}-${s.week}`} href={query(award, s.season, s.week)} className="rounded border px-2 py-1 font-mono text-xs hover:bg-muted" aria-current={s.season === meta.season && s.week === meta.week ? "page" : undefined}>{s.season} · W{s.week}</NavigationLink>)}</div></details>
-        {meta.status === "watchlist" ? <section className="space-y-4">
+        {meta.status === "watchlist" ? <PageSection>
           <p className="text-sm leading-relaxed text-muted-foreground">Documented injury-return watchlist, in alphabetical order. These are candidates to follow, not a predicted finishing order. There is not enough comparable history under the revised criteria to publish a CPOY forecast.</p>
           <div className="grid gap-3 sm:grid-cols-2">{[...board].sort((a, b) => a.candidate_name.localeCompare(b.candidate_name)).map((row) => <article className="rounded-lg border p-4" key={row.candidate_id}>
             <div className="flex items-center gap-3"><PlayerHeadshot name={row.candidate_name} src={row.headshot_url} /><div><h3 className="text-sm font-medium">{row.candidate_name}</h3><p className="mt-1 font-mono text-xs text-muted-foreground">{row.team} · {row.position}</p></div></div>
             <p className="mt-3 text-sm text-muted-foreground">{row.context_reason}</p>{row.context_source?.startsWith("https://") && <a className="mt-2 inline-block text-xs underline" href={row.context_source}>Source context</a>}
           </article>)}</div>
-        </section> : meta.status !== "ready" ? <p className="rounded-lg border p-5 text-sm text-muted-foreground">{meta.status === "missing_comeback_context"
+        </PageSection> : meta.status !== "ready" ? <p className="rounded-lg border p-5 text-sm text-muted-foreground">{meta.status === "missing_comeback_context"
           ? "Comeback forecasts need dated, sourced eligibility context. This award has not passed that data check yet."
           : meta.status === "insufficient_history" ? "There is not enough eligible historical data to fit this award model yet."
           : "Waiting for completed regular-season games before building this award board."}</p>
@@ -58,7 +59,7 @@ export default async function AwardsPage({ searchParams }: {
             <NflAwardsBoard rows={board} award={award} />
             <NflAwardsTrajectory points={trajectory} leaders={board.slice(0, TRAJECTORY_LINES)} />
           </>}
-        {history.length > 0 && <section className="space-y-3"><h2 className="font-heading text-lg">Weekly leaders</h2><div className="flex gap-3 overflow-x-auto pb-2">{history.map((row) => <NavigationLink prefetch={true} scroll={false} key={row.week} href={query(award, row.season, row.week)} className="min-w-44 rounded-lg border p-4 hover:bg-muted"><p className="font-mono text-xs text-muted-foreground">Week {row.week}</p><p className="mt-2 text-sm font-medium">{row.candidate_name}</p><p className="mt-1 text-xs text-muted-foreground">{row.team}</p></NavigationLink>)}</div></section>}
+        {history.length > 0 && <PageSection><h2 className="font-heading text-lg">Weekly leaders</h2><div className="flex gap-3 overflow-x-auto pb-2">{history.map((row) => <NavigationLink prefetch={true} scroll={false} key={row.week} href={query(award, row.season, row.week)} className="min-w-44 rounded-lg border p-4 hover:bg-muted"><p className="font-mono text-xs text-muted-foreground">Week {row.week}</p><p className="mt-2 text-sm font-medium">{row.candidate_name}</p><p className="mt-1 text-xs text-muted-foreground">{row.team}</p></NavigationLink>)}</div></PageSection>}
         <details className="border-t pt-5 text-sm"><summary className="cursor-pointer font-medium">Methodology and validation</summary><div className="mt-4 max-w-3xl space-y-3 leading-relaxed text-muted-foreground">
           <p>Each award has a separate regularized model trained on earlier seasons only. Candidates come from statistics available at the selected cutoff. Missing winners count as misses. The model predicts award winners; it does not estimate ballot share.</p>
           <p>Remaining-season player totals shrink toward prior-season rates with a four-game prior. Team records use a beta prior. Coach forecasts compare projected wins with a preseason baseline formed from the prior season record. These projections assume continued availability and do not yet model future injury risk. Full-game production informs the award forecast; competitive-drive EPA is a separate performance measure. Awards do not change team ratings.</p>
@@ -68,5 +69,5 @@ export default async function AwardsPage({ searchParams }: {
           <p>Sources: <a className="underline" href="https://nflreadpy.nflverse.com/api/load_functions/">nflverse player and schedule data</a>, <a className="underline" href="https://static.clubs.nfl.com/image/upload/saints/bvaqvsl0fwdhlxu6wnw2.pdf">NFL Record and Fact Book</a>, and <a className="underline" href="https://amp.nfl.com/news/list-of-nfl-honors-award-winners-from-2025-nfl-season">NFL Honors results</a>.</p>
         </div></details>
       </>}
-  </main>;
+  </PageShell>;
 }

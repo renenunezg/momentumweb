@@ -46,10 +46,10 @@ export function ScheduleMatchupCell({
 export function ScheduleMatchupHead() {
   return (
     <TableHead className="sticky left-0 z-10 p-0 max-md:bg-background max-md:shadow-[1px_0_0_var(--border)] md:static">
-      <span className="px-2 md:hidden">Matchup</span>
+      <span className="px-[var(--table-cell-x)] md:hidden">Matchup</span>
       <span className="hidden md:grid md:grid-cols-2">
-        <span className="px-2">Away</span>
-        <span className="px-2">Home</span>
+        <span className="px-[var(--table-cell-x)]">Away</span>
+        <span className="px-[var(--table-cell-x)]">Home</span>
       </span>
     </TableHead>
   );
@@ -67,7 +67,7 @@ function Side({
     // The live score writer appends this side's score to the span. A side
     // with no color on file paints nothing.
     <span
-      className="flex min-w-0 items-center gap-2 px-2 py-1.5"
+      className="flex min-w-0 items-center gap-2 px-[var(--table-cell-x)] py-[var(--table-cell-y)]"
       data-team-cell={side}
       style={
         color

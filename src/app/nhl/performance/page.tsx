@@ -1,3 +1,4 @@
+import { PageDescription, PageHeader, PageShell, PageTitle } from "@/components/page-layout";
 import type { Metadata } from "next";
 import Link from "next/link";
 import {
@@ -41,12 +42,12 @@ export default async function PerformancePage({
   if (params.view === "accuracy" || params.source) {
     const source = params.source === "backtest" ? "backtest" : "live";
     return (
-      <main id="main" className="mx-auto w-full max-w-6xl min-w-0 space-y-6 px-4 py-8">
-        <h1 className="font-heading text-2xl">NHL Model Performance</h1>
+      <PageShell>
+        <PageTitle>NHL Model Performance</PageTitle>
         <FootballPerformanceTabs sport="nhl" active="accuracy" query={query}>
           <NhlForecastAccuracy source={source} page="performance" />
         </FootballPerformanceTabs>
-      </main>
+      </PageShell>
     );
   }
   const summary = await fetchNhlPickSummary(filters);
@@ -55,22 +56,22 @@ export default async function PerformancePage({
   const settled = (metric?.wins ?? 0) + (metric?.losses ?? 0) + (metric?.pushes ?? 0);
 
   return (
-    <main id="main" className="mx-auto w-full max-w-6xl min-w-0 space-y-6 px-4 py-8">
-      <div className="flex flex-wrap items-start justify-between gap-3">
+    <PageShell>
+      <PageHeader>
         <div>
-          <h1 className="font-heading text-2xl">NHL Model Performance</h1>
-          <p className="mt-1 max-w-2xl text-sm text-muted-foreground">
+          <PageTitle>NHL Model Performance</PageTitle>
+          <PageDescription className="max-w-2xl">
             How the NHL model&apos;s moneyline and total picks have done:
             recommended picks, the partner-book prices recorded at the time,
             and graded results.
-          </p>
+          </PageDescription>
         </div>
         <Link href={`/nhl/history?${query}`} className="text-sm underline underline-offset-4">
           View pick history
         </Link>
-      </div>
+      </PageHeader>
       <FootballPerformanceTabs sport="nhl" active="picks" query={query}>
-        <div className="space-y-7">
+        <div className="space-y-section">
           <PickFilters
             seasonOptions={summary.seasons}
             season={filters.season}
@@ -142,6 +143,6 @@ export default async function PerformancePage({
           <PickPolicy sport="nhl" firstDecision={metric?.first_decision_at} />
         </div>
       </FootballPerformanceTabs>
-    </main>
+    </PageShell>
   );
 }

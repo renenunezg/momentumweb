@@ -82,7 +82,7 @@ export function GroupRatings<T extends PowerRatingRow>({
   }
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-section">
       <div className="space-y-3">
         {tiers.map((tier) => {
           const inTier = groups

@@ -1,3 +1,4 @@
+import { PageDescription, PageHeader, PageShell, PageTitle } from "@/components/page-layout";
 import type { Metadata } from "next";
 import { supabase } from "@/lib/supabase";
 import { TableOfContents } from "./toc";
@@ -131,18 +132,20 @@ export default async function Page() {
   const featured = await fetchFeaturedGame();
 
   return (
-    <main id="main" className="mx-auto w-full max-w-6xl min-w-0 px-4 py-8">
-      <div className="mb-6">
-        <h1 className="font-heading text-2xl">MLB Model Methodology</h1>
-        <p className="mt-1 text-sm text-muted-foreground">
-          Hierarchical Bayesian skill model and per-PA Monte Carlo simulator, end to end
-        </p>
-      </div>
+    <PageShell>
+      <PageHeader>
+        <div>
+          <PageTitle>MLB Model Methodology</PageTitle>
+          <PageDescription>
+            Hierarchical Bayesian skill model and per-PA Monte Carlo simulator, end to end
+          </PageDescription>
+        </div>
+      </PageHeader>
 
       <div className="lg:grid lg:grid-cols-[180px_1fr] lg:gap-8">
         <TableOfContents />
         <MethodologyContent featured={featured} />
       </div>
-    </main>
+    </PageShell>
   );
 }

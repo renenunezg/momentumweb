@@ -217,7 +217,7 @@ export function MethodologyContent({
         title="Model Changelog"
         subtitle="Significant changes to model behavior, most recent first"
       >
-        <div className="space-y-6 text-sm">
+        <div className="space-y-section text-sm">
           <ChangelogEntry
             date="September 4, 2026"
             title="Moneyline flags require a paired market anchor"
@@ -272,7 +272,7 @@ export function MethodologyContent({
             <summary className="cursor-pointer select-none rounded-sm border border-border bg-muted/40 px-3 py-2 text-xs uppercase tracking-wider text-muted-foreground hover:bg-muted">
               See full changelog (2 older entries)
             </summary>
-            <div className="mt-6 space-y-6">
+            <div className="mt-6 space-y-section">
               <ChangelogEntry
                 date="April 20, 2026 (v1)"
                 title="Raised +EV thresholds from 3% to 4.5% (ML/RL) and 6.5% (totals)"

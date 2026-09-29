@@ -380,7 +380,7 @@ export function FootballTeamComparison<T extends RatingRow, U extends UnitRow>({
   }
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-section">
       {projections.games.length > 0 && (
         <label className="block space-y-2 text-xs text-muted-foreground">
           <span className="font-mono uppercase tracking-wider">
@@ -569,7 +569,7 @@ export function FootballTeamComparison<T extends RatingRow, U extends UnitRow>({
           within {scope}
         </p>
         {mode === "matchups" ? (
-          <div className="space-y-6">
+          <div className="space-y-section">
             {[
               {
                 offense: left,
