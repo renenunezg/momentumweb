@@ -8,6 +8,7 @@ import { ThemeToggle } from "@/components/theme-toggle";
 const mlbLinks = [
   { href: "/mlb/methodology", label: "Methodology" },
   { href: "/mlb/games", label: "Games" },
+  { href: "/mlb/playoffs", label: "Playoffs" },
   { href: "/mlb/history", label: "History" },
   { href: "/mlb/performance", label: "Performance" },
   { href: "/about", label: "About" },
