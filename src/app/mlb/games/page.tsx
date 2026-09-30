@@ -5,7 +5,6 @@ import type { Tables } from "@/lib/database.types";
 import type { ModelOutput, GameMatchup, GameInfo } from "@/lib/types";
 import { GamesLive } from "@/components/games-live";
 import { SummaryStats } from "@/components/summary-stats";
-import { GameCardUnavailable } from "@/components/game-card-unavailable";
 import { LastUpdated } from "@/components/last-updated";
 import { latestStamp } from "@/lib/mlb-picks-version";
 import type { LiveScore } from "@/app/mlb/api/live-scores/route";
@@ -206,16 +205,14 @@ export default async function Page() {
       <GamesLive
         key={picksVersion ?? "unpublished"}
         initial={matchups}
+        unavailableGames={unavailableGames.map((game) => {
+          const live = liveScores.get(game.game_pk);
+          return { ...game, status: live?.status ?? game.status,
+            home_score: live?.home_score ?? game.home_score,
+            away_score: live?.away_score ?? game.away_score };
+        })}
         picksVersion={picksVersion}
       />
-
-      {unavailableGames.length > 0 && (
-        <div className="space-y-3">
-          {unavailableGames.map((game) => (
-            <GameCardUnavailable key={game.game_pk} game={game} />
-          ))}
-        </div>
-      )}
     </PageShell>
   );
 }

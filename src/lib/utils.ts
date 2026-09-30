@@ -14,6 +14,15 @@ export function formatOdds(odds: number | null | undefined): string {
   return rounded > 0 ? `+${rounded}` : `${rounded}`;
 }
 
+// Convert the full probability before display rounding; 0/1 have no finite line.
+export function formatFairOdds(probability: number | null | undefined): string {
+  if (probability == null || !Number.isFinite(probability) || probability <= 0 || probability >= 1) return EMPTY;
+  const odds = probability > 0.5
+    ? -100 * probability / (1 - probability)
+    : 100 * (1 - probability) / probability;
+  return Number.isFinite(odds) ? formatOdds(odds) : EMPTY;
+}
+
 export function formatNumber(
   value: number | null | undefined,
   decimals = 1

@@ -1,11 +1,13 @@
+import { MlbLiveProbabilityDialog } from "@/components/mlb-live-probability-dialog";
 import type { GameInfo } from "@/lib/types";
 import { Card, CardHeader, CardContent } from "@/components/ui/card";
 
 interface GameCardUnavailableProps {
   game: GameInfo;
+  showWinProbability?: boolean;
 }
 
-export function GameCardUnavailable({ game }: GameCardUnavailableProps) {
+export function GameCardUnavailable({ game, showWinProbability = false }: GameCardUnavailableProps) {
   const startTime = game.start_time
     ? new Date(game.start_time).toLocaleTimeString("en-US", {
         hour: "numeric",
@@ -17,10 +19,11 @@ export function GameCardUnavailable({ game }: GameCardUnavailableProps) {
   return (
     <Card size="sm">
       <CardHeader className="border-b pb-2">
-        <div className="flex items-baseline justify-between gap-2">
+        <div className="flex flex-wrap items-baseline justify-between gap-2">
           <span className="font-mono text-sm font-semibold">
             {game.away_team} @ {game.home_team}
           </span>
+          {showWinProbability && <MlbLiveProbabilityDialog gamePk={game.game_pk} away={game.away_team} home={game.home_team} />}
           <span className="text-xs text-muted-foreground font-mono">
             {game.venue && <>{game.venue} &middot; </>}
             {startTime}

@@ -2,7 +2,8 @@
 
 import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
-import type { GameMatchup } from "@/lib/types";
+import { GameCardUnavailable } from "@/components/game-card-unavailable";
+import type { GameInfo, GameMatchup } from "@/lib/types";
 import type { LiveScore } from "@/app/mlb/api/live-scores/route";
 import { GamesTable } from "@/components/games-table";
 
@@ -31,16 +32,18 @@ function mergeScores(
   });
 }
 
-function allFinal(matchups: GameMatchup[]): boolean {
+function allFinal(matchups: { status: string | null }[]): boolean {
   if (matchups.length === 0) return true;
   return matchups.every((m) => m.status === "Final");
 }
 
 export function GamesLive({
   initial,
+  unavailableGames = [],
   picksVersion,
 }: {
   initial: GameMatchup[];
+  unavailableGames?: GameInfo[];
   // Newest pick or game write the server rendered from. When the poll
   // reports a newer one the page re-renders, and the parent keys this
   // component on the version so the fresh picks replace the merged state.
@@ -48,6 +51,8 @@ export function GamesLive({
 }) {
   const router = useRouter();
   const [matchups, setMatchups] = useState<GameMatchup[]>(initial);
+  const [unavailable, setUnavailable] = useState(unavailableGames);
+  const finished = allFinal([...matchups, ...unavailable]);
   const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const versionRef = useRef(picksVersion);
 
@@ -65,7 +70,14 @@ export function GamesLive({
           picks_version?: string | null;
         };
         if (cancelled || !data.scores) return;
-        setMatchups((prev) => mergeScores(prev, data.scores!));
+        const scores = data.scores;
+        setMatchups((prev) => mergeScores(prev, scores));
+        setUnavailable((prev) => prev.map((game) => {
+          const score = scores.find((s) => s.game_pk === game.game_pk);
+          return score ? { ...game, status: score.status ?? game.status,
+            home_score: score.home_score ?? game.home_score,
+            away_score: score.away_score ?? game.away_score } : game;
+        }));
         if (data.picks_version && data.picks_version !== versionRef.current) {
           versionRef.current = data.picks_version;
           router.refresh();
@@ -76,9 +88,10 @@ export function GamesLive({
     }
 
     function schedule() {
+      if (cancelled) return;
       if (timerRef.current) clearTimeout(timerRef.current);
       if (document.visibilityState !== "visible") return;
-      if (allFinal(matchups)) return;
+      if (finished) return;
       timerRef.current = setTimeout(async () => {
         await fetchOnce();
         schedule();
@@ -108,7 +121,16 @@ export function GamesLive({
       document.removeEventListener("visibilitychange", onVisibility);
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps -- re-run only when the last game goes Final, so polling stops
-  }, [allFinal(matchups)]);
+  }, [finished]);
 
-  return <GamesTable matchups={matchups} />;
+  return <>
+    <GamesTable matchups={matchups} />
+    {unavailable.length > 0 && <div className="space-y-3">
+      {unavailable.map((game) => <GameCardUnavailable key={game.game_pk} game={game}
+        showWinProbability={game.status === "Final" || (
+          game.status != null && !["Scheduled", "Pre-Game", "Warmup", "Delayed Start", "Postponed", "Cancelled"].includes(game.status)
+          && (game.home_score != null || game.away_score != null)
+        )} />)}
+    </div>}
+  </>;
 }

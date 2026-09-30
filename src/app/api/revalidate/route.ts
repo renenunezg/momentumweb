@@ -25,10 +25,16 @@ export async function POST(request: Request) {
   }
   const body = (await request.json().catch(() => null)) as {
     schema?: unknown;
+    table?: unknown;
   } | null;
   const sport = typeof body?.schema === "string" ? body.schema : "";
   if (!SPORTS.has(sport)) {
     return NextResponse.json({ error: "unknown schema" }, { status: 400 });
+  }
+  // Live snapshots change throughout every game; invalidate only their reads.
+  if (sport === "mlb" && body?.table === "live_win_probability") {
+    revalidateTag("mlb-live-probability", { expire: 0 });
+    return NextResponse.json({ revalidated: "mlb-live-probability" });
   }
   // A published decision must be visible on the next visit, with no stale window.
   revalidateTag(sport, { expire: 0 });

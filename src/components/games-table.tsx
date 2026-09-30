@@ -1,4 +1,5 @@
 import { Fragment } from "react";
+import { MlbLiveProbabilityDialog } from "@/components/mlb-live-probability-dialog";
 import { cn, formatNumber, formatOdds, formatPct } from "@/lib/utils";
 import type { GameMatchup, ModelOutput } from "@/lib/types";
 import { gameStatus } from "@/lib/game-status";
@@ -99,6 +100,9 @@ export function GamesTable({ matchups }: { matchups: GameMatchup[] }) {
                   )}
                   {status.isLive && (
                     <span className="text-[10px] uppercase tracking-wider text-positive">{status.liveLabel}</span>
+                  )}
+                  {(status.isLive || status.isFinal) && (
+                    <MlbLiveProbabilityDialog gamePk={matchup.game_pk} away={matchup.away_team} home={matchup.home_team} />
                   )}
                   {status.lineupsPending && (
                     <span className="text-[10px] uppercase tracking-wider text-muted-foreground">Lineups pending</span>
