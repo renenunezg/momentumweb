@@ -2,6 +2,7 @@ import { NextResponse, after } from "next/server";
 import { createClient } from "@supabase/supabase-js";
 import type { Database } from "@/lib/database.types";
 import { runEvalForGame } from "@/lib/eval-game";
+import { toLiveScore, type MlbScheduleGame } from "@/lib/mlb-live-scores";
 import { fetchPicksVersion } from "@/lib/mlb-picks-version";
 
 // Cached proxy to the MLB Stats API: N browsers polling this route become at
@@ -15,32 +16,6 @@ import { fetchPicksVersion } from "@/lib/mlb-picks-version";
 // browsers are polling.
 
 export const revalidate = 30;
-
-interface MLBGame {
-  gamePk: number;
-  status?: {
-    detailedState?: string;
-    abstractGameState?: string; // "Preview" | "Live" | "Final"
-  };
-  teams?: {
-    away?: { score?: number; team?: { abbreviation?: string } };
-    home?: { score?: number; team?: { abbreviation?: string } };
-  };
-  linescore?: {
-    currentInning?: number;
-    inningState?: string; // "Top" | "Middle" | "Bottom" | "End"
-  };
-}
-
-export interface LiveScore {
-  game_pk: number;
-  status: string | null;
-  abstract_state: string | null;
-  home_score: number | null;
-  away_score: number | null;
-  current_inning: number | null;
-  inning_state: string | null;
-}
 
 // Games this server instance has already seen graded, so a finished game
 // costs one indexed lookup per instance rather than one per revalidation.
@@ -96,17 +71,9 @@ export async function GET() {
       );
     }
     const data = await res.json();
-    const games: MLBGame[] = data?.dates?.[0]?.games ?? [];
+    const games: MlbScheduleGame[] = data?.dates?.[0]?.games ?? [];
 
-    const scores: LiveScore[] = games.map((g) => ({
-      game_pk: g.gamePk,
-      status: g.status?.detailedState ?? null,
-      abstract_state: g.status?.abstractGameState ?? null,
-      home_score: g.teams?.home?.score ?? null,
-      away_score: g.teams?.away?.score ?? null,
-      current_inning: g.linescore?.currentInning ?? null,
-      inning_state: g.linescore?.inningState ?? null,
-    }));
+    const scores = games.map(toLiveScore);
 
     const finals = games
       .filter((g) => g.status?.abstractGameState === "Final")

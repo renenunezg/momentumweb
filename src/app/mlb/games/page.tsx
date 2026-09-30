@@ -7,7 +7,7 @@ import { GamesLive } from "@/components/games-live";
 import { SummaryStats } from "@/components/summary-stats";
 import { LastUpdated } from "@/components/last-updated";
 import { latestStamp } from "@/lib/mlb-picks-version";
-import type { LiveScore } from "@/app/mlb/api/live-scores/route";
+import { toLiveScore, type LiveScore, type MlbScheduleGame } from "@/lib/mlb-live-scores";
 
 // Render fresh on every request so predictions always reflect the current
 // model_outputs (the last pre-pitch re-score / frozen value), not a cached
@@ -19,13 +19,6 @@ export const metadata: Metadata = {
   description:
     "Today's MLB win probabilities, projected run totals, and model picks from a hierarchical Bayesian simulation of every plate appearance, refreshed each morning and graded against the closing line.",
 };
-
-interface MlbScheduleGame {
-  gamePk: number;
-  status?: { detailedState?: string; abstractGameState?: string };
-  teams?: { home?: { score?: number }; away?: { score?: number } };
-  linescore?: { currentInning?: number; inningState?: string };
-}
 
 async function fetchLiveScores(): Promise<Map<number, LiveScore>> {
   const today = new Date().toLocaleDateString("en-CA", {
@@ -43,20 +36,7 @@ async function fetchLiveScores(): Promise<Map<number, LiveScore>> {
     if (!res.ok) return new Map();
     const data = await res.json();
     const games: MlbScheduleGame[] = data?.dates?.[0]?.games ?? [];
-    return new Map(
-      games.map((g) => [
-        g.gamePk,
-        {
-          game_pk: g.gamePk,
-          status: g.status?.detailedState ?? null,
-          abstract_state: g.status?.abstractGameState ?? null,
-          home_score: g.teams?.home?.score ?? null,
-          away_score: g.teams?.away?.score ?? null,
-          current_inning: g.linescore?.currentInning ?? null,
-          inning_state: g.linescore?.inningState ?? null,
-        },
-      ])
-    );
+    return new Map(games.map((game) => [game.gamePk, toLiveScore(game)]));
   } catch {
     return new Map();
   }
@@ -145,6 +125,7 @@ export default async function Page() {
         status: live?.status ?? game.status ?? null,
         current_inning: live?.current_inning ?? null,
         inning_state: live?.inning_state ?? null,
+        bases: live?.bases ?? null,
       };
     })
     .filter((m): m is GameMatchup => m != null);
@@ -209,7 +190,7 @@ export default async function Page() {
           const live = liveScores.get(game.game_pk);
           return { ...game, status: live?.status ?? game.status,
             home_score: live?.home_score ?? game.home_score,
-            away_score: live?.away_score ?? game.away_score };
+            away_score: live?.away_score ?? game.away_score, bases: live?.bases ?? null };
         })}
         picksVersion={picksVersion}
       />

@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import { CartesianGrid, Line, LineChart, ReferenceLine, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
 import { chartAxisProps, chartTooltipStyle, useChartTheme } from "@/lib/chart-theme";
 import { liveProbabilityStale, parseLiveProbability, type LiveProbability } from "@/lib/mlb-live-probability";
+import { baseOccupancyLabel } from "@/lib/mlb-bases";
 import { formatFairOdds, formatPct } from "@/lib/utils";
 
 export default function LiveProbabilityContent({ gamePk, away, home }: { gamePk: number; away: string; home: string }) {
@@ -89,8 +90,7 @@ export default function LiveProbabilityContent({ gamePk, away, home }: { gamePk:
         </div>
         {state && <div className="flex flex-wrap items-center justify-between gap-2 text-sm">
           <span>{state.top ? "Top" : "Bottom"} {state.inning} &middot; {state.outs} out{state.outs === 1 ? "" : "s"} &middot; {state.balls}-{state.strikes}</span>
-          <span className="text-xs text-muted-foreground">{state.bases === 0 ? "Bases empty" :
-            `${["1st", "2nd", "3rd"].filter((_, i) => state.bases & (1 << i)).join(" & ")} occupied`}</span>
+          <span className="text-xs text-muted-foreground">{baseOccupancyLabel(state.bases)}</span>
         </div>}
         <div>
           <div className="mb-2 text-xs uppercase tracking-wide text-muted-foreground">{home} win probability</div>

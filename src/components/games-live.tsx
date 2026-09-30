@@ -4,7 +4,7 @@ import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { GameCardUnavailable } from "@/components/game-card-unavailable";
 import type { GameInfo, GameMatchup } from "@/lib/types";
-import type { LiveScore } from "@/app/mlb/api/live-scores/route";
+import type { LiveScore } from "@/lib/mlb-live-scores";
 import { GamesTable } from "@/components/games-table";
 
 // The route caches upstream for 30s, so polling faster than that only
@@ -28,6 +28,7 @@ function mergeScores(
       status: s.status ?? m.status,
       current_inning: s.current_inning,
       inning_state: s.inning_state,
+      bases: s.bases ?? null,
     };
   });
 }
@@ -76,7 +77,7 @@ export function GamesLive({
           const score = scores.find((s) => s.game_pk === game.game_pk);
           return score ? { ...game, status: score.status ?? game.status,
             home_score: score.home_score ?? game.home_score,
-            away_score: score.away_score ?? game.away_score } : game;
+            away_score: score.away_score ?? game.away_score, bases: score.bases ?? null } : game;
         }));
         if (data.picks_version && data.picks_version !== versionRef.current) {
           versionRef.current = data.picks_version;

@@ -42,7 +42,7 @@ export type GameInfo = Pick<
   | "status"
   | "venue"
   | "start_time"
->;
+> & { bases?: number | null };
 
 // The nightly batch always fills the count and accuracy columns; only the
 // regression, probabilistic and financial metrics are legitimately null.
@@ -142,6 +142,7 @@ export interface GameMatchup {
   // Filled by the live-scores poll, never stored.
   current_inning?: number | null;
   inning_state?: string | null;
+  bases?: number | null;
 }
 
 // ---------------------------------------------------------------------------

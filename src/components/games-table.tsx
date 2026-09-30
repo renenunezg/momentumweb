@@ -1,4 +1,5 @@
 import { Fragment } from "react";
+import { BaseDiamond } from "@/components/base-diamond";
 import { MlbLiveProbabilityDialog } from "@/components/mlb-live-probability-dialog";
 import { cn, formatNumber, formatOdds, formatPct } from "@/lib/utils";
 import type { GameMatchup, ModelOutput } from "@/lib/types";
@@ -99,7 +100,10 @@ export function GamesTable({ matchups }: { matchups: GameMatchup[] }) {
                     <span className="text-[10px] uppercase tracking-wider text-muted-foreground">Final</span>
                   )}
                   {status.isLive && (
-                    <span className="text-[10px] uppercase tracking-wider text-positive">{status.liveLabel}</span>
+                    <span className="inline-flex items-center gap-1.5">
+                      <span className="text-[10px] uppercase tracking-wider text-positive">{status.liveLabel}</span>
+                      {matchup.bases != null && <BaseDiamond bases={matchup.bases} />}
+                    </span>
                   )}
                   {(status.isLive || status.isFinal) && (
                     <MlbLiveProbabilityDialog gamePk={matchup.game_pk} away={matchup.away_team} home={matchup.home_team} />

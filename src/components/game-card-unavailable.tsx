@@ -1,3 +1,4 @@
+import { BaseDiamond } from "@/components/base-diamond";
 import { MlbLiveProbabilityDialog } from "@/components/mlb-live-probability-dialog";
 import type { GameInfo } from "@/lib/types";
 import { Card, CardHeader, CardContent } from "@/components/ui/card";
@@ -20,8 +21,9 @@ export function GameCardUnavailable({ game, showWinProbability = false }: GameCa
     <Card size="sm">
       <CardHeader className="border-b pb-2">
         <div className="flex flex-wrap items-baseline justify-between gap-2">
-          <span className="font-mono text-sm font-semibold">
+          <span className="inline-flex items-center gap-2 font-mono text-sm font-semibold">
             {game.away_team} @ {game.home_team}
+            {game.bases != null && <BaseDiamond bases={game.bases} />}
           </span>
           {showWinProbability && <MlbLiveProbabilityDialog gamePk={game.game_pk} away={game.away_team} home={game.home_team} />}
           <span className="text-xs text-muted-foreground font-mono">
