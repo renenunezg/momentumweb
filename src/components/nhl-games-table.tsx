@@ -112,11 +112,11 @@ function TeamRow({
         <span className="text-muted-foreground">{formatOdds(price)}</span>
         {provider && (
           <span className="block text-[10px] leading-3 text-muted-foreground">
-            {provider} · recorded
+            {provider}
           </span>
         )}
         <span className="block text-[10px] leading-3 text-muted-foreground">
-          min {formatOdds(picked ? moneyline.minimum_price : minimum)}
+          play at {formatOdds(picked ? moneyline.minimum_price : minimum)}
         </span>
       </TableCell>
       <TableCell className="text-center">
