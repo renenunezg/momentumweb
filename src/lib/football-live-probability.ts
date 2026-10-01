@@ -1,3 +1,5 @@
+import type { FootballLeague } from "@/lib/football-slates";
+
 export interface LiveProbabilityPoint {
   /** Seconds of regulation elapsed; overtime stays at 3600. */
   s: number;
@@ -9,7 +11,8 @@ export interface LiveProbabilityPoint {
 
 export interface FootballLiveProbability {
   schema_version: 1;
-  game_id: number;
+  /** An ESPN event id for CFB, an nflverse game id for NFL. */
+  game_id: number | string;
   abstract_state: "Pre" | "Live" | "Final" | "Off";
   status: string;
   home_team: string;
@@ -35,9 +38,9 @@ const count = (value: unknown): value is number =>
 // The site validates the serving contract; probability calculations stay in the model repo.
 export function parseFootballLiveProbability(
   value: unknown,
-  gameId: number,
+  gameId: string,
 ): FootballLiveProbability | null {
-  if (!record(value) || value.schema_version !== 1 || value.game_id !== gameId ||
+  if (!record(value) || value.schema_version !== 1 || String(value.game_id) !== gameId ||
     value.probability_source !== "pregame_anchored_game_state" ||
     !["Pre", "Live", "Final", "Off"].includes(String(value.abstract_state)) ||
     typeof value.status !== "string" ||
@@ -67,15 +70,18 @@ export function liveProbabilityStale(data: FootballLiveProbability, now = Date.n
   return data.abstract_state === "Live" && now - Date.parse(data.fetched_at) > 300_000;
 }
 
-export function liveProbabilityRoute(league: "cfb") {
+const GAME_ID: Record<FootballLeague, RegExp> = {
+  cfb: /^[1-9]\d{0,15}$/,
+  nfl: /^\d{4}_\d{2}_[A-Z]{2,3}_[A-Z]{2,3}$/,
+};
+
+export function liveProbabilityRoute(league: FootballLeague) {
   return async function GET(_request: Request, { params }: { params: Promise<{ gameId: string }> }) {
-    const { gameId: raw } = await params;
-    const gameId = Number(raw);
+    const { gameId } = await params;
     const json = (body: object, status: number) => Response.json(body, {
       status, headers: { "Cache-Control": "no-store" },
     });
-    if (!/^\d+$/.test(raw) || !Number.isSafeInteger(gameId) || gameId <= 0)
-      return json({ error: "Invalid game" }, 400);
+    if (!GAME_ID[league].test(gameId)) return json({ error: "Invalid game" }, 400);
     try {
       const url = new URL("/rest/v1/live_win_probability", process.env.NEXT_PUBLIC_SUPABASE_URL);
       url.search = new URLSearchParams({ select: "payload", game_id: `eq.${gameId}`, limit: "1" }).toString();

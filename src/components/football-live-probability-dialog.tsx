@@ -11,7 +11,7 @@ const FootballLiveProbabilityContent = dynamic(() => import("@/components/footba
 });
 
 export function FootballLiveProbabilityDialog({ league, gameId, away, home }: {
-  league: FootballLeague; gameId: number; away: string; home: string;
+  league: FootballLeague; gameId: string; away: string; home: string;
 }) {
   const [open, setOpen] = useState(false);
   return (

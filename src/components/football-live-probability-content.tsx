@@ -19,7 +19,7 @@ function quarterLabel(elapsed: number) {
 }
 
 export default function FootballLiveProbabilityContent({ league, gameId, away, home }: {
-  league: FootballLeague; gameId: number; away: string; home: string;
+  league: FootballLeague; gameId: string; away: string; home: string;
 }) {
   const [data, setData] = useState<FootballLiveProbability | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -126,8 +126,9 @@ export default function FootballLiveProbabilityContent({ league, gameId, away, h
         </p>
       </>}
       <p className="border-t border-border pt-3 text-xs leading-relaxed text-muted-foreground">
-        Based on the score, time remaining, and possession, anchored on the model&apos;s pregame projection for this game.
-        Pregame picks stay fixed; live probabilities do not include betting odds, injuries, or field position.
+        {league === "nfl"
+          ? "Based on the score, time remaining, possession, down and distance, field position, and timeouts, anchored on the model's pregame projection for this game. Pregame picks stay fixed; live probabilities do not include live betting odds or injuries."
+          : "Based on the score, time remaining, and possession, anchored on the model's pregame projection for this game. Pregame picks stay fixed; live probabilities do not include betting odds, injuries, or field position."}{" "}
         Fair odds are derived from these probabilities without bookmaker margin.
       </p>
     </div>

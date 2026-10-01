@@ -273,10 +273,10 @@ function GamePredictions({
             </span>
           ))}
         </h3>
-        {started && league === "cfb" && (
+        {started && (
           <FootballLiveProbabilityDialog
             league={league}
-            gameId={Number(game.game_id)}
+            gameId={String(game.game_id)}
             away={game.away_team}
             home={game.home_team}
           />
