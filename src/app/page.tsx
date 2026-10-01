@@ -7,7 +7,7 @@ import { ContactLine } from "@/components/site-footer";
 import { fetchFullBetLedger } from "@/lib/bet-ledger";
 import { aggregateLedger } from "@/lib/betting-aggs";
 import { supabaseCfb, supabaseNfl } from "@/lib/supabase";
-import { formatPct, formatSigned } from "@/lib/utils";
+import { formatPct } from "@/lib/utils";
 import { fetchCfbPickSummary } from "@/lib/cfb-picks";
 import { fetchNflPickSummary } from "@/lib/nfl-picks";
 import { fetchNhlPickSummary } from "@/lib/nhl-picks";
@@ -22,25 +22,27 @@ import { SITE_DESCRIPTION, SITE_NAME, SITE_URL, SOCIAL_LINKS } from "@/lib/site"
 
 export const revalidate = 3600;
 
-type MlbHeadline = {
-  roi: number | null;
-  wins: number;
-  losses: number;
-  netUnits: number;
-};
-
-async function getMlbHeadline(): Promise<MlbHeadline | null> {
+async function getMlbHeadline(): Promise<MarketRecord[] | null> {
   try {
     const ledger = await fetchFullBetLedger();
     if (ledger.length === 0) return null;
-    const kpis = aggregateLedger(ledger);
-    const wins = ledger.filter((r) => r.won).length;
-    return {
-      roi: kpis.roi,
-      wins,
-      losses: ledger.length - wins,
-      netUnits: kpis.net_profit_units,
-    };
+    return ([
+      ["ml", "h2h"],
+      ["rl", "spreads"],
+      ["total", "totals"],
+    ] as const).map(([betType, market]) => {
+      const rows = ledger.filter((row) => row.bet_type === betType);
+      const wins = rows.filter((row) => row.won).length;
+      const pushes = rows.filter((row) => row.push).length;
+      return {
+        market,
+        wins,
+        losses: rows.length - wins - pushes,
+        pushes,
+        pending: 0,
+        roi: aggregateLedger(rows).roi,
+      };
+    });
   } catch {
     // Home should never 500 because Supabase is unreachable; the MLB card
     // degrades to a plain link.
@@ -223,13 +225,17 @@ const MARKET_HEADINGS = {
   totals: "Totals",
 } as const;
 
-function FootballStats({ headline }: { headline: FootballHeadline }) {
+function MarketStats({ markets, period, spreadLabel = "Spreads" }: {
+  markets: MarketRecord[];
+  period: string;
+  spreadLabel?: string;
+}) {
   return (
     <div className="mt-4 flex flex-wrap gap-x-8 gap-y-3 border-t border-border pt-4">
-      {headline.markets.map((record) => (
+      {markets.map((record) => (
         <div key={record.market}>
           <p className="text-xs text-muted-foreground">
-            {MARKET_HEADINGS[record.market]}
+            {record.market === "spreads" ? spreadLabel : MARKET_HEADINGS[record.market]}
           </p>
           <p className="mt-0.5 font-mono text-sm tabular-nums">
             {record.wins}&ndash;{record.losses}&ndash;{record.pushes}
@@ -241,13 +247,17 @@ function FootballStats({ headline }: { headline: FootballHeadline }) {
         </div>
       ))}
       <p className="ml-auto self-end font-mono text-xs text-muted-foreground">
-        {headline.period ??
-          (headline.live
-            ? `${headline.season} week ${headline.week ?? "–"}`
-            : `${headline.season} preseason`)}
+        {period}
       </p>
     </div>
   );
+}
+
+function FootballStats({ headline }: { headline: FootballHeadline }) {
+  const period = headline.period ?? (headline.live
+    ? `${headline.season} week ${headline.week ?? "–"}`
+    : `${headline.season} preseason`);
+  return <MarketStats markets={headline.markets} period={period} />;
 }
 
 export default async function Home() {
@@ -317,31 +327,7 @@ export default async function Home() {
                 cta="View today's slate"
                 description="Hierarchical Bayesian model simulating every game one plate appearance at a time."
               >
-                {mlb && (
-                  <div className="mt-4 flex flex-wrap gap-x-8 gap-y-3 border-t border-border pt-4">
-                    <div>
-                      <p className="text-xs text-muted-foreground">ROI</p>
-                      <p className="mt-0.5 font-mono text-sm tabular-nums">
-                        {mlb.roi != null ? `${formatSigned(mlb.roi * 100, 1)}%` : "–"}
-                      </p>
-                    </div>
-                    <div>
-                      <p className="text-xs text-muted-foreground">Record</p>
-                      <p className="mt-0.5 font-mono text-sm tabular-nums">
-                        {mlb.wins}&ndash;{mlb.losses}
-                      </p>
-                    </div>
-                    <div>
-                      <p className="text-xs text-muted-foreground">Net units</p>
-                      <p className="mt-0.5 font-mono text-sm tabular-nums">
-                        {formatSigned(mlb.netUnits, 1)}u
-                      </p>
-                    </div>
-                    <p className="ml-auto self-end font-mono text-xs text-muted-foreground">
-                      Updated nightly
-                    </p>
-                  </div>
-                )}
+                {mlb && <MarketStats markets={mlb} period="Updated nightly" spreadLabel="Run lines" />}
               </ModelEntry>
 
               <ModelEntry
