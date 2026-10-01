@@ -126,6 +126,7 @@ export default async function Page() {
         current_inning: live?.current_inning ?? null,
         inning_state: live?.inning_state ?? null,
         bases: live?.bases ?? null,
+        outs: live?.outs ?? null,
       };
     })
     .filter((m): m is GameMatchup => m != null);
@@ -190,7 +191,8 @@ export default async function Page() {
           const live = liveScores.get(game.game_pk);
           return { ...game, status: live?.status ?? game.status,
             home_score: live?.home_score ?? game.home_score,
-            away_score: live?.away_score ?? game.away_score, bases: live?.bases ?? null };
+            away_score: live?.away_score ?? game.away_score, bases: live?.bases ?? null,
+            outs: live?.outs ?? null };
         })}
         picksVersion={picksVersion}
       />

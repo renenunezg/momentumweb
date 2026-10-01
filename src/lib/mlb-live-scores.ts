@@ -19,6 +19,7 @@ export interface LiveScore {
   current_inning: number | null;
   inning_state: string | null;
   bases: number | null;
+  outs: number | null;
 }
 
 export function toLiveScore(game: MlbScheduleGame): LiveScore {
@@ -41,5 +42,8 @@ export function toLiveScore(game: MlbScheduleGame): LiveScore {
     current_inning: linescore?.currentInning ?? null,
     inning_state: linescore?.inningState ?? null,
     bases,
+    outs: game.status?.abstractGameState === "Live" &&
+      typeof linescore?.outs === "number" && Number.isInteger(linescore.outs) &&
+      linescore.outs >= 0 && linescore.outs <= 3 ? linescore.outs : null,
   };
 }

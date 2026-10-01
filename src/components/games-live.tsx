@@ -29,6 +29,7 @@ function mergeScores(
       current_inning: s.current_inning,
       inning_state: s.inning_state,
       bases: s.bases ?? null,
+      outs: s.outs ?? null,
     };
   });
 }
@@ -77,7 +78,8 @@ export function GamesLive({
           const score = scores.find((s) => s.game_pk === game.game_pk);
           return score ? { ...game, status: score.status ?? game.status,
             home_score: score.home_score ?? game.home_score,
-            away_score: score.away_score ?? game.away_score, bases: score.bases ?? null } : game;
+            away_score: score.away_score ?? game.away_score, bases: score.bases ?? null,
+            outs: score.outs ?? null } : game;
         }));
         if (data.picks_version && data.picks_version !== versionRef.current) {
           versionRef.current = data.picks_version;
