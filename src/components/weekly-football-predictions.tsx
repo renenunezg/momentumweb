@@ -30,6 +30,7 @@ import {
 } from "@/lib/football-live";
 import { useFootballLiveScores } from "@/components/use-football-live-scores";
 import { FootballPickDetails } from "@/components/football-pick-details";
+import { FootballLiveProbabilityDialog } from "@/components/football-live-probability-dialog";
 
 const MARKETS = [
   { key: "all", label: "All" },
@@ -272,6 +273,14 @@ function GamePredictions({
             </span>
           ))}
         </h3>
+        {started && league === "cfb" && (
+          <FootballLiveProbabilityDialog
+            league={league}
+            gameId={Number(game.game_id)}
+            away={game.away_team}
+            home={game.home_team}
+          />
+        )}
         {started ? (
           <p
             aria-live="polite"
