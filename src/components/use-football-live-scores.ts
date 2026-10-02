@@ -173,9 +173,13 @@ export function useLiveScoreRows(
 
       let block = row.querySelector<HTMLElement>("[data-live-block]");
       if (!block) {
-        block = document.createElement("span");
+        // A button, so the schedule can open the game's win probability.
+        block = document.createElement("button");
+        block.setAttribute("type", "button");
+        block.title = "Win probability";
         block.dataset.liveBlock = "";
-        block.className = "flex flex-col items-center gap-0.5";
+        block.className =
+          "mx-auto flex cursor-pointer flex-col items-center gap-0.5 rounded-sm px-1 py-0.5 hover:bg-muted focus-visible:outline-2 focus-visible:outline-ring";
         block.setAttribute("aria-live", "polite");
         for (const part of Object.keys(PARTS) as (keyof typeof PARTS)[]) {
           const span = document.createElement("span");

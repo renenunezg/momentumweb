@@ -194,6 +194,9 @@ export default async function SchedulePage() {
                   <TableRow
                     key={g.game_id}
                     data-live={liveKey("nfl", g.game_id)}
+                    data-game={g.game_id}
+                    data-away={g.away_team}
+                    data-home={g.home_team}
                     data-search={`${g.away_team} ${g.home_team} ${g.away_team_abbr ?? ""} ${g.home_team_abbr ?? ""}`.toLowerCase()}
                     data-division={String(g.div_game === true)}
                   >

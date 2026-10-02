@@ -282,6 +282,9 @@ export default async function SchedulePage() {
                     key={g.game_id}
                     hidden={!isFbsGame}
                     data-live={liveKey("cfb", g.game_id)}
+                    data-game={g.game_id}
+                    data-away={g.away_team}
+                    data-home={g.home_team}
                     data-search={`${g.away_team} ${g.home_team}`.toLowerCase()}
                     data-fbs={String(isFbsGame)}
                     data-fcs={String(

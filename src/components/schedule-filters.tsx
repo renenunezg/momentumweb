@@ -1,6 +1,11 @@
 "use client";
 
-import { useRef, useState, type ReactNode } from "react";
+import { useRef, useState, type MouseEvent, type ReactNode } from "react";
+import { Dialog } from "@/components/ui/dialog";
+import {
+  FootballLiveProbabilityPanel,
+  type LiveProbabilityGame,
+} from "@/components/football-live-probability-dialog";
 import { ToggleGroup } from "@/components/toggle-group";
 import { useVisitorKickoffs } from "@/components/use-visitor-timezone";
 import { useLiveScoreRows } from "@/components/use-football-live-scores";
@@ -23,7 +28,8 @@ export interface ScheduleView<K extends string> {
 // table. Each slate is its own <tbody> headed by a row without those
 // attributes; a slate the filter has emptied is hidden, heading and all, so
 // its rule does not stack on the next slate's. Live scores are
-// written into the rows the same way, from one poll loop per page.
+// written into the rows the same way, from one poll loop per page, and a
+// started game's status opens its win probability in one shared dialog.
 export function ScheduleFilters<K extends string>({
   league,
   views,
@@ -45,6 +51,19 @@ export function ScheduleFilters<K extends string>({
   const [shown, setShown] = useState(initialShown);
   const clock = useVisitorKickoffs(container, children);
   useLiveScoreRows(container, league, children);
+  // The game outlives `open` so the dialog keeps its title while it closes.
+  const [probability, setProbability] = useState<LiveProbabilityGame | null>(null);
+  const [open, setOpen] = useState(false);
+
+  function openProbability(event: MouseEvent<HTMLDivElement>) {
+    const row = (event.target as HTMLElement)
+      .closest("[data-live-block]")
+      ?.closest<HTMLTableRowElement>("tr[data-game]");
+    const { game, away, home } = row?.dataset ?? {};
+    if (!game || !away || !home) return;
+    setProbability({ gameId: game, away, home });
+    setOpen(true);
+  }
 
   function apply(nextView: K, nextQuery: string) {
     setView(nextView);
@@ -107,7 +126,13 @@ export function ScheduleFilters<K extends string>({
         Times shown in {clock.zone()}.
       </p>
 
-      <div ref={container}>{children}</div>
+      <div ref={container} onClick={openProbability}>{children}</div>
+
+      <Dialog open={open} onOpenChange={setOpen}>
+        {open && probability && (
+          <FootballLiveProbabilityPanel league={league} {...probability} />
+        )}
+      </Dialog>
 
       {shown === 0 && (
         <p className="text-sm text-muted-foreground">
