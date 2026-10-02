@@ -32,6 +32,10 @@ const pct = (p: number) =>
 const control =
   "inline-flex items-center justify-center gap-2 rounded-md border border-border px-3 py-2 text-xs font-medium transition-colors hover:bg-muted focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring";
 
+function isSeriesFinished(series: BracketSeries) {
+  return Math.max(...series.matchup.current_wins) === Math.floor(series.node.best_of / 2) + 1;
+}
+
 function SeriesCard({
   series,
   teams,
@@ -44,12 +48,11 @@ function SeriesCard({
   sampled: boolean;
 }) {
   const { node, matchup, outcome, winner } = series;
-  const finished =
-    Math.max(...matchup.current_wins) === Math.floor(node.best_of / 2) + 1;
+  const finished = isSeriesFinished(series);
   return (
     <button
       onClick={onSelect}
-      aria-label={`${node.id}: ${matchup.teams.join(" versus ")}, ${finished ? "final" : sampled ? "simulated" : "projected"} ${outcome.wins.join(" to ")}. View series probabilities`}
+      aria-label={`${node.id}: ${matchup.teams.join(" versus ")}, ${finished ? "final" : sampled ? "simulated" : "projected"} ${outcome.wins.join(" to ")}. View series ${finished ? "result" : "probabilities"}`}
       className="relative w-full rounded-lg border border-border bg-card p-3 text-left shadow-sm transition-colors hover:border-foreground/40 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring"
     >
       <div className="mb-3 flex items-center justify-between gap-2 font-mono text-[9px] uppercase tracking-wider text-muted-foreground">
@@ -83,9 +86,9 @@ function SeriesCard({
               className="size-6"
             />
             <span className="flex-1 text-sm font-semibold">{code}</span>
-            <span className="font-mono text-[10px] tabular-nums">
+            {!finished && <span className="font-mono text-[10px] tabular-nums">
               {pct(winnerProbability(matchup, i))}
-            </span>
+            </span>}
             <span className="ml-2 w-4 text-right font-mono text-xl font-semibold tabular-nums">
               {outcome.wins[i]}
             </span>
@@ -104,13 +107,16 @@ function BracketView({
   bracket,
   teams,
   sampled = false,
+  initialRound = "WC",
 }: {
   bracket: BracketSeries[];
   teams: Map<string, PlayoffTeam>;
   sampled?: boolean;
+  initialRound?: "WC" | "DS";
 }) {
-  const [round, setRound] = useState<string>("WC");
+  const [round, setRound] = useState<string>(initialRound);
   const [selected, setSelected] = useState<BracketSeries | null>(null);
+  const selectedFinished = selected !== null && isSeriesFinished(selected);
   const champion = teams.get(bracket.find((s) => s.node.id === "WS")!.winner)!;
   const championColor = teamColor(mlbTeamIdentity(champion.code)) ?? "var(--foreground)";
   return (
@@ -253,8 +259,9 @@ function BracketView({
                   {selected.matchup.teams.join(" vs ")} · {selected.node.id}
                 </DialogTitle>
                 <DialogDescription className="text-sm leading-relaxed text-muted-foreground">
-                  Series win probabilities conditional on this matchup.{" "}
-                  {selected.matchup.home_field} has home field.
+                  {selectedFinished
+                    ? "This series is complete. Final series wins are shown below."
+                    : `Series win probabilities conditional on this matchup. ${selected.matchup.home_field} has home field.`}
                 </DialogDescription>
               </div>
               <div className="mt-3 flex gap-3">
@@ -265,11 +272,12 @@ function BracketView({
                       <strong>{code}</strong>
                     </div>
                     <p className="mt-2 font-mono text-2xl">
-                      {pct(winnerProbability(selected.matchup, i))}
+                      {selectedFinished ? selected.matchup.current_wins[i] : pct(winnerProbability(selected.matchup, i))}
                     </p>
                   </div>
                 ))}
               </div>
+              {!selectedFinished && <>
               <h3 className="mt-3 text-sm font-semibold">
                 Final series score distribution
               </h3>
@@ -307,6 +315,7 @@ function BracketView({
                 Future games use the projected pitching and lineup assumptions
                 below the bracket.
               </p>
+              </>}
             </>
           )}
         </DialogContent>
@@ -353,10 +362,13 @@ function RandomScenarioExplorer({
 export function MlbPlayoffBracket({
   forecast,
   stale,
+  edition = "current",
 }: {
   forecast: PlayoffForecast;
   stale: boolean;
+  edition?: "current" | "original" | "conditional-preview";
 }) {
+  const conditionalPreview = edition === "conditional-preview";
   const teams = useMemo(
     () => new Map(forecast.teams.map((t) => [t.code, t])),
     [forecast],
@@ -376,7 +388,7 @@ export function MlbPlayoffBracket({
   });
   return (
     <>
-      {stale && (
+      {stale && edition === "current" && (
         <div
           role="status"
           className="mb-6 rounded-lg border border-amber-500/30 bg-amber-500/5 px-4 py-3 text-xs leading-relaxed"
@@ -408,20 +420,20 @@ export function MlbPlayoffBracket({
           </div>
           <div>
             <p className="font-mono text-[10px] uppercase tracking-wider text-muted-foreground">
-              Projected champion
+              {conditionalPreview ? "Conditional projected champion" : "Projected champion"}
             </p>
             <h2 className="mt-1 font-heading text-2xl sm:text-3xl">
               {champion.name}
             </h2>
-            <p className="mt-1 text-xs text-muted-foreground">
+            {!conditionalPreview && <p className="mt-1 text-xs text-muted-foreground">
               <strong className="text-foreground">
                 {pct(championshipChance)}
               </strong>{" "}
               overall title chance
-            </p>
+            </p>}
           </div>
         </div>
-        <RandomScenarioExplorer forecast={forecast} teams={teams} />
+        {!conditionalPreview && <RandomScenarioExplorer forecast={forecast} teams={teams} />}
       </section>
       <div className="mb-4 flex flex-wrap items-baseline justify-between gap-2">
         <h2 className="font-heading text-xl">
@@ -432,8 +444,8 @@ export function MlbPlayoffBracket({
           Tap a series for details.
         </p>
       </div>
-      <BracketView bracket={bracket} teams={teams} />
-      <section className="mt-10" aria-labelledby="odds-title">
+      <BracketView bracket={bracket} teams={teams} initialRound={conditionalPreview ? "DS" : "WC"} />
+      {!conditionalPreview && <section className="mt-10" aria-labelledby="odds-title">
         <div className="mb-5 flex flex-wrap items-baseline justify-between gap-2">
           <h2 id="odds-title" className="font-heading text-2xl">
             Championship chances
@@ -511,7 +523,7 @@ export function MlbPlayoffBracket({
             </tbody>
           </table>
         </div>
-      </section>
+      </section>}
       <details className="mt-8 rounded-lg border border-border p-4 text-xs leading-relaxed text-muted-foreground">
         <summary className="cursor-pointer font-medium text-foreground">
           How the model builds this bracket
