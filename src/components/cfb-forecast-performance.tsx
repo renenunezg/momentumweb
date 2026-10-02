@@ -123,6 +123,9 @@ export default async function ForecastPerformance({
       .map((m) => [m.prediction_source, m]),
   );
   const livePure = overallBySource.get("pure_model") ?? null;
+  // The headline grades the line the site published; intervals and win
+  // probabilities are only frozen for the pure model.
+  const livePublished = overallBySource.get("market_informed") ?? livePure;
   const liveClosing = overallBySource.get("closing_market") ?? null;
   const liveSources = (
     ["pure_model", "market_informed", "closing_market"] as CfbPredictionSource[]
@@ -191,9 +194,9 @@ export default async function ForecastPerformance({
               />
               <KpiCard
                 label="Model MAE"
-                value={formatNumber(livePure.margin_mae, 2)}
+                value={formatNumber(livePublished?.margin_mae, 2)}
                 sub="points"
-                tooltip="Mean absolute error of the pure model's projected home margin against the actual margin."
+                tooltip="Mean absolute error of the published market-informed home margin against the actual margin."
               />
               <KpiCard
                 label="Market MAE"
@@ -203,20 +206,20 @@ export default async function ForecastPerformance({
               />
               <KpiCard
                 label="Gap to market"
-                value={formatSigned(livePure.model_minus_market_mae, 2)}
+                value={formatSigned(livePublished?.model_minus_market_mae, 2)}
                 sub="points (lower is better)"
                 tooltip="Model MAE minus market MAE on the games that have a closing spread. Positive means the closing line is more accurate than the model."
               />
               <KpiCard
                 label="Model closer"
-                value={formatPct(livePure.closer_than_market_share)}
-                tooltip="Share of games with a closing spread where the model's margin was strictly closer to the result."
+                value={formatPct(livePublished?.closer_than_market_share)}
+                tooltip="Share of games with a closing spread where the published margin was strictly closer to the result."
               />
               <KpiCard
                 label="80% coverage"
                 value={formatPct(livePure.coverage_80, 0)}
                 sub="target 80%"
-                tooltip="Share of actual margins that landed inside the model's frozen 80% interval. Well above 80% means the model's uncertainty is too wide; well below means too narrow."
+                tooltip="Share of actual margins that landed inside the pure model's frozen 80% interval. Well above 80% means the model's uncertainty is too wide; well below means too narrow."
               />
             </div>
 

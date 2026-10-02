@@ -15,7 +15,7 @@ const PAGE_SIZE = 50;
 const FIRST_BACKTEST_SEASON = 2021;
 
 // The live record carries the pure projection and the blend; the history
-// table grades the pure one, which is the model's own opinion.
+// table grades the blend, which is the line the site published.
 function fromGraded(r: CfbGradedGame): GradedRow {
   return {
     game_id: r.game_id,
@@ -27,7 +27,7 @@ function fromGraded(r: CfbGradedGame): GradedRow {
     home_points: r.home_points,
     away_points: r.away_points,
     closing_spread: r.closing_spread,
-    model_margin: r.pure_home_margin,
+    model_margin: r.market_informed_home_margin ?? r.pure_home_margin,
     actual_margin: r.actual_margin,
   };
 }

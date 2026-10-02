@@ -302,12 +302,21 @@ export function FootballTeamComparison<T extends RatingRow, U extends UnitRow>({
   );
   // HFA is a fitted model parameter shared by the week's non-neutral games.
   // Never treat a neutral game's zero as the model's home-field advantage.
-  const homeFields = projections.games.flatMap((item) =>
-    item.season === left?.season &&
-    item.week === left?.week &&
-    item.neutralSite === false &&
-    item.homeFieldPoints != null &&
-    Number.isFinite(item.homeFieldPoints)
+  // A started game keeps the forecast it kicked off with, so only the latest
+  // publish speaks for the current ratings.
+  const weekGames = projections.games.filter(
+    (item) =>
+      item.season === left?.season &&
+      item.week === left?.week &&
+      item.neutralSite === false &&
+      item.homeFieldPoints != null &&
+      Number.isFinite(item.homeFieldPoints),
+  );
+  const latestPublish = Math.max(
+    ...weekGames.map((item) => Date.parse(item.asOf)),
+  );
+  const homeFields = weekGames.flatMap((item) =>
+    Date.parse(item.asOf) === latestPublish && item.homeFieldPoints != null
       ? [item.homeFieldPoints]
       : [],
   );

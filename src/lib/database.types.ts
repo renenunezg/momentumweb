@@ -2170,6 +2170,7 @@ export type Database = {
           scoring_environment: number | null
           expected_possessions: number | null
           power_rating_sd: number | null
+          forecast_alignment_points: number | null
           missing_input_count: number | null
         }
         Insert: {
@@ -2187,6 +2188,7 @@ export type Database = {
           scoring_environment?: number | null
           expected_possessions?: number | null
           power_rating_sd?: number | null
+          forecast_alignment_points?: number | null
           missing_input_count?: number | null
         }
         Update: {
@@ -2204,6 +2206,7 @@ export type Database = {
           scoring_environment?: number | null
           expected_possessions?: number | null
           power_rating_sd?: number | null
+          forecast_alignment_points?: number | null
           missing_input_count?: number | null
         }
         Relationships: []
@@ -2861,6 +2864,7 @@ export type Database = {
           scoring_environment: number | null
           expected_drives: number | null
           power_rating_sd: number | null
+          forecast_alignment_points: number | null
           missing_input_count: number | null
         }
         Insert: {
@@ -2878,6 +2882,7 @@ export type Database = {
           scoring_environment?: number | null
           expected_drives?: number | null
           power_rating_sd?: number | null
+          forecast_alignment_points?: number | null
           missing_input_count?: number | null
         }
         Update: {
@@ -2895,6 +2900,7 @@ export type Database = {
           scoring_environment?: number | null
           expected_drives?: number | null
           power_rating_sd?: number | null
+          forecast_alignment_points?: number | null
           missing_input_count?: number | null
         }
         Relationships: []
