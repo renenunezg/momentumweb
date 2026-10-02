@@ -37,6 +37,13 @@ export interface PlayoffOdds {
   WS: number;
   champion: number;
 }
+// One snapshot is stored per round, taken before that round's first final.
+export const PLAYOFF_STAGES = ["WC", "DS", "CS", "WS"] as const;
+export type PlayoffStage = (typeof PLAYOFF_STAGES)[number];
+export interface PlayoffEdition {
+  stage: PlayoffStage;
+  forecast: PlayoffForecast;
+}
 export interface PlayoffForecast {
   schema_version: 1;
   season: number;

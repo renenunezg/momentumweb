@@ -1,8 +1,8 @@
 import { PageDescription, PageHeader, PageShell, PageTitle } from "@/components/page-layout";
 import type { Metadata } from "next";
 import { Trophy } from "lucide-react";
-import { MlbPlayoffBracket } from "@/components/mlb-playoff-bracket";
-import { fetchPlayoffForecast } from "@/lib/mlb-playoffs.server";
+import { MlbPlayoffEditions } from "@/components/mlb-playoff-editions";
+import { fetchPlayoffEditions } from "@/lib/mlb-playoffs.server";
 
 export const revalidate = 3600;
 export const metadata: Metadata = {
@@ -12,7 +12,7 @@ export const metadata: Metadata = {
 };
 
 export default async function PlayoffsPage() {
-  const forecast = await fetchPlayoffForecast();
+  const editions = await fetchPlayoffEditions();
   return (
     <PageShell width="wide">
       <PageHeader className="border-b border-border pb-section">
@@ -33,13 +33,8 @@ export default async function PlayoffsPage() {
           aria-hidden="true"
         />
       </PageHeader>
-      {forecast ? (
-        <MlbPlayoffBracket
-          forecast={forecast}
-          stale={
-            new Date().getTime() - Date.parse(forecast.generated_at) > 86400000
-          }
-        />
+      {editions.length > 0 ? (
+        <MlbPlayoffEditions editions={editions} />
       ) : (
         <div className="rounded-xl border border-dashed border-border px-6 py-16 text-center">
           <Trophy

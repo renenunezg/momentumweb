@@ -17,6 +17,7 @@ import {
   winnerProbability,
   type BracketSeries,
   type PlayoffForecast,
+  type PlayoffStage,
   type PlayoffTeam,
 } from "@/lib/mlb-playoffs";
 import { cn } from "@/lib/utils";
@@ -112,7 +113,7 @@ function BracketView({
   bracket: BracketSeries[];
   teams: Map<string, PlayoffTeam>;
   sampled?: boolean;
-  initialRound?: "WC" | "DS";
+  initialRound?: PlayoffStage;
 }) {
   const [round, setRound] = useState<string>(initialRound);
   const [selected, setSelected] = useState<BracketSeries | null>(null);
@@ -361,14 +362,12 @@ function RandomScenarioExplorer({
 
 export function MlbPlayoffBracket({
   forecast,
-  stale,
-  edition = "current",
+  initialRound = "WC",
 }: {
   forecast: PlayoffForecast;
-  stale: boolean;
-  edition?: "current" | "original" | "conditional-preview";
+  // The round this snapshot was taken before; the phone layout opens on it.
+  initialRound?: PlayoffStage;
 }) {
-  const conditionalPreview = edition === "conditional-preview";
   const teams = useMemo(
     () => new Map(forecast.teams.map((t) => [t.code, t])),
     [forecast],
@@ -388,18 +387,6 @@ export function MlbPlayoffBracket({
   });
   return (
     <>
-      {stale && edition === "current" && (
-        <div
-          role="status"
-          className="mb-6 rounded-lg border border-amber-500/30 bg-amber-500/5 px-4 py-3 text-xs leading-relaxed"
-        >
-          <strong>Outdated forecast</strong>
-          <p>
-            This snapshot is more than a day old. Results and pitching plans
-            may have changed.
-          </p>
-        </div>
-      )}
       <section
         className="mb-7 grid gap-5 rounded-xl border border-border bg-card p-5 sm:grid-cols-[1fr_auto] sm:items-center sm:p-6"
         aria-label="Bracket outcome"
@@ -420,20 +407,20 @@ export function MlbPlayoffBracket({
           </div>
           <div>
             <p className="font-mono text-[10px] uppercase tracking-wider text-muted-foreground">
-              {conditionalPreview ? "Conditional projected champion" : "Projected champion"}
+              Projected champion
             </p>
             <h2 className="mt-1 font-heading text-2xl sm:text-3xl">
               {champion.name}
             </h2>
-            {!conditionalPreview && <p className="mt-1 text-xs text-muted-foreground">
+            <p className="mt-1 text-xs text-muted-foreground">
               <strong className="text-foreground">
                 {pct(championshipChance)}
               </strong>{" "}
               overall title chance
-            </p>}
+            </p>
           </div>
         </div>
-        {!conditionalPreview && <RandomScenarioExplorer forecast={forecast} teams={teams} />}
+        <RandomScenarioExplorer forecast={forecast} teams={teams} />
       </section>
       <div className="mb-4 flex flex-wrap items-baseline justify-between gap-2">
         <h2 className="font-heading text-xl">
@@ -444,8 +431,8 @@ export function MlbPlayoffBracket({
           Tap a series for details.
         </p>
       </div>
-      <BracketView bracket={bracket} teams={teams} initialRound={conditionalPreview ? "DS" : "WC"} />
-      {!conditionalPreview && <section className="mt-10" aria-labelledby="odds-title">
+      <BracketView bracket={bracket} teams={teams} initialRound={initialRound} />
+      <section className="mt-10" aria-labelledby="odds-title">
         <div className="mb-5 flex flex-wrap items-baseline justify-between gap-2">
           <h2 id="odds-title" className="font-heading text-2xl">
             Championship chances
@@ -523,7 +510,7 @@ export function MlbPlayoffBracket({
             </tbody>
           </table>
         </div>
-      </section>}
+      </section>
       <details className="mt-8 rounded-lg border border-border p-4 text-xs leading-relaxed text-muted-foreground">
         <summary className="cursor-pointer font-medium text-foreground">
           How the model builds this bracket

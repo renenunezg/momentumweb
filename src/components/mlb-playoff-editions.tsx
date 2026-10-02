@@ -3,61 +3,64 @@
 import { useState } from "react";
 import { MlbPlayoffBracket } from "@/components/mlb-playoff-bracket";
 import { ViewTabs, ViewTabPanel } from "@/components/view-tabs";
-import type { PlayoffForecast } from "@/lib/mlb-playoffs";
+import type { PlayoffEdition, PlayoffStage } from "@/lib/mlb-playoffs";
 
+const STAGE_NAMES: Record<PlayoffStage, string> = {
+  WC: "Wild Card",
+  DS: "Division Series",
+  CS: "Championship Series",
+  WS: "World Series",
+};
+
+// One tab per round: the bracket as the model saw it going into that round.
+// Earlier tabs stay as they were published, so each prediction can be judged
+// against what happened next.
 export function MlbPlayoffEditions({
-  original,
-  divisionSeriesPreview,
+  editions,
 }: {
-  original: PlayoffForecast;
-  divisionSeriesPreview: PlayoffForecast;
+  editions: PlayoffEdition[];
 }) {
-  const [edition, setEdition] = useState<"updated" | "original">("updated");
+  const latest = editions[editions.length - 1].stage;
+  const [stage, setStage] = useState<PlayoffStage>(latest);
 
   return (
     <ViewTabs
-      label="Bracket edition"
-      options={[
-        { key: "updated", label: "Division Series update" },
-        { key: "original", label: "Original bracket" },
-      ]}
-      value={edition}
-      onValueChange={setEdition}
+      label="Forecast before each round"
+      options={editions.map((edition) => ({
+        key: edition.stage,
+        label: STAGE_NAMES[edition.stage],
+      }))}
+      value={stage}
+      onValueChange={setStage}
     >
-      <ViewTabPanel value="updated" className="space-y-section">
-        <div className="space-y-heading">
-          <h2 className="font-heading text-xl">Updated for the Division Series</h2>
-          <p className="text-sm text-muted-foreground">
-            Wild Card results are locked. The remaining path uses the eight teams
-            that advanced, including the White Sox.
-          </p>
-          <p role="status" className="border-l-2 border-accent-amber pl-3 text-xs leading-relaxed text-muted-foreground">
-            Local preview: remaining series use the original snapshot’s matchup
-            probabilities. Pitching, rosters and title odds have not been refreshed.
-            A new model forecast is required before publishing this update.
-          </p>
-        </div>
-        <MlbPlayoffBracket
-          forecast={divisionSeriesPreview}
-          stale={false}
-          edition="conditional-preview"
-        />
-      </ViewTabPanel>
-      <ViewTabPanel value="original" className="space-y-section">
-        <div className="space-y-heading">
-          <h2 className="font-heading text-xl">Original postseason bracket</h2>
-          <p className="text-sm text-muted-foreground">
-            The original picks stay unchanged, including Houston. Evaluate this
-            bracket separately from forecasts made after each round.
-          </p>
-          <p className="text-xs text-muted-foreground">
-            Frozen {new Date(original.generated_at).toLocaleDateString("en-US", {
-              month: "short", day: "numeric", year: "numeric", timeZone: "America/New_York",
-            })}. The original championship chances below belong to that snapshot.
-          </p>
-        </div>
-        <MlbPlayoffBracket forecast={original} stale={false} edition="original" />
-      </ViewTabPanel>
+      {editions.map(({ stage: key, forecast }) => (
+        <ViewTabPanel key={key} value={key} className="space-y-section">
+          <div className="space-y-heading">
+            <h2 className="font-heading text-xl">
+              Before the {STAGE_NAMES[key]}
+            </h2>
+            <p className="text-sm text-muted-foreground">
+              {key === "WC"
+                ? "The original bracket, forecast before the first postseason game."
+                : `Results through the previous round are locked. The rest of the bracket is the forecast going into the ${STAGE_NAMES[key]}.`}{" "}
+              {key === latest
+                ? "This is the latest forecast; it stays fixed once the round begins."
+                : "This forecast is frozen and is not updated with later results."}
+            </p>
+            <p className="text-xs text-muted-foreground">
+              Published{" "}
+              {new Date(forecast.generated_at).toLocaleDateString("en-US", {
+                month: "short",
+                day: "numeric",
+                year: "numeric",
+                timeZone: "America/New_York",
+              })}
+              .
+            </p>
+          </div>
+          <MlbPlayoffBracket forecast={forecast} initialRound={key} />
+        </ViewTabPanel>
+      ))}
     </ViewTabs>
   );
 }
