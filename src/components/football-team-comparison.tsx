@@ -384,7 +384,7 @@ export function FootballTeamComparison<T extends RatingRow, U extends UnitRow>({
     ),
   );
 
-  function selectTeams(a: T, b: T, neutral = false) {
+  function selectTeams(a: T, b: T, neutral = neutralSite) {
     const url = new URL(window.location.href);
     url.searchParams.set("team", String(rowKey(a)));
     url.searchParams.set("opponent", String(rowKey(b)));
@@ -461,6 +461,17 @@ export function FootballTeamComparison<T extends RatingRow, U extends UnitRow>({
         />
       </div>
 
+      <ToggleGroup
+        label="Venue"
+        variant="pill"
+        options={[
+          { key: "home", label: `At ${right.team}` },
+          { key: "neutral", label: "Neutral field" },
+        ]}
+        value={neutralSite ? "neutral" : "home"}
+        onChange={(venue) => selectTeams(left, right, venue === "neutral")}
+      />
+
       <FootballComparisonLine
         awayTeam={left.team}
         homeTeam={right.team}
@@ -469,15 +480,6 @@ export function FootballTeamComparison<T extends RatingRow, U extends UnitRow>({
         neutralSite={neutralSite}
         asOf={left.as_of}
       />
-      {neutralSite && (
-        <button
-          type="button"
-          className="text-xs underline underline-offset-4 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
-          onClick={() => selectTeams(left, right)}
-        >
-          Play at {right.team}
-        </button>
-      )}
       {game && <FootballComparisonForecast game={game} />}
 
       <section
