@@ -212,7 +212,7 @@ export function MethodologyContent({ example }: { example: PickExample | null })
               { label: "Home field", val: "Refit weekly from a 2.5 ± 1.5 point prior" },
               { label: "In-game model", val: "3-parameter Gaussian on the final margin" },
               { label: "Kickoff anchor", val: "Published market-informed line, sd 15.35 points" },
-              { label: "Picks", val: "Moneyline, spread and total at a flat unit (cfb-picks-v6)" },
+              { label: "Picks", val: "Moneyline, spread and total at a flat unit (cfb-picks-v7)" },
             ].map(({ label, val }) => (
               <Card key={label} size="sm"><CardContent>
                 <p className="font-mono text-xs uppercase tracking-wider text-muted-foreground">{label}</p>
@@ -576,13 +576,13 @@ export function MethodologyContent({ example }: { example: PickExample | null })
         <div className="space-y-4 text-sm leading-relaxed">
           <p>
             Picks come from a separate policy, currently{" "}
-            <span className="font-mono">cfb-picks-v6</span>, that selects at most
+            <span className="font-mono">cfb-picks-v7</span>, that selects at most
             one side per game and market, and every edge is measured after
             shrinking toward the market being bet into. Spreads are priced from a
             market-informed margin: the pure margin mixed with a rating fitted to
             the closing lines of earlier games (weight 0.55 through week 3, 0.35
-            after), then averaged with the consensus spread. Totals are averaged
-            with the median posted total. Moneylines keep only 0.2 of the
+            after), then averaged with the consensus spread. Totals use the published total, the
+            model total averaged with the sportsbook total. Moneylines keep only 0.2 of the
             model&apos;s disagreement with the market. Probabilities use the
             measured dispersion of results around these lines (15.35 points for
             margin, 15.93 for total), not the pure model&apos;s wider spread.

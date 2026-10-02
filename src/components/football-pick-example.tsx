@@ -248,8 +248,7 @@ export function FootballPickExample({ example }: { example: PickExample }) {
           with the same arithmetic the policy uses. The pick clears when the priced line sits at
           least 2.0 points beyond the price&apos;s break-even line and EV is positive; when too few
           picks clear in a week, the highest-edge positive-EV offers fill the slate. Spread picks
-          are priced from the published line, totals from the model total moved halfway toward the
-          posted total at decision time, and moneylines from the market margin moved 0.2 of the
+          are priced from the published line, totals from the published total, and moneylines from the market margin moved 0.2 of the
           way toward the pure model.
         </p>
       </Notice>

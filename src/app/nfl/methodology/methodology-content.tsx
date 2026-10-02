@@ -214,7 +214,7 @@ export function MethodologyContent({ example }: { example: PickExample | null })
       <Section id="picks" title="Picks">
         <p className={p}>
           Picks come from a versioned policy, currently{" "}
-          <span className="font-mono">nfl-picks-v4</span>, that selects at
+          <span className="font-mono">nfl-picks-v5</span>, that selects at
           most one side per game and market across moneylines, spreads and
           totals. A pick needs the priced line to sit at least two points
           beyond the offered price&apos;s break-even line, plus positive
@@ -225,8 +225,8 @@ export function MethodologyContent({ example }: { example: PickExample | null })
           Spreads are priced off the published margin. Moneylines start from
           the market line and move only 20 percent of the way toward the pure
           model, because on 2019 through 2025 the model added nothing to the
-          market on who wins outright. Totals use the model total moved
-          halfway toward the median posted total. All three use the spread of
+          market on who wins outright. Totals use the published total, the
+          model total moved halfway toward the sportsbook total. All three use the spread of
           actual results around the priced line (12.8 points on margins, 13.3
           on totals), not the engine&apos;s wider uncertainty. If fewer than
           five picks clear the gate in a week, the highest-edge positive-EV

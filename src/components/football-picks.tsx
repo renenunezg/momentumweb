@@ -414,11 +414,10 @@ export function PickPolicy({
         </p>
       ) : sport === "nfl" ? (
         <p>
-          NFL picks v4 requires the priced line to sit at least 2.0 points
+          NFL picks v5 requires the priced line to sit at least 2.0 points
           beyond the price&apos;s break-even line, plus positive estimated EV.
           Spreads are priced from the published blended margin, totals from
-          the model total moved halfway toward the median posted total at
-          decision time, and moneylines from the market margin moved 0.2 of
+          the published total, and moneylines from the market margin moved 0.2 of
           the way toward the pure model, with fixed dispersions of 12.82
           points for margins and 13.28 for totals. If fewer than 5 picks
           qualify in a week, the highest-edge positive-EV offers are promoted
@@ -440,11 +439,10 @@ export function PickPolicy({
         </p>
       ) : (
         <p>
-          CFB picks v6 requires the priced line to sit at least 2.0 points
+          CFB picks v7 requires the priced line to sit at least 2.0 points
           beyond the price&apos;s break-even line, plus positive EV. Spreads
           are priced from the published market-informed margin, totals from
-          the model total moved halfway toward the median posted total at
-          decision time, and moneylines from the market margin moved 0.2 of
+          the published total, and moneylines from the market margin moved 0.2 of
           the way toward the pure model, with fixed dispersions of 15.35
           points for margins and 15.93 for totals. If fewer than 15 picks
           qualify in a week, the highest-edge positive-EV offers are promoted
