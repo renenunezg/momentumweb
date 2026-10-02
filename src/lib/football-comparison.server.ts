@@ -2,7 +2,7 @@ import { supabaseCfb, supabaseNfl } from "@/lib/supabase";
 import type { ComparisonProjections } from "@/lib/football-comparison";
 
 const COLUMNS =
-  "game_id,season,week,start_date,home_team,away_team,neutral_site,home_field_points,home_spread,pure_home_spread,market_home_spread,expected_home_points,expected_away_points,as_of";
+  "game_id,season,week,start_date,home_team,away_team,neutral_site,home_field_points,pure_home_spread,market_home_spread,expected_home_points,expected_away_points,market_informed_home_points,market_informed_away_points,as_of";
 
 // Match the ratings snapshot so a cached comparison cannot combine model weeks.
 export async function fetchComparisonProjections(
@@ -14,13 +14,19 @@ export async function fetchComparisonProjections(
     sport === "cfb"
       ? await supabaseCfb
           .from("game_projections")
-          .select(`${COLUMNS},home_key:home_team_id,away_key:away_team_id`)
+          // CFB keeps home_spread pure and publishes its blended line in a
+          // separate column; NFL's home_spread is already the blend.
+          .select(
+            `${COLUMNS},home_key:home_team_id,away_key:away_team_id,forecast_spread:market_informed_home_spread`,
+          )
           .eq("season", season)
           .eq("week", week)
           .order("start_date")
       : await supabaseNfl
           .from("game_projections")
-          .select(`${COLUMNS},home_key:home_team_abbr,away_key:away_team_abbr`)
+          .select(
+            `${COLUMNS},home_key:home_team_abbr,away_key:away_team_abbr,forecast_spread:home_spread`,
+          )
           .eq("season", season)
           .eq("week", week)
           .order("start_date");
@@ -49,11 +55,15 @@ export async function fetchComparisonProjections(
               kickoff: row.start_date,
               neutralSite: row.neutral_site,
               homeFieldPoints: row.home_field_points,
-              forecastSpread: row.home_spread,
+              forecastSpread: row.forecast_spread,
               pureSpread: row.pure_home_spread,
               marketSpread: row.market_home_spread,
-              awayPoints: row.expected_away_points,
-              homePoints: row.expected_home_points,
+              // Rows published before the blended scores existed carry only
+              // the earlier ones.
+              awayPoints:
+                row.market_informed_away_points ?? row.expected_away_points,
+              homePoints:
+                row.market_informed_home_points ?? row.expected_home_points,
               asOf: row.as_of,
             },
           ],

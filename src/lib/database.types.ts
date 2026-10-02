@@ -1442,6 +1442,9 @@ export type Database = {
           market_weight: number | null
           market_informed_home_margin: number | null
           market_informed_home_spread: number | null
+          market_informed_home_points: number | null
+          market_informed_away_points: number | null
+          market_informed_total: number | null
         }
         Insert: {
           game_id: number
@@ -1477,6 +1480,9 @@ export type Database = {
           market_weight?: number | null
           market_informed_home_margin?: number | null
           market_informed_home_spread?: number | null
+          market_informed_home_points?: number | null
+          market_informed_away_points?: number | null
+          market_informed_total?: number | null
         }
         Update: {
           game_id?: number
@@ -1512,6 +1518,9 @@ export type Database = {
           market_weight?: number | null
           market_informed_home_margin?: number | null
           market_informed_home_spread?: number | null
+          market_informed_home_points?: number | null
+          market_informed_away_points?: number | null
+          market_informed_total?: number | null
         }
         Relationships: []
       }
@@ -2623,6 +2632,10 @@ export type Database = {
           home_margin: number | null
           home_spread: number | null
           model_total: number | null
+          market_total: number | null
+          market_informed_total: number | null
+          market_informed_home_points: number | null
+          market_informed_away_points: number | null
           margin_sd: number | null
           total_sd: number | null
           margin_total_correlation: number | null
@@ -2655,6 +2668,10 @@ export type Database = {
           home_margin?: number | null
           home_spread?: number | null
           model_total?: number | null
+          market_total?: number | null
+          market_informed_total?: number | null
+          market_informed_home_points?: number | null
+          market_informed_away_points?: number | null
           margin_sd?: number | null
           total_sd?: number | null
           margin_total_correlation?: number | null
@@ -2687,6 +2704,10 @@ export type Database = {
           home_margin?: number | null
           home_spread?: number | null
           model_total?: number | null
+          market_total?: number | null
+          market_informed_total?: number | null
+          market_informed_home_points?: number | null
+          market_informed_away_points?: number | null
           margin_sd?: number | null
           total_sd?: number | null
           margin_total_correlation?: number | null

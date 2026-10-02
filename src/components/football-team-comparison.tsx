@@ -472,15 +472,20 @@ export function FootballTeamComparison<T extends RatingRow, U extends UnitRow>({
         onChange={(venue) => selectTeams(left, right, venue === "neutral")}
       />
 
-      <FootballComparisonLine
-        awayTeam={left.team}
-        homeTeam={right.team}
-        spread={ratingsLine}
-        homeField={homeField}
-        neutralSite={neutralSite}
-        asOf={left.as_of}
-      />
-      {game && <FootballComparisonForecast game={game} />}
+      {/* A scheduled game shows its published forecast; the ratings-based
+          line is only for pairings and venues the model has not projected. */}
+      {game ? (
+        <FootballComparisonForecast game={game} />
+      ) : (
+        <FootballComparisonLine
+          awayTeam={left.team}
+          homeTeam={right.team}
+          spread={ratingsLine}
+          homeField={homeField}
+          neutralSite={neutralSite}
+          asOf={left.as_of}
+        />
+      )}
 
       <section
         aria-label="Overall team comparison"

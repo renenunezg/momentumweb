@@ -342,11 +342,20 @@ export default async function SchedulePage() {
                       {diff != null ? formatHomeLine(diff) : "–"}
                     </TableCell>
                     <TableCell className="whitespace-nowrap text-center font-mono tabular-nums">
-                      {formatNumber(g.expected_away_points, 0)}&ndash;
-                      {formatNumber(g.expected_home_points, 0)}
+                      {/* Rows published before the blended scores existed
+                          carry only the pure model's. */}
+                      {formatNumber(
+                        g.market_informed_away_points ?? g.expected_away_points,
+                        0,
+                      )}
+                      &ndash;
+                      {formatNumber(
+                        g.market_informed_home_points ?? g.expected_home_points,
+                        0,
+                      )}
                     </TableCell>
                     <TableCell className="text-center font-mono tabular-nums">
-                      {formatNumber(g.model_total)}
+                      {formatNumber(g.market_informed_total ?? g.model_total)}
                     </TableCell>
                     <TableCell className="text-center font-mono tabular-nums text-muted-foreground">
                       {formatNumber(
