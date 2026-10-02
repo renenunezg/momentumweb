@@ -1,5 +1,6 @@
 import type { Metadata, Viewport } from "next";
 import { Oswald } from "next/font/google";
+import Script from "next/script";
 import "./globals.css";
 import { SpeedInsights } from "@vercel/speed-insights/next";
 import { SiteAnalytics } from "@/components/site-analytics";
@@ -73,6 +74,15 @@ export default function RootLayout({
           <SiteAnalytics />
           <SpeedInsights />
         </ThemeProvider>
+        {process.env.VERCEL_ENV === "production" && (
+          <Script
+            id="cloudflare-web-analytics"
+            type="module"
+            src="https://static.cloudflareinsights.com/beacon.min.js"
+            data-cf-beacon='{"token":"dba42dc69c18403399e0de43de4bd52e"}'
+            strategy="afterInteractive"
+          />
+        )}
       </body>
     </html>
   );
