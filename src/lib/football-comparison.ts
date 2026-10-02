@@ -8,6 +8,7 @@ export interface ComparisonProjection {
   week: number;
   kickoff: string | null;
   neutralSite: boolean | null;
+  homeFieldPoints: number | null;
   forecastSpread: number | null;
   pureSpread: number | null;
   marketSpread: number | null;

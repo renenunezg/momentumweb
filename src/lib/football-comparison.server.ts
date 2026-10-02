@@ -2,7 +2,7 @@ import { supabaseCfb, supabaseNfl } from "@/lib/supabase";
 import type { ComparisonProjections } from "@/lib/football-comparison";
 
 const COLUMNS =
-  "game_id,season,week,start_date,home_team,away_team,neutral_site,home_spread,pure_home_spread,market_home_spread,expected_home_points,expected_away_points,as_of";
+  "game_id,season,week,start_date,home_team,away_team,neutral_site,home_field_points,home_spread,pure_home_spread,market_home_spread,expected_home_points,expected_away_points,as_of";
 
 // Match the ratings snapshot so a cached comparison cannot combine model weeks.
 export async function fetchComparisonProjections(
@@ -48,6 +48,7 @@ export async function fetchComparisonProjections(
               week: row.week,
               kickoff: row.start_date,
               neutralSite: row.neutral_site,
+              homeFieldPoints: row.home_field_points,
               forecastSpread: row.home_spread,
               pureSpread: row.pure_home_spread,
               marketSpread: row.market_home_spread,

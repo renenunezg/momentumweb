@@ -5,7 +5,10 @@ import { Combobox } from "@base-ui/react/combobox";
 import { ArrowLeftRight, BarChart3, Check, ChevronsUpDown } from "lucide-react";
 import { replaceLocation, useLocationSearch } from "@/lib/use-location-search";
 import type { ComparisonProjections } from "@/lib/football-comparison";
-import { FootballComparisonForecast } from "@/components/football-comparison-forecast";
+import {
+  FootballComparisonForecast,
+  FootballComparisonLine,
+} from "@/components/football-comparison-forecast";
 import { teamColor } from "@/lib/team-colors";
 import { cn, formatDate, formatSigned } from "@/lib/utils";
 import { TeamLogo, type TeamLogoSource } from "@/components/team-logo";
@@ -38,6 +41,8 @@ type UnitRow = Partial<Record<UnitKey, number | null>> & {
 };
 type RatingRow = PowerRatingRow & {
   season: number;
+  week: number;
+  as_of: string;
   classification?: string | null;
 };
 
@@ -278,39 +283,48 @@ export function FootballTeamComparison<T extends RatingRow, U extends UnitRow>({
     () => new Map(units.map((row) => [String(unitKey(row)), row])),
     [units, unitKey],
   );
-  const selectedLeft =
+  const left =
     ratings.find((row) => String(rowKey(row)) === params.get("team")) ??
     ratings[0];
-  const selectedRight =
+  const right =
     ratings.find(
       (row) =>
         String(rowKey(row)) === params.get("opponent") &&
-        rowKey(row) !== rowKey(selectedLeft),
-    ) ?? ratings.find((row) => rowKey(row) !== rowKey(selectedLeft));
-  const leftKey = selectedLeft ? String(rowKey(selectedLeft)) : "";
-  const rightKey = selectedRight ? String(rowKey(selectedRight)) : "";
-  const pairedGame = projections.games.find(
-    (game) =>
-      (game.awayKey === leftKey && game.homeKey === rightKey) ||
-      (game.awayKey === rightKey && game.homeKey === leftKey),
+        rowKey(row) !== rowKey(left),
+    ) ?? ratings.find((row) => rowKey(row) !== rowKey(left));
+  const leftKey = left ? String(rowKey(left)) : "";
+  const rightKey = right ? String(rowKey(right)) : "";
+  const neutralSite = params.get("venue") === "neutral";
+  const game = projections.games.find(
+    (item) =>
+      item.awayKey === leftKey && item.homeKey === rightKey &&
+      item.neutralSite === neutralSite,
   );
-  const useScheduledVenue = pairedGame && params.get("venue") !== "custom";
-  const left = useScheduledVenue
-    ? (ratings.find((row) => String(rowKey(row)) === pairedGame.awayKey) ??
-      selectedLeft)
-    : selectedLeft;
-  const right = useScheduledVenue
-    ? (ratings.find((row) => String(rowKey(row)) === pairedGame.homeKey) ??
-      selectedRight)
-    : selectedRight;
-  const game =
-    pairedGame &&
-    left &&
-    right &&
-    pairedGame.awayKey === String(rowKey(left)) &&
-    pairedGame.homeKey === String(rowKey(right))
-      ? pairedGame
-      : undefined;
+  // HFA is a fitted model parameter shared by the week's non-neutral games.
+  // Never treat a neutral game's zero as the model's home-field advantage.
+  const homeFields = projections.games.flatMap((item) =>
+    item.season === left?.season &&
+    item.week === left?.week &&
+    item.neutralSite === false &&
+    item.homeFieldPoints != null &&
+    Number.isFinite(item.homeFieldPoints)
+      ? [item.homeFieldPoints]
+      : [],
+  );
+  const fittedHomeField =
+    homeFields.length > 0 &&
+    homeFields.every((value) => Math.abs(value - homeFields[0]) < 1e-6)
+      ? homeFields[0]
+      : null;
+  const homeField = neutralSite ? 0 : fittedHomeField;
+  const ratingsLine =
+    left && right &&
+    left.season === right.season && left.week === right.week &&
+    left.as_of === right.as_of &&
+    Number.isFinite(left.power_rating) && Number.isFinite(right.power_rating) &&
+    homeField != null
+      ? left.power_rating - right.power_rating - homeField
+      : null;
   const mode = params.get("compare") === "units" ? "units" : "matchups";
   const scope =
     sport === "nfl"
@@ -370,11 +384,11 @@ export function FootballTeamComparison<T extends RatingRow, U extends UnitRow>({
     ),
   );
 
-  function selectTeams(a: T, b: T, customVenue = false) {
+  function selectTeams(a: T, b: T, neutral = false) {
     const url = new URL(window.location.href);
     url.searchParams.set("team", String(rowKey(a)));
     url.searchParams.set("opponent", String(rowKey(b)));
-    if (customVenue) url.searchParams.set("venue", "custom");
+    if (neutral) url.searchParams.set("venue", "neutral");
     else url.searchParams.delete("venue");
     replaceLocation(url);
   }
@@ -400,7 +414,9 @@ export function FootballTeamComparison<T extends RatingRow, U extends UnitRow>({
               const home = ratings.find(
                 (row) => String(rowKey(row)) === selected?.homeKey,
               );
-              if (away && home) selectTeams(away, home);
+              if (away && home) {
+                selectTeams(away, home, selected?.neutralSite === true);
+              }
             }}
           >
             <option value="" disabled>
@@ -427,7 +443,7 @@ export function FootballTeamComparison<T extends RatingRow, U extends UnitRow>({
         />
         <button
           type="button"
-          onClick={() => selectTeams(right, left, true)}
+          onClick={() => selectTeams(right, left)}
           className="flex h-11 items-center justify-center gap-2 rounded-md border border-border px-3 text-xs text-muted-foreground hover:bg-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
           aria-label="Swap teams"
         >
@@ -445,36 +461,24 @@ export function FootballTeamComparison<T extends RatingRow, U extends UnitRow>({
         />
       </div>
 
-      {game ? (
-        <FootballComparisonForecast game={game} />
-      ) : (
-        <div
-          className="rounded-lg border border-border bg-muted/30 p-4 text-sm"
-          role="status"
+      <FootballComparisonLine
+        awayTeam={left.team}
+        homeTeam={right.team}
+        spread={ratingsLine}
+        homeField={homeField}
+        neutralSite={neutralSite}
+        asOf={left.as_of}
+      />
+      {neutralSite && (
+        <button
+          type="button"
+          className="text-xs underline underline-offset-4 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+          onClick={() => selectTeams(left, right)}
         >
-          <p>
-            {projections.unavailable
-              ? "Published game projections are temporarily unavailable."
-              : "No published game projection for this pairing and venue in the current ratings week."}
-          </p>
-          {pairedGame && (
-            <p className="mt-2 text-xs text-muted-foreground">
-              The published game is {pairedGame.awayTeam}{" "}
-              {pairedGame.neutralSite ? "vs" : "at"} {pairedGame.homeTeam}.{" "}
-              <button
-                type="button"
-                className="underline underline-offset-4 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
-                onClick={() => selectTeams(left, right)}
-              >
-                Use scheduled venue
-              </button>
-            </p>
-          )}
-          <p className="mt-2 text-xs text-muted-foreground">
-            Team and unit ratings remain available below.
-          </p>
-        </div>
+          Play at {right.team}
+        </button>
       )}
+      {game && <FootballComparisonForecast game={game} />}
 
       <section
         aria-label="Overall team comparison"
