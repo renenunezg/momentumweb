@@ -65,8 +65,10 @@ export default async function SeasonWinsPage() {
         <span className="text-muted-foreground">
           Book is the frozen preseason line, which also informs the model&apos;s
           initial ratings. These forecasts are therefore not independent of that
-          input. Difference is projected wins minus Book, without an additional
-          game-line blend.
+          input. Each remaining game is simulated from its published margin:
+          games that already have a sportsbook line use the margin blended
+          with that line, and games without a line yet use the model&apos;s
+          own margin. Difference is projected wins minus Book.
         </span>
       </div>
       <SeasonWinsTable rows={rows} teams={[...teams.values()]} />

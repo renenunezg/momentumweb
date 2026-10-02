@@ -93,8 +93,8 @@ const flowNodes = [
     items: [
       { label: "Play-boundary states", sub: "Strictly pre-snap information" },
       { label: "3-parameter WP model", sub: "Gaussian on the final margin" },
-      { label: "Market anchor", sub: "Closing spread as the kickoff prior" },
-      { label: "Rebuild-per-play serving", sub: "~9 ms median per event" },
+      { label: "Market anchor", sub: "Published pregame line as the kickoff prior" },
+      { label: "Live publishing", sub: "Scoreboard states during games" },
     ],
   },
 ];
@@ -104,7 +104,7 @@ const pipelineSteps = [
   { num: "02", name: "Possessions", desc: "Classify plays, build possessions, aggregate team-game features" },
   { num: "03", name: "Fit", desc: "Ridge over offense/defense PPP plus home field, or the preseason prior" },
   { num: "04", name: "Project", desc: "Margin and total distributions for every upcoming game" },
-  { num: "05", name: "Anchor", desc: "Outcome-free pregame anchors for in-game serving" },
+  { num: "05", name: "Anchor", desc: "Published pregame lines anchor live win probability" },
   { num: "06", name: "Publish", desc: "Serving tables written to the Supabase cfb schema" },
 ];
 
@@ -171,7 +171,7 @@ export function MethodologyContent({ example }: { example: PickExample | null })
       <SectionCard
         id="overview"
         title="Overview"
-        subtitle="Possession-based power ratings, calibrated score distributions, and a market-anchored in-game win probability model"
+        subtitle="Possession-based power ratings, calibrated score distributions, and an in-game win probability model anchored on the published pregame line"
       >
         <div className="space-y-4 text-sm leading-relaxed">
           <p>
@@ -179,15 +179,19 @@ export function MethodologyContent({ example }: { example: PickExample | null })
             expected scoring margin against an average FBS opponent on a neutral
             field. From those ratings it projects a spread and a total for every
             game with a probability distribution around each, and an in-game
-            layer turns any game state into a home win probability.
+            layer turns any game state into a home win probability. The
+            published line, total, projected scores and team ratings are
+            those numbers moved toward the sportsbook market; the model&apos;s
+            own numbers stay on the site wherever they are labeled Pure.
           </p>
           <p>
             <strong>The pregame model does not beat the closing spread.</strong>{" "}
             Across 3,853 backtested games from 2021 through 2025 its average margin
             error is 13.40 points against the closing line&apos;s 12.14, and the
-            market wins every season. So picks are priced from a margin shrunk
-            halfway to the market, and the in-game model anchors on the closing
-            spread instead of the model&apos;s own number.
+            market wins every season. So the published line, total and scores
+            are blended halfway to the market, picks are priced from those
+            market-informed numbers, and the in-game model anchors on the
+            published line instead of the pure model&apos;s number.
           </p>
           <p>
             What the model offers is coverage and calibration. It rates all 266 D1
@@ -207,7 +211,7 @@ export function MethodologyContent({ example }: { example: PickExample | null })
               { label: "Training data", val: "2019–2025 play-by-play; holdout 2023–2025" },
               { label: "Home field", val: "Refit weekly from a 2.5 ± 1.5 point prior" },
               { label: "In-game model", val: "3-parameter Gaussian on the final margin" },
-              { label: "Kickoff anchor", val: "Market closing spread, sd 15.45 points" },
+              { label: "Kickoff anchor", val: "Published market-informed line, sd 15.35 points" },
               { label: "Picks", val: "Moneyline, spread and total at a flat unit (cfb-picks-v6)" },
             ].map(({ label, val }) => (
               <Card key={label} size="sm"><CardContent>
@@ -285,8 +289,9 @@ export function MethodologyContent({ example }: { example: PickExample | null })
               publishes the next slate and grades the finished week, and a
               kickoff-capture window that restores that frozen forecast and records
               the final pregame market without refitting. Odds capture is
-              append-only. Live in-game serving is built but not connected to a
-              live feed.
+              append-only. During games a live worker reads the CFBD scoreboard
+              and publishes win probabilities anchored on the published
+              pregame line.
             </p>
             <div className="flex flex-col gap-2 md:flex-row md:items-start md:gap-0">
               {pipelineSteps.map((step, i) => (
@@ -370,7 +375,7 @@ export function MethodologyContent({ example }: { example: PickExample | null })
             Zero always means an average FBS team.
           </p>
           <p>
-            The published margin is half this fit and half a points-only ridge
+            The model&apos;s own (pure) margin is half this fit and half a points-only ridge
             rating over every completed game with a final score, including FCS
             games with no play-by-play, carried across seasons with a 9-point
             prior. On the 2023&ndash;2025 holdout the blend cut margin error by
@@ -483,24 +488,70 @@ export function MethodologyContent({ example }: { example: PickExample | null })
         <div className="space-y-4 text-sm leading-relaxed">
           <p>
             Power rating is offense plus defense and scoring environment is
-            offense minus defense, so the projection is short:
+            offense minus defense, so the model&apos;s own (pure) projection
+            is short:
           </p>
           <FormulaBlock>
             joint_margin = power_home − power_away + home_field + crossover
             <br />
-            home_margin = 0.5 · joint_margin + 0.5 · points_only_margin + process_correction
+            pure_margin = 0.5 · joint_margin + 0.5 · points_only_margin + process_correction
             <br />
-            model_total = league_base + environment_home + environment_away − 0.8
+            pure_total = league_base + environment_home + environment_away − 0.8
             <br />
             <span className="text-muted-foreground">{"//"} league_base = league scoring rate × the teams&apos; blended pace</span>
           </FormulaBlock>
           <p>
             A team rated +10 is roughly a 10-point favorite over an average FBS
-            team on a neutral field. The published spread is the negated margin,
-            following the sportsbook sign convention.
+            team on a neutral field. A spread is the negated margin, following
+            the sportsbook sign convention. These are the pure numbers, shown
+            on the site only where they are labeled Pure.
           </p>
           <p>
-            Around that point sits a bivariate Student-t distribution over margin
+            What is published is market-informed. The pure margin is first
+            mixed with a rating fitted to the closing lines of earlier games
+            (weight 0.55 through week 3, 0.35 after), then moved halfway toward
+            the game&apos;s own sportsbook line; the weight on the game&apos;s
+            line is capped at 0.50. The published total is the pure total
+            moved halfway toward the sportsbook total posted when the forecast
+            was made, and the two published scores are the pair whose
+            difference is the published line and whose sum is the published
+            total.
+          </p>
+          <FormulaBlock>
+            informed_margin = (1 − w) · pure_margin + w · market_history_margin
+            <br />
+            published_margin = 0.5 · informed_margin + 0.5 · market_margin
+            <br />
+            published_total = 0.5 · pure_total + 0.5 · market_total
+            <br />
+            <span className="text-muted-foreground">{"//"} w = 0.55 through week 3, 0.35 after</span>
+          </FormulaBlock>
+          <p>
+            Published team ratings are the fitted ratings shifted so that, for
+            every game a team plays that week, the rating difference plus home
+            field equals the published line exactly. Each game&apos;s gap is
+            split evenly between its two teams, offense and defense each take
+            half of a team&apos;s shift, and the size of the shift is stored
+            per team. A team with no game that week moves part of the way
+            toward its market-history rating, by the same share the line uses
+            (0.55 through week 3, 0.35 after). The underlying fit is unchanged
+            and uses no market input: market information enters only at the
+            output layer.
+          </p>
+          <p>
+            The Compare tab on the{" "}
+            <Link href="/cfb/ratings" className="underline underline-offset-2 hover:text-foreground">
+              Ratings page
+            </Link>{" "}
+            follows from this. When the selected away team, home team and venue
+            match a published game, it shows that game&apos;s published
+            forecast: the line, the market line at forecast time and the
+            projected score. For any other pairing or venue it shows a
+            ratings-based line: away rating minus home rating minus home-field
+            advantage, which is zero on a neutral field.
+          </p>
+          <p>
+            Around the pure point sits a bivariate Student-t distribution over margin
             and total, built from the fit&apos;s residual covariance plus
             parameter uncertainty, including both teams&apos; rating SDs. The
             margin SD is scaled by 0.915, which brought 80% interval coverage from
@@ -508,8 +559,8 @@ export function MethodologyContent({ example }: { example: PickExample | null })
             College football is that noisy.
           </p>
           <p>
-            The market comparison view flags any offer where the pure model sees
-            at least 4 points of edge with positive EV. Those flags are review
+            The market comparison view flags any offer where the published line
+            or total sees at least 4 points of edge with positive EV. Those flags are review
             diagnostics, not picks: the biggest raw edges usually involve FCS
             opponents with thin data.
           </p>
@@ -677,6 +728,14 @@ export function MethodologyContent({ example }: { example: PickExample | null })
             stored batch predictions exactly, at a median of 8.9 ms per event
             against a 1-second budget.
           </p>
+          <p>
+            In production a live worker reads the CFBD scoreboard during games
+            and publishes a win probability for each new state. It uses the
+            score, the clock and possession; the scoreboard feed carries no
+            field position, so that term is left out. The pregame expectation
+            is the published market-informed line, with the 15.35-point
+            dispersion picks are priced with.
+          </p>
         </div>
       </SectionCard>
 
@@ -684,12 +743,14 @@ export function MethodologyContent({ example }: { example: PickExample | null })
       <SectionCard
         id="anchor"
         title="The Market Anchor"
-        subtitle="Swapping the model's pregame margin for the closing spread, everywhere the clock still matters"
+        subtitle="A research test of a market pregame anchor, and what the live model anchors on"
       >
         <div className="space-y-4 text-sm leading-relaxed">
           <p>
-            If the closing line is the better pregame forecast, the in-game model
-            should start from it. One closing spread per game, the median across
+            If the market is the better pregame forecast, the in-game model
+            should start from it. This was tested offline with the closing
+            spread, which is a research evaluation and not the live anchor.
+            One closing spread per game, the median across
             priced providers, enters the equation as{" "}
             <span className="font-mono">pregame_margin = −closing_spread</span>. The
             market prices no uncertainty, so{" "}
@@ -733,10 +794,13 @@ export function MethodologyContent({ example }: { example: PickExample | null })
           </div>
           <p className="text-muted-foreground">
             The pregame anchor is the binding constraint on in-game accuracy; this
-            does not show an independent model beating the market. At kickoff the
-            served win probability is essentially the market&apos;s line; by the
-            fourth quarter it is almost entirely the scoreboard. Without a market
-            anchor, the model&apos;s own projection fills in.
+            does not show an independent model beating the market. The live
+            publisher does not wait for the closing line: it anchors on the
+            published market-informed pregame line, which is already blended
+            halfway toward the market. At kickoff the served win probability is
+            essentially that published line; by the fourth quarter it is almost
+            entirely the scoreboard. A forecast stored without a market-informed
+            line falls back to the model&apos;s own projection.
           </p>
         </div>
       </SectionCard>
@@ -820,8 +884,9 @@ export function MethodologyContent({ example }: { example: PickExample | null })
             on this site is betting advice.
           </p>
           <p>
-            There is no live production feed yet: the in-game serving path
-            replays stored plays, and bowl season has no anchor mapping. FCS teams
+            Live win probability reads a scoreboard feed, so it sees the score,
+            clock and possession but not field position, live odds or
+            injuries. FCS teams
             with sparse data carry the widest uncertainty and the largest
             model-market gaps.
           </p>

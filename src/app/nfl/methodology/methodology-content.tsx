@@ -33,7 +33,8 @@ export function MethodologyContent({ example }: { example: PickExample | null })
           every Tuesday on the season&apos;s play-by-play: no Elo chain,
           nothing carried by hand. Around it sit a starting quarterback
           adjustment, an offseason prior, and a capped blend toward the
-          betting market. The pure and blended lines are both graded against
+          betting market that sets the published line, total, projected scores
+          and team ratings. The pure and blended lines are both graded against
           the closing spread, and picks go into a frozen ledger at a flat one
           unit.
         </p>
@@ -73,8 +74,10 @@ export function MethodologyContent({ example }: { example: PickExample | null })
           drive, plus a pace rating in drives per game, with a fitted
           home-field parameter (prior of two points). The model is a conjugate
           Gaussian ridge, a closed-form Bayesian update: the posterior mean
-          gives the ratings and the posterior covariance gives their
-          uncertainty, with no sampling.
+          gives the fitted ratings and the posterior covariance gives their
+          uncertainty, with no sampling. The ratings shown on the site are
+          these fitted ratings shifted to the week&apos;s published lines, as
+          described under Market Blend.
         </p>
         <p className={p}>
           The target fuses points per drive, what the scoreboard said, with
@@ -89,8 +92,10 @@ export function MethodologyContent({ example }: { example: PickExample | null })
           Totals get one extra step: league scoring and pace keep a preseason
           prior that fades with a six-week half-life, and a linear correction
           fitted on 2016 through 2021 pulls extreme totals toward 45. On 2022
-          through 2025 that cut total error from 10.62 to 10.54 points. The
-          published total is not blended with the market.
+          through 2025 that cut total error from 10.62 to 10.54 points. That
+          is the model&apos;s own total; the published total then moves
+          halfway toward the sportsbook total, as described under Market
+          Blend.
         </p>
       </Section>
 
@@ -125,7 +130,34 @@ export function MethodologyContent({ example }: { example: PickExample | null })
           The published line is an even blend of the pure model margin and the
           market line. The weight is hard-capped at one half so the model can
           never become an echo of the market, and calibration landed on the
-          cap. The market never touches the ratings.
+          cap. The pure line stays on the site wherever a number is labeled
+          Pure. The market never touches the fit: the engine&apos;s ratings
+          are estimated with no market input, and market information enters
+          only at the output layer.
+        </p>
+        <p className={p}>
+          The published total and projected scores are blended the same way.
+          The model total moves halfway toward the sportsbook total posted
+          when the forecast was made, and the two published scores are the
+          pair whose difference is the published line and whose sum is the
+          published total.
+        </p>
+        <p className={p}>
+          Published team ratings are the fitted ratings shifted so that, for
+          every game a team plays that week, the rating difference plus home
+          field equals the published line exactly. Each game&apos;s gap is
+          split evenly between its two teams, offense and defense each take
+          half of a team&apos;s shift, and the size of the shift is stored
+          per team. A team with no game that week keeps its fitted rating.
+        </p>
+        <p className={p}>
+          The Compare tab on the Ratings page follows from this. When the
+          selected away team, home team and venue match a published game, it
+          shows that game&apos;s published forecast: the line, the market
+          line at forecast time and the projected score. For any other
+          pairing or venue it shows a ratings-based line: away rating minus
+          home rating minus home-field advantage, which is zero on a neutral
+          field.
         </p>
         <p className={p}>
           Spread and moneyline probabilities use a discrete margin
@@ -217,8 +249,10 @@ export function MethodologyContent({ example }: { example: PickExample | null })
 
       <Section id="season-wins" title="Season Wins">
         <p className={p}>
-          Season win projections apply the same ratings and expected
-          quarterbacks to the remaining schedule, with no market blend. The
+          Season win projections simulate each remaining game from its
+          published margin: games that already have a sportsbook line use the
+          blended margin, and games without a line yet use the model&apos;s
+          own margin. The
           10th, 50th and 90th percentiles come from 100,000 season draws that
           share the engine&apos;s team-strength uncertainty across games.
           Ratings and starters are held fixed, so future injuries are not

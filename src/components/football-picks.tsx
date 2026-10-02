@@ -414,9 +414,15 @@ export function PickPolicy({
         </p>
       ) : sport === "nfl" ? (
         <p>
-          NFL picks v1 requires a 4.5 percentage-point advantage over the
-          price&apos;s break-even probability, conditional on no push or
-          returned tie, plus positive estimated EV. Each pick risks 1 unit.
+          NFL picks v4 requires the priced line to sit at least 2.0 points
+          beyond the price&apos;s break-even line, plus positive estimated EV.
+          Spreads are priced from the published blended margin, totals from
+          the model total moved halfway toward the median posted total at
+          decision time, and moneylines from the market margin moved 0.2 of
+          the way toward the pure model, with fixed dispersions of 12.82
+          points for margins and 13.28 for totals. If fewer than 5 picks
+          qualify in a week, the highest-edge positive-EV offers are promoted
+          and recorded as volume-floor picks. Each pick risks 1 unit.
           Prices require an opposing quote, an exact kickoff, a verified game
           match, an explicitly configured available bookmaker, and an update
           within one hour. Schedule receipts must be within 24 hours,
@@ -427,23 +433,28 @@ export function PickPolicy({
           injury clearance. Confirmed cancellations, postponements, and changed
           kickoffs void the original contract. Unconfirmed missing games stay
           pending. Moneyline ties are void; spread and total pushes return the
-          stake. The pure NFL model uses discrete key-number margins and
-          integer-score total probabilities. Historical calibration is
+          stake. Margin probabilities use discrete key-number margins and
+          total probabilities use integer scores. Historical calibration is
           diagnostic, not a publication gate. Estimated EV does not establish a
           real betting advantage. There are no additional exposure caps.
         </p>
       ) : (
         <p>
-          CFB picks v3 requires a 4.5 percentage-point advantage over the
-          price&apos;s break-even probability, conditional on no push, plus
-          positive EV. Prices must come from the configured odds feed, have an
+          CFB picks v6 requires the priced line to sit at least 2.0 points
+          beyond the price&apos;s break-even line, plus positive EV. Spreads
+          are priced from the published market-informed margin, totals from
+          the model total moved halfway toward the median posted total at
+          decision time, and moneylines from the market margin moved 0.2 of
+          the way toward the pure model, with fixed dispersions of 15.35
+          points for margins and 15.93 for totals. If fewer than 15 picks
+          qualify in a week, the highest-edge positive-EV offers are promoted
+          and recorded as volume-floor picks. Prices must come from the configured odds feed, have an
           opposing price and matching kickoff, and be captured within one hour.
           Verified game matches are required. Injury availability is unavailable
           for every team and remains flagged; any additional missing model input
           blocks a pick. Each pick risks 1 unit; a push returns the stake.
           Moneylines use the frozen margin distribution’s win probability
-          without a spread; a tied final is void. Picks use the model&apos;s own
-          probabilities. Historical calibration is diagnostic and does not gate
+          without a spread; a tied final is void. Historical calibration is diagnostic and does not gate
           recommendations; this record measures the picks as games finish.
         </p>
       )}

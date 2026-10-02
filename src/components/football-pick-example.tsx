@@ -24,8 +24,6 @@ import {
 } from "@/lib/pick-pricing";
 import { formatOdds, formatPct, formatSigned } from "@/lib/utils";
 
-const EDGE_GATE = 0.045;
-
 function lineLabel(example: PickExample): string {
   if (example.market === "h2h") return `${example.selection} ML`;
   const point = example.point ?? 0;
@@ -237,7 +235,7 @@ export function FootballPickExample({ example }: { example: PickExample }) {
         <Stat
           label="Edge"
           value={formatPct(example.probabilityEdge)}
-          sub={`${formatPct(conditionalWin)} no-push cover minus break-even; gate ${formatPct(EDGE_GATE)}`}
+          sub={`${formatPct(conditionalWin)} no-push cover minus break-even; the gate is 2.0 points of line`}
         />
         <Stat label="EV per unit" value={formatSigned(example.expectedValuePerUnit, 3)} sub={`stake ${example.stakeUnits.toFixed(0)}u, flat`} />
       </div>
@@ -247,11 +245,12 @@ export function FootballPickExample({ example }: { example: PickExample }) {
           Every number above is read from the frozen recommendation row and the projection it was
           priced from; the bars are recomputed from the stored mean, standard deviation
           {example.weights ? ", degrees of freedom and key-number multipliers" : " and degrees of freedom"}{" "}
-          with the same arithmetic the policy uses. The pick clears when the no-push cover
-          probability beats the price&apos;s break-even by at least 4.5 points and EV is positive.
-          {example.sport === "nfl"
-            ? " In the NFL the pricing margin is also the published line."
-            : " In CFB the published line stays pure; the shrink toward the market happens only inside the pick policy."}
+          with the same arithmetic the policy uses. The pick clears when the priced line sits at
+          least 2.0 points beyond the price&apos;s break-even line and EV is positive; when too few
+          picks clear in a week, the highest-edge positive-EV offers fill the slate. Spread picks
+          are priced from the published line, totals from the model total moved halfway toward the
+          posted total at decision time, and moneylines from the market margin moved 0.2 of the
+          way toward the pure model.
         </p>
       </Notice>
     </div>

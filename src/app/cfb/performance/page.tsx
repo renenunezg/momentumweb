@@ -56,14 +56,16 @@ export default async function PerformancePage({
   ]);
   const market = filters.market;
   const metric = selectedPickMetric(summary.metrics, market);
-  const pure =
+  // Grade the published market-informed forecast; seasons recorded before it
+  // existed fall back to the pure model.
+  const overall =
     filters.season === null || live.season === filters.season
-      ? live.metrics.find(
-          (m) =>
-            m.segment_kind === "overall" &&
-            m.prediction_source === "pure_model",
-        )
-      : null;
+      ? live.metrics.filter((m) => m.segment_kind === "overall")
+      : [];
+  const published =
+    overall.find((m) => m.prediction_source === "market_informed") ??
+    overall.find((m) => m.prediction_source === "pure_model") ??
+    null;
   const settled =
     (metric?.wins ?? 0) + (metric?.losses ?? 0) + (metric?.pushes ?? 0);
   const historyUrl = `/cfb/history?${query}`;
@@ -178,35 +180,39 @@ export default async function PerformancePage({
                 )}
             />
           </>
-          {pure && (
+          {published && (
             <PageSection>
               <h2 className="font-heading text-lg">
                 Forecast accuracy at a glance
               </h2>
               <p className="text-xs text-muted-foreground">
-                All {pure.games} graded forecasts in {live.season}, including
+                All {published.games} published forecasts graded in {live.season}, including
                 games without a recommendation. Full comparisons and historical
                 backtests are in the Forecast accuracy tab.
               </p>
               <div className="grid grid-cols-2 gap-4 border-y border-rule-strong py-4 sm:grid-cols-4">
                 <KpiCard
                   label="Margin MAE"
-                  value={formatNumber(pure.margin_mae, 2)}
+                  value={formatNumber(published.margin_mae, 2)}
                   sub="points"
                 />
                 <KpiCard
                   label="Gap to market"
-                  value={formatSigned(pure.model_minus_market_mae, 2)}
+                  value={formatSigned(published.model_minus_market_mae, 2)}
                   sub="MAE difference; lower is better"
                 />
                 <KpiCard
                   label="Total MAE"
-                  value={formatNumber(pure.total_mae, 2)}
-                  sub="points"
+                  value={
+                    published.total_games
+                      ? formatNumber(published.total_mae, 2)
+                      : "–"
+                  }
+                  sub={`points, ${published.total_games ?? 0} games`}
                 />
                 <KpiCard
                   label="80% coverage"
-                  value={formatPct(pure.coverage_80)}
+                  value={formatPct(published.coverage_80)}
                   sub="target 80%"
                 />
               </div>

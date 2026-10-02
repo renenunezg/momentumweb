@@ -127,8 +127,8 @@ export default function FootballLiveProbabilityContent({ league, gameId, away, h
       </>}
       <p className="border-t border-border pt-3 text-xs leading-relaxed text-muted-foreground">
         {league === "nfl"
-          ? "Based on the score, time remaining, possession, down and distance, field position, and timeouts, anchored on the model's pregame projection for this game. Pregame picks stay fixed; live probabilities do not include live betting odds or injuries."
-          : "Based on the score, time remaining, and possession, anchored on the model's pregame projection for this game. Pregame picks stay fixed; live probabilities do not include betting odds, injuries, or field position."}{" "}
+          ? "Based on the score, time remaining, possession, down and distance, field position, and timeouts, anchored on the published pregame line for this game, which blends the model with the sportsbook line. Pregame picks stay fixed; live probabilities do not include live betting odds or injuries."
+          : "Based on the score, time remaining, and possession, anchored on the published pregame line for this game, which blends the model with the sportsbook line. Pregame picks stay fixed; live probabilities do not include live betting odds, injuries, or field position."}{" "}
         Fair odds are derived from these probabilities without bookmaker margin.
       </p>
     </div>

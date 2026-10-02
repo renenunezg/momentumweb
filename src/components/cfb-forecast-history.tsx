@@ -194,7 +194,7 @@ export default async function ForecastHistory({
         axis. Model err is the absolute miss of the model&apos;s margin, shown
         green when the model was closer than the closing line.
         {isLive
-          ? " Model is the pure projection, not the market-informed blend."
+          ? " Model is the published market-informed line, not the pure projection."
           : ""}
       </p>
     </PageShell>

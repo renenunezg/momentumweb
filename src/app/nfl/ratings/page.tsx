@@ -67,7 +67,9 @@ export default async function RatingsPage() {
         Power ratings for all 32 NFL teams, refit each week from drive-level
         EPA. A team&apos;s rating is its expected scoring margin against an
         average opponent on a neutral field, split into offense and defense
-        points per game. Ratings are model output, not a poll.
+        points per game. Ratings are model output, not a poll. The published
+        ratings are the fitted ratings shifted so that this week&apos;s
+        rating differences plus home field match the published lines.
       </p>
 
       <NflRatings

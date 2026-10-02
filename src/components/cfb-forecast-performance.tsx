@@ -39,7 +39,7 @@ function fmtDate(value: string | null): string {
 
 const SOURCE_LABELS: Record<CfbPredictionSource, string> = {
   pure_model: "Pure model",
-  market_informed: "Market-informed blend",
+  market_informed: "Published (market-informed)",
   closing_market: "Closing line",
 };
 
@@ -132,11 +132,14 @@ export default async function ForecastPerformance({
   )
     .map((source) => overallBySource.get(source))
     .filter((m): m is CfbPerformanceMetric => m != null);
-  const pureSegments = live.metrics.filter(
-    (m) => m.prediction_source === "pure_model" && m.segment_kind !== "overall",
+  // Segments grade the published line, like the headline.
+  const publishedSource = livePublished?.prediction_source ?? "pure_model";
+  const publishedSegments = live.metrics.filter(
+    (m) =>
+      m.prediction_source === publishedSource && m.segment_kind !== "overall",
   );
   const segmentKinds = Object.keys(SEGMENT_TITLES).filter((kind) =>
-    pureSegments.some((m) => m.segment_kind === kind),
+    publishedSegments.some((m) => m.segment_kind === kind),
   );
 
   return (
@@ -217,9 +220,9 @@ export default async function ForecastPerformance({
               />
               <KpiCard
                 label="80% coverage"
-                value={formatPct(livePure.coverage_80, 0)}
+                value={formatPct(livePublished?.coverage_80, 0)}
                 sub="target 80%"
-                tooltip="Share of actual margins that landed inside the pure model's frozen 80% interval. Well above 80% means the model's uncertainty is too wide; well below means too narrow."
+                tooltip="Share of actual margins that landed inside the published line's 80% interval, built with the dispersion picks are priced with. Well above 80% means the interval is too wide; well below means too narrow."
               />
             </div>
 
@@ -279,20 +282,22 @@ export default async function ForecastPerformance({
                 </Table>
               </div>
               <p className="text-xs text-muted-foreground">
-                Pure model is the independent projection. The market-informed
-                blend mixes the pure margin with the pregame market spread the
-                model saw when it published, so it is a product line, not model
-                skill. Closing line is the benchmark graded on its own. Coverage
-                is the share of results inside the pure model&apos;s frozen 50,
-                80, and 90 percent intervals.
-                {livePure.probability_games ? (
+                Published is the market-informed line, total and scores the
+                site shows: the pure margin mixed with the pregame market spread
+                the model saw when it published. Pure model is the independent
+                projection behind it. Closing line is the benchmark graded on
+                its own. Coverage is the share of results inside each
+                source&apos;s 50, 80, and 90 percent intervals: the pure
+                model&apos;s frozen ones, and for the published line the
+                dispersion picks are priced with. The published total is graded
+                only for games published since it existed.
+                {livePublished?.probability_games ? (
                   <>
                     {" "}
-                    Home win probability, taken from the frozen pregame margin
-                    distribution before kickoff, scores Brier{" "}
-                    {formatNumber(livePure.brier_score, 3)} and log loss{" "}
-                    {formatNumber(livePure.log_loss, 3)} over{" "}
-                    {livePure.probability_games} games.
+                    Home win probability from the published pregame line scores
+                    Brier {formatNumber(livePublished.brier_score, 3)} and log
+                    loss {formatNumber(livePublished.log_loss, 3)} over{" "}
+                    {livePublished.probability_games} games.
                   </>
                 ) : null}
               </p>
@@ -302,7 +307,7 @@ export default async function ForecastPerformance({
               <SegmentTable
                 key={kind}
                 title={SEGMENT_TITLES[kind]}
-                rows={pureSegments.filter((m) => m.segment_kind === kind)}
+                rows={publishedSegments.filter((m) => m.segment_kind === kind)}
               />
             ))}
             <details className="space-y-4 rounded-sm border border-border p-4">
@@ -320,19 +325,19 @@ export default async function ForecastPerformance({
               </p>
               <SegmentTable
                 title="By input completeness"
-                rows={pureSegments.filter(
+                rows={publishedSegments.filter(
                   (m) => m.segment_kind === "missing_inputs",
                 )}
               />
               <SegmentTable
                 title="By projected winning margin (points)"
-                rows={pureSegments.filter(
+                rows={publishedSegments.filter(
                   (m) => m.segment_kind === "model_favorite_size",
                 )}
               />
             </details>
             <p className="text-xs text-muted-foreground">
-              Segments are pure model rows. Market columns use only the games in
+              Segments grade the published line. Market columns use only the games in
               that segment with a closing spread. A segment marked thin has
               fewer than 30 games.
             </p>
@@ -367,7 +372,7 @@ async function HistoricalBacktest() {
     <section className="space-y-section">
       <div className="flex items-start justify-between gap-4">
         <h2 className="font-heading text-lg">
-          Historical walk-forward backtest
+          Historical walk-forward backtest (pure model)
         </h2>
         {seasons.length > 0 && (
           <div className="text-xs text-muted-foreground">
@@ -378,8 +383,9 @@ async function HistoricalBacktest() {
 
       <p className="max-w-4xl text-sm text-muted-foreground leading-relaxed">
         Every prediction below was made walking forward through each season with
-        only the data available at the time, then frozen. These are historical
-        stand-ins for live performance, not live results. The market benchmark
+        only the data available at the time, then frozen. They come from the
+        pure model with no market blend, so they are historical stand-ins for
+        the model&apos;s own skill, not for the published line. The market benchmark
         is the closing spread: the strongest public forecast of a game&apos;s
         margin. Beating it consistently is rare, and the model is measured
         against it, not against a naive baseline.
@@ -401,9 +407,9 @@ async function HistoricalBacktest() {
 
       <p className="text-xs text-muted-foreground">
         Bias is the mean signed error of the model&apos;s home margin: positive
-        means the model leans toward home teams. In-game projections anchor on
-        the market closing line precisely because the closing line remains the
-        better pregame forecast.
+        means the model leans toward home teams. The published line and the
+        in-game projections lean on the market precisely because the closing
+        line remains the better pregame forecast.
       </p>
     </section>
   );

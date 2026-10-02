@@ -8,7 +8,7 @@ export const revalidate = 1800;
 export const metadata: Metadata = {
   title: "College Football Model Methodology",
   description:
-    "How the college football model works: possession-based Bayesian ratings, calibrated game distributions, market comparison, and an in-game win probability model.",
+    "How the college football model works: possession-based Bayesian ratings, calibrated game distributions, a published line blended with the market, and a live in-game win probability model.",
 };
 
 export default async function Page() {
@@ -19,8 +19,9 @@ export default async function Page() {
         <div>
           <PageTitle>College Football Model Methodology</PageTitle>
           <PageDescription>
-            Possession-based ratings, calibrated game distributions, and a
-            market-anchored in-game win probability model
+            Possession-based ratings, calibrated game distributions, and an
+            in-game win probability model anchored on the published pregame
+            line
           </PageDescription>
         </div>
       </PageHeader>

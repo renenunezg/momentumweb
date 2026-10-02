@@ -374,8 +374,9 @@ export default async function SchedulePage() {
       </ScheduleFilters>
 
       <p className="max-w-4xl text-xs text-muted-foreground">
-        Proj score is the pure model&apos;s away&ndash;home expected points.
-        Diff is model line minus
+        Proj score is the published away&ndash;home expected points, which
+        agree with the Model Line and the published total. Diff is model line
+        minus
         market line. Market total is the consensus total when the total pick was
         decided. Picks require qualifying probabilities, prices, and input
         flags; a large point difference alone does not qualify. A star marks a
