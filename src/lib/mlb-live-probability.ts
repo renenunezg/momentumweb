@@ -67,6 +67,11 @@ export function parseLiveProbability(value: unknown, gamePk: number): LiveProbab
   return value as unknown as LiveProbability;
 }
 
+/** A game that will change no further, so an open dialog can stop refreshing. */
+export function liveProbabilitySettled(data: LiveProbability): boolean {
+  return data.abstract_state === "Final" && data.home_win_probability !== null;
+}
+
 export function liveProbabilityStale(data: LiveProbability, now = Date.now()): boolean {
   return data.abstract_state !== "Final" && [data.fetched_at, data.source_timestamp]
     .some((stamp) => now - Date.parse(stamp) > 120_000 || Date.parse(stamp) - now > 30_000);

@@ -1,16 +1,15 @@
 "use client";
 
-import { useEffect, useState } from "react";
 import { CartesianGrid, Line, LineChart, ReferenceLine, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
 import { chartAxisProps, chartTooltipStyle, useChartTheme } from "@/lib/chart-theme";
 import {
   liveProbabilitySettled,
   liveProbabilityStale,
   parseFootballLiveProbability,
-  type FootballLiveProbability,
 } from "@/lib/football-live-probability";
 import type { FootballLeague } from "@/lib/football-slates";
 import { formatFairOdds, formatPct } from "@/lib/utils";
+import { useLiveProbability } from "@/components/use-live-probability";
 
 const QUARTERS = [0, 900, 1800, 2700, 3600];
 
@@ -21,57 +20,10 @@ function quarterLabel(elapsed: number) {
 export default function FootballLiveProbabilityContent({ league, gameId, away, home }: {
   league: FootballLeague; gameId: string; away: string; home: string;
 }) {
-  const [data, setData] = useState<FootballLiveProbability | null>(null);
-  const [error, setError] = useState<string | null>(null);
-  const [now, setNow] = useState(0);
+  const { data, error, now } = useLiveProbability(
+    `/${league}/api/live-probability/${gameId}`, gameId, parseFootballLiveProbability, liveProbabilitySettled,
+  );
   const theme = useChartTheme();
-
-  useEffect(() => {
-    let cancelled = false;
-    let settled = false;
-    let timer: ReturnType<typeof setTimeout> | undefined;
-    let controller: AbortController | undefined;
-    async function refresh() {
-      clearTimeout(timer);
-      if (cancelled || settled || document.visibilityState !== "visible") return;
-      controller?.abort();
-      const request = new AbortController();
-      controller = request;
-      try {
-        const response = await fetch(`/${league}/api/live-probability/${gameId}`, {
-          signal: AbortSignal.any([request.signal, AbortSignal.timeout(8000)]),
-        });
-        if (!response.ok) throw new Error(response.status === 404
-          ? "Win probability is not available for this game yet."
-          : "Could not refresh win probability. Retrying shortly.");
-        const snapshot = parseFootballLiveProbability(await response.json(), gameId);
-        if (!snapshot) throw new Error("The latest game state is unavailable. Retrying shortly.");
-        if (!cancelled && !request.signal.aborted) {
-          setData(snapshot);
-          setError(null);
-          setNow(Date.now());
-          settled = liveProbabilitySettled(snapshot);
-        }
-      } catch (cause) {
-        if (!cancelled && !request.signal.aborted) setError(cause instanceof Error ? cause.message : "Refresh failed.");
-      } finally {
-        if (!cancelled && !settled && !request.signal.aborted) timer = setTimeout(refresh, 30_000);
-      }
-    }
-    function visibility() {
-      clearTimeout(timer);
-      if (document.visibilityState === "visible") void refresh();
-      else controller?.abort();
-    }
-    void refresh();
-    document.addEventListener("visibilitychange", visibility);
-    return () => {
-      cancelled = true;
-      clearTimeout(timer);
-      controller?.abort();
-      document.removeEventListener("visibilitychange", visibility);
-    };
-  }, [league, gameId]);
 
   const stale = data ? liveProbabilityStale(data, now) : false;
   const available = data?.home_win_probability != null;

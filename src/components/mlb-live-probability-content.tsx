@@ -1,65 +1,17 @@
 "use client";
 
-import { useEffect, useState } from "react";
 import { CartesianGrid, Line, LineChart, ReferenceLine, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
 import { chartAxisProps, chartTooltipStyle, useChartTheme } from "@/lib/chart-theme";
-import { liveProbabilityStale, parseLiveProbability, type LiveProbability } from "@/lib/mlb-live-probability";
+import { liveProbabilitySettled, liveProbabilityStale, parseLiveProbability } from "@/lib/mlb-live-probability";
 import { baseOccupancyLabel } from "@/lib/mlb-bases";
 import { formatFairOdds, formatPct } from "@/lib/utils";
+import { useLiveProbability } from "@/components/use-live-probability";
 
 export default function LiveProbabilityContent({ gamePk, away, home }: { gamePk: number; away: string; home: string }) {
-  const [data, setData] = useState<LiveProbability | null>(null);
-  const [error, setError] = useState<string | null>(null);
-  const [now, setNow] = useState(0);
+  const { data, error, now } = useLiveProbability(
+    `/mlb/api/live-probability/${gamePk}`, gamePk, parseLiveProbability, liveProbabilitySettled,
+  );
   const theme = useChartTheme();
-
-  useEffect(() => {
-    let cancelled = false;
-    let finished = false;
-    let timer: ReturnType<typeof setTimeout> | undefined;
-    let controller: AbortController | undefined;
-    async function refresh() {
-      clearTimeout(timer);
-      if (cancelled || finished || document.visibilityState !== "visible") return;
-      controller?.abort();
-      const request = new AbortController();
-      controller = request;
-      setNow(Date.now());
-      try {
-        const response = await fetch(`/mlb/api/live-probability/${gamePk}`, {
-          signal: AbortSignal.any([request.signal, AbortSignal.timeout(8000)]),
-        });
-        if (!response.ok) throw new Error(response.status === 404
-          ? "Win probability is not available for this game yet."
-          : "Could not refresh win probability. Retrying shortly.");
-        const snapshot = parseLiveProbability(await response.json(), gamePk);
-        if (!snapshot) throw new Error("The latest game state is unavailable. Retrying shortly.");
-        if (!cancelled && !request.signal.aborted) {
-          setData(snapshot);
-          setError(null);
-          setNow(Date.now());
-          finished = snapshot.abstract_state === "Final" && snapshot.home_win_probability !== null;
-        }
-      } catch (cause) {
-        if (!cancelled && !request.signal.aborted) setError(cause instanceof Error ? cause.message : "Refresh failed.");
-      } finally {
-        if (!cancelled && !finished && !request.signal.aborted) timer = setTimeout(refresh, 30_000);
-      }
-    }
-    function visibility() {
-      clearTimeout(timer);
-      if (document.visibilityState === "visible") void refresh();
-      else controller?.abort();
-    }
-    void refresh();
-    document.addEventListener("visibilitychange", visibility);
-    return () => {
-      cancelled = true;
-      clearTimeout(timer);
-      controller?.abort();
-      document.removeEventListener("visibilitychange", visibility);
-    };
-  }, [gamePk]);
 
   const stale = data ? liveProbabilityStale(data, now) : false;
   const state = data?.state;

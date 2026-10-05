@@ -1,5 +1,3 @@
-import type { FootballLeague } from "@/lib/football-slates";
-
 export interface LiveProbabilityPoint {
   /** Seconds of regulation elapsed; overtime stays at 3600. */
   s: number;
@@ -68,46 +66,4 @@ export function liveProbabilitySettled(data: FootballLiveProbability): boolean {
 // The publisher rewrites an unchanged live row every two minutes.
 export function liveProbabilityStale(data: FootballLiveProbability, now = Date.now()): boolean {
   return data.abstract_state === "Live" && now - Date.parse(data.fetched_at) > 300_000;
-}
-
-const GAME_ID: Record<FootballLeague, RegExp> = {
-  cfb: /^[1-9]\d{0,15}$/,
-  nfl: /^\d{4}_\d{2}_[A-Z]{2,3}_[A-Z]{2,3}$/,
-};
-
-export function liveProbabilityRoute(league: FootballLeague) {
-  return async function GET(_request: Request, { params }: { params: Promise<{ gameId: string }> }) {
-    const { gameId } = await params;
-    const json = (body: object, status: number) => Response.json(body, {
-      status, headers: { "Cache-Control": "no-store" },
-    });
-    if (!GAME_ID[league].test(gameId)) return json({ error: "Invalid game" }, 400);
-    try {
-      const url = new URL("/rest/v1/live_win_probability", process.env.NEXT_PUBLIC_SUPABASE_URL);
-      url.search = new URLSearchParams({ select: "payload", game_id: `eq.${gameId}`, limit: "1" }).toString();
-      const key = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!;
-      // The CDN window alone bounds Supabase reads to one per game per window,
-      // however many dialogs are open, and needs no revalidate trigger. A
-      // data-cache copy would bill a write on every snapshot.
-      const response = await fetch(url, {
-        headers: { apikey: key, Authorization: `Bearer ${key}`, "Accept-Profile": league },
-        cache: "no-store",
-        signal: AbortSignal.timeout(5000),
-      });
-      if (!response.ok) throw new Error("Snapshot unavailable");
-      const rows: { payload?: unknown }[] = await response.json();
-      const snapshot = parseFootballLiveProbability(rows[0]?.payload, gameId);
-      const shared = {
-        "Cache-Control": "public, max-age=0, must-revalidate",
-        "Vercel-CDN-Cache-Control": "public, s-maxage=20",
-      };
-      if (!snapshot) return Response.json(
-        { error: "Win probability is not available for this game yet." },
-        { status: 404, headers: shared },
-      );
-      return Response.json(snapshot, { headers: shared });
-    } catch {
-      return json({ error: "Win probability is temporarily unavailable." }, 503);
-    }
-  };
 }
