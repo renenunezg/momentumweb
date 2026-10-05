@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useSyncExternalStore } from "react";
 
 function formatRelative(ts: string | null): string {
   if (!ts) return "unknown";
@@ -16,6 +16,18 @@ function formatRelative(ts: string | null): string {
   return `${diffDay}d ago`;
 }
 
+function subscribe(onChange: () => void) {
+  const id = window.setInterval(onChange, 30_000);
+  return () => window.clearInterval(id);
+}
+
+// The server renders no age: a clock reading in cached HTML makes every
+// regeneration differ from the last, which bills an ISR write even when the
+// data is unchanged.
+function serverAge() {
+  return "";
+}
+
 export function LastUpdated({
   timestamp,
   schedule,
@@ -23,18 +35,16 @@ export function LastUpdated({
   timestamp: string | null;
   schedule: string;
 }) {
-  const [, setTick] = useState(0);
-
-  useEffect(() => {
-    const id = setInterval(() => setTick((t) => t + 1), 30_000);
-    return () => clearInterval(id);
-  }, []);
+  const age = useSyncExternalStore(
+    subscribe,
+    () => formatRelative(timestamp),
+    serverAge,
+  );
 
   return (
     <div className="text-xs text-muted-foreground">
       <div>{schedule}</div>
-      {/* Cached server HTML and the browser use different clock times. */}
-      <div suppressHydrationWarning>Last updated: {formatRelative(timestamp)}</div>
+      <div>Last updated: {age}</div>
     </div>
   );
 }

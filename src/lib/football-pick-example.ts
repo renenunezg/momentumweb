@@ -152,10 +152,18 @@ function buildExample(
   };
 }
 
+// The cutoff for an unstarted game, rounded up to the hour: the cached reads
+// are keyed by URL, so an exact clock reading would store a new entry on
+// every render and never be read back. Rounding up keeps a started game out.
+function unstartedCutoff(): string {
+  const hour = 3_600_000;
+  return new Date(Math.ceil(Date.now() / hour) * hour).toISOString();
+}
+
 // The soonest unstarted recommended pick, or the most recently settled one
 // when nothing is pending, so the example never shows a game in progress.
 export async function fetchCfbPickExample(): Promise<PickExample | null> {
-  const now = new Date().toISOString();
+  const now = unstartedCutoff();
   const base = () =>
     supabaseCfb.from("recommendations").select(REC_COLUMNS).eq("status", "recommended");
   const upcoming = await base()
@@ -183,7 +191,7 @@ export async function fetchCfbPickExample(): Promise<PickExample | null> {
 }
 
 export async function fetchNflPickExample(): Promise<PickExample | null> {
-  const now = new Date().toISOString();
+  const now = unstartedCutoff();
   const columns = `${REC_COLUMNS},pricing_weights`;
   const base = () =>
     supabaseNfl.from("recommendations").select(columns).eq("status", "recommended");

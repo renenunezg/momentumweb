@@ -38,7 +38,7 @@ Route tree:
 | `/*/methodology` | How each model works |
 | `/blog`, `/about` | Writing and contact |
 
-One API route supports the MLB games page. `GET /mlb/api/live-scores` is a cached proxy to the MLB Stats API so many browsers polling the page cost at most two upstream requests a minute. It is also the live-grading trigger: after responding, it grades any game the schedule shows as Final, writing the score back and refreshing the day's evaluation windows. Which game gets graded is decided server-side from the MLB feed, never from the request, so the site exposes no write endpoint; the route cache bounds grading to one pass per revalidation window, and the nightly Python batch remains the source of truth.
+One API route supports the MLB games page. `GET /mlb/api/live-scores` is a CDN-cached proxy to the MLB Stats API so many browsers polling the page cost at most two upstream requests a minute per region. It is also the live-grading trigger: after responding, it grades any game the schedule shows as Final, writing the score back and refreshing the day's evaluation windows. Which game gets graded is decided server-side from the MLB feed, never from the request, so the site exposes no write endpoint; the CDN window bounds grading to one pass per window, and the nightly Python batch remains the source of truth.
 
 Things that are load-bearing and easy to break:
 

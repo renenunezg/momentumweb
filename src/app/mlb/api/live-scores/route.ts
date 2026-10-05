@@ -5,20 +5,22 @@ import { runEvalForGame } from "@/lib/eval-game";
 import { toLiveScore, type MlbScheduleGame } from "@/lib/mlb-live-scores";
 import { fetchPicksVersion } from "@/lib/mlb-picks-version";
 
-// Cached proxy to the MLB Stats API: N browsers polling this route become at
-// most two upstream requests a minute, whatever the traffic.
+// Cached proxy to the MLB Stats API: the CDN window turns N browsers polling
+// this route into at most two upstream requests a minute per region. The
+// cache is the CDN's, not ISR: scores change all game long, so an ISR copy
+// would bill a write every window.
 //
 // It is also the trigger for live grading. When the schedule the server just
 // read shows a game as Final, that game is graded after the response is sent.
 // Which game gets graded is decided here from the MLB feed, never from the
-// request, so there is no client-facing write endpoint, and the route cache
-// bounds the trigger to one pass per revalidation window however many
-// browsers are polling.
+// request, so there is no client-facing write endpoint, and the CDN window
+// bounds the trigger to one pass per window however many browsers are
+// polling.
 
-export const revalidate = 30;
+export const dynamic = "force-dynamic";
 
 // Games this server instance has already seen graded, so a finished game
-// costs one indexed lookup per instance rather than one per revalidation.
+// costs one indexed lookup per instance rather than one per window.
 const graded = new Set<number>();
 
 async function gradeFinals(gamePks: number[]): Promise<void> {
@@ -58,7 +60,7 @@ export async function GET() {
   try {
     const [res, picksVersion] = await Promise.all([
       fetch(url, {
-        next: { revalidate: 30 },
+        cache: "no-store",
         headers: { "User-Agent": "mlb-model-dashboard" },
         signal: AbortSignal.timeout(4000),
       }),

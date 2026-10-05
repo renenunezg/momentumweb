@@ -31,10 +31,10 @@ export async function POST(request: Request) {
   if (!SPORTS.has(sport)) {
     return NextResponse.json({ error: "unknown schema" }, { status: 400 });
   }
-  // Live snapshots change throughout every game; invalidate only their reads.
+  // Live snapshots change throughout every game and are served from the CDN
+  // window alone, so their writes must not mark the sport's pages stale.
   if (sport === "mlb" && body?.table === "live_win_probability") {
-    revalidateTag("mlb-live-probability", { expire: 0 });
-    return NextResponse.json({ revalidated: "mlb-live-probability" });
+    return NextResponse.json({ revalidated: null });
   }
   // A published decision must be visible on the next visit, with no stale window.
   revalidateTag(sport, { expire: 0 });

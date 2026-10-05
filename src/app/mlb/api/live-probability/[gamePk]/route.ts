@@ -11,21 +11,25 @@ export async function GET(_request: Request, { params }: { params: Promise<{ gam
     const url = new URL("/rest/v1/live_win_probability", process.env.NEXT_PUBLIC_SUPABASE_URL);
     url.search = new URLSearchParams({ select: "payload", game_pk: `eq.${gamePk}`, limit: "1" }).toString();
     const key = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!;
+    // The CDN window alone bounds Supabase reads to one per game per window,
+    // however many dialogs are open. A data-cache copy would bill a write on
+    // every snapshot.
     const response = await fetch(url, {
       headers: { apikey: key, Authorization: `Bearer ${key}`, "Accept-Profile": "mlb" },
-      next: { revalidate: 10, tags: ["mlb-live-probability"] },
+      cache: "no-store",
       signal: AbortSignal.timeout(5000),
     });
     if (!response.ok) throw new Error("Snapshot unavailable");
     const rows: { payload?: unknown }[] = await response.json();
     const snapshot = parseLiveProbability(rows[0]?.payload, gamePk);
-    if (!snapshot) return NextResponse.json({ error: "Win probability is not available for this game yet." },
-      { status: 404, headers: { "Cache-Control": "no-store" } });
     // Share public snapshots at the edge without retaining an old browser copy.
-    return NextResponse.json(snapshot, { headers: {
+    const shared = {
       "Cache-Control": "public, max-age=0, must-revalidate",
       "Vercel-CDN-Cache-Control": "public, s-maxage=15",
-    } });
+    };
+    if (!snapshot) return NextResponse.json({ error: "Win probability is not available for this game yet." },
+      { status: 404, headers: shared });
+    return NextResponse.json(snapshot, { headers: shared });
   } catch {
     return NextResponse.json({ error: "Win probability is temporarily unavailable." },
       { status: 503, headers: { "Cache-Control": "no-store" } });
