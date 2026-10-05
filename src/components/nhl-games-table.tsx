@@ -2,6 +2,7 @@ import { Fragment } from "react";
 import { TeamLogo } from "@/components/team-logo";
 import { TableCell, TableRow } from "@/components/ui/table";
 import { GamesTableLayout, GameMatchupHeader } from "@/components/games-table-layout";
+import { NhlLiveProbabilityDialog } from "@/components/nhl-live-probability-dialog";
 import { cn, formatNumber, formatOdds, formatPct } from "@/lib/utils";
 import { americanToImplied, PROVIDER_NAMES } from "@/lib/nhl";
 import type { NhlDecision } from "@/lib/nhl-picks";
@@ -178,12 +179,19 @@ export function NhlGamesTable({ matchups }: { matchups: NhlMatchup[] }) {
               home={projection.home_team}
               columnCount={8}
               status={live && live.state !== "pre" && (
-                <span className={cn(
-                  "text-[10px] uppercase tracking-wider",
-                  live.state === "in" ? "text-positive" : "text-muted-foreground",
-                )}>
-                  {live.detail}
-                </span>
+                <>
+                  <span className={cn(
+                    "text-[10px] uppercase tracking-wider",
+                    live.state === "in" ? "text-positive" : "text-muted-foreground",
+                  )}>
+                    {live.detail}
+                  </span>
+                  <NhlLiveProbabilityDialog
+                    gameId={projection.game_id}
+                    away={projection.away_team}
+                    home={projection.home_team}
+                  />
+                </>
               )}
               detail={startLabel(projection.start_date)}
             />
