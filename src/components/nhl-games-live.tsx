@@ -32,10 +32,13 @@ export function NhlGamesLive({
 
   useEffect(() => {
     let cancelled = false;
+    const controller = new AbortController();
     async function fetchOnce() {
+      if (cancelled) return;
       try {
         const res = await fetch(`/nhl/api/live-scores?date=${date}`, {
           cache: "no-store",
+          signal: controller.signal,
         });
         if (!res.ok) return;
         const data = (await res.json()) as { games?: NhlLiveGame[] };
@@ -47,7 +50,7 @@ export function NhlGamesLive({
     }
     function schedule() {
       if (timer.current) clearTimeout(timer.current);
-      if (document.visibilityState !== "visible" || done) return;
+      if (cancelled || document.visibilityState !== "visible" || done) return;
       timer.current = setTimeout(async () => {
         await fetchOnce();
         schedule();
@@ -69,6 +72,7 @@ export function NhlGamesLive({
     document.addEventListener("visibilitychange", onVisibility);
     return () => {
       cancelled = true;
+      controller.abort();
       if (timer.current) clearTimeout(timer.current);
       document.removeEventListener("visibilitychange", onVisibility);
     };

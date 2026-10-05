@@ -177,7 +177,3 @@ export function pickProbabilities(
 export function breakEvenProbability(price: number): number {
   return price > 0 ? 100 / (price + 100) : -price / (-price + 100);
 }
-
-export function americanProfit(price: number): number {
-  return price > 0 ? price / 100 : 100 / -price;
-}

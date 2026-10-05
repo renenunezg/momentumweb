@@ -127,7 +127,7 @@ export function GamesLive({
   }, [finished]);
 
   return <>
-    <GamesTable matchups={matchups} />
+    {matchups.length > 0 && <GamesTable matchups={matchups} />}
     {unavailable.length > 0 && <div className="space-y-3">
       {unavailable.map((game) => <GameCardUnavailable key={game.game_pk} game={game}
         showWinProbability={game.status === "Final" || (

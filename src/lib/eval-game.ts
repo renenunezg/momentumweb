@@ -5,11 +5,11 @@ import {
   computeSegmentRow,
   type EvalRow,
   type EvalWindow,
-} from "@/lib/eval";
+} from "./eval.ts";
 
 // Best-effort live eval, run server-side from the live-scores route when the
 // MLB schedule shows a game as Final. Verifies via the MLB API, writes back the
-// score, and partial-upserts today's evaluation windows. The nightly Python
+// score, and atomically publishes provisional windows. The nightly Python
 // batch is the canonical reconciliation.
 
 type MlbClient = SupabaseClient<Database, "mlb">;
@@ -107,8 +107,7 @@ export async function runEvalForGame(
   sb: MlbClient,
   game_pk: number
 ): Promise<EvalResult> {
-  // The cheap, indexed lookup comes first so a repeated call for a game that is
-  // already graded costs one query and never reaches the MLB API or the scans.
+  // A final score is an ingestion result, not a grading completion marker.
   const { data: existingGame, error: lookupErr } = await sb
     .from("games")
     .select("status, home_score, away_score")
@@ -120,14 +119,6 @@ export async function runEvalForGame(
   if (!existingGame) {
     return { ok: false, reason: "unknown game" };
   }
-  if (
-    existingGame.status === "Final" &&
-    existingGame.home_score != null &&
-    existingGame.away_score != null
-  ) {
-    return { ok: true, game_pk, eval_date: ptDateString(new Date()), windows_updated: [] };
-  }
-
   const mlb = await fetchMlbGame(game_pk);
   if (!mlb || mlb.status?.abstractGameState !== "Final") {
     return { ok: false, reason: "not final per MLB API" };
@@ -146,22 +137,33 @@ export async function runEvalForGame(
     return { ok: false, error: `games update failed: ${gameWriteErr.message}` };
   }
 
-  const { data: preds, error: predErr } = await sb
-    .from("model_outputs_season_unified")
-    .select(
-      "game_pk, team, expected_runs, win_prob, ev_flag, run_line_ev_flag, spread, total, total_play, moneyline, kelly_quarter_ml, kelly_quarter_total, total_over_odds, total_under_odds",
-    );
-  if (predErr) {
-    return { ok: false, error: `predictions query failed: ${predErr.message}` };
+  const pageSize = 1000;
+  const snapshot = await sb.rpc("live_evaluation_started_at");
+  if (snapshot.error || !snapshot.data) return { ok: false, error: "evaluation snapshot unavailable" };
+
+  const preds: Pred[] = [];
+  const finals: GameRow[] = [];
+  for (let offset = 0; ; offset += pageSize) {
+    const { data, error } = await sb
+      .from("model_outputs_season_unified")
+      .select("game_pk, date, team, expected_runs, win_prob, ev_flag, run_line_ev_flag, spread, total, total_play, moneyline, kelly_quarter_ml, kelly_quarter_total, total_over_odds, total_under_odds")
+      .order("game_pk").order("team").order("date")
+      .range(offset, offset + pageSize - 1);
+    if (error) return { ok: false, error: `predictions query failed: ${error.message}` };
+    preds.push(...(data ?? []) as Pred[]);
+    if (!data || data.length < pageSize) break;
   }
-  const { data: finals, error: gamesErr } = await sb
-    .from("games")
-    .select("game_pk, game_date, home_team, away_team, home_score, away_score")
-    .eq("status", "Final")
-    .not("home_score", "is", null)
-    .not("away_score", "is", null);
-  if (gamesErr) {
-    return { ok: false, error: `games query failed: ${gamesErr.message}` };
+  for (let offset = 0; ; offset += pageSize) {
+    const { data, error } = await sb
+      .from("games")
+      .select("game_pk, game_date, home_team, away_team, home_score, away_score")
+      .eq("status", "Final")
+      .not("home_score", "is", null).not("away_score", "is", null)
+      .order("game_pk")
+      .range(offset, offset + pageSize - 1);
+    if (error) return { ok: false, error: `games query failed: ${error.message}` };
+    finals.push(...(data ?? []) as GameRow[]);
+    if (!data || data.length < pageSize) break;
   }
 
   type GameRow = {
@@ -177,6 +179,7 @@ export async function runEvalForGame(
 
   type Pred = {
     game_pk: number;
+    date: string;
     team: string;
     expected_runs: number;
     win_prob: number;
@@ -195,7 +198,7 @@ export async function runEvalForGame(
   const evalRows: (EvalRow & { game_date: string })[] = [];
   for (const p of (preds ?? []) as Pred[]) {
     const g = gameByPk.get(p.game_pk);
-    if (!g) continue;
+    if (!g || p.date?.slice(0, 10) !== g.game_date) continue;
     const isHome = g.home_team === p.team;
     if (!isHome && g.away_team !== p.team) continue;
     const teamScore = isHome ? g.home_score : g.away_score;
@@ -227,19 +230,20 @@ export async function runEvalForGame(
     return { ok: true, game_pk, eval_date: ptDateString(new Date()), windows_updated: [] };
   }
 
-  const evalDate = ptDateString(new Date());
   const latestDate = evalRows.reduce(
     (mx, r) => (r.game_date > mx ? r.game_date : mx),
     evalRows[0].game_date,
   );
+  const evalDate = latestDate;
 
   const windows: Array<{ name: EvalWindow; rows: EvalRow[] }> = [
     { name: "day", rows: evalRows.filter((r) => r.game_date === latestDate) },
-    { name: "7d", rows: evalRows.filter((r) => r.game_date >= shiftDays(latestDate, -7)) },
-    { name: "30d", rows: evalRows.filter((r) => r.game_date >= shiftDays(latestDate, -30)) },
+    { name: "7d", rows: evalRows.filter((r) => r.game_date >= shiftDays(latestDate, -6)) },
+    { name: "30d", rows: evalRows.filter((r) => r.game_date >= shiftDays(latestDate, -29)) },
     { name: "season", rows: evalRows },
   ];
 
+  const updates: Database["mlb"]["Tables"]["model_evaluation"]["Insert"][] = [];
   for (const w of windows) {
     if (w.rows.length === 0) continue;
     const base = computeBaseRow(w.rows);
@@ -253,17 +257,13 @@ export async function runEvalForGame(
       partial[col] = merged[col];
     }
 
-    // Several browsers see the same game go Final within the same poll window,
-    // so the write has to be one atomic statement against the (date, window)
-    // unique index rather than a select followed by an insert.
-    const { error } = await sb
-      .from("model_evaluation")
-      .upsert(partial, { onConflict: "date,eval_window" });
-
-    if (error) {
-      return { ok: false, error: `eval write failed (${w.name}): ${error.message}` };
-    }
+    updates.push(partial);
   }
+  // All windows commit together; a failure leaves every window retryable.
+  const { error } = await sb.rpc("publish_live_evaluation", {
+    p_started_at: snapshot.data, p_rows: updates,
+  });
+  if (error) return { ok: false, error: `eval write failed: ${error.message}` };
 
   return {
     ok: true,

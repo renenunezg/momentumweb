@@ -1,5 +1,5 @@
 import type { NhlMarketDatabase } from "@/lib/nhl-market.database.types";
-import type { Tables } from "@/lib/database.types";
+import type { Tables } from "@/lib/database-schema";
 import type { CfbRatingsDatabase } from "@/lib/cfb-ratings.database.types";
 
 // Row types come from the generated schema so a column change in a model repo
@@ -62,7 +62,10 @@ export type ModelEvaluation = Narrow<
     average_total_diff: number;
     average_win_prob: number;
   }
->;
+> & {
+  evaluation_state?: "legacy" | "provisional" | "canonical";
+  interval_coverage_predictions?: number | null;
+};
 
 export type CalibrationBin = Narrow<
   Tables<"mlb", "model_calibration">,

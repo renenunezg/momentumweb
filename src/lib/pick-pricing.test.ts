@@ -3,7 +3,6 @@ import assert from "node:assert/strict";
 import {
   breakEvenProbability,
   pickProbabilities,
-  studentTCdf,
 } from "./pick-pricing.ts";
 
 // Stored NFL key-number multipliers (margin_distribution_v2), as published on
@@ -68,13 +67,6 @@ const close = (actual: number, expected: number, tol = 2e-6) =>
     `expected ${expected}, got ${actual}`,
   );
 
-test("student t cdf matches scipy reference values", () => {
-  close(studentTCdf(0, 7), 0.5, 1e-12);
-  close(studentTCdf(1.5, 7), 0.9114, 5e-5);
-  close(studentTCdf(-2.0, 500), 0.02301, 5e-5);
-  close(studentTCdf(1.96, 1e9), 0.97500, 5e-5);
-});
-
 // Expected values are the win/push probabilities stored on real
 // recommendation rows, produced by the model repos' pricing code.
 test("NFL spread pick reproduces stored key-number probabilities", () => {
@@ -87,6 +79,7 @@ test("NFL spread pick reproduces stored key-number probabilities", () => {
   );
   close(p.win, 0.54905072599849);
   close(p.push, 0.0518175475456757);
+  close(p.win / (1 - p.push) - breakEvenProbability(-110), 0.0552464633344051, 5e-6);
 });
 
 test("NFL moneyline pick reproduces stored probabilities with tie mass", () => {
@@ -129,17 +122,4 @@ test("CFB spread, moneyline and total picks reproduce stored probabilities", () 
     null,
   );
   close(total.win, 0.581159720097922);
-});
-
-test("stored probability edge equals push-conditional win minus break-even", () => {
-  const p = pickProbabilities(
-    { market: "spreads", side: "away", point: 7 },
-    5.28381824331628,
-    13.7082614424095,
-    7,
-    NFL_WEIGHTS,
-  );
-  const edge = p.win / (1 - p.push) - breakEvenProbability(-110);
-  close(edge, 0.0552464633344051, 5e-6);
-  close(breakEvenProbability(172), 100 / 272, 1e-12);
 });

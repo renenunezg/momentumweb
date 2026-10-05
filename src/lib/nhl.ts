@@ -61,13 +61,13 @@ export async function fetchProjections(
   return { games: data ?? [], unavailable: false };
 }
 
-async function fetchSnapshotRows(gameIds: string[]): Promise<NhlMarketSnapshot[]> {
+async function fetchSnapshotRows(
+  gameIds: string[], cutoffs: Record<string, string> = {},
+): Promise<NhlMarketSnapshot[]> {
   if (gameIds.length === 0) return [];
-  const { data, error } = await supabaseNhl
-    .from("market_snapshots")
-    .select("*")
-    .in("game_id", gameIds)
-    .order("fetched_at", { ascending: false });
+  const { data, error } = await supabaseNhl.rpc("latest_market_snapshots", {
+    p_game_ids: gameIds, p_cutoffs: cutoffs,
+  });
   if (error) {
     console.error("nhl snapshots fetch failed:", error.message);
     return [];
@@ -105,7 +105,7 @@ export async function fetchForecastSnapshots(
   const forecasts = new Map(games.map((game) => [game.game_id, game]));
   const byGame = new Map<string, NhlMarketSnapshot[]>();
   const seen = new Set<string>();
-  for (const row of await fetchSnapshotRows([...forecasts.keys()])) {
+  for (const row of await fetchSnapshotRows([...forecasts.keys()], Object.fromEntries(games.map((game) => [game.game_id, game.as_of])))) {
     const forecast = forecasts.get(row.game_id);
     if (!forecast || Date.parse(row.fetched_at) > Date.parse(forecast.as_of)) continue;
     const key = `${row.game_id}:${row.provider_key}`;

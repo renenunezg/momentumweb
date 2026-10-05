@@ -1,10 +1,11 @@
 import { PageDescription, PageHeader, PageShell, PageTitle } from "@/components/page-layout";
 import type { Metadata } from "next";
 import { supabase } from "@/lib/supabase";
-import type { Tables } from "@/lib/database.types";
+import type { Tables } from "@/lib/database-schema";
 import type { ModelOutput, GameMatchup, GameInfo } from "@/lib/types";
 import { GamesLive } from "@/components/games-live";
 import { SummaryStats } from "@/components/summary-stats";
+import { Notice } from "@/components/notice";
 import { LastUpdated } from "@/components/last-updated";
 import { latestStamp } from "@/lib/mlb-picks-version";
 import { toLiveScore, type LiveScore, type MlbScheduleGame } from "@/lib/mlb-live-scores";
@@ -62,7 +63,7 @@ export default async function Page() {
     timeZone: "America/Los_Angeles",
   });
 
-  const [{ data: outputs }, { data: allGames }, liveScores] = await Promise.all([
+  const [{ data: outputs, error: outputsError }, { data: allGames, error: gamesError }, liveScores] = await Promise.all([
     supabase.from("model_outputs").select("*").eq("date", today).order("game_pk"),
     supabase
       .from("games")
@@ -71,6 +72,9 @@ export default async function Page() {
       .order("start_time"),
     fetchLiveScores(),
   ]);
+
+  if (outputsError) console.error("MLB predictions unavailable:", outputsError.message);
+  if (gamesError) console.error("MLB schedule unavailable:", gamesError.message);
 
   const lastUpdated = latestStamp((allGames ?? []).map((game) => game.updated_at));
   const picksVersion = latestStamp([
@@ -93,7 +97,7 @@ export default async function Page() {
           Today&apos;s MLB Predictions
         </PageTitle>
         <p className="text-muted-foreground">
-          No predictions available.
+          {outputsError || gamesError ? "Predictions are temporarily unavailable." : "No predictions available."}
         </p>
       </PageShell>
     );
@@ -131,8 +135,9 @@ export default async function Page() {
     })
     .filter((m): m is GameMatchup => m != null);
 
+  const completePks = new Set(matchups.map((matchup) => matchup.game_pk));
   const unavailableGames: GameInfo[] = (allGames ?? []).filter(
-    (g) => !predictionPks.has(g.game_pk)
+    (g) => !completePks.has(g.game_pk)
   );
 
   const hasAnyPlay = (m: GameMatchup) =>
@@ -182,7 +187,9 @@ export default async function Page() {
         Picks freeze at first pitch and are graded against the closing line.
       </p>
 
-      <SummaryStats matchups={matchups} />
+      {outputsError || gamesError ? (
+        <Notice>Predictions are temporarily unavailable. Scores remain available.</Notice>
+      ) : <SummaryStats matchups={matchups} gameCount={matchups.length + unavailableGames.length} />}
 
       <GamesLive
         key={picksVersion ?? "unpublished"}

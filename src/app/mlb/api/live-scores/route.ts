@@ -1,6 +1,6 @@
+import type { Database } from "@/lib/database.types";
 import { NextResponse, after } from "next/server";
 import { createClient } from "@supabase/supabase-js";
-import type { Database } from "@/lib/database.types";
 import { runEvalForGame } from "@/lib/eval-game";
 import { toLiveScore, type MlbScheduleGame } from "@/lib/mlb-live-scores";
 import { fetchPicksVersion } from "@/lib/mlb-picks-version";
@@ -19,8 +19,8 @@ import { fetchPicksVersion } from "@/lib/mlb-picks-version";
 
 export const dynamic = "force-dynamic";
 
-// Games this server instance has already seen graded, so a finished game
-// costs one indexed lookup per instance rather than one per window.
+// Successful grading is cached per instance; failures remain eligible on
+// the next poll, including failures after the final score was saved.
 const graded = new Set<number>();
 
 async function gradeFinals(gamePks: number[]): Promise<void> {

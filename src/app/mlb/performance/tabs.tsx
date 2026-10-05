@@ -40,7 +40,7 @@ interface PerformanceTabsProps {
   residuals: number[];
   posteriorSkills: PosteriorSkill[];
   posteriorSigmas: PosteriorSigma[];
-  liveKpis: LiveKpis;
+  liveKpis: LiveKpis | null;
 }
 
 // A push is a bet that is neither a win nor a loss; show it as a third number
@@ -106,21 +106,22 @@ export function PerformanceTabs({
         </TabsList>
       </div>
 
+      {latest?.evaluation_state === "provisional" && <p className="mb-4 text-sm text-muted-foreground">Live results are provisional until nightly reconciliation.</p>}
       <TabsContent value="overview" className="space-y-8">
         <div className="grid grid-cols-3 sm:flex sm:flex-wrap items-baseline gap-x-4 gap-y-3 font-mono text-sm">
           <KpiCard
             label="ROI"
-            value={formatPct(liveKpis.roi)}
+            value={formatPct(liveKpis?.roi)}
             tooltip="Profit per dollar risked. ROI = total P&L ÷ total stakes. 13% ROI means 13¢ profit per $1 staked, on average - not 13% of your bankroll."
           />
           <KpiCard
             label="Sharpe"
-            value={formatNumber(liveKpis.sharpe, 2)}
+            value={formatNumber(liveKpis?.sharpe, 2)}
             tooltip="Risk-adjusted return: mean daily P&L ÷ std dev of daily P&L. >1 is good, >2 excellent."
           />
           <KpiCard
             label="Max DD"
-            value={liveKpis.max_drawdown != null ? `${formatSigned(liveKpis.max_drawdown, 2)}u` : EMPTY}
+            value={liveKpis?.max_drawdown != null ? `${formatSigned(liveKpis.max_drawdown, 2)}u` : EMPTY}
             tooltip="Worst peak-to-trough decline of cumulative P&L, in units. With flat 1u stake sizing (no compounding), drawdown is reported in absolute units rather than as a % of equity - a Kelly-style % would misrepresent a non-compounding strategy."
           />
           <KpiCard
@@ -185,7 +186,7 @@ export function PerformanceTabs({
           <KpiCard label="Brier Score" value={formatNumber(latest?.brier_score, 3)} sub="Lower is better (baseline: 0.250)" />
           <KpiCard label="Log Loss" value={formatNumber(latest?.log_loss, 3)} />
           <KpiCard label="Sharpness" value={formatNumber(latest?.sharpness, 4)} sub="Higher = more decisive" />
-          <KpiCard label="80% Coverage" value={formatPct(latest?.interval_coverage_80)} sub="Target: 80%" />
+          <KpiCard label="80% Coverage" value={formatPct(latest?.interval_coverage_predictions ? latest?.interval_coverage_80 : null)} sub={latest?.interval_coverage_predictions ? `${latest.interval_coverage_predictions} frozen distributions` : "Frozen distributions unavailable"} />
         </div>
 
         <div className="border-t border-border pt-6">
@@ -216,15 +217,16 @@ export function PerformanceTabs({
       </TabsContent>
 
       <TabsContent value="betting" className="space-y-8">
+        {liveKpis === null ? <p role="status" className="text-sm text-muted-foreground">Betting results are temporarily unavailable.</p> : (
         <div className="grid grid-cols-3 sm:flex sm:flex-wrap items-baseline gap-x-4 gap-y-3 font-mono text-sm">
           <KpiCard
             label="ROI"
-            value={formatPct(liveKpis.roi)}
+            value={formatPct(liveKpis?.roi)}
             tooltip="Profit per dollar risked. ROI = total P&L ÷ total stakes. 13% ROI means the model returns 13¢ profit on every $1 staked, on average. Independent of bankroll size."
           />
           <KpiCard
             label="Sharpe"
-            value={formatNumber(liveKpis.sharpe, 2)}
+            value={formatNumber(liveKpis?.sharpe, 2)}
             tooltip="Risk-adjusted return: mean daily P&L ÷ std dev of daily P&L. Higher is better. >1 is good, >2 is excellent."
           />
           <KpiCard
@@ -234,7 +236,7 @@ export function PerformanceTabs({
           />
           <KpiCard
             label="Max Drawdown"
-            value={liveKpis.max_drawdown != null ? `${formatSigned(liveKpis.max_drawdown, 2)}u` : EMPTY}
+            value={liveKpis?.max_drawdown != null ? `${formatSigned(liveKpis.max_drawdown, 2)}u` : EMPTY}
             tooltip="Worst peak-to-trough decline of cumulative P&L, in units. Stakes are flat fractions of a fixed 1u base (no compounding), so reporting drawdown as a % of running equity (the Kelly-style metric) would be misleading."
           />
           <KpiCard
@@ -245,17 +247,17 @@ export function PerformanceTabs({
           />
           <KpiCard
             label="Favorites"
-            value={formatPct(liveKpis.roi_favorites)}
+            value={formatPct(liveKpis?.roi_favorites)}
             sub={`(${liveKpis.favorites_correct}-${liveKpis.n_favorites - liveKpis.favorites_correct})`}
           />
           <KpiCard
             label="Underdogs"
-            value={formatPct(liveKpis.roi_underdogs)}
+            value={formatPct(liveKpis?.roi_underdogs)}
             sub={`(${liveKpis.underdogs_correct}-${liveKpis.n_underdogs - liveKpis.underdogs_correct})`}
           />
           <KpiCard
             label="Run Line"
-            value={formatPct(liveKpis.roi_run_line)}
+            value={formatPct(liveKpis?.roi_run_line)}
             sub={`(${liveKpis.run_line_bets_correct}-${liveKpis.n_run_line - liveKpis.run_line_bets_correct})`}
             tooltip="Run-line bet ROI. Computed from the same ledger as the headline ROI; bets sized via quarter-Kelly on the model's cover probability vs. book spread odds."
           />
@@ -271,6 +273,7 @@ export function PerformanceTabs({
             sub={formatRecord(liveKpis.unders_correct, liveKpis.unders_predictions, liveKpis.unders_pushes)}
           />
         </div>
+        )}
 
         <div className="border-t border-border pt-6">
           <h2 className="font-heading text-lg mb-4">Equity Curve</h2>
@@ -362,17 +365,17 @@ export function PerformanceTabs({
           <div className="grid grid-cols-3 sm:flex sm:flex-wrap items-baseline gap-x-4 gap-y-3 font-mono text-sm">
             <KpiCard
               label="50% Interval"
-              value={formatPct(latest?.interval_coverage_50)}
+              value={formatPct(latest?.interval_coverage_predictions ? latest?.interval_coverage_50 : null)}
               sub="Target: 50%"
             />
             <KpiCard
               label="80% Interval"
-              value={formatPct(latest?.interval_coverage_80)}
-              sub="Target: 80%"
+              value={formatPct(latest?.interval_coverage_predictions ? latest?.interval_coverage_80 : null)}
+              sub={latest?.interval_coverage_predictions ? `${latest.interval_coverage_predictions} frozen distributions` : "Frozen distributions unavailable"}
             />
             <KpiCard
               label="90% Interval"
-              value={formatPct(latest?.interval_coverage_90)}
+              value={formatPct(latest?.interval_coverage_predictions ? latest?.interval_coverage_90 : null)}
               sub="Target: 90%"
             />
           </div>

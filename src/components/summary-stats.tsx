@@ -2,10 +2,10 @@ import type { GameMatchup } from "@/lib/types";
 
 interface SummaryStatsProps {
   matchups: GameMatchup[];
+  gameCount?: number;
 }
 
-export function SummaryStats({ matchups }: SummaryStatsProps) {
-  const gameCount = matchups.length;
+export function SummaryStats({ matchups, gameCount = matchups.length }: SummaryStatsProps) {
 
   const mlPlays = new Set<string>();
   const rlPlays = new Set<string>();

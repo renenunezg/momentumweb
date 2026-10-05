@@ -20,6 +20,7 @@ export type NhlMatchup = {
   bookTotal: number | null;
   moneyline: NhlDecision | null;
   total: NhlDecision | null;
+  decisionsUnavailable: boolean;
   live: NhlLiveGame | null;
 };
 
@@ -128,7 +129,7 @@ function TeamRow({
               Kelly {formatPct(moneyline.kelly_fraction)}
             </span>
           </>
-        ) : <span className="text-muted-foreground">–</span>}
+        ) : <span className="text-muted-foreground">{matchup.decisionsUnavailable ? "Unavailable" : "–"}</span>}
       </TableCell>
       {side === "away" && (
         <>
@@ -154,7 +155,7 @@ function TeamRow({
                     {total.provider ?? providerName(total.provider_key ?? "")}
                   </span>
                 </>
-              ) : <span className="text-xs text-muted-foreground">No play</span>}
+              ) : <span className="text-xs text-muted-foreground">{matchup.decisionsUnavailable ? "Unavailable" : total ? "No play" : "Pending"}</span>}
             </div>
           </TableCell>
         </>

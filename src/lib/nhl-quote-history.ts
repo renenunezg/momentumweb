@@ -27,7 +27,13 @@ export function quotesAtForecast(
     const responseDate = Date.parse(String(quote.response_date ?? ""));
     const responseAge = quote.response_age_seconds;
     const sourceStart = Date.parse(String(quote.source_start_date ?? ""));
+    const marketId = String(quote.source_market_id ?? "");
+    const marketValid = market === "h2h" ? /^0ML\d+$/.test(marketId) : /^0OU\d+$/.test(marketId);
+    const selection = market === "h2h"
+      ? `${marketId}_${side === "home" ? "1" : "3"}`
+      : `${marketId}${side === "over" ? "O" : "U"}${Math.round((point ?? 0) * 100)}_${side === "over" ? "1" : "3"}`;
     return snapshot.provider_key === "draftkings" &&
+      marketValid && /^\d+$/.test(String(quote.source_event_id ?? "")) && quote.source_selection_id === selection &&
       quote.method === "draftkings_public_listing_v1" &&
       quote.source_url === PUBLIC_LISTING &&
       quote.provider_key === snapshot.provider_key && quote.game_id === snapshot.game_id &&

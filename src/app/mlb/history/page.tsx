@@ -1,7 +1,7 @@
 import { PageHeader, PageShell, PageTitle } from "@/components/page-layout";
 import type { Metadata } from "next";
 import { supabase } from "@/lib/supabase";
-import type { Tables } from "@/lib/database.types";
+import type { Tables } from "@/lib/database-schema";
 import type { Narrow } from "@/lib/types";
 import { EMPTY, cn, formatDate, formatNumber, formatOdds, formatPct, pageNumber } from "@/lib/utils";
 import { V2_CUTOVER_DATE } from "@/lib/constants";
@@ -26,7 +26,6 @@ export const metadata: Metadata = {
   description:
     "Every MLB prediction this season next to the final score: moneyline, run line, and total picks frozen before first pitch, with results by team and date.",
 };
-
 const PAGE_SIZE = 50;
 
 // Same treatment as the CFB schedule: a color rule down the leading edge plus a
@@ -71,7 +70,6 @@ type HistoryRow = Narrow<
   }
 >;
 
-type BetRecord = { bet_type: string; wins: number; losses: number; pushes: number };
 
 // Keyed by the ledger's bet_type. A selected market lists only the rows where
 // that market is a play; No Play rows stay in the default All markets view.
@@ -104,12 +102,12 @@ export default async function HistoryPage({
   const offset = (page - 1) * PAGE_SIZE;
 
   // 7D / 30D quick-filter applies a date floor to both the table and the
-  // records widget. Explicit from/to in the URL overrides it for the table.
+  // records widget. Explicit bounds override the quick period for both.
   const periodFloor =
     period === "7"
-      ? new Date(new Date().getTime() - 7 * 86400000).toISOString().split("T")[0]
+      ? new Date(new Date().getTime() - 6 * 86400000).toISOString().split("T")[0]
       : period === "30"
-        ? new Date(new Date().getTime() - 30 * 86400000).toISOString().split("T")[0]
+        ? new Date(new Date().getTime() - 29 * 86400000).toISOString().split("T")[0]
         : "";
   const effectiveFrom = from || periodFloor;
 
@@ -155,14 +153,11 @@ export default async function HistoryPage({
     : null;
   if (picksQuery && team) picksQuery = picksQuery.eq("team", team);
 
-  const [pageRes, picked, { data: recordRows }, { data: latest }, { data: firstV2GameRows }] = await Promise.all([
+  const [pageRes, picked, ledger, { data: latest }, { data: firstV2GameRows }] = await Promise.all([
     pageQuery,
     picksQuery,
-    // Win/loss record aggregated in the database: one tiny response instead
-    // of paging the full bet ledger view across sequential requests.
     supabase.rpc("bet_record_summary", {
-      p_from: periodFloor || null,
-      p_team: team || null,
+      p_from: effectiveFrom || undefined, p_to: to || undefined, p_team: team || undefined,
     }),
     supabase
       .from("games")
@@ -196,9 +191,10 @@ export default async function HistoryPage({
     rl: { wins: 0, losses: 0, pushes: 0 },
     total: { wins: 0, losses: 0, pushes: 0 },
   };
-  for (const r of (recordRows ?? []) as BetRecord[]) {
-    if (Object.hasOwn(records, r.bet_type)) records[r.bet_type as Market] = r;
+  for (const row of ledger.data ?? []) {
+    if (Object.hasOwn(records, row.bet_type)) records[row.bet_type as Market] = row;
   }
+  if (ledger.error) console.error("MLB history record unavailable:", ledger.error.message);
 
   // Pushes are bets with zero P&L: shown as a third number, excluded from the
   // win percentage.
@@ -259,7 +255,7 @@ export default async function HistoryPage({
                         : ""
                   )}
                 >
-                  {fmtRecord(wins, losses, pushes)}
+                  {ledger.error ? "Unavailable" : fmtRecord(wins, losses, pushes)}
                 </span>
               </div>
             );

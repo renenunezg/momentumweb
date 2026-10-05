@@ -98,6 +98,7 @@ export default async function Page({
       bookTotal: withTotal?.total_line ?? null,
       moneyline: decisions.find((d) => d.market === "h2h") ?? null,
       total: decisions.find((d) => d.market === "totals") ?? null,
+      decisionsUnavailable: decisionsRes.unavailable,
       live: live.get(projection.game_id) ?? null,
     };
   });
@@ -139,13 +140,14 @@ export default async function Page({
       </p>
       <SlateSummary stats={[
         { label: "Games", value: matchups.length },
-        { label: "ML", value: matchups.filter((m) => m.moneyline?.status === "recommended").length },
-        { label: "Totals", value: matchups.filter((m) => m.total?.status === "recommended").length },
+        ...(decisionsRes.unavailable ? [] : [{ label: "ML", value: matchups.filter((m) => m.moneyline?.status === "recommended").length },
+        { label: "Totals", value: matchups.filter((m) => m.total?.status === "recommended").length }]),
       ]} />
       {decisionsRes.decisions.length === 0 && (
         <Notice>
-          Decisions for today have not been published yet; prices and plays
-          appear after the morning run.
+          {decisionsRes.unavailable
+            ? "Decisions are temporarily unavailable. Model forecasts remain available."
+            : "Decisions for today have not been published yet; prices and plays appear after the morning run."}
         </Notice>
       )}
       {decisionsRes.decisions.length > 0 &&

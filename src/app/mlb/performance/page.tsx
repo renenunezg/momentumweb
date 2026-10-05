@@ -57,9 +57,10 @@ export default async function PerformancePage() {
       .select("*")
       .order("refit_date", { ascending: false })
       .limit(20),
-    // The betting tab degrades to empty KPIs if the ledger view is unreachable;
-    // the rest of the page must still render.
-    fetchFullBetLedger().catch(() => []),
+    fetchFullBetLedger().catch((error: unknown) => {
+      console.error("MLB betting ledger unavailable:", error instanceof Error ? error.message : "read failed");
+      return null;
+    }),
   ]);
 
   const evaluations = (evalRes.data ?? []) as ModelEvaluation[];
@@ -68,7 +69,7 @@ export default async function PerformancePage() {
   const edgeBuckets = (edgeRes.data ?? []) as EdgeBucket[];
   const posteriorSkills = (skillsRes.data ?? []) as PosteriorSkill[];
   const posteriorSigmas = (sigmasRes.data ?? []) as PosteriorSigma[];
-  const liveKpis = aggregateLedger(ledger);
+  const liveKpis = ledger === null ? null : aggregateLedger(ledger);
 
   // Residuals join predictions to graded games here rather than in PostgREST:
   // an embedded !inner needs an FK constraint, which these tables lack.
@@ -106,8 +107,7 @@ export default async function PerformancePage() {
           MLB Model Performance
         </PageTitle>
         <p className="text-muted-foreground">
-          No evaluation data available yet. Run the pipeline to generate
-          performance metrics.
+          {evalRes.error ? "Performance data is temporarily unavailable." : "No evaluation data available yet."}
         </p>
       </PageShell>
     );
@@ -129,6 +129,7 @@ export default async function PerformancePage() {
         up: calibration, Brier score, and betting results against the closing
         line, scored overnight after every game.
       </p>
+      {ledger === null && <p role="status" className="text-sm text-muted-foreground">Betting results are temporarily unavailable.</p>}
       <PerformanceTabs
         evaluations={evaluations}
         calibration={calibration}
