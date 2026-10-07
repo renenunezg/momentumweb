@@ -1433,6 +1433,36 @@ export type Database = {
         }
         Relationships: []
       }
+      live_evaluation_completions: {
+        Row: {
+          completed_at: string
+          eval_date: string
+          game_pk: number
+          input_version: string
+        }
+        ComputedFields: never
+        Insert: {
+          completed_at?: string
+          eval_date: string
+          game_pk: number
+          input_version: string
+        }
+        Update: {
+          completed_at?: string
+          eval_date?: string
+          game_pk?: number
+          input_version?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "live_evaluation_completions_game_pk_fkey"
+            columns: ["game_pk"]
+            isOneToOne: true
+            referencedRelation: "games"
+            referencedColumns: ["game_pk"]
+          },
+        ]
+      }
       live_win_probability: {
         Row: {
           game_pk: number
@@ -2694,11 +2724,23 @@ export type Database = {
       }
       live_evaluation_status: {
         Args: { p_game_pk: number }
-        Returns: { input_version: string | null; eval_date: string | null }[]
+        Returns: {
+          eval_date: string
+          input_version: string
+        }[]
       }
       complete_live_evaluation: {
-        Args: { p_game_pk: number; p_input_version: string; p_started_at: string; p_rows: Json }
+        Args: {
+          p_game_pk: number
+          p_input_version: string
+          p_rows: Json
+          p_started_at: string
+        }
         Returns: undefined
+      }
+      live_evaluation_input_version: {
+        Args: { p_game_pk: number }
+        Returns: string
       }
       live_evaluation_started_at: {
         Args: Record<PropertyKey, never>
