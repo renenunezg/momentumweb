@@ -229,7 +229,8 @@ export default function DraftWorkspace({ data }: { data: Workspace }) {
   const filteredPlayers = (players ?? [])
     .filter(
       (p) =>
-        (!position || (p.position_group ?? p.position) === position) &&
+        (!position ||
+          (p.position_group ?? p.position ?? "Not listed") === position) &&
         `${p.athlete_name} ${p.team}`
           .toLowerCase()
           .includes(query.toLowerCase()),
@@ -648,7 +649,9 @@ export default function DraftWorkspace({ data }: { data: Workspace }) {
                 <option value="">All positions</option>
                 {[
                   ...new Set(
-                    (players ?? []).map((p) => p.position_group ?? p.position),
+                    (players ?? []).map(
+                      (p) => p.position_group ?? p.position ?? "Not listed",
+                    ),
                   ),
                 ]
                   .sort()
@@ -757,7 +760,7 @@ export default function DraftWorkspace({ data }: { data: Workspace }) {
                           </button>
                           <small>{p.team}</small>
                         </td>
-                        <td>{p.position}</td>
+                        <td>{p.position ?? "Not listed"}</td>
                         <td>{score(p.value_above_replacement)}</td>
                         <td>{p.position_rank ?? "Not measured"}</td>
                         <td>{p.games ?? "Not measured"}</td>
@@ -1120,7 +1123,7 @@ export default function DraftWorkspace({ data }: { data: Workspace }) {
                   {profile.athlete_name}
                 </DialogTitle>
                 <DialogDescription>
-                  {profile.team} · {profile.position}
+                  {profile.team} · {profile.position ?? "Position not listed"}
                 </DialogDescription>
                 <div className={styles.fit}>
                   <div>

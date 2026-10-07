@@ -59,7 +59,7 @@ export type CollegePlayer = {
   athlete_id: string;
   athlete_name: string;
   team: string;
-  position: string;
+  position?: string;
   position_group?: string;
   games?: number;
   value_above_replacement?: number;
