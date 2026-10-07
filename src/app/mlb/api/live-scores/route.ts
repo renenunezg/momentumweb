@@ -19,10 +19,6 @@ import { fetchPicksVersion } from "@/lib/mlb-picks-version";
 
 export const dynamic = "force-dynamic";
 
-// Successful grading is cached per instance; failures remain eligible on
-// the next poll, including failures after the final score was saved.
-const graded = new Set<number>();
-
 async function gradeFinals(gamePks: number[]): Promise<void> {
   const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
   const serviceKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
@@ -30,19 +26,15 @@ async function gradeFinals(gamePks: number[]): Promise<void> {
   // Python batch remains the source of truth either way.
   if (!url || !serviceKey) return;
 
-  const pending = gamePks.filter((pk) => !graded.has(pk));
-  if (pending.length === 0) return;
-
   const sb = createClient<Database, "mlb">(url, serviceKey, {
     auth: { persistSession: false, autoRefreshToken: false },
     db: { schema: "mlb" },
   });
-  // Sequential on purpose: the first ungraded game recomputes the day's
-  // evaluation windows, and running several at once only repeats that scan.
-  for (const pk of pending) {
+  // Completion is durable across instances. Recheck official scores so a
+  // correction stays eligible; failed publications never record completion.
+  for (const pk of gamePks) {
     try {
-      const result = await runEvalForGame(sb, pk);
-      if (result.ok) graded.add(pk);
+      await runEvalForGame(sb, pk);
     } catch {
       // Best effort: the nightly batch reconciles anything missed here.
     }

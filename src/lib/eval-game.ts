@@ -55,10 +55,6 @@ const LIVE_UPSERT_COLUMNS = [
   "unders_roi",
 ] as const;
 
-function ptDateString(d: Date): string {
-  return d.toLocaleDateString("en-CA", { timeZone: "America/Los_Angeles" });
-}
-
 function shiftDays(date: string, days: number): string {
   const d = new Date(date + "T00:00:00Z");
   d.setUTCDate(d.getUTCDate() + days);
@@ -129,12 +125,25 @@ export async function runEvalForGame(
     return { ok: false, reason: "missing scores" };
   }
 
-  const { error: gameWriteErr } = await sb
-    .from("games")
-    .update({ status: "Final", home_score: homeScore, away_score: awayScore })
-    .eq("game_pk", game_pk);
-  if (gameWriteErr) {
-    return { ok: false, error: `games update failed: ${gameWriteErr.message}` };
+  if (existingGame.status !== "Final" || existingGame.home_score !== homeScore
+    || existingGame.away_score !== awayScore) {
+    const { error: gameWriteErr } = await sb
+      .from("games")
+      .update({ status: "Final", home_score: homeScore, away_score: awayScore })
+      .eq("game_pk", game_pk);
+    if (gameWriteErr) {
+      return { ok: false, error: `games update failed: ${gameWriteErr.message}` };
+    }
+  }
+
+  const { data: status, error: statusError } = await sb.rpc("live_evaluation_status", {
+    p_game_pk: game_pk,
+  });
+  if (statusError || !status?.length) return { ok: false, error: "evaluation status unavailable" };
+  const { input_version: inputVersion, eval_date: completedDate } = status[0];
+  if (!inputVersion) return { ok: false, reason: "no matching predictions" };
+  if (completedDate) {
+    return { ok: true, game_pk, eval_date: completedDate, windows_updated: [] };
   }
 
   const pageSize = 1000;
@@ -227,7 +236,7 @@ export async function runEvalForGame(
   }
 
   if (evalRows.length === 0) {
-    return { ok: true, game_pk, eval_date: ptDateString(new Date()), windows_updated: [] };
+    return { ok: false, reason: "no matching evaluation rows" };
   }
 
   const latestDate = evalRows.reduce(
@@ -260,7 +269,8 @@ export async function runEvalForGame(
     updates.push(partial);
   }
   // All windows commit together; a failure leaves every window retryable.
-  const { error } = await sb.rpc("publish_live_evaluation", {
+  const { error } = await sb.rpc("complete_live_evaluation", {
+    p_game_pk: game_pk, p_input_version: inputVersion,
     p_started_at: snapshot.data, p_rows: updates,
   });
   if (error) return { ok: false, error: `eval write failed: ${error.message}` };

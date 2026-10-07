@@ -102,6 +102,10 @@ test("live grading retries failures, rejects rescheduled rows, and commits compl
   let failRead = true;
   let failWrite = true;
   let scans = 0;
+  let gameWrites = 0;
+  let completed = false;
+  let statusUnavailable = false;
+  let missingPredictions = false;
   let writes: Record<string, unknown>[][] = [];
   const predictions = Array.from({ length: 1002 }, (_, i) => ({
     game_pk: i + 1, team: "H", date: fixture.predictions[Math.min(i, 2)].date,
@@ -113,9 +117,15 @@ test("live grading retries failures, rejects rescheduled rows, and commits compl
   }));
   const sb = {
     async rpc(name: string, args: { p_rows: Record<string, unknown>[] }) {
+      if (name === "live_evaluation_status") return {
+        data: statusUnavailable ? null : [{ input_version: missingPredictions ? null : "version-1", eval_date: completed ? fixture.date : null }],
+        error: statusUnavailable ? { message: "status failure" } : null,
+      };
       if (name === "live_evaluation_started_at") return { data: new Date().toISOString(), error: null };
       if (failWrite) { failWrite = false; return { data: null, error: { message: "write failure" } }; }
+      assert.equal(name, "complete_live_evaluation");
       writes = [...writes, args.p_rows];
+      completed = true;
       return { data: null, error: null };
     },
     from(table: string) {
@@ -125,7 +135,7 @@ test("live grading retries failures, rejects rescheduled rows, and commits compl
     const query = {
       select() { return query; }, eq() { return query; }, not() { return query; }, order() { return query; },
       range(from: number, to: number) { bounds = [from, to]; return query; },
-      update(value: unknown) { update = value; return query; },
+      update(value: unknown) { gameWrites++; update = value; return query; },
       upsert(value: Record<string, unknown>[]) { upsert = value; return query; },
       async maybeSingle() { return { data: { status: "Final", home_score: 4, away_score: 2 }, error: null }; },
       then(resolve: (value: unknown) => unknown) {
@@ -155,6 +165,21 @@ test("live grading retries failures, rejects rescheduled rows, and commits compl
     assert.equal(scans, 5);
     assert.equal(writes.length, 1);
     assert.equal(writes[0].length, 4);
+    assert.equal(gameWrites, 0, "unchanged finals must not trigger database writes");
+    const repeated = await runEvalForGame(sb, 1);
+    assert.ok(repeated.ok);
+    assert.deepEqual(repeated.windows_updated, []);
+    assert.equal(scans, 5, "durable completion skips history on a fresh call");
+    statusUnavailable = true;
+    assert.equal((await runEvalForGame(sb, 1)).ok, false);
+    statusUnavailable = false;
+    missingPredictions = true;
+    assert.equal((await runEvalForGame(sb, 1)).ok, false);
+    assert.equal(scans, 5);
+    missingPredictions = false;
+    completed = false;
+    assert.equal((await runEvalForGame(sb, 1)).ok, true);
+    assert.equal(scans, 7, "changed input version remains retryable");
     assert.ok(writes[0].every((row) => row.date === fixture.date));
     const windows = new Map(writes[0].map((r) => [r.eval_window, r.total_predictions]));
     for (const [window, count] of Object.entries(fixture.window_counts)) {

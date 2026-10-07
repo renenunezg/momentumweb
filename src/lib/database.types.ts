@@ -2692,6 +2692,14 @@ export type Database = {
           wins: number
         }[]
       }
+      live_evaluation_status: {
+        Args: { p_game_pk: number }
+        Returns: { input_version: string | null; eval_date: string | null }[]
+      }
+      complete_live_evaluation: {
+        Args: { p_game_pk: number; p_input_version: string; p_started_at: string; p_rows: Json }
+        Returns: undefined
+      }
       live_evaluation_started_at: {
         Args: Record<PropertyKey, never>
         Returns: string
