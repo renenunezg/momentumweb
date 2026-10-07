@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState, useSyncExternalStore } from "react";
+import { useMemo, useState, useSyncExternalStore } from "react";
 import { ViewTabs, ViewTabPanel } from "@/components/view-tabs";
 import {
   Dialog,
@@ -18,11 +18,18 @@ import type {
   CollegePlayer,
   DraftPosition,
   DraftWorkspace as Workspace,
-  HistoricalPlayer,
   MockMode,
   RosterPlayer,
 } from "@/lib/draft";
 import styles from "./draft-workspace.module.css";
+import { PlayerHeadshot } from "@/components/player-headshot";
+import {
+  cfbPlayerHeadshotUrl,
+  nflPlayerHeadshotUrl,
+} from "@/lib/player-headshots";
+import { DraftImpactChart, DraftComparison } from "./draft-charts";
+import { useDraftSection } from "./use-draft-section";
+import type { PlayerPage, HistoryPage } from "@/lib/draft";
 
 type Tab = "mock" | "players" | "roster" | "guide" | "history";
 const tabs: { key: Tab; label: string }[] = [
@@ -76,8 +83,16 @@ function Source({
   );
 }
 
-export default function DraftWorkspace({ data }: { data: Workspace }) {
-  const { board, roster, meta } = data;
+export default function DraftWorkspace({
+  data,
+  initialPlayers,
+  initialRoster,
+}: {
+  data: Workspace;
+  initialPlayers: PlayerPage;
+  initialRoster: RosterPlayer[];
+}) {
+  const { board, meta } = data;
   const [tab, setTab] = useState<Tab>("mock");
   const [edits, setEdits] = useState<{
     mode: MockMode;
@@ -88,10 +103,7 @@ export default function DraftWorkspace({ data }: { data: Workspace }) {
   const [unit, setUnit] = useState("3WR 1TE");
   const [slot, setSlot] = useState<number | null>(null);
   const [pickNumber, setPickNumber] = useState<number | null>(null);
-  const [players, setPlayers] = useState<CollegePlayer[] | null>(null);
-  const [history, setHistory] = useState<HistoricalPlayer[] | null>(null);
-  const [loadError, setLoadError] = useState("");
-  const [retry, setRetry] = useState(0);
+  const [page, setPage] = useState(0);
   const [query, setQuery] = useState("");
   const [position, setPosition] = useState("QB");
   const [profile, setProfile] = useState<CollegePlayer | null>(null);
@@ -138,32 +150,6 @@ export default function DraftWorkspace({ data }: { data: Workspace }) {
     return { mode: "needs" as MockMode, overrides: {} };
   }, [stored, board]);
   const { mode, overrides } = edits ?? saved;
-  useEffect(() => {
-    const section =
-      tab === "players" && !players
-        ? "players"
-        : tab === "history" && !history
-          ? "history"
-          : null;
-    if (!section) return;
-    const controller = new AbortController();
-    fetch(`/cfb/api/draft/${section}?year=${board.season}`, {
-      signal: controller.signal,
-    })
-      .then(async (response) => {
-        if (!response.ok) throw new Error("Data temporarily unavailable");
-        const rows = await response.json();
-        if (!Array.isArray(rows)) throw new Error("Invalid draft data");
-        setLoadError("");
-        if (section === "players") setPlayers(rows);
-        else setHistory(rows);
-      })
-      .catch((error: Error) => {
-        if (error.name !== "AbortError")
-          setLoadError("This view could not load. Try again.");
-      });
-    return () => controller.abort();
-  }, [tab, players, history, board.season, retry]);
   function save(nextMode: MockMode, nextOverrides: Record<number, string>) {
     setEdits({ mode: nextMode, overrides: nextOverrides });
     try {
@@ -183,10 +169,54 @@ export default function DraftWorkspace({ data }: { data: Workspace }) {
   );
   const selectedPick =
     pickNumber == null ? null : picks.find((p) => p.pick === pickNumber);
+  const playerUrl = `/cfb/api/draft/players?year=${board.season}&view=page&position=${encodeURIComponent(position)}&query=${encodeURIComponent(query)}&offset=${page * 50}`;
+  const playerSection = useDraftSection<PlayerPage>(
+    playerUrl,
+    tab === "players",
+    {
+      url: `/cfb/api/draft/players?year=${board.season}&view=page&position=QB&query=&offset=0`,
+      data: initialPlayers,
+    },
+  );
+  const historySection = useDraftSection<HistoryPage>(
+    `/cfb/api/draft/history?year=${board.season}&view=page&query=${encodeURIComponent(query)}&offset=${page * 50}`,
+    tab === "history",
+  );
+  const rosterTeam = selectedPick?.owner ?? team;
+  const rosterSection = useDraftSection<RosterPlayer[]>(
+    `/cfb/api/draft/roster?year=${board.season}&team=${rosterTeam}`,
+    tab === "roster" || !!selectedPick,
+    {
+      url: `/cfb/api/draft/roster?year=${board.season}&team=${board.picks[0].owner}`,
+      data: initialRoster,
+    },
+  );
+  const roster = rosterSection.data ?? [];
+  const players = playerSection.data;
+  const history = historySection.data;
+  const activeSection =
+    tab === "players"
+      ? playerSection
+      : tab === "history"
+        ? historySection
+        : rosterSection;
+  const profileGroup =
+    profile?.position_group ?? profile?.position ?? "Not listed";
+  const profileSection = useDraftSection<PlayerPage>(
+    `/cfb/api/draft/players?year=${board.season}&view=page&position=${encodeURIComponent(profileGroup)}&query=${encodeURIComponent(profile?.athlete_name ?? "")}`,
+    !!profile && profileGroup !== position,
+  );
+  const comparison =
+    profileGroup === position
+      ? players?.comparison
+      : profileSection.data?.comparison;
+  const mockPlayerIds = new Set(
+    picks.flatMap((p) => (p.player.athlete_id ? [p.player.athlete_id] : [])),
+  );
   const teamPicks = picks.filter((p) => p.owner === team);
   const teamRows = roster.filter((r) => r.team === team);
   const units = [...new Set(teamRows.map((r) => r.pos_grp))].sort();
-  const activeUnit = units.includes(unit) ? unit : units[0];
+  const activeUnit = units.includes(unit) ? unit : (units[0] ?? "");
   const slots = [
     ...new Set(
       teamRows.filter((r) => r.pos_grp === activeUnit).map((r) => r.pos_slot),
@@ -226,36 +256,12 @@ export default function DraftWorkspace({ data }: { data: Workspace }) {
       seen.add(row.player_name);
     }
   }
-  const filteredPlayers = (players ?? [])
-    .filter(
-      (p) =>
-        (!position ||
-          (p.position_group ?? p.position ?? "Not listed") === position) &&
-        `${p.athlete_name} ${p.team}`
-          .toLowerCase()
-          .includes(query.toLowerCase()),
-    )
-    .sort(
-      (a, b) =>
-        (b.value_above_replacement ?? -Infinity) -
-        (a.value_above_replacement ?? -Infinity),
-    );
-  const plotted = filteredPlayers
-    .filter((p) => p.value_above_replacement != null)
-    .slice(0, 24);
-  const minValue = Math.min(
-    0,
-    ...plotted.map((p) => p.value_above_replacement!),
-  );
-  const maxValue = Math.max(
-    1,
-    ...plotted.map((p) => p.value_above_replacement!),
-  );
-  const filteredHistory = (history ?? []).filter((p) =>
-    `${p.college_name} ${p.collegeTeam} ${p.draft_year} ${p.draft_position}`
-      .toLowerCase()
-      .includes(query.toLowerCase()),
-  );
+  const filteredPlayers = players?.rows ?? [];
+  const filteredHistory = history?.rows ?? [];
+  function changeQuery(value: string) {
+    setQuery(value);
+    setPage(0);
+  }
 
   return (
     <div className={styles.workspace}>
@@ -273,8 +279,7 @@ export default function DraftWorkspace({ data }: { data: Workspace }) {
         value={tab}
         onValueChange={(value) => {
           setTab(value);
-          setQuery("");
-          setLoadError("");
+          changeQuery("");
         }}
       >
         <ViewTabPanel value="mock">
@@ -377,13 +382,26 @@ export default function DraftWorkspace({ data }: { data: Workspace }) {
                       )}
                     </td>
                     <td>
-                      <button
-                        className={styles.link}
-                        onClick={() => setPickNumber(p.pick)}
-                      >
-                        {p.player.name}
-                      </button>
-                      <small>{p.player.school}</small>
+                      <div className={styles.playerCell}>
+                        <PlayerHeadshot
+                          name={p.player.name}
+                          src={
+                            p.player.athlete_id
+                              ? cfbPlayerHeadshotUrl(p.player.athlete_id, 96)
+                              : null
+                          }
+                          className="h-10 w-10"
+                        />
+                        <div>
+                          <button
+                            className={styles.link}
+                            onClick={() => setPickNumber(p.pick)}
+                          >
+                            {p.player.name}
+                          </button>
+                          <small>{p.player.school}</small>
+                        </div>
+                      </div>
                     </td>
                     <td>
                       <abbr title={positionNames[p.player.position]}>
@@ -498,6 +516,9 @@ export default function DraftWorkspace({ data }: { data: Workspace }) {
             a priority or position to connect the current roster with the
             proposed pick.
           </p>
+          {!rosterSection.data && (
+            <p role="status">Loading {board.teams[team].name} roster…</p>
+          )}
           <div className={styles.rosterLayout}>
             <div className={styles.rosterGroups}>
               {groups.map((group) => {
@@ -540,7 +561,16 @@ export default function DraftWorkspace({ data }: { data: Workspace }) {
                               aria-pressed={selectedSlot?.id === s.id}
                               onClick={() => setSlot(s.id)}
                             >
-                              <span className={styles.badge}>
+                              <PlayerHeadshot
+                                name={s.first.player_name}
+                                src={
+                                  s.first.espn_id
+                                    ? nflPlayerHeadshotUrl(s.first.espn_id)
+                                    : null
+                                }
+                                className="h-14 w-14"
+                              />
+                              <span className={styles.positionCode}>
                                 {s.first.pos_abb}
                               </span>
                               <strong>{s.first.position_name}</strong>
@@ -644,20 +674,17 @@ export default function DraftWorkspace({ data }: { data: Workspace }) {
               Position
               <select
                 value={position}
-                onChange={(e) => setPosition(e.target.value)}
+                onChange={(e) => {
+                  setPosition(e.target.value);
+                  setPage(0);
+                }}
               >
                 <option value="">All positions</option>
-                {[
-                  ...new Set(
-                    (players ?? []).map(
-                      (p) => p.position_group ?? p.position ?? "Not listed",
-                    ),
-                  ),
-                ]
-                  .sort()
-                  .map((value) => (
+                {(players?.positions ?? initialPlayers.positions).map(
+                  (value) => (
                     <option key={value}>{value}</option>
-                  ))}
+                  ),
+                )}
               </select>
             </label>
             <label>
@@ -665,78 +692,18 @@ export default function DraftWorkspace({ data }: { data: Workspace }) {
               <input
                 type="search"
                 value={query}
-                onChange={(e) => setQuery(e.target.value)}
+                onChange={(e) => changeQuery(e.target.value)}
                 placeholder="Search all college players"
               />
             </label>
           </div>
           {players && (
             <>
-              <div className={styles.plot}>
-                <div className={styles.plotLabels}>
-                  <span>Lower college impact</span>
-                  <span>Higher college impact →</span>
-                </div>
-                <svg
-                  viewBox={`0 0 900 ${Math.max(120, plotted.length * 28 + 30)}`}
-                  role="img"
-                  aria-label="College impact plot. Each row is a player; points farther right indicate more value above replacement."
-                >
-                  <line
-                    x1="245"
-                    x2="245"
-                    y1="0"
-                    y2={plotted.length * 28}
-                    stroke="currentColor"
-                    opacity=".2"
-                  />
-                  {plotted.map((p, i) => {
-                    const x =
-                      250 +
-                      (560 * (p.value_above_replacement! - minValue)) /
-                        (maxValue - minValue);
-                    return (
-                      <g key={p.athlete_id}>
-                        <text
-                          x="0"
-                          y={i * 28 + 18}
-                          fill="currentColor"
-                          fontSize="15"
-                        >
-                          {p.athlete_name}
-                        </text>
-                        <line
-                          x1="250"
-                          x2={x}
-                          y1={i * 28 + 14}
-                          y2={i * 28 + 14}
-                          stroke="currentColor"
-                          opacity=".2"
-                        />
-                        <circle
-                          cx={x}
-                          cy={i * 28 + 14}
-                          r="5"
-                          fill="currentColor"
-                        />
-                        <text
-                          x={x + 12}
-                          y={i * 28 + 18}
-                          fill="currentColor"
-                          fontSize="13"
-                        >
-                          {score(p.value_above_replacement)}
-                        </text>
-                      </g>
-                    );
-                  })}
-                </svg>
-              </div>
-              <p className={styles.context}>
-                Top {plotted.length} measured players in the filtered group.
-                Points above a positional replacement, adjusted for opponents.
-                Full player details below.
-              </p>
+              <DraftImpactChart
+                players={filteredPlayers}
+                selected={mockPlayerIds}
+                onSelect={setProfile}
+              />
               <div className={styles.tableWrap}>
                 <table>
                   <thead>
@@ -749,16 +716,25 @@ export default function DraftWorkspace({ data }: { data: Workspace }) {
                     </tr>
                   </thead>
                   <tbody>
-                    {filteredPlayers.slice(0, 100).map((p) => (
+                    {filteredPlayers.map((p) => (
                       <tr key={p.athlete_id}>
                         <td>
-                          <button
-                            className={styles.link}
-                            onClick={() => setProfile(p)}
-                          >
-                            {p.athlete_name}
-                          </button>
-                          <small>{p.team}</small>
+                          <div className={styles.playerCell}>
+                            <PlayerHeadshot
+                              name={p.athlete_name}
+                              src={cfbPlayerHeadshotUrl(p.athlete_id, 96)}
+                              className="h-9 w-9"
+                            />
+                            <div>
+                              <button
+                                className={styles.link}
+                                onClick={() => setProfile(p)}
+                              >
+                                {p.athlete_name}
+                              </button>
+                              <small>{p.team}</small>
+                            </div>
+                          </div>
                         </td>
                         <td>{p.position ?? "Not listed"}</td>
                         <td>{score(p.value_above_replacement)}</td>
@@ -770,12 +746,13 @@ export default function DraftWorkspace({ data }: { data: Workspace }) {
                 </table>
               </div>
               <p>
-                {filteredPlayers.length} matching players. Showing up to 100;
-                narrow the search for more.
+                {players.total.toLocaleString()} matching players. Showing{" "}
+                {players.total ? page * 50 + 1 : 0}-
+                {Math.min((page + 1) * 50, players.total)}.
               </p>
             </>
           )}
-          {!players && !loadError && (
+          {!players && !activeSection.error && (
             <p role="status">Loading college players…</p>
           )}
         </ViewTabPanel>
@@ -850,7 +827,7 @@ export default function DraftWorkspace({ data }: { data: Workspace }) {
             <input
               type="search"
               value={query}
-              onChange={(e) => setQuery(e.target.value)}
+              onChange={(e) => changeQuery(e.target.value)}
             />
           </label>
           {history ? (
@@ -869,7 +846,7 @@ export default function DraftWorkspace({ data }: { data: Workspace }) {
                     </tr>
                   </thead>
                   <tbody>
-                    {filteredHistory.slice(0, 100).map((p) => (
+                    {filteredHistory.map((p) => (
                       <tr key={`${p.draft_year}-${p.pick}`}>
                         <td>
                           {p.college_name}
@@ -898,29 +875,49 @@ export default function DraftWorkspace({ data }: { data: Workspace }) {
                 </table>
               </div>
               <p>
-                Showing up to 100 of {filteredHistory.length} matches.
-                Historical snapshot: {date(meta.history_as_of)}. Includes
-                drafted players only, so it cannot estimate a college
-                player&apos;s probability of being drafted. College scores span
-                model versions and are not directly comparable across draft
-                classes.
+                Showing {history.total ? page * 50 + 1 : 0}-
+                {Math.min((page + 1) * 50, history.total)} of{" "}
+                {history.total.toLocaleString()} matches. Historical snapshot:{" "}
+                {date(meta.history_as_of)}. Includes drafted players only, so it
+                cannot estimate a college player&apos;s probability of being
+                drafted. College scores span model versions and are not directly
+                comparable across draft classes.
               </p>
             </>
           ) : (
-            !loadError && <p role="status">Loading historical players…</p>
+            !activeSection.error && (
+              <p role="status">Loading historical players…</p>
+            )
           )}
         </ViewTabPanel>
       </ViewTabs>
-      {loadError && (
-        <p role="alert">
-          {loadError}{" "}
+      {(tab === "players" || tab === "history") && (
+        <div className={styles.controls} aria-label="Result pages">
           <button
-            className={styles.link}
-            onClick={() => {
-              setLoadError("");
-              setRetry((n) => n + 1);
-            }}
+            className={styles.button}
+            disabled={page === 0}
+            onClick={() => setPage((p) => p - 1)}
           >
+            Previous 50
+          </button>
+          <span>Page {page + 1}</span>
+          <button
+            className={styles.button}
+            disabled={
+              !((tab === "players" ? players?.total : history?.total) ?? 0) ||
+              (page + 1) * 50 >=
+                ((tab === "players" ? players?.total : history?.total) ?? 0)
+            }
+            onClick={() => setPage((p) => p + 1)}
+          >
+            Next 50
+          </button>
+        </div>
+      )}
+      {activeSection.error && (
+        <p role="alert">
+          This view could not load.{" "}
+          <button className={styles.link} onClick={activeSection.retry}>
             Retry
           </button>
         </p>
@@ -971,7 +968,7 @@ export default function DraftWorkspace({ data }: { data: Workspace }) {
           className={styles.link}
           onClick={() => {
             setTab("history");
-            setQuery("");
+            changeQuery("");
           }}
         >
           Explore past draft classes →
@@ -991,6 +988,18 @@ export default function DraftWorkspace({ data }: { data: Workspace }) {
                   Pick {selectedPick.pick} ·{" "}
                   {board.teams[selectedPick.owner].name}
                 </span>
+                <PlayerHeadshot
+                  name={selectedPick.player.name}
+                  src={
+                    selectedPick.player.athlete_id
+                      ? cfbPlayerHeadshotUrl(
+                          selectedPick.player.athlete_id,
+                          160,
+                        )
+                      : null
+                  }
+                  className="h-20 w-20"
+                />
                 <DialogTitle className="pr-8 text-2xl">
                   {selectedPick.player.name}
                 </DialogTitle>
@@ -1029,6 +1038,9 @@ export default function DraftWorkspace({ data }: { data: Workspace }) {
                     "This position was already selected earlier in this mock."}
                 </p>
                 <h3>Current players he would join</h3>
+                {!rosterSection.data && (
+                  <p role="status">Loading current players…</p>
+                )}
                 <div className={styles.current}>
                   {currentForPick.slice(0, 6).map((r) => (
                     <div key={r.player_name}>
@@ -1119,6 +1131,11 @@ export default function DraftWorkspace({ data }: { data: Workspace }) {
           <div className={styles.workspace}>
             {profile && (
               <>
+                <PlayerHeadshot
+                  name={profile.athlete_name}
+                  src={cfbPlayerHeadshotUrl(profile.athlete_id, 160)}
+                  className="h-20 w-20"
+                />
                 <DialogTitle className="pr-8 text-2xl">
                   {profile.athlete_name}
                 </DialogTitle>
@@ -1135,6 +1152,21 @@ export default function DraftWorkspace({ data }: { data: Workspace }) {
                     <strong>{profile.position_rank ?? "Not measured"}</strong>
                   </div>
                 </div>
+                {comparison ? (
+                  <DraftComparison player={profile} comparison={comparison} />
+                ) : profileSection.error ? (
+                  <p role="alert">
+                    The comparison could not load.{" "}
+                    <button
+                      className={styles.link}
+                      onClick={profileSection.retry}
+                    >
+                      Retry
+                    </button>
+                  </p>
+                ) : (
+                  <p role="status">Loading position comparison…</p>
+                )}
                 <p>
                   {profile.games ?? "No"} games measured through week{" "}
                   {meta.college_week}. Impact is points above a positional

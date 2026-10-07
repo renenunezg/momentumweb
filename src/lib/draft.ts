@@ -20,6 +20,7 @@ export const priorityLabel = (index: number) =>
 export type Prospect = {
   id: string;
   name: string;
+  athlete_id?: string;
   school: string;
   position: DraftPosition;
   rank: number | null;
@@ -50,6 +51,7 @@ export type RosterPlayer = {
   pos_slot: number;
   pos_rank: number;
   player_name: string;
+  espn_id?: number | string;
   apy_cap_pct?: number;
   draft_position?: DraftPosition;
   display_group: string;
@@ -86,7 +88,6 @@ export type DraftMeta = {
 export type DraftWorkspace = {
   schema_version: number;
   board: Board;
-  roster: RosterPlayer[];
   meta: DraftMeta;
 };
 export type MockPick = DraftPick & {
@@ -153,3 +154,18 @@ export function pickReason(pick: MockPick, mode: MockMode) {
         ? priorityLabel(pick.priority)
         : "Player ranking";
 }
+
+export type PlayerComparison = {
+  low: number;
+  high: number;
+  bins: number[];
+  count: number;
+  median: number | null;
+};
+export type PlayerPage = {
+  rows: CollegePlayer[];
+  total: number;
+  positions: string[];
+  comparison: PlayerComparison;
+};
+export type HistoryPage = { rows: HistoricalPlayer[]; total: number };

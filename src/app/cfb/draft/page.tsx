@@ -7,7 +7,7 @@ import {
 } from "@/components/page-layout";
 import { LastUpdated } from "@/components/last-updated";
 import DraftWorkspace from "@/components/draft-workspace";
-import { fetchDraft } from "@/lib/draft-server";
+import { fetchDraft, fetchPlayerPage } from "@/lib/draft-server";
 export const revalidate = 3600;
 export const metadata: Metadata = {
   title: "NFL Draft Board",
@@ -16,6 +16,14 @@ export const metadata: Metadata = {
 };
 export default async function DraftPage() {
   const data = await fetchDraft("workspace");
+  const [initialPlayers, initialRoster] = data
+    ? await Promise.all([
+        fetchPlayerPage(data.board.season),
+        fetchDraft("roster", data.board.season).then((rows) =>
+          rows.filter((row) => row.team === data.board.picks[0].owner),
+        ),
+      ])
+    : [null, []];
   return (
     <PageShell width="wide">
       <PageHeader>
@@ -33,7 +41,11 @@ export default async function DraftPage() {
         )}
       </PageHeader>
       {data ? (
-        <DraftWorkspace data={data} />
+        <DraftWorkspace
+          data={data}
+          initialPlayers={initialPlayers!}
+          initialRoster={initialRoster}
+        />
       ) : (
         <p>The draft board has not been published yet.</p>
       )}
