@@ -1,4 +1,5 @@
 "use client";
+import { TeamLogo, type TeamLogoSource } from "@/components/team-logo";
 import { PlayerHeadshot } from "@/components/player-headshot";
 import { cfbPlayerHeadshotUrl } from "@/lib/player-headshots";
 import type { CollegePlayer, PlayerComparison } from "@/lib/draft";
@@ -6,11 +7,14 @@ import styles from "./draft-workspace.module.css";
 
 export function DraftImpactChart({
   players,
-  selected,
+  destinations,
   onSelect,
 }: {
   players: CollegePlayer[];
-  selected: Set<string>;
+  destinations: Record<
+    string,
+    { name: string; logo: TeamLogoSource | undefined; pick: number }
+  >;
   onSelect: (player: CollegePlayer) => void;
 }) {
   const rows = players
@@ -34,20 +38,21 @@ export function DraftImpactChart({
           </span>
           <span>
             <i className={styles.amberKey} />
-            Selected in your mock
+            Mock pick
           </span>
         </div>
       </figcaption>
       {rows.length ? (
         rows.map((p) => {
           const value = p.value_above_replacement!,
-            drafted = selected.has(p.athlete_id);
+            destination = destinations[p.athlete_id],
+            drafted = !!destination;
           return (
             <button
               key={p.athlete_id}
               className={styles.impactRow}
               onClick={() => onSelect(p)}
-              aria-label={`${p.athlete_name}, ${value.toFixed(1)} college impact points${drafted ? ", selected in your mock" : ""}`}
+              aria-label={`${p.athlete_name}, ${value.toFixed(1)} college impact points${destination ? `, mock pick ${destination.pick} to ${destination.name}` : ""}`}
             >
               <PlayerHeadshot
                 name={p.athlete_name}
@@ -57,6 +62,16 @@ export function DraftImpactChart({
               <span className={styles.impactIdentity}>
                 <strong>{p.athlete_name}</strong>
                 <small>{p.team}</small>
+                {destination && (
+                  <small className={styles.teamIdentity}>
+                    <TeamLogo
+                      team={destination.logo}
+                      name={destination.name}
+                      className="h-4 w-4"
+                    />
+                    Mock #{destination.pick} · {destination.name}
+                  </small>
+                )}
               </span>
               <span className={styles.impactTrack}>
                 <span

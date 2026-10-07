@@ -22,6 +22,7 @@ import type {
   RosterPlayer,
 } from "@/lib/draft";
 import styles from "./draft-workspace.module.css";
+import { TeamLogo, type TeamLogoSource } from "@/components/team-logo";
 import { PlayerHeadshot } from "@/components/player-headshot";
 import {
   cfbPlayerHeadshotUrl,
@@ -87,10 +88,12 @@ export default function DraftWorkspace({
   data,
   initialPlayers,
   initialRoster,
+  nflLogos,
 }: {
   data: Workspace;
   initialPlayers: PlayerPage;
   initialRoster: RosterPlayer[];
+  nflLogos: Record<string, TeamLogoSource>;
 }) {
   const { board, meta } = data;
   const [tab, setTab] = useState<Tab>("mock");
@@ -210,8 +213,21 @@ export default function DraftWorkspace({
     profileGroup === position
       ? players?.comparison
       : profileSection.data?.comparison;
-  const mockPlayerIds = new Set(
-    picks.flatMap((p) => (p.player.athlete_id ? [p.player.athlete_id] : [])),
+  const destinations = Object.fromEntries(
+    picks.flatMap((p) =>
+      p.player.athlete_id
+        ? [
+            [
+              p.player.athlete_id,
+              {
+                name: board.teams[p.owner].name,
+                logo: nflLogos[p.owner],
+                pick: p.pick,
+              },
+            ],
+          ]
+        : [],
+    ),
   );
   const teamPicks = picks.filter((p) => p.owner === team);
   const teamRows = roster.filter((r) => r.team === team);
@@ -375,7 +391,13 @@ export default function DraftWorkspace({
                         className={styles.link}
                         onClick={() => openRoster(p.owner)}
                       >
-                        {board.teams[p.owner].name}
+                        <span className={styles.teamIdentity}>
+                          <TeamLogo
+                            team={nflLogos[p.owner]}
+                            name={board.teams[p.owner].name}
+                          />
+                          {board.teams[p.owner].name}
+                        </span>
                       </button>
                       {p.original !== p.owner && (
                         <small>Via {p.original}</small>
@@ -485,7 +507,14 @@ export default function DraftWorkspace({
           </div>
           <div className={styles.heading}>
             <div>
-              <h2>{board.teams[team].name}</h2>
+              <h2 className={styles.teamIdentity}>
+                <TeamLogo
+                  team={nflLogos[team]}
+                  name={board.teams[team].name}
+                  className="h-7 w-7"
+                />
+                {board.teams[team].name}
+              </h2>
               <p>
                 {teamPicks.length
                   ? `This mock adds ${teamPicks.map((p) => `${p.player.name} at No. ${p.pick}`).join("; ")}.`
@@ -701,7 +730,7 @@ export default function DraftWorkspace({
             <>
               <DraftImpactChart
                 players={filteredPlayers}
-                selected={mockPlayerIds}
+                destinations={destinations}
                 onSelect={setProfile}
               />
               <div className={styles.tableWrap}>
@@ -985,6 +1014,10 @@ export default function DraftWorkspace({
             {selectedPick && (
               <>
                 <span className={styles.eyebrow}>
+                  <TeamLogo
+                    team={nflLogos[selectedPick.owner]}
+                    name={board.teams[selectedPick.owner].name}
+                  />{" "}
                   Pick {selectedPick.pick} ·{" "}
                   {board.teams[selectedPick.owner].name}
                 </span>

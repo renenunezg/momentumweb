@@ -8,6 +8,7 @@ import {
 import { LastUpdated } from "@/components/last-updated";
 import DraftWorkspace from "@/components/draft-workspace";
 import { fetchDraft, fetchPlayerPage } from "@/lib/draft-server";
+import { fetchTeams as fetchNflTeams } from "@/lib/nfl";
 export const revalidate = 3600;
 export const metadata: Metadata = {
   title: "NFL Draft Board",
@@ -15,7 +16,10 @@ export const metadata: Metadata = {
     "Explore a first-round NFL mock draft, team priorities, current rosters, and college player performance.",
 };
 export default async function DraftPage() {
-  const data = await fetchDraft("workspace");
+  const [data, nflTeams] = await Promise.all([
+    fetchDraft("workspace"),
+    fetchNflTeams(),
+  ]);
   const [initialPlayers, initialRoster] = data
     ? await Promise.all([
         fetchPlayerPage(data.board.season),
@@ -45,6 +49,12 @@ export default async function DraftPage() {
           data={data}
           initialPlayers={initialPlayers!}
           initialRoster={initialRoster}
+          nflLogos={Object.fromEntries(
+            [...nflTeams].map(([abbr, t]) => [
+              abbr,
+              { logo_light: t.logo_light, logo_dark: t.logo_dark },
+            ]),
+          )}
         />
       ) : (
         <p>The draft board has not been published yet.</p>

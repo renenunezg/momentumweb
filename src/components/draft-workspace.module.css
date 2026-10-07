@@ -558,3 +558,9 @@
     padding: 0.75rem 0.25rem;
   }
 }
+
+.workspace .teamIdentity {
+  display: flex;
+  align-items: center;
+  gap: 0.375rem;
+}
