@@ -1,6 +1,7 @@
 "use client";
 
 import { useMemo, useState } from "react";
+import { ComparisonGaps } from "@/components/comparison-gaps";
 import {
   CartesianGrid,
   Legend,
@@ -220,6 +221,20 @@ function HeismanBoard({
           </TableBody>
         </Table>
       </div>
+      <ComparisonGaps
+        title="Where the voters and the value disagree"
+        description={`The six leading voter forecasts, through week ${week}: value rank minus predicted Heisman finish. These are forecast ranks, not actual votes. Value ranks cover the full player pool; voter ranks cover ballot candidates.`}
+        negativeLabel="Value ranks higher"
+        positiveLabel="Voter forecast ranks higher"
+        unit="places"
+        digits={0}
+        rows={rows.slice(0, 6).map((row) => ({
+          id: row.athlete_id,
+          label: row.athlete_name,
+          detail: `${row.team} · Voter #${row.predicted_rank} · Value ${row.value_rank == null ? "unavailable" : `#${row.value_rank}`}`,
+          difference: row.rank_gap,
+        }))}
+      />
     </div>
   );
 }

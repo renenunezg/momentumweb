@@ -56,8 +56,8 @@ export default async function AwardsPage({ searchParams }: {
               <div><p className="text-xs uppercase tracking-wide text-muted-foreground">Historical top-three hit rate</p><p className="mt-2 font-mono text-lg">{percent(meta.validation.top_three_rate)}</p><p className="mt-1 text-xs text-muted-foreground">{meta.validation.seasons} retrospective validation seasons at this horizon</p></div>
               <div><p className="text-xs uppercase tracking-wide text-muted-foreground">Forecast status</p><p className="mt-2 text-lg font-medium">{meta.validation.probabilities_publishable ? "Validated" : "Experimental"}</p><p className="mt-1 text-xs text-muted-foreground">{meta.validation.probabilities_publishable ? "Win probabilities available" : "Win percentages withheld pending validation"}</p></div>
             </div>
-            <NflAwardsBoard rows={board} award={award} />
             <NflAwardsTrajectory points={trajectory} leaders={board.slice(0, TRAJECTORY_LINES)} />
+            <NflAwardsBoard rows={board} award={award} />
           </>}
         {history.length > 0 && <PageSection><h2 className="font-heading text-lg">Weekly leaders</h2><div className="flex gap-3 overflow-x-auto pb-2">{history.map((row) => <NavigationLink prefetch={true} scroll={false} key={row.week} href={query(award, row.season, row.week)} className="min-w-44 rounded-lg border p-4 hover:bg-muted"><p className="font-mono text-xs text-muted-foreground">Week {row.week}</p><p className="mt-2 text-sm font-medium">{row.candidate_name}</p><p className="mt-1 text-xs text-muted-foreground">{row.team}</p></NavigationLink>)}</div></PageSection>}
         <details className="border-t pt-5 text-sm"><summary className="cursor-pointer font-medium">Methodology and validation</summary><div className="mt-4 max-w-3xl space-y-3 leading-relaxed text-muted-foreground">

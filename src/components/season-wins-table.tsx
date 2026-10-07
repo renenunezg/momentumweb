@@ -1,6 +1,7 @@
 "use client";
 
 import { useMemo, useState } from "react";
+import { ComparisonGaps } from "@/components/comparison-gaps";
 import type { NflSeasonWinTotal, NflTeamIdentity } from "@/lib/types";
 import { TeamLogo } from "@/components/team-logo";
 import { ViewTabPanel, ViewTabs } from "@/components/view-tabs";
@@ -115,6 +116,19 @@ export function SeasonWinsTable({
             {divisions.map((name) => <option key={name} value={name}>{name}</option>)}
           </select>
         </label>
+        <ComparisonGaps
+          title="Where the season outlook has moved"
+          description="Projected full-season wins minus the frozen preseason sportsbook total. The baseline informs the model; this is a change in outlook, not a live betting edge. Follows the conference and division filters."
+          negativeLabel="Below preseason total"
+          positiveLabel="Above preseason total"
+          unit="wins"
+          rows={visible.map((row) => ({
+            id: row.team_abbr,
+            label: row.team,
+            detail: `Projected ${row.projected_wins.toFixed(1)} · Preseason ${row.sportsbook_win_total?.toFixed(1) ?? "unavailable"}`,
+            difference: row.difference,
+          }))}
+        />
         <div className="flex flex-wrap items-center justify-between gap-2 text-xs text-muted-foreground">
           <p>{visible.length} teams · Sort by wins or difference.</p>
           <p className="hidden items-center gap-3 sm:flex" aria-hidden="true">
