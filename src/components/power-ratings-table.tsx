@@ -99,24 +99,6 @@ export function PowerRatingsTable<T extends PowerRatingRow>({
         scope={searchScope}
       />
       {allLimited && <p className="text-xs text-accent-amber">{limited.allNote}</p>}
-      {market && (
-        <ComparisonGaps
-          title="Where model and market disagree"
-          description="Model rating minus market-implied strength from earlier closing spreads, in points on a neutral field. Follows the selected group and team search; this is a strength comparison, not a current game edge."
-          negativeLabel="Market rates higher"
-          positiveLabel="Model rates higher"
-          unit="points"
-          rows={matches.map(({ row }) => {
-            const strength = market(row).rating;
-            return {
-              id: rowKey(row),
-              label: row.team,
-              detail: `Model ${formatNumber(row.power_rating)} · Market ${formatNumber(strength)}`,
-              difference: strength == null ? null : row.power_rating - strength,
-            };
-          })}
-        />
-      )}
       <div className="overflow-x-auto">
         <Table density={market ? "compact" : "default"}>
           <TableCaption className="sr-only">
@@ -191,6 +173,24 @@ export function PowerRatingsTable<T extends PowerRatingRow>({
           </TableBody>
         </Table>
       </div>
+      {market && (
+        <ComparisonGaps
+          title="Where model and market disagree"
+          description="Model rating minus market-implied strength from earlier closing spreads, in points on a neutral field. Follows the selected group and team search; this is a strength comparison, not a current game edge."
+          negativeLabel="Market rates higher"
+          positiveLabel="Model rates higher"
+          unit="points"
+          rows={matches.map(({ row }) => {
+            const strength = market(row).rating;
+            return {
+              id: rowKey(row),
+              label: row.team,
+              detail: `Model ${formatNumber(row.power_rating)} · Market ${formatNumber(strength)}`,
+              difference: strength == null ? null : row.power_rating - strength,
+            };
+          })}
+        />
+      )}
       {market && (
         <Dialog open={detail !== null} onOpenChange={(open) => { if (!open) setDetail(null); }}>
           {detail && <RatingDetails row={detail} market={market(detail)} />}
