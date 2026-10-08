@@ -76,7 +76,24 @@ export async function fetchDraft(
     if (!Array.isArray(row.data)) throw new Error("Invalid draft section");
     return row.data;
   }
-  if (row.schema_version !== 1 || row.board?.picks?.length !== 32 || !row.meta)
+  if (!row.meta || !Array.isArray(row.board?.picks))
+    throw new Error("Unsupported draft publication");
+  const picks = row.board.picks;
+  const supported =
+    row.schema_version === 1
+      ? picks.length === 32
+      : row.schema_version === 2 &&
+        picks.length >= 224 &&
+        picks.length <= 272 &&
+        new Set(picks.map((p: { round: number }) => p.round)).size === 7 &&
+        picks.every(
+          (p: { round: number }) =>
+            Number.isInteger(p.round) && p.round >= 1 && p.round <= 7,
+        );
+  if (
+    !supported ||
+    !picks.every((p: { pick: number }, i: number) => p.pick === i + 1)
+  )
     throw new Error("Unsupported draft publication");
   return row as DraftWorkspace;
 }

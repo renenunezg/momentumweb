@@ -27,6 +27,8 @@ export type Prospect = {
 };
 export type DraftPick = {
   pick: number;
+  round?: number;
+  compensatory?: boolean;
   original: string;
   owner: string;
   ownership_note: string;
@@ -38,8 +40,10 @@ export type Board = {
   season: number;
   order_date: string;
   rank_date: string;
+  rank_source?: string;
+  ownership_date?: string;
   needs_date: string;
-  sources: Record<"order" | "rank" | "needs", string>;
+  sources: Record<"order" | "rank" | "needs", string> & { capital?: string };
   teams: Record<string, { name: string; needs: DraftPosition[] }>;
   prospects: Prospect[];
   picks: DraftPick[];
@@ -115,7 +119,9 @@ export function buildMock(
     );
     const best = available.find((p) => p.rank != null);
     if (!best)
-      throw new Error("Not enough ranked prospects for a complete first round");
+      throw new Error(
+        "Not enough ranked prospects for the published draft order",
+      );
     const eligible = available.filter(
       (p) =>
         p.rank != null &&

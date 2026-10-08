@@ -5,7 +5,7 @@ import { cfbPlayerHeadshotUrl } from "@/lib/player-headshots";
 import type { CollegePlayer, PlayerComparison } from "@/lib/draft";
 import styles from "./draft-workspace.module.css";
 
-export function DraftImpactChart({
+export function DraftPlayerTable({
   players,
   destinations,
   onSelect,
@@ -17,83 +17,107 @@ export function DraftImpactChart({
   >;
   onSelect: (player: CollegePlayer) => void;
 }) {
-  const rows = players
-    .filter((p) => p.value_above_replacement != null)
-    .slice(0, 12);
-  const low = Math.min(0, ...rows.map((p) => p.value_above_replacement!));
-  const high = Math.max(1, ...rows.map((p) => p.value_above_replacement!));
-  const x = (v: number) => (100 * (v - low)) / (high - low);
+  const measured = players.flatMap((p) =>
+    p.value_above_replacement == null ? [] : [p.value_above_replacement],
+  );
+  const low = Math.min(0, ...measured);
+  const high = Math.max(1, ...measured);
+  const x = (value: number) => (100 * (value - low)) / (high - low);
   return (
-    <figure className={styles.impactChart}>
-      <figcaption>
-        <h3>College impact comparison</h3>
-        <p>
-          Top measured scores on this page · Select a player to compare him with
-          his position.
-        </p>
-        <div className={styles.legend}>
-          <span>
-            <i className={styles.blueKey} />
-            College player
-          </span>
-          <span>
-            <i className={styles.amberKey} />
-            Mock pick
-          </span>
-        </div>
-      </figcaption>
-      {rows.length ? (
-        rows.map((p) => {
-          const value = p.value_above_replacement!,
-            destination = destinations[p.athlete_id],
-            drafted = !!destination;
-          return (
-            <button
-              key={p.athlete_id}
-              className={styles.impactRow}
-              onClick={() => onSelect(p)}
-              aria-label={`${p.athlete_name}, ${value.toFixed(1)} college impact points${destination ? `, mock pick ${destination.pick} to ${destination.name}` : ""}`}
-            >
-              <PlayerHeadshot
-                name={p.athlete_name}
-                src={cfbPlayerHeadshotUrl(p.athlete_id, 96)}
-                className="h-10 w-10"
-              />
-              <span className={styles.impactIdentity}>
-                <strong>{p.athlete_name}</strong>
-                <small>{p.team}</small>
-                {destination && (
-                  <small className={styles.teamIdentity}>
-                    <TeamLogo
-                      team={destination.logo}
-                      name={destination.name}
-                      className="h-4 w-4"
+    <div className={styles.tableWrap}>
+      <table className={styles.playerTable}>
+        <caption className="sr-only">
+          College players, impact scores, and current mock selections
+        </caption>
+        <thead>
+          <tr>
+            <th scope="col">Player</th>
+            <th scope="col">Position</th>
+            <th scope="col">College impact</th>
+            <th scope="col">Position rank</th>
+            <th scope="col">Games</th>
+            <th scope="col">Your mock</th>
+          </tr>
+        </thead>
+        <tbody>
+          {players.map((p) => {
+            const value = p.value_above_replacement;
+            const destination = destinations[p.athlete_id];
+            return (
+              <tr key={p.athlete_id}>
+                <td>
+                  <div className={styles.playerCell}>
+                    <PlayerHeadshot
+                      name={p.athlete_name}
+                      src={cfbPlayerHeadshotUrl(p.athlete_id, 96)}
+                      className="h-9 w-9"
                     />
-                    Mock #{destination.pick} · {destination.name}
-                  </small>
-                )}
-              </span>
-              <span className={styles.impactTrack}>
-                <span
-                  className={styles.zeroLine}
-                  style={{ left: `${x(0)}%` }}
-                />
-                <span
-                  className={drafted ? styles.amberBar : styles.blueBar}
-                  style={{
-                    left: `${x(Math.min(0, value))}%`,
-                    width: `${Math.max(0.7, Math.abs(x(value) - x(0)))}%`,
-                  }}
-                />
-              </span>
-              <strong className={styles.impactScore}>{value.toFixed(1)}</strong>
-            </button>
-          );
-        })
-      ) : (
-        <p>No measured college scores match this filter.</p>
-      )}
-    </figure>
+                    <div>
+                      <button
+                        className={styles.link}
+                        onClick={() => onSelect(p)}
+                      >
+                        {p.athlete_name}
+                      </button>
+                      <small>{p.team}</small>
+                    </div>
+                  </div>
+                </td>
+                <td>{p.position ?? "Not listed"}</td>
+                <td>
+                  {value == null ? (
+                    "Not measured"
+                  ) : (
+                    <div className={styles.impactCell}>
+                      <span className={styles.impactTrack} aria-hidden="true">
+                        <span
+                          className={styles.zeroLine}
+                          style={{ left: `${x(0)}%` }}
+                        />
+                        <span
+                          className={styles.blueBar}
+                          style={{
+                            left: `${x(Math.min(0, value))}%`,
+                            width: `${Math.abs(x(value) - x(0))}%`,
+                          }}
+                        />
+                      </span>
+                      <span className={styles.impactScore}>
+                        {value.toFixed(1)}
+                      </span>
+                    </div>
+                  )}
+                </td>
+                <td>{p.position_rank ?? "Not measured"}</td>
+                <td>{p.games ?? "Not measured"}</td>
+                <td>
+                  {destination ? (
+                    <span className={styles.teamIdentity}>
+                      <TeamLogo
+                        team={destination.logo}
+                        name={destination.name}
+                        className="h-5 w-5"
+                      />
+                      <span>
+                        Pick {destination.pick}
+                        <small>{destination.name}</small>
+                      </span>
+                    </span>
+                  ) : (
+                    <span className={styles.context}>Not selected</span>
+                  )}
+                </td>
+              </tr>
+            );
+          })}
+          {!players.length && (
+            <tr>
+              <td colSpan={6}>No college players match these filters.</td>
+            </tr>
+          )}
+        </tbody>
+      </table>
+    </div>
   );
 }
 

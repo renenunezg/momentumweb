@@ -395,36 +395,19 @@
   gap: 0.75rem;
   min-width: 170px;
 }
-.impactChart {
-  margin: 1.5rem 0;
-  border-block: 1px solid var(--border);
-  padding: 1rem 0;
-}
-.impactChart figcaption p,
 .comparison figcaption p {
   color: var(--muted-foreground);
   font-size: 0.875rem;
 }
-.impactRow {
+.impactCell {
   display: grid;
-  grid-template-columns: 40px minmax(130px, 180px) minmax(50px, 1fr) 44px;
+  grid-template-columns: minmax(80px, 1fr) 44px;
   align-items: center;
   gap: 0.75rem;
-  width: 100%;
-  padding: 0.65rem 0.25rem;
-  text-align: left;
-  border-bottom: 1px solid var(--border);
-  font-size: 0.875rem;
+  min-width: 160px;
 }
-.impactRow:hover {
-  background: var(--muted);
-}
-.impactIdentity strong {
-  display: block;
-  font-weight: 500;
-}
-.impactIdentity small {
-  font-size: 0.75rem;
+.playerTable td:last-child {
+  min-width: 150px;
 }
 .impactTrack {
   position: relative;
@@ -432,18 +415,15 @@
   background: color-mix(in srgb, var(--muted) 65%, transparent);
   border-radius: 2px;
 }
-.blueBar,
-.amberBar {
+.blueBar {
   position: absolute;
   height: 100%;
   border-radius: 2px;
-  min-width: 2px;
 }
 .blueBar,
 .blueKey {
   background: var(--chart-2);
 }
-.amberBar,
 .amberKey {
   background: var(--chart-3);
 }
@@ -534,33 +514,16 @@
 .steps section:nth-child(3) > span {
   color: var(--chart-1);
 }
-@media (max-width: 520px) {
-  .impactRow {
-    grid-template-columns: 36px minmax(0, 1fr) 40px;
-    gap: 0.6rem;
-  }
-  .impactRow > span:first-child {
-    grid-row: span 2;
-  }
-  .impactIdentity {
-    grid-column: 2;
-  }
-  .impactScore {
-    grid-column: 3;
-    grid-row: 1;
-  }
-  .impactTrack {
-    grid-column: 2 / 4;
-    grid-row: 2;
-    height: 12px;
-  }
-  .impactRow {
-    padding: 0.75rem 0.25rem;
-  }
-}
 
 .workspace .teamIdentity {
   display: flex;
   align-items: center;
   gap: 0.375rem;
+}
+
+.roundCount {
+  font-family: var(--font-oswald), sans-serif;
+  color: var(--muted-foreground);
+  font-size: 0.875rem;
+  font-weight: 400;
 }

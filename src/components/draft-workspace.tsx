@@ -28,7 +28,7 @@ import {
   cfbPlayerHeadshotUrl,
   nflPlayerHeadshotUrl,
 } from "@/lib/player-headshots";
-import { DraftImpactChart, DraftComparison } from "./draft-charts";
+import { DraftPlayerTable, DraftComparison } from "./draft-charts";
 import { useDraftSection } from "./use-draft-section";
 import type { PlayerPage, HistoryPage } from "@/lib/draft";
 
@@ -103,6 +103,7 @@ export default function DraftWorkspace({
   } | null>(null);
   const [team, setTeam] = useState(board.picks[0].owner);
   const [highlight, setHighlight] = useState("");
+  const [round, setRound] = useState(1);
   const [unit, setUnit] = useState("3WR 1TE");
   const [slot, setSlot] = useState<number | null>(null);
   const [pickNumber, setPickNumber] = useState<number | null>(null);
@@ -170,6 +171,8 @@ export default function DraftWorkspace({
     () => buildMock(board, mode, overrides),
     [board, mode, overrides],
   );
+  const rounds = [...new Set(picks.map((p) => p.round ?? 1))];
+  const roundPicks = picks.filter((p) => (p.round ?? 1) === round);
   const selectedPick =
     pickNumber == null ? null : picks.find((p) => p.pick === pickNumber);
   const playerUrl = `/cfb/api/draft/players?year=${board.season}&view=page&position=${encodeURIComponent(position)}&query=${encodeURIComponent(query)}&offset=${page * 50}`;
@@ -282,8 +285,10 @@ export default function DraftWorkspace({
   return (
     <div className={styles.workspace}>
       <p className={styles.context}>
-        Working mock · Player ranks and team priorities from Pro Football Mania.
-        Selections are editable and are not predictions of confirmed picks.
+        Working mock · Player ranks from{" "}
+        {board.rank_source ?? "Pro Football Mania"}; team priorities from Pro
+        Football Mania. Selections are editable and are not predictions of
+        confirmed picks.
       </p>
       <ViewTabs
         label="Draft workspace"
@@ -301,7 +306,10 @@ export default function DraftWorkspace({
         <ViewTabPanel value="mock">
           <div className={styles.heading}>
             <div>
-              <h2>Round 1</h2>
+              <h2>
+                Round {round}{" "}
+                <span className={styles.roundCount}>of {rounds.length}</span>
+              </h2>
               <p>
                 Select a player to review or change the pick. Select a team to
                 explore its roster.
@@ -310,6 +318,19 @@ export default function DraftWorkspace({
             <span>{date(board.order_date)} projected order</span>
           </div>
           <div className={styles.controls}>
+            <label>
+              Draft round
+              <select
+                value={round}
+                onChange={(e) => setRound(Number(e.target.value))}
+              >
+                {rounds.map((value) => (
+                  <option key={value} value={value}>
+                    Round {value}
+                  </option>
+                ))}
+              </select>
+            </label>
             <label>
               How picks are chosen
               <select
@@ -356,14 +377,14 @@ export default function DraftWorkspace({
                     .filter((p) => p.owner === highlight)
                     .map((p) => `No. ${p.pick}`)
                     .join(", ")}`
-                : "no first-round pick in this order"}
+                : "no pick in this order"}
               .
             </p>
           )}
           <div className={styles.tableWrap}>
             <table>
               <caption className="sr-only">
-                {board.season} first-round mock draft
+                {board.season} mock draft, round {round}
               </caption>
               <thead>
                 <tr>
@@ -376,7 +397,7 @@ export default function DraftWorkspace({
                 </tr>
               </thead>
               <tbody>
-                {picks.map((p) => (
+                {roundPicks.map((p) => (
                   <tr
                     key={p.pick}
                     className={
@@ -385,7 +406,10 @@ export default function DraftWorkspace({
                         : undefined
                     }
                   >
-                    <td className={styles.pickNumber}>{p.pick}</td>
+                    <td className={styles.pickNumber}>
+                      {p.pick}
+                      {p.compensatory && <small>Projected comp</small>}
+                    </td>
                     <td>
                       <button
                         className={styles.link}
@@ -456,11 +480,12 @@ export default function DraftWorkspace({
               declared for the draft.
             </p>
             <p>
-              The top 40 source entries include one duplicate: Brauntae and Tae
-              Johnson are the same Notre Dame player. Jayden Maiava is available
-              as an additional custom selection, without an invented scouting
-              rank. Changing an earlier pick clears your later overrides so
-              players cannot be selected twice.
+              This edition includes {board.prospects.length} prospects across{" "}
+              {rounds.length} rounds. Projected compensatory picks are labeled
+              in the table and have not yet been awarded. Overall numbers can
+              change as the order and compensatory awards are finalized.
+              Changing an earlier pick clears your later overrides so players
+              cannot be selected twice.
             </p>
             <p>
               Your choices are saved in this browser for this source edition.
@@ -518,7 +543,7 @@ export default function DraftWorkspace({
               <p>
                 {teamPicks.length
                   ? `This mock adds ${teamPicks.map((p) => `${p.player.name} at No. ${p.pick}`).join("; ")}.`
-                  : "No first-round pick in the current ownership list."}
+                  : "No pick in the current ownership list."}
               </p>
             </div>
           </div>
@@ -728,52 +753,16 @@ export default function DraftWorkspace({
           </div>
           {players && (
             <>
-              <DraftImpactChart
+              <p className={styles.context}>
+                Bar length shows college impact points, with a shared scale for
+                this page. Your mock shows each player&apos;s current selection.
+                Select a player to compare him with his position.
+              </p>
+              <DraftPlayerTable
                 players={filteredPlayers}
                 destinations={destinations}
                 onSelect={setProfile}
               />
-              <div className={styles.tableWrap}>
-                <table>
-                  <thead>
-                    <tr>
-                      <th>Player</th>
-                      <th>Position</th>
-                      <th>College impact</th>
-                      <th>Position rank</th>
-                      <th>Games</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {filteredPlayers.map((p) => (
-                      <tr key={p.athlete_id}>
-                        <td>
-                          <div className={styles.playerCell}>
-                            <PlayerHeadshot
-                              name={p.athlete_name}
-                              src={cfbPlayerHeadshotUrl(p.athlete_id, 96)}
-                              className="h-9 w-9"
-                            />
-                            <div>
-                              <button
-                                className={styles.link}
-                                onClick={() => setProfile(p)}
-                              >
-                                {p.athlete_name}
-                              </button>
-                              <small>{p.team}</small>
-                            </div>
-                          </div>
-                        </td>
-                        <td>{p.position ?? "Not listed"}</td>
-                        <td>{score(p.value_above_replacement)}</td>
-                        <td>{p.position_rank ?? "Not measured"}</td>
-                        <td>{p.games ?? "Not measured"}</td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
               <p>
                 {players.total.toLocaleString()} matching players. Showing{" "}
                 {players.total ? page * 50 + 1 : 0}-
@@ -960,6 +949,14 @@ export default function DraftWorkspace({
           <Source href={board.sources.order}>
             Projected order: {date(board.order_date)}
           </Source>{" "}
+          {board.sources.capital && board.ownership_date && (
+            <>
+              ·{" "}
+              <Source href={board.sources.capital}>
+                All-round ownership: {date(board.ownership_date)}
+              </Source>{" "}
+            </>
+          )}
           ·{" "}
           <Source href={board.sources.rank}>
             Scouting ranks: {date(board.rank_date)}
@@ -991,7 +988,7 @@ export default function DraftWorkspace({
           <Source href="https://fightingirish.com/sports/football/roster/player/tae-johnson">
             Notre Dame confirms Tae Johnson&apos;s identity
           </Source>
-          ; the duplicated scouting entry is counted once.
+          ; his Brauntae Johnson scouting entry is matched to the same player.
         </p>
         <button
           className={styles.link}
@@ -1006,7 +1003,11 @@ export default function DraftWorkspace({
       <Dialog
         open={!!selectedPick}
         onOpenChange={(open) => {
-          if (!open) setPickNumber(null);
+          if (!open) {
+            if (selectedPick && tab === "mock")
+              setRound(selectedPick.round ?? 1);
+            setPickNumber(null);
+          }
         }}
       >
         <DialogContent className="max-w-3xl">
@@ -1018,7 +1019,7 @@ export default function DraftWorkspace({
                     team={nflLogos[selectedPick.owner]}
                     name={board.teams[selectedPick.owner].name}
                   />{" "}
-                  Pick {selectedPick.pick} ·{" "}
+                  Round {selectedPick.round ?? 1} · Pick {selectedPick.pick} ·{" "}
                   {board.teams[selectedPick.owner].name}
                 </span>
                 <PlayerHeadshot
@@ -1097,11 +1098,17 @@ export default function DraftWorkspace({
                     </Source>
                   </p>
                   <p>
-                    Originally {board.teams[selectedPick.original].name}; now{" "}
-                    {board.teams[selectedPick.owner].name}.{" "}
-                    {selectedPick.playoff_projection
-                      ? "This slot depends on a projected playoff finish."
-                      : "The slot can change with season results and tiebreakers."}
+                    {selectedPick.compensatory ? (
+                      "This additional selection is projected, not yet awarded by the league. Its owner and overall number may change."
+                    ) : (
+                      <>
+                        Originally {board.teams[selectedPick.original].name};
+                        now {board.teams[selectedPick.owner].name}.{" "}
+                        {selectedPick.playoff_projection
+                          ? "This slot depends on a projected playoff finish."
+                          : "The slot can change with season results and tiebreakers."}
+                      </>
+                    )}
                   </p>
                 </details>
                 <label>
@@ -1143,7 +1150,7 @@ export default function DraftWorkspace({
                   </button>
                   <button
                     className={styles.button}
-                    disabled={selectedPick.pick === 32}
+                    disabled={selectedPick.pick === picks.at(-1)?.pick}
                     onClick={() => setPickNumber(selectedPick.pick + 1)}
                   >
                     Next pick

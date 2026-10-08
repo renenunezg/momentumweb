@@ -13,7 +13,7 @@ export const revalidate = 3600;
 export const metadata: Metadata = {
   title: "NFL Draft Board",
   description:
-    "Explore a first-round NFL mock draft, team priorities, current rosters, and college player performance.",
+    "Explore an editable NFL mock draft, team priorities, current rosters, and college player performance.",
 };
 export default async function DraftPage() {
   const [data, nflTeams] = await Promise.all([
