@@ -37,7 +37,7 @@ const tabs: { key: Tab; label: string }[] = [
   { key: "mock", label: "Mock draft" },
   { key: "players", label: "Player map" },
   { key: "roster", label: "Team roster" },
-  { key: "guide", label: "How the draft works" },
+  { key: "guide", label: "Methodology" },
 ];
 const date = (value: string) =>
   new Date(
@@ -224,6 +224,7 @@ export default function DraftWorkspace({
               p.player.athlete_id,
               {
                 name: board.teams[p.owner].name,
+                abbreviation: p.owner,
                 logo: nflLogos[p.owner],
                 pick: p.pick,
               },
@@ -285,10 +286,8 @@ export default function DraftWorkspace({
   return (
     <div className={styles.workspace}>
       <p className={styles.context}>
-        Working mock · Player ranks from{" "}
-        {board.rank_source ?? "Pro Football Mania"}; team priorities from Pro
-        Football Mania. Selections are editable and are not predictions of
-        confirmed picks.
+        Scouting rankings: {board.rank_source ?? "Pro Football Mania"} · Team
+        needs: Pro Football Mania
       </p>
       <ViewTabs
         label="Draft workspace"
@@ -311,8 +310,7 @@ export default function DraftWorkspace({
                 <span className={styles.roundCount}>of {rounds.length}</span>
               </h2>
               <p>
-                Select a player to review or change the pick. Select a team to
-                explore its roster.
+                Select a player to edit a pick or a team to view its roster.
               </p>
             </div>
             <span>{date(board.order_date)} projected order</span>
@@ -332,17 +330,17 @@ export default function DraftWorkspace({
               </select>
             </label>
             <label>
-              How picks are chosen
+              Selection strategy
               <select
                 value={mode}
                 onChange={(e) => save(e.target.value as MockMode, {})}
               >
-                <option value="needs">Player ranking + team priorities</option>
-                <option value="value">Player ranking only</option>
+                <option value="needs">Ranking + team needs</option>
+                <option value="value">Best available</option>
               </select>
             </label>
             <label>
-              Highlight a team
+              Highlight team
               <select
                 value={highlight}
                 onChange={(e) => setHighlight(e.target.value)}
@@ -361,9 +359,7 @@ export default function DraftWorkspace({
               className={styles.button}
               onClick={() => {
                 save("needs", {});
-                setNotice(
-                  "Starting mock restored. Your custom picks have been cleared.",
-                );
+                setNotice("Mock reset. Custom selections cleared.");
               }}
             >
               Reset mock
@@ -393,7 +389,7 @@ export default function DraftWorkspace({
                   <th>Player</th>
                   <th>Position</th>
                   <th>Scouting rank</th>
-                  <th>Why this pick</th>
+                  <th>Selection basis</th>
                 </tr>
               </thead>
               <tbody>
@@ -413,6 +409,8 @@ export default function DraftWorkspace({
                     <td>
                       <button
                         className={styles.link}
+                        aria-label={board.teams[p.owner].name}
+                        title={board.teams[p.owner].name}
                         onClick={() => openRoster(p.owner)}
                       >
                         <span className={styles.teamIdentity}>
@@ -420,7 +418,7 @@ export default function DraftWorkspace({
                             team={nflLogos[p.owner]}
                             name={board.teams[p.owner].name}
                           />
-                          {board.teams[p.owner].name}
+                          {p.owner}
                         </span>
                       </button>
                       {p.original !== p.owner && (
@@ -462,15 +460,15 @@ export default function DraftWorkspace({
             </table>
           </div>
           <details className={styles.disclosure}>
-            <summary>How are these picks chosen?</summary>
+            <summary>Selection rules</summary>
             <p>
-              In the team-priorities setting, the mock considers the five
-              highest-ranked eligible players and chooses one at the team&apos;s
-              highest remaining priority. A position picked earlier by the same
-              team is no longer treated as an unfilled priority. Quarterbacks
-              are considered only while quarterback is a remaining priority.
-              Otherwise, the mock follows the player ranking. This rule has not
-              been validated as a prediction model.
+              Ranking + team needs selects from the five highest-ranked
+              available prospects, favoring the team&apos;s highest unfilled
+              need. Selecting a position removes it from that team&apos;s needs
+              for subsequent picks. Quarterbacks are considered only for teams
+              with an unfilled quarterback need. Best available follows the
+              scouting ranking. These selection rules have not been validated as
+              a draft forecast.
             </p>
             <p>
               The order includes currently reported pick trades. Slots 19-32
@@ -483,13 +481,13 @@ export default function DraftWorkspace({
               This edition includes {board.prospects.length} prospects across{" "}
               {rounds.length} rounds. Projected compensatory picks are labeled
               in the table and have not yet been awarded. Overall numbers can
-              change as the order and compensatory awards are finalized.
-              Changing an earlier pick clears your later overrides so players
-              cannot be selected twice.
+              change as the order and compensatory awards are finalized. Editing
+              a pick resets subsequent custom selections to prevent duplicate
+              picks.
             </p>
             <p>
-              Your choices are saved in this browser for this source edition.
-              They do not change the public board.
+              Custom selections are saved in this browser for the current board
+              edition.
             </p>
           </details>
         </ViewTabPanel>
@@ -542,7 +540,7 @@ export default function DraftWorkspace({
               </h2>
               <p>
                 {teamPicks.length
-                  ? `This mock adds ${teamPicks.map((p) => `${p.player.name} at No. ${p.pick}`).join("; ")}.`
+                  ? `Mock selections: ${teamPicks.map((p) => `${p.player.name} at No. ${p.pick}`).join("; ")}.`
                   : "No pick in the current ownership list."}
               </p>
             </div>
@@ -560,15 +558,14 @@ export default function DraftWorkspace({
                   {teamPicks
                     .filter((p) => p.player.position === need)
                     .map((p) => `No. ${p.pick} · ${p.player.name}`)
-                    .join(", ") || "No addition in this mock"}
+                    .join(", ") || "No selection"}
                 </small>
               </button>
             ))}
           </div>
           <p className={styles.context}>
-            Priorities rank importance, not the number of players needed. Select
-            a priority or position to connect the current roster with the
-            proposed pick.
+            Team needs are ordered by priority. Select a position to view its
+            depth chart and mock selections.
           </p>
           {!rosterSection.data && (
             <p role="status">Loading {board.teams[team].name} roster…</p>
@@ -585,21 +582,17 @@ export default function DraftWorkspace({
                       <h3>{group}</h3>
                       {group === "Nickel option" && (
                         <p>
-                          A fifth defensive back, usually replacing a
-                          linebacker. Not an extra twelfth defender.
+                          Five defensive backs, with a linebacker typically
+                          replaced by the nickel corner.
                         </p>
                       )}
                       {group === "Fullback option" && (
                         <p>
-                          An alternative personnel package, not an extra starter
-                          alongside three receivers and a tight end.
+                          An alternative offensive package featuring a fullback.
                         </p>
                       )}
                       {group === "Specialists" && (
-                        <p>
-                          Separate kicking and return units, not one on-field
-                          formation.
-                        </p>
+                        <p>Kicking and return units.</p>
                       )}
                       <div className={styles.positionGrid}>
                         {positions.map((s) => {
@@ -641,16 +634,14 @@ export default function DraftWorkspace({
             </div>
             {selectedSlot && (
               <aside className={styles.inspector}>
-                <span className={styles.eyebrow}>
-                  Current roster → draft group
-                </span>
+                <span className={styles.eyebrow}>Position group</span>
                 <h3>{selectedSlot.first.position_name}</h3>
                 <p>
                   {selectedSlot.first.draft_position
                     ? positionNames[selectedSlot.first.draft_position]
                     : "Special teams - outside the scouting board's position groups"}
                 </p>
-                <h4>What this mock adds</h4>
+                <h4>Mock selections</h4>
                 {teamPicks
                   .filter(
                     (p) =>
@@ -663,7 +654,7 @@ export default function DraftWorkspace({
                       onClick={() => setPickNumber(p.pick)}
                     >
                       <strong>+ {p.player.name}</strong>
-                      <span>Pick {p.pick} · Review or change →</span>
+                      <span>Pick {p.pick} · Edit selection →</span>
                     </button>
                   ))}
                 {!teamPicks.some(
@@ -671,8 +662,8 @@ export default function DraftWorkspace({
                     p.player.position === selectedSlot.first.draft_position,
                 ) && <p>No player at this position in the current mock.</p>}
                 <p className={styles.context}>
-                  A proposed addition joins the position group. This does not
-                  predict his exact side, starting role, or who leaves the team.
+                  Selections indicate position fit. Starting roles and roster
+                  departures are not projected.
                 </p>
                 <h4>Current depth chart</h4>
                 <ol className={styles.depth}>
@@ -684,7 +675,7 @@ export default function DraftWorkspace({
                   ))}
                 </ol>
                 <p className={styles.context}>
-                  These numbers show depth-chart order, not draft priority.
+                  Players are listed in depth-chart order.
                 </p>
                 <details>
                   <summary>Contract context</summary>
@@ -692,13 +683,12 @@ export default function DraftWorkspace({
                     <p key={i}>
                       {r.player_name}:{" "}
                       {r.apy_cap_pct == null
-                        ? "No unambiguous active contract match."
+                        ? "Contract data unavailable."
                         : `${(r.apy_cap_pct * 100).toFixed(1)}% of the salary cap at signing in average annual value.`}
                     </p>
                   ))}
                   <p>
-                    This does not establish expiry, release cost, or whether a
-                    player will leave.
+                    Contract figures exclude expiration dates and release costs.
                   </p>
                 </details>
               </aside>
@@ -715,10 +705,9 @@ export default function DraftWorkspace({
         <ViewTabPanel value="players">
           <div className={styles.heading}>
             <div>
-              <h2>College performance, by position</h2>
+              <h2>College player rankings</h2>
               <p>
-                Compare college impact within a position. These scores measure
-                college play, not NFL potential or draft eligibility.
+                Opponent-adjusted college impact, ranked within each position.
               </p>
             </div>
             <span>Through week {meta.college_week}</span>
@@ -754,9 +743,9 @@ export default function DraftWorkspace({
           {players && (
             <>
               <p className={styles.context}>
-                Bar length shows college impact points, with a shared scale for
-                this page. Your mock shows each player&apos;s current selection.
-                Select a player to compare him with his position.
+                Bars show impact points above positional replacement. Mock pick
+                lists the current selection; scores do not assess NFL potential
+                or draft eligibility.
               </p>
               <DraftPlayerTable
                 players={filteredPlayers}
@@ -775,64 +764,53 @@ export default function DraftWorkspace({
           )}
         </ViewTabPanel>
         <ViewTabPanel value="guide">
-          <h2>A great player and a great fit are different questions.</h2>
+          <h2>Draft methodology</h2>
           <div className={styles.steps}>
-            {[
-              [
-                "1",
-                "Evaluate the player",
-                "College play, physical traits, and development inform his NFL potential. That evaluation should not depend on which team wants him.",
-              ],
-              [
-                "2",
-                "Look at the team",
-                "Compare its priorities with current players and the prospects available. A priority ranks importance; it is not a count of players needed.",
-              ],
-              [
-                "3",
-                "Place the pick",
-                "Use the pick order and its current owner. Trades can change which team gets to make the selection.",
-              ],
-            ].map(([number, title, copy]) => (
-              <section key={number}>
-                <span>{number}</span>
-                <h3>{title}</h3>
-                <p>{copy}</p>
-              </section>
-            ))}
+            <section>
+              <span>1</span>
+              <h3>Scouting rankings</h3>
+              <p>
+                {board.rank_source ?? "Pro Football Mania"} ranks the prospects.
+                Rankings remain independent of team needs and pick ownership.
+              </p>
+            </section>
+            <section>
+              <span>2</span>
+              <h3>Team needs</h3>
+              <p>
+                Pro Football Mania supplies each team&apos;s top three needs.
+                Ranking + team needs considers those priorities when selecting
+                among the five highest-ranked available prospects.
+              </p>
+            </section>
+            <section>
+              <span>3</span>
+              <h3>Draft order</h3>
+              <p>
+                Selections follow the projected order and reported pick
+                ownership. Compensatory picks remain provisional. Future trades
+                are not simulated.
+              </p>
+            </section>
           </div>
-          <section className={styles.trade}>
-            <h3>The best quarterback can still go first.</h3>
-            <div>
-              <strong>
-                Original owner
-                <br />
-                <small>Already has a proven QB</small>
-              </strong>
-              <span aria-hidden="true">⇄</span>
-              <strong>
-                Trade buyer
-                <br />
-                <small>Needs a quarterback</small>
-              </strong>
-            </div>
-            <p>
-              The owner can receive picks or players in exchange for No. 1. This
-              is an explanation of how value affects placement, not a trade
-              predicted by this mock.
-            </p>
-          </section>
+          <h3>College impact</h3>
           <p>
-            Available now: outside scouting ranks, editable picks, team
-            priorities, current roster context, college performance, and
-            historical playing time. Momentum&apos;s own NFL-performance model
-            and future-trade predictions are not yet available.
+            Momentum measures opponent-adjusted production above positional
+            replacement. Position ranks compare college players at the same
+            position. These scores are separate from the scouting rankings used
+            in the mock draft and do not project NFL performance.
+          </p>
+          <h3>Custom selections</h3>
+          <p>
+            Editing a pick recalculates subsequent selections. Custom picks are
+            saved in this browser until the board edition changes or the mock is
+            reset. The published board remains unchanged.
           </p>
         </ViewTabPanel>
         <ViewTabPanel value="history">
           <div className={styles.heading}>
             <div>
-              <h2>How much did past draft picks play?</h2>
+              <h2>Historical draft outcomes</h2>
               <p>
                 First three NFL seasons, regular-season offense and defense.
                 Playing time depends on opportunity and is not a complete
@@ -953,7 +931,7 @@ export default function DraftWorkspace({
             <>
               ·{" "}
               <Source href={board.sources.capital}>
-                All-round ownership: {date(board.ownership_date)}
+                Pick ownership: {date(board.ownership_date)}
               </Source>{" "}
             </>
           )}
@@ -980,9 +958,8 @@ export default function DraftWorkspace({
           <Source href="https://nflreadr.nflverse.com/articles/nflverse_data_schedule.html">
             nflverse
           </Source>
-          : NFL depth charts and historical draft and snap data. Contract
-          context is Over The Cap via nflverse. Roster information is evidence
-          about current roles, not a prediction of future departures.
+          : NFL depth charts and historical draft and snap data. Contract data
+          is from Over The Cap via nflverse.
         </p>
         <p>
           <Source href="https://fightingirish.com/sports/football/roster/player/tae-johnson">
@@ -1048,18 +1025,18 @@ export default function DraftWorkspace({
                   </div>
                   <span aria-hidden="true">→</span>
                   <div>
-                    <small>Proposed addition</small>
+                    <small>Mock selection</small>
                     <strong>{selectedPick.player.name}</strong>
                   </div>
                 </div>
-                <h3>Why this pick?</h3>
+                <h3>Selection basis</h3>
                 <p>
                   {pickReason(selectedPick, mode)}.{" "}
                   {selectedPick.player.rank
                     ? `Scouting rank: No. ${selectedPick.player.rank}.`
-                    : "Unranked custom option."}{" "}
+                    : "Outside the scouting rankings."}{" "}
                   {selectedPick.best.id !== selectedPick.player.id &&
-                    `The highest-ranked player still available was ${selectedPick.best.name}, No. ${selectedPick.best.rank}.`}
+                    `Best available: ${selectedPick.best.name}, No. ${selectedPick.best.rank}.`}
                 </p>
                 <p>
                   {selectedPick.priority
@@ -1071,7 +1048,7 @@ export default function DraftWorkspace({
                     ) &&
                     "This position was already selected earlier in this mock."}
                 </p>
-                <h3>Current players he would join</h3>
+                <h3>Current depth chart</h3>
                 {!rosterSection.data && (
                   <p role="status">Loading current players…</p>
                 )}
@@ -1086,11 +1063,10 @@ export default function DraftWorkspace({
                   ))}
                 </div>
                 <p className={styles.context}>
-                  An addition to the position group, not a prediction of his
-                  exact side or starting role.
+                  Position fit does not determine a starting role.
                 </p>
                 <details>
-                  <summary>Who owns this pick?</summary>
+                  <summary>Pick ownership</summary>
                   <p>
                     {selectedPick.ownership_note}{" "}
                     <Source href={selectedPick.ownership_source}>
@@ -1112,7 +1088,7 @@ export default function DraftWorkspace({
                   </p>
                 </details>
                 <label>
-                  Make your pick
+                  Selection
                   <select
                     value={selectedPick.player.id}
                     onChange={(e) => {
@@ -1213,9 +1189,9 @@ export default function DraftWorkspace({
                   replacement, adjusted for opponents.
                 </p>
                 <p>
-                  NFL potential has not been rated by Momentum. We have not
-                  confirmed draft eligibility or declaration for every college
-                  player.
+                  This score does not project NFL performance or establish
+                  draft eligibility. Declarations are not verified for every
+                  college player.
                 </p>
               </>
             )}

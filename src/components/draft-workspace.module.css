@@ -115,7 +115,7 @@
 }
 .workspace th {
   font-family: var(--font-mono), sans-serif;
-  text-align: left;
+  text-align: center;
   font-size: 0.75rem;
   text-transform: uppercase;
   letter-spacing: 0.04em;
@@ -129,6 +129,8 @@
   padding: 0.75rem 0.65rem;
 }
 .workspace td {
+  text-align: center;
+  font-variant-numeric: tabular-nums;
   border-bottom: 1px solid var(--border);
   vertical-align: middle;
 }
@@ -301,23 +303,8 @@
   font-size: 2rem;
   color: var(--muted-foreground);
 }
-.steps p,
-.trade p {
+.steps p {
   color: var(--muted-foreground);
-}
-.trade {
-  padding: 1.25rem;
-  background: var(--muted);
-}
-.trade > div {
-  display: flex;
-  align-items: center;
-  justify-content: space-around;
-  gap: 1rem;
-  padding: 1.5rem 0;
-}
-.trade > div > span {
-  font-size: 2.5rem;
 }
 .fit {
   display: flex;
@@ -407,7 +394,7 @@
   min-width: 160px;
 }
 .playerTable td:last-child {
-  min-width: 150px;
+  min-width: 110px;
 }
 .impactTrack {
   position: relative;
@@ -526,4 +513,12 @@
   color: var(--muted-foreground);
   font-size: 0.875rem;
   font-weight: 400;
+}
+
+.workspace table .link {
+  text-align: center;
+}
+.workspace table .playerCell,
+.workspace table .teamIdentity {
+  justify-content: center;
 }

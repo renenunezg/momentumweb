@@ -34,7 +34,7 @@ export default async function DraftPage() {
         <div>
           <PageTitle>{data?.board.season} NFL Draft</PageTitle>
           <PageDescription>
-            Build a mock draft. See where player value meets team priorities.
+            Seven-round mock draft, scouting rankings, and team needs.
           </PageDescription>
         </div>
         {data && (

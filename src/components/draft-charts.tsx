@@ -13,7 +13,12 @@ export function DraftPlayerTable({
   players: CollegePlayer[];
   destinations: Record<
     string,
-    { name: string; logo: TeamLogoSource | undefined; pick: number }
+    {
+      name: string;
+      abbreviation: string;
+      logo: TeamLogoSource | undefined;
+      pick: number;
+    }
   >;
   onSelect: (player: CollegePlayer) => void;
 }) {
@@ -36,7 +41,7 @@ export function DraftPlayerTable({
             <th scope="col">College impact</th>
             <th scope="col">Position rank</th>
             <th scope="col">Games</th>
-            <th scope="col">Your mock</th>
+            <th scope="col">Mock pick</th>
           </tr>
         </thead>
         <tbody>
@@ -92,7 +97,10 @@ export function DraftPlayerTable({
                 <td>{p.games ?? "Not measured"}</td>
                 <td>
                   {destination ? (
-                    <span className={styles.teamIdentity}>
+                    <span
+                      className={styles.teamIdentity}
+                      title={destination.name}
+                    >
                       <TeamLogo
                         team={destination.logo}
                         name={destination.name}
@@ -100,7 +108,7 @@ export function DraftPlayerTable({
                       />
                       <span>
                         Pick {destination.pick}
-                        <small>{destination.name}</small>
+                        <small>{destination.abbreviation}</small>
                       </span>
                     </span>
                   ) : (
@@ -141,11 +149,11 @@ export function DraftComparison({
   return (
     <figure className={styles.comparison}>
       <figcaption>
-        <h3>How he compares at his position</h3>
+        <h3>Position comparison</h3>
         <p>
           {count.toLocaleString()} measured{" "}
-          {player.position_group ?? player.position} players · College
-          performance, not NFL potential
+          {player.position_group ?? player.position} players · College impact
+          points
         </p>
       </figcaption>
       <svg

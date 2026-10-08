@@ -153,7 +153,7 @@ export function buildMock(
 }
 export function pickReason(pick: MockPick, mode: MockMode) {
   return pick.custom
-    ? "Your selection"
+    ? "Custom selection"
     : mode === "value"
       ? "Best available"
       : pick.remainingNeeds.includes(pick.player.position)
