@@ -143,6 +143,7 @@ export default function CfbRatings({
         ) : (
           <PowerRatingsTable
             rows={visible}
+            heatmapRows={ratings}
             searchRows={view === "top25" ? ratings : undefined}
             searchScope={view === "top25" ? "Search includes all D1 teams" : undefined}
             rowKey={rowKey}
@@ -206,6 +207,7 @@ function CfbUnitRatings({
   return (
     <UnitRatingsTable
       units={shown}
+      heatmapUnits={units}
       columns={UNIT_COLUMNS}
       defaultSort="pass_offense"
       rowKey={rowKey}

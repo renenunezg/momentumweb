@@ -143,6 +143,7 @@ export default function NflRatings({
         ) : (
           <PowerRatingsTable
             rows={visible}
+            heatmapRows={ratings}
             rowKey={rowKey}
             logo={logo}
             caption={`${VIEWS.find((v) => v.key === view)?.label} power ratings`}

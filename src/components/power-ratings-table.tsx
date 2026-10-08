@@ -1,6 +1,8 @@
 "use client";
 
-import { useState, type ReactNode } from "react";
+import { useMemo, useState, type ReactNode } from "react";
+import { ratingHeatmap } from "@/lib/rating-heatmap";
+import { RatingsHeatmapLegend } from "@/components/ratings-heatmap-legend";
 import { ComparisonGaps } from "@/components/comparison-gaps";
 import { Dialog, DialogContent, DialogDescription, DialogTitle } from "@/components/ui/dialog";
 import { RatingsSearch, useRatingsSearch } from "@/components/ratings-search";
@@ -58,6 +60,7 @@ const numCell = "text-right font-mono tabular-nums";
 // power rating, so the index is the rank within the slice shown.
 export function PowerRatingsTable<T extends PowerRatingRow>({
   rows,
+  heatmapRows,
   rowKey,
   logo,
   caption,
@@ -71,6 +74,7 @@ export function PowerRatingsTable<T extends PowerRatingRow>({
   searchScope,
 }: {
   rows: T[];
+  heatmapRows: T[];
   rowKey: (row: T) => string | number;
   logo: (row: T) => TeamLogoSource | undefined;
   caption: string;
@@ -85,6 +89,12 @@ export function PowerRatingsTable<T extends PowerRatingRow>({
 }) {
   const [detail, setDetail] = useState<T | null>(null);
   const { query, setQuery, matches, total } = useRatingsSearch(rows, searchRows);
+  const heatmap = useMemo(() => ({
+    model: ratingHeatmap(heatmapRows.map((r) => r.power_rating), { center: 0 }),
+    market: ratingHeatmap(heatmapRows.map((r) => market?.(r).rating), { center: 0 }),
+    offense: ratingHeatmap(heatmapRows.map((r) => r.offense_points), { center: 0 }),
+    defense: ratingHeatmap(heatmapRows.map((r) => r.defense_points), { center: 0 }),
+  }), [heatmapRows, market]);
   // A badge on every row singles out nobody: whole tiers (all of FCS today)
   // run on reduced inputs, so say it once above the table instead.
   const allLimited = rows.length > 0 && rows.every(limited.isLimited);
@@ -99,6 +109,7 @@ export function PowerRatingsTable<T extends PowerRatingRow>({
         scope={searchScope}
       />
       {allLimited && <p className="text-xs text-accent-amber">{limited.allNote}</p>}
+      <RatingsHeatmapLegend centered />
       <div className="overflow-x-auto">
         <Table density={market ? "compact" : "default"}>
           <TableCaption className="sr-only">
@@ -151,18 +162,18 @@ export function PowerRatingsTable<T extends PowerRatingRow>({
                     {overallRank.value(row)}
                   </TableCell>
                 )}
-                <TableCell className={`${numCell} font-semibold`}>
+                <TableCell className={`${numCell} font-semibold`} style={heatmap.model(row.power_rating)}>
                   {market ? (
                     <RatingButton team={row.team} label="Model" value={row.power_rating} onClick={() => setDetail(row)} />
                   ) : formatNumber(row.power_rating)}
                 </TableCell>
                 {market && (
-                  <TableCell className={`${numCell} text-muted-foreground`}>
+                  <TableCell className={numCell} style={heatmap.market(market(row).rating)}>
                     <RatingButton team={row.team} label="Market" value={market(row).rating} onClick={() => setDetail(row)} />
                   </TableCell>
                 )}
-                <TableCell className={numCell}>{formatNumber(row.offense_points)}</TableCell>
-                <TableCell className={numCell}>{formatNumber(row.defense_points)}</TableCell>
+                <TableCell className={numCell} style={heatmap.offense(row.offense_points)}>{formatNumber(row.offense_points)}</TableCell>
+                <TableCell className={numCell} style={heatmap.defense(row.defense_points)}>{formatNumber(row.defense_points)}</TableCell>
                 {showSd && !market && (
                   <TableCell className={`hidden ${numCell} text-muted-foreground sm:table-cell`}>
                     {formatNumber(row.power_rating_sd)}

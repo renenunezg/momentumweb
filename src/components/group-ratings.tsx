@@ -118,6 +118,7 @@ export function GroupRatings<T extends PowerRatingRow>({
         </div>
         <PowerRatingsTable
           rows={selected.teams}
+          heatmapRows={ratings}
           rowKey={rowKey}
           logo={logo}
           caption={`${selected.name} power ratings`}

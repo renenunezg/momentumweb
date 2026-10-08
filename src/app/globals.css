@@ -91,6 +91,9 @@
   --chart-5: oklch(0.35 0.005 60);
   --positive: oklch(0.42 0.10 155);
   --negative: oklch(0.48 0.14 25);
+  /* Muted sage and clay washes keep ratings legible on the paper surface. */
+  --rating-strong: oklch(0.42 0.06 155 / 34%);
+  --rating-weak: oklch(0.48 0.075 25 / 34%);
   --accent-blue: oklch(0.45 0.09 250);
   --accent-amber: oklch(0.52 0.10 65);
   --radius: 0.125rem;
@@ -136,6 +139,8 @@ html.dark {
   --chart-5: oklch(0.72 0.004 70);
   --positive: oklch(0.72 0.15 155);
   --negative: oklch(0.68 0.16 25);
+  --rating-strong: oklch(0.72 0.085 155 / 34%);
+  --rating-weak: oklch(0.68 0.095 25 / 34%);
   --accent-blue: oklch(0.70 0.11 250);
   --accent-amber: oklch(0.75 0.11 65);
   --sidebar: oklch(0.16 0.003 60);

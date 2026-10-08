@@ -1,6 +1,8 @@
 "use client";
 
 import { useMemo, useState, type ReactNode } from "react";
+import { ratingHeatmap } from "@/lib/rating-heatmap";
+import { RatingsHeatmapLegend } from "@/components/ratings-heatmap-legend";
 import { cn, formatSigned } from "@/lib/utils";
 import { RatingsSearch, useRatingsSearch } from "@/components/ratings-search";
 import { TeamLogo, type TeamLogoSource } from "@/components/team-logo";
@@ -21,6 +23,7 @@ export function UnitRatingsTable<
   U extends { team: string } & Record<K, number | null>,
 >({
   units,
+  heatmapUnits = units,
   columns,
   defaultSort,
   rowKey,
@@ -32,6 +35,7 @@ export function UnitRatingsTable<
   caption,
 }: {
   units: U[];
+  heatmapUnits?: U[];
   columns: readonly { key: K; label: string }[];
   defaultSort: K;
   rowKey: (unit: U) => string | number;
@@ -51,6 +55,9 @@ export function UnitRatingsTable<
     [units, sortKey]
   );
   const { query, setQuery, matches, total } = useRatingsSearch(sorted);
+  const heatmap = useMemo(() => new Map(columns.map(({ key }) => [
+    key, ratingHeatmap(heatmapUnits.map((unit) => unit[key]), { center: 0 }),
+  ])), [columns, heatmapUnits]);
 
   return (
     <div className="space-y-3">
@@ -67,6 +74,7 @@ export function UnitRatingsTable<
         shown={matches.length}
         total={total}
       />
+      <RatingsHeatmapLegend centered />
       <div className="overflow-x-auto">
         <Table>
           <TableCaption className="sr-only">{caption}</TableCaption>
@@ -129,6 +137,7 @@ export function UnitRatingsTable<
                   {columns.map((column) => (
                     <TableCell
                       key={column.key}
+                      style={heatmap.get(column.key)?.(unit[column.key])}
                       className={cn(
                         "text-right font-mono tabular-nums",
                         sortKey === column.key && "font-semibold"
