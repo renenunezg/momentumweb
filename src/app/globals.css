@@ -92,8 +92,8 @@
   --positive: oklch(0.42 0.10 155);
   --negative: oklch(0.48 0.14 25);
   /* Translucent green and coral keep the heatmap vivid without obscuring values. */
-  --rating-strong: oklch(0.52 0.13 155 / 38%);
-  --rating-weak: oklch(0.57 0.16 25 / 38%);
+  --rating-strong: oklch(0.64 0.19 150 / 48%);
+  --rating-weak: oklch(0.65 0.21 25 / 48%);
   --accent-blue: oklch(0.45 0.09 250);
   --accent-amber: oklch(0.52 0.10 65);
   --radius: 0.125rem;
