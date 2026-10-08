@@ -2713,6 +2713,17 @@ export type Database = {
       }
     }
     Functions: {
+      betting_headline: {
+        Args: Record<PropertyKey, never>
+        Returns: {
+          bet_type: string
+          losses: number
+          pushes: number
+          total_payout: number
+          total_stake: number
+          wins: number
+        }[]
+      }
       bet_record_summary: {
         Args: { p_from?: string; p_team?: string; p_to?: string }
         Returns: {

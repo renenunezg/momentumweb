@@ -1,4 +1,5 @@
-import { supabase } from "@/lib/supabase";
+import { supabase } from "./supabase.ts";
+import { summarizeMlbLedger } from "./mlb-headline.ts";
 import type { BetLedgerRow } from "@/lib/types";
 
 const LEDGER_PAGE_SIZE = 1000;
@@ -26,4 +27,15 @@ export async function fetchFullBetLedger(): Promise<BetLedgerRow[]> {
     rows.push(...page);
     if (page.length < LEDGER_PAGE_SIZE) return rows;
   }
+}
+
+// This aggregate reads the same live ledger once, without transferring every
+// historical wager to the homepage. No extra cache or settlement lag is added.
+export async function fetchBettingHeadline() {
+  const { data, error } = await supabase.rpc("betting_headline", {}, { get: true });
+  if (error?.code === "PGRST202" || error?.code === "42883") {
+    return summarizeMlbLedger(await fetchFullBetLedger());
+  }
+  if (error) throw new Error(`Failed to load MLB headline: ${error.message}`);
+  return data ?? [];
 }

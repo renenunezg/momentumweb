@@ -4,8 +4,8 @@ import { HomeFeatureSlot } from "@/components/home-feature-slot";
 import { fetchHomeFeature } from "@/lib/home-features.server";
 import { SiteHeader } from "@/components/site-header";
 import { ContactLine } from "@/components/site-footer";
-import { fetchFullBetLedger } from "@/lib/bet-ledger";
-import { aggregateLedger } from "@/lib/betting-aggs";
+import { fetchBettingHeadline } from "@/lib/bet-ledger";
+import { mlbHeadline } from "@/lib/mlb-headline";
 import { supabaseCfb, supabaseNfl } from "@/lib/supabase";
 import { formatPct } from "@/lib/utils";
 import { fetchCfbPickSummary } from "@/lib/cfb-picks";
@@ -24,25 +24,7 @@ export const revalidate = 3600;
 
 async function getMlbHeadline(): Promise<MarketRecord[] | null> {
   try {
-    const ledger = await fetchFullBetLedger();
-    if (ledger.length === 0) return null;
-    return ([
-      ["ml", "h2h"],
-      ["rl", "spreads"],
-      ["total", "totals"],
-    ] as const).map(([betType, market]) => {
-      const rows = ledger.filter((row) => row.bet_type === betType);
-      const wins = rows.filter((row) => row.won).length;
-      const pushes = rows.filter((row) => row.push).length;
-      return {
-        market,
-        wins,
-        losses: rows.length - wins - pushes,
-        pushes,
-        pending: 0,
-        roi: aggregateLedger(rows).roi,
-      };
-    });
+    return mlbHeadline(await fetchBettingHeadline());
   } catch {
     // Home should never 500 because Supabase is unreachable; the MLB card
     // degrades to a plain link.

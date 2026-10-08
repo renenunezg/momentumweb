@@ -2,7 +2,7 @@ import type { Database } from "@/lib/database.types";
 import { NextResponse, after } from "next/server";
 import { createClient } from "@supabase/supabase-js";
 import { runEvalForGame } from "@/lib/eval-game";
-import { toLiveScore, type MlbScheduleGame } from "@/lib/mlb-live-scores";
+import { fetchMlbSchedule, toLiveScore } from "@/lib/mlb-live-scores";
 import { fetchPicksVersion } from "@/lib/mlb-picks-version";
 
 // Cached proxy to the MLB Stats API: the CDN window turns N browsers polling
@@ -47,25 +47,18 @@ export async function GET() {
     timeZone: "America/Los_Angeles",
   });
 
-  const url = `https://statsapi.mlb.com/api/v1/schedule?sportId=1&date=${today}&hydrate=linescore`;
-
   try {
-    const [res, picksVersion] = await Promise.all([
-      fetch(url, {
-        cache: "no-store",
-        headers: { "User-Agent": "mlb-model-dashboard" },
-        signal: AbortSignal.timeout(4000),
-      }),
+    const [schedule, picksVersion] = await Promise.all([
+      fetchMlbSchedule(today),
       fetchPicksVersion(today),
     ]);
-    if (!res.ok) {
+    if (!schedule.ok) {
       return NextResponse.json(
-        { error: `MLB API ${res.status}` },
+        { error: `MLB API ${schedule.status}` },
         { status: 502 }
       );
     }
-    const data = await res.json();
-    const games: MlbScheduleGame[] = data?.dates?.[0]?.games ?? [];
+    const { games } = schedule;
 
     const scores = games.map(toLiveScore);
 

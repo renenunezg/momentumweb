@@ -1,5 +1,6 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
+import { mlbHeadline, summarizeMlbLedger } from "./mlb-headline.ts";
 import { aggregateLedger } from "./betting-aggs.ts";
 import type { BetLedgerRow } from "./types.ts";
 import {
@@ -130,4 +131,23 @@ test("history totals span query pages and exclude pending, void and No Play stak
   }));
   assert.equal(failed.unavailable, true);
   assert.deepEqual(failed.metrics, []);
+});
+
+test("MLB headline preserves the ledger's market records and rounded ROI", () => {
+  const ledger = [
+    bet({ stake: 0.1, payout: 0.233333333333 }),
+    bet({ game_pk: 2, stake: 0.2, payout: 0, won: false }),
+    bet({ game_pk: 3, bet_type: "total", stake: 0.3, payout: 0.3, won: false, push: true }),
+    bet({ game_pk: 4, bet_type: "total", stake: 0.4, payout: 0.7 }),
+  ];
+  for (const rows of [[], ledger, ledger.map(r => ({ ...r, won: false, payout: r.push ? r.stake : 0 }))]) {
+    const expected = rows.length ? ([ ["ml", "h2h"], ["rl", "spreads"], ["total", "totals"] ] as const).map(([type, market]) => {
+      const selected = rows.filter(r => r.bet_type === type);
+      const wins = selected.filter(r => r.won).length;
+      const pushes = selected.filter(r => r.push).length;
+      return { market, wins, losses: selected.length - wins - pushes, pushes,
+        pending: 0, roi: aggregateLedger(selected).roi };
+    }) : null;
+    assert.deepEqual(mlbHeadline(summarizeMlbLedger(rows)), expected);
+  }
 });

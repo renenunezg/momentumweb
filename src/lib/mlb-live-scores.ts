@@ -47,3 +47,18 @@ export function toLiveScore(game: MlbScheduleGame): LiveScore {
       linescore.outs >= 0 && linescore.outs <= 3 ? linescore.outs : null,
   };
 }
+
+// Consume the body while the upstream timeout still belongs to this request.
+// Waiting for unrelated database reads before json() can abort a received body.
+export async function fetchMlbSchedule(
+  today: string,
+  signal: AbortSignal = AbortSignal.timeout(4000),
+): Promise<{ ok: true; games: MlbScheduleGame[] } | { ok: false; status: number }> {
+  const response = await fetch(
+    `https://statsapi.mlb.com/api/v1/schedule?sportId=1&date=${today}&hydrate=linescore`,
+    { cache: "no-store", headers: { "User-Agent": "mlb-model-dashboard" }, signal },
+  );
+  if (!response.ok) return { ok: false, status: response.status };
+  const data = await response.json();
+  return { ok: true, games: data?.dates?.[0]?.games ?? [] };
+}
