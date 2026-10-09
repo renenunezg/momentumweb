@@ -36,9 +36,11 @@ export function MethodologyContent() {
           freeze every decision before puck drop, and grade it in public.
         </p>
         <p className={p}>
-          Version one keeps the spreadsheet&apos;s method on purpose, with two
-          changes: the shot-quality source and a walk-forward backtest. None
-          of it is betting advice.
+          The spreadsheet&apos;s method is kept on purpose, with three
+          changes: the shot-quality source, a walk-forward backtest, and,
+          since October 9, 2026, a forecast blended halfway with the betting
+          market for every game the books have priced. None of it is betting
+          advice.
         </p>
       </Section>
 
@@ -61,6 +63,12 @@ export function MethodologyContent() {
             sportsbook feed, read each morning: DraftKings on the US feed and
             FanDuel on the Canadian feed. A pick records the better of the
             two.
+          </li>
+          <li>
+            <span className={strongText}>Historical lines.</span> Opening and
+            closing moneylines and totals for the backtest seasons, from
+            ESPN&apos;s public odds data. They are used to check the model
+            against the market, never to price a pick.
           </li>
         </ul>
       </Section>
@@ -114,26 +122,72 @@ export function MethodologyContent() {
         </p>
       </Section>
 
+      <Section id="market" title="Market Blend">
+        <p className={p}>
+          On its own the model does not beat the betting market. Checked
+          against opening and closing lines for the backtest seasons, the
+          market&apos;s price predicts winners and totals better than the
+          model does, and once the price is known the model adds nothing to
+          it. So for every game the books have priced, the published forecast
+          is blended halfway with the market.
+        </p>
+        <p className={p}>
+          The market&apos;s win probability is the no-vig probability from
+          each book that quotes both sides (the two implied probabilities
+          scaled to sum to one), averaged over DraftKings and FanDuel. The
+          model&apos;s home win probability first gets a small home-ice
+          correction of 0.10 in log-odds, because it runs about two points low
+          on home teams, and is then averaged with the market in log-odds. The
+          model total is averaged with the posted total, using the median line
+          when the books disagree.
+        </p>
+        <p className={p}>
+          Each side&apos;s expected goals are then reset so the Poisson grid
+          returns exactly that win probability and that total. Everything
+          shown for the game, the expected goals, win probability, fair price,
+          total, any pick, and the opening point of the live win probability,
+          comes from that one blended forecast.
+        </p>
+        <p className={p}>
+          The partner feed only prices the current day&apos;s games, so games
+          further out on the{" "}
+          <Link className={link} href="/nhl/schedule">schedule</Link> show the
+          model alone until the morning they are played. The halfway weight is
+          a choice, not a fitted value: the data would put nearly all of the
+          weight on the market, and the model would then never disagree with
+          a price.
+        </p>
+      </Section>
+
       <Section id="picks" title="Pricing and Picks">
         <p className={p}>
-          The fair price is one over the win probability, shown in American
-          odds with the spreadsheet&apos;s minimum acceptable price beneath
-          it: the fair decimal marked up by ten percent. The edge is the model
-          probability minus the break-even probability of the partner-book
-          price, vig included. Every pick risks a flat one unit so results
-          compare across sports; Kelly at ten percent of full is published for
-          reference.
+          The fair price is one over the published win probability, shown in
+          American odds with the spreadsheet&apos;s minimum acceptable price
+          beneath it: the fair decimal marked up by ten percent. The edge is
+          the published probability minus the break-even probability of the
+          partner-book price, vig included. Every pick risks a flat one unit
+          so results compare across sports; Kelly at ten percent of full is
+          published for reference.
         </p>
         <p className={p}>
           One decision per game and market, recorded each morning for that
           day&apos;s slate and frozen at first publication. A moneyline is
-          recommended at an edge of at least 13 percentage points with
-          positive expected value; a total when the model total differs from
-          the posted line by at least one goal. Prices older than 24 hours
-          produce No Play. A moved, postponed or cancelled game voids its
-          pick, totals push on the line, and the database rejects any change
-          to a published pick or a settled result. The record lives on the{" "}
+          recommended at an edge of at least 4.5 percentage points with
+          positive expected value; a total when the published total differs
+          from the posted line by at least half a goal, which is the
+          spreadsheet&apos;s one-goal rule applied to the model&apos;s own
+          total. A game without a two-sided price, or with prices older than
+          24 hours, produces No Play. A moved, postponed or cancelled game
+          voids its pick, totals push on the line, and the database rejects
+          any change to a published pick or a settled result. The record
+          lives on the{" "}
           <Link className={link} href="/nhl/performance">performance page</Link>.
+        </p>
+        <p className={p}>
+          Picks through October 9, 2026 followed the spreadsheet&apos;s
+          original rules: the model alone, 13 percentage points for a
+          moneyline, and one goal for a total. The performance page separates
+          the two policies.
         </p>
       </Section>
 
@@ -145,9 +199,18 @@ export function MethodologyContent() {
           against 0.693 for a coin flip and picks the winner 57 percent of the
           time; the model total misses by 1.90 goals on average and runs
           about a sixth of a goal low. It is overconfident: games priced at 74
-          percent for the home side were won 67 percent of the time. No free
-          archive of NHL closing lines exists, so the backtest is model-only;
-          the live record adds frozen partner prices as games accumulate.
+          percent for the home side were won 67 percent of the time.
+        </p>
+        <p className={p}>
+          Against historical lines the market is better. Over the 3,900
+          games from 2023-24 through 2025-26 the closing moneyline scores a
+          log loss of 0.665, the model alone 0.691, and the halfway blend
+          0.671. The posted total misses by 1.87 goals on average against 1.92
+          for the model. Betting the model against those lines lost money at
+          every threshold tried: the spreadsheet&apos;s 13-point moneyline
+          rule lost between 8 and 15 percent per unit depending on the season
+          and whether the opening or closing price was used. The backtest
+          gives no reason to expect the picks to profit.
         </p>
       </Section>
 
@@ -161,6 +224,8 @@ export function MethodologyContent() {
           <li>Goalies are not modeled; a backup start changes nothing.</li>
           <li>The puck line is read but not priced.</li>
           <li>Prices are the morning partner-feed quotes, not closing lines.</li>
+          <li>The blend weight and the pick thresholds are choices, not fitted values, and the backtest finds no betting edge at any threshold.</li>
+          <li>Games beyond the current day have no market price yet, so their forecast changes when the blend is applied on game day.</li>
         </ul>
       </Section>
 

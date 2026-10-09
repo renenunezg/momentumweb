@@ -399,18 +399,21 @@ export function PickPolicy({
       </p>
       {sport === "nhl" ? (
         <p>
-          NHL picks v1 follows the original spreadsheet&apos;s rules. A
-          moneyline is recommended when the model&apos;s win probability
-          beats the posted price&apos;s break-even probability by at least 13
-          percentage points with positive estimated EV; a total when the model
-          total differs from the posted line by at least one goal. Prices come
-          from the NHL&apos;s partner sportsbook feed (DraftKings and FanDuel),
-          the better of the two, and must be dated within 24 hours of
-          publication. Each pick risks 1 unit; the fractional Kelly stake the
-          sheet computed is shown for reference only. A moved, postponed or
-          cancelled game voids its pick; totals push on the line; there are no
-          moneyline ties. Estimated EV does not establish a real betting
-          advantage.
+          NHL picks v2 prices the published forecast, which blends the model
+          halfway with the market. A moneyline is recommended when the
+          published win probability beats the posted price&apos;s break-even
+          probability by at least 4.5 percentage points with positive
+          estimated EV; a total when the published total differs from the
+          posted line by at least half a goal. A game without a two-sided
+          price is No Play. Picks through October 9, 2026 (v1) used the model
+          alone with the spreadsheet&apos;s thresholds of 13 percentage points
+          and one goal. Prices come from the NHL&apos;s partner sportsbook
+          feed (DraftKings and FanDuel), the better of the two, and must be
+          dated within 24 hours of publication. Each pick risks 1 unit; the
+          fractional Kelly stake the sheet computed is shown for reference
+          only. A moved, postponed or cancelled game voids its pick; totals
+          push on the line; there are no moneyline ties. Estimated EV does not
+          establish a real betting advantage.
         </p>
       ) : sport === "nfl" ? (
         <p>
