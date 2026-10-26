@@ -84,6 +84,16 @@ interface Reliability {
   split_half_correlation: number;
 }
 
+const GROUP_NAMES: Record<string, string> = {
+  QB: "quarterbacks",
+  RB: "running backs",
+  WR: "wide receivers",
+  TE: "tight ends",
+  DL: "defensive linemen",
+  LB: "linebackers",
+  DB: "defensive backs",
+};
+
 function parseJson<T>(text: string | null | undefined): T | null {
   if (!text) return null;
   try {
@@ -451,6 +461,16 @@ function History({ rows, meta, week }: { rows: CfbHeismanHistory[]; meta: CfbPla
 function Method({ meta }: { meta: CfbPlayerModelMeta | null }) {
   const shares = parseJson<CreditShares>(meta?.credit_shares);
   const reliability = parseJson<Reliability[]>(meta?.reliability) ?? [];
+  const priors = parseJson<Record<string, number>>(meta?.prior_games_by_group);
+  const priorEntries = priors
+    ? Object.entries(priors).sort((a, b) => a[1] - b[1])
+    : [];
+  const priorText =
+    priorEntries.length > 1
+      ? `${formatNumber(priorEntries[0][1], 1)} games for ${GROUP_NAMES[priorEntries[0][0]] ?? priorEntries[0][0]} up to ${formatNumber(priorEntries[priorEntries.length - 1][1], 1)} games for ${GROUP_NAMES[priorEntries[priorEntries.length - 1][0]] ?? priorEntries[priorEntries.length - 1][0]}`
+      : meta?.prior_games != null
+        ? `${formatNumber(meta.prior_games, 0)} games`
+        : "a few games";
   const offenseShares = shares
     ? Object.entries(shares.offense).map(([key, value]) => {
         const [kind, stat] = key.split(":");
@@ -464,10 +484,14 @@ function Method({ meta }: { meta: CfbPlayerModelMeta | null }) {
         <p className="text-muted-foreground">
           Every play&apos;s expected points added is split among the players
           the stat feed credits on it with fixed shares; the remainder belongs
-          to the unit. The shares are documented assumptions, not fitted
-          values: nothing in the data says who was responsible for a play, so
-          they can only ever be tuned against how stable the resulting rates
-          are from one half of a season to the other.
+          to the unit. Nothing in the data says who was responsible for a
+          play, so the shares are conventions checked two ways: whether the
+          resulting per-game rates repeat from one half of a season to the
+          other and from one season to the next, and whether they agree with
+          the next NFL draft. The passer takes the same share of every pass
+          attempt whatever its outcome, and a receiver gets no credit for an
+          incompletion thrown his way, because that credit repeated worse than
+          noise.
         </p>
         {offenseShares.length > 0 && (
           <div className="overflow-x-auto">
@@ -526,8 +550,9 @@ function Method({ meta }: { meta: CfbPlayerModelMeta | null }) {
         <p className="text-muted-foreground">
           Games are the opportunity unit, because a defender&apos;s credited
           plays are disruption events rather than snaps. Per-game production
-          shrinks toward the position-group mean with a prior of
-          {meta ? ` ${formatNumber(meta.prior_games, 0)} games` : " 4 games"}, then
+          shrinks toward the position-group mean with a prior sized to how
+          noisy that group&apos;s per-game credit is next to the spread of real
+          ability, {priorText}, then
           the {meta ? `${formatNumber(meta.replacement_percentile * 100, 0)}th` : "30th"} percentile
           among players with at least
           {meta ? ` ${meta.qualifying_games}` : " 6"} games (half the weeks played

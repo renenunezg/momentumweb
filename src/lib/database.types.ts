@@ -721,7 +721,8 @@ export type Database = {
           heisman_winner_pool_coverage: number | null
           opponent_prior_regression: number | null
           opponent_prior_share: number | null
-          prior_games: number
+          prior_games: number | null
+          prior_games_by_group: string | null
           qualifying_games: number
           reliability: string
           replacement_percentile: number
@@ -744,7 +745,8 @@ export type Database = {
           heisman_winner_pool_coverage?: number | null
           opponent_prior_regression?: number | null
           opponent_prior_share?: number | null
-          prior_games?: number
+          prior_games?: number | null
+          prior_games_by_group?: string | null
           qualifying_games?: number
           reliability: string
           replacement_percentile: number
@@ -767,7 +769,8 @@ export type Database = {
           heisman_winner_pool_coverage?: number | null
           opponent_prior_regression?: number | null
           opponent_prior_share?: number | null
-          prior_games?: number
+          prior_games?: number | null
+          prior_games_by_group?: string | null
           qualifying_games?: number
           reliability?: string
           replacement_percentile?: number
