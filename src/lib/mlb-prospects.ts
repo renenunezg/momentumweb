@@ -1,5 +1,6 @@
 import { supabase } from "@/lib/supabase";
 import type { Tables } from "@/lib/database-schema";
+import { seasonStatsLine, type SeasonStatsLine } from "@/lib/season-stats";
 import { PROSPECT_PAGE, prospectSearchRegex, type ProspectFilters, type ProspectSort } from "@/lib/prospect-values";
 
 // The prospect table, written weekly by mlbmodel: about 8,500 rows, so neither
@@ -16,6 +17,7 @@ export interface ProspectRow
   tip: TipInput[];
   trait_grades: (number | null)[];
   trait_pcts: (number | null)[];
+  season_stats: SeasonStatsLine | null;
 }
 
 export interface ProspectPage {
@@ -69,7 +71,23 @@ function toRow(row: Record<string, unknown>): ProspectRow {
     tip: tipInputs(raw.tip),
     trait_grades: traitList(raw.trait_grades as (number | null)[]),
     trait_pcts: traitList(raw.trait_pcts as (number | null)[]),
+    season_stats: null,
   };
+}
+
+// The page's season lines, one keyed read; a prospect without a line this season has no stats block.
+async function attachSeasonStats(rows: ProspectRow[]): Promise<void> {
+  if (rows.length === 0) return;
+  const res = await supabase
+    .from("player_season_stats")
+    .select("player_id, season, levels, stats")
+    .eq("pool", "prospect")
+    .in("player_id", rows.map((row) => row.player_id))
+    .limit(PROSPECT_PAGE)
+    .abortSignal(AbortSignal.timeout(10_000));
+  if (res.error) throw new Error(`Prospect season stats read failed: ${res.error.message}`);
+  const byId = new Map((res.data ?? []).map((row) => [row.player_id, seasonStatsLine(row)]));
+  for (const row of rows) row.season_stats = byId.get(row.player_id) ?? null;
 }
 
 export async function fetchProspectPage(filters: ProspectFilters, offset: number): Promise<ProspectPage> {
@@ -92,8 +110,10 @@ export async function fetchProspectPage(filters: ProspectFilters, offset: number
     .abortSignal(AbortSignal.timeout(10_000));
   // Callers turn a failed read into a kept ISR page or an uncached 503.
   if (res.error) throw new Error(`Prospect read failed: ${res.error.message}`);
+  const rows = (res.data ?? []).map((row) => toRow(row as Record<string, unknown>));
+  await attachSeasonStats(rows);
   return {
-    rows: (res.data ?? []).map((row) => toRow(row as Record<string, unknown>)),
+    rows,
     total: offset === 0 ? (res.count ?? null) : null,
   };
 }

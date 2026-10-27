@@ -25,6 +25,8 @@ import { PlayerComparisonPicker } from "@/components/player-comparison-picker";
 import { ComparisonGrades, ComparisonMetrics, type ComparisonMetric } from "@/components/player-comparison";
 import { ToggleGroup } from "@/components/toggle-group";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { BaseballSeasonStats } from "@/components/baseball-season-stats";
+import { seasonStats } from "@/lib/season-stats";
 
 const PAGE_ROWS = 40;
 const ALL = "all";
@@ -173,6 +175,7 @@ function PlayerCard({ row, detail, failed, onRetry }: {
   const graded = row.grade != null;
   const head = headlineValue(row);
   const pitcher = PITCHER_GROUPS.has(row.position_group);
+  const stats = seasonStats(detail?.seasonStats, pitcher, false);
   const panels = pitcher ? ["arsenal", "results", "durability"] : ["batting", "fielding"];
   return (
     <div className="min-w-0 space-y-4 py-3">
@@ -235,6 +238,7 @@ function PlayerCard({ row, detail, failed, onRetry }: {
           })}
         </div>
       )}
+      {stats && <BaseballSeasonStats stats={stats} />}
       {detail != null && detail.outlook.length > 0 && (
         <div className="space-y-1.5">
           <div className="inline-flex items-center gap-1 text-[10px] uppercase tracking-wider text-muted-foreground">

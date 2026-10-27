@@ -23,6 +23,7 @@ const MLB_PATHS: Record<string, string[]> = {
   player_values: ["/mlb/players"],
   player_traits: [], // Details use their API route's CDN window.
   prospect_values: ["/mlb/prospects"], // Filtered pages use their API route's CDN window.
+  player_season_stats: ["/mlb/prospects"], // Player cards read theirs through the details route's CDN window.
   playoff_forecasts: [], // Both consumers use the tagged REST read.
 };
 

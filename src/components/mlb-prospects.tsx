@@ -37,6 +37,8 @@ import { PlayerCell } from "@/components/player-cell";
 import { ComparisonGrades, ComparisonMetrics, type ComparisonMetric } from "@/components/player-comparison";
 import { PlayerComparisonPicker, type ComparisonPlayer } from "@/components/player-comparison-picker";
 import { PlayerRowDisclosure, PlayerRowHeader } from "@/components/player-row-disclosure";
+import { BaseballSeasonStats } from "@/components/baseball-season-stats";
+import { seasonStats } from "@/lib/season-stats";
 import { TeamLogo } from "@/components/team-logo";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 
@@ -106,6 +108,7 @@ function Headline({ label, tip, value, sub, tone }: { label: string; tip: string
 
 function ProspectCard({ row }: { row: ProspectRow }) {
   const pitcher = isPitcherGroup(row.position_group);
+  const stats = seasonStats(row.season_stats, pitcher, true);
   const graded = row.peak_grade != null;
   const traits = prospectTraits(row.position_group);
   const acquired = acquisition(row);
@@ -213,6 +216,7 @@ function ProspectCard({ row }: { row: ProspectRow }) {
           </div>
         </>
       )}
+      {stats && <BaseballSeasonStats stats={stats} />}
     </div>
   );
 }

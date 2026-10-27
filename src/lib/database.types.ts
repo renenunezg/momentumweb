@@ -3169,6 +3169,33 @@ export type Database = {
         }
         Relationships: []
       }
+      player_season_stats: {
+        Row: {
+          levels: string | null
+          player_id: number
+          pool: string
+          season: number
+          stats: (number | null)[]
+          updated_at: string
+        }
+        Insert: {
+          levels?: string | null
+          player_id: number
+          pool: string
+          season: number
+          stats: (number | null)[]
+          updated_at?: string
+        }
+        Update: {
+          levels?: string | null
+          player_id?: number
+          pool?: string
+          season?: number
+          stats?: (number | null)[]
+          updated_at?: string
+        }
+        Relationships: []
+      }
       player_traits: {
         Row: {
           as_of: string
