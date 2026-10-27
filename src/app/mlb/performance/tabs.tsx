@@ -1,6 +1,5 @@
 "use client";
 
-import type { ReactNode } from "react";
 import type {
   ModelEvaluation,
   CalibrationBin,
@@ -33,7 +32,6 @@ const REWRITTEN_NOTE =
   "Predictions for this day were overwritten by a later hand-run with a different model. Eval is computed against the rewritten predictions, not what was live on the day.";
 
 interface PerformanceTabsProps {
-  playerPerformance: ReactNode;
   evaluations: ModelEvaluation[];
   calibration: CalibrationBin[];
   edgeBuckets: EdgeBucket[];
@@ -50,7 +48,6 @@ function formatRecord(wins: number, bets: number, pushes: number): string {
 }
 
 export function PerformanceTabs({
-  playerPerformance,
   evaluations,
   calibration,
   edgeBuckets,
@@ -98,7 +95,6 @@ export function PerformanceTabs({
       <div className="mb-6 -mx-4 overflow-x-auto px-4 sm:mx-0 sm:overflow-visible sm:px-0">
         <TabsList>
           <TabsTrigger value="overview">Overview</TabsTrigger>
-          <TabsTrigger value="players">Player models</TabsTrigger>
           <TabsTrigger value="regression">Regression</TabsTrigger>
           <TabsTrigger value="probabilistic">Probabilistic</TabsTrigger>
           <TabsTrigger value="betting">Betting</TabsTrigger>
@@ -107,7 +103,6 @@ export function PerformanceTabs({
       </div>
 
       {latest?.evaluation_state === "provisional" && <p className="mb-4 text-sm text-muted-foreground">Live results are provisional until nightly reconciliation.</p>}
-      <TabsContent value="players">{playerPerformance}</TabsContent>
       <TabsContent value="overview" className="space-y-8">
         <div className="grid grid-cols-3 sm:flex sm:flex-wrap items-baseline gap-x-4 gap-y-3 font-mono text-sm">
           <KpiCard
