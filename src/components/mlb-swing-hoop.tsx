@@ -16,6 +16,19 @@ type Vec = [number, number, number];
 
 const CONTACT: Vec = [0, 0.35, 0.85];
 const RADIUS = 1.0;
+// A 34-inch bat with its sweet spot on the hoop, about 6 inches from the end.
+const BAT_LENGTH = 0.86;
+const BAT_KNOB = RADIUS + 0.15 - BAT_LENGTH;
+// The bat picture lies along x from the knob (0) to the end cap (400), centered on y = 20. It is stretched to the
+// projected bat's length but keeps a fixed on-screen girth, so it reads as a bat at any angle.
+const BAT_SVG = `<svg xmlns="http://www.w3.org/2000/svg" width="400" height="40" viewBox="0 0 400 40">
+<defs><linearGradient id="w" x1="0" y1="0" x2="0" y2="1">
+<stop offset="0" stop-color="#7a4a22"/><stop offset="0.28" stop-color="#f0cf9c"/><stop offset="0.55" stop-color="#c98f55"/><stop offset="1" stop-color="#6b3f1c"/>
+</linearGradient></defs>
+<path d="M4 20C4 12 8 11 12 11L14 11C17 11 18 15.5 22 15.5L130 15.5C190 15.5 220 7 282 6.5L382 6C394 6 396 12 396 20C396 28 394 34 382 34L282 33.5C220 33 190 24.5 130 24.5L22 24.5C18 24.5 17 29 14 29L12 29C8 29 4 28 4 20Z" fill="url(#w)" stroke="#4a2a10" stroke-width="1.2"/>
+<path d="M150 18C210 16 240 11 300 10.5L370 10.3" fill="none" stroke="#fff3dd" stroke-opacity="0.5" stroke-width="1.5" stroke-linecap="round"/>
+</svg>`;
+const BAT_GIRTH_PX = 12;
 const VIEWS: { label: string; az: number; el: number }[] = [
   { label: "3/4 view", az: 34, el: 22 },
   { label: "Behind the catcher", az: 0, el: 4 },
@@ -31,12 +44,13 @@ const norm = (a: Vec): Vec => {
   return [a[0] / l, a[1] / l, a[2] / l];
 };
 
-function hoopPoint(tilt: number, angle: number): Vec {
+// The hoop traces the bat's sweet spot; `dist` from the hoop's center places other points along the same bat.
+function hoopPoint(tilt: number, angle: number, dist = RADIUS): Vec {
   const r = (tilt * Math.PI) / 180;
   const n: Vec = [-Math.cos(r), 0, Math.sin(r)];
   const c: Vec = [CONTACT[0] + RADIUS * n[0], CONTACT[1], CONTACT[2] + RADIUS * n[2]];
   const p = (angle * Math.PI) / 180;
-  return [c[0] - RADIUS * n[0] * Math.cos(p), c[1] + RADIUS * Math.sin(p), c[2] - RADIUS * n[2] * Math.cos(p)];
+  return [c[0] - dist * n[0] * Math.cos(p), c[1] + dist * Math.sin(p), c[2] - dist * n[2] * Math.cos(p)];
 }
 
 export function SwingHoop({ hoops, height = 340, label }: { hoops: Hoop[]; height?: number; label: string }) {
@@ -54,6 +68,8 @@ export function SwingHoop({ hoops, height = 340, label }: { hoops: Hoop[]; heigh
     const canvas = canvasRef.current;
     const ctx = canvas?.getContext("2d");
     if (!canvas || !ctx) return;
+    const batImage = new Image();
+    batImage.src = `data:image/svg+xml;charset=utf-8,${encodeURIComponent(BAT_SVG)}`;
     let frame = 0;
     const start = performance.now();
     const draw = (now: number) => {
@@ -79,6 +95,21 @@ export function SwingHoop({ hoops, height = 340, label }: { hoops: Hoop[]; heigh
         const d = sub(p, eye);
         const z = dot(d, f);
         return [w / 2 + (scale * dot(d, r)) / z, h * 0.56 - (scale * dot(d, u)) / z];
+      };
+      // The grip tape carries the swing's color so overlapping bats stay tellable apart.
+      const drawBat = (tilt: number, angle: number, color: string) => {
+        if (!batImage.naturalWidth) return;
+        const [x0, y0] = project(hoopPoint(tilt, angle, BAT_KNOB));
+        const [x1, y1] = project(hoopPoint(tilt, angle, BAT_KNOB + BAT_LENGTH));
+        ctx.save();
+        ctx.translate(x0, y0);
+        ctx.rotate(Math.atan2(y1 - y0, x1 - x0));
+        const len = Math.hypot(x1 - x0, y1 - y0);
+        ctx.scale(len / 400, Math.min(BAT_GIRTH_PX, len / 7) / 28);
+        ctx.drawImage(batImage, 0, -20, 400, 40);
+        ctx.fillStyle = color;
+        ctx.fillRect(24, -4.5, 96, 9);
+        ctx.restore();
       };
       const path = (pts: Vec[], stroke: string, width: number, dash: number[] = [], fill?: string) => {
         ctx.beginPath();
@@ -106,13 +137,15 @@ export function SwingHoop({ hoops, height = 340, label }: { hoops: Hoop[]; heigh
       const hx = -0.85;
       path([[hx - 0.18, 0.05, 0], [hx, 0.05, 0.9], [hx + 0.18, 0.05, 0]], theme["muted-foreground"], 4);
       path([[hx, 0.05, 0.9], [hx, 0.05, 1.5]], theme["muted-foreground"], 6);
-      path([[hx, 0.05, 1.4], [hx + 0.35, 0.2, 1.15]], theme["muted-foreground"], 3);
       const [hdx, hdy] = project([hx, 0.05, 1.66]);
       ctx.beginPath();
       ctx.arc(hdx, hdy, 7, 0, 7);
       ctx.fillStyle = theme["muted-foreground"];
       ctx.fill();
       const phase = ((now - start) / 1000) % 1.6;
+      const angle = -150 + (phase / 1.6) * 260;
+      // One figure holds one bat: it swings the solid hoop, and a dashed (comparison) hoop shows only its sweet spot.
+      const batter = hoopsRef.current.find((hoop) => !hoop.dashed) ?? hoopsRef.current[0];
       for (const hoop of hoopsRef.current) {
         const full: Vec[] = [];
         const arc: Vec[] = [];
@@ -120,11 +153,31 @@ export function SwingHoop({ hoops, height = 340, label }: { hoops: Hoop[]; heigh
         for (let g = -150; g <= 110; g += 3) arc.push(hoopPoint(hoop.tilt, g));
         path(full, hoop.color, 1, [3, 4]);
         path(arc, hoop.color, 3, hoop.dashed ? [7, 5] : []);
-        const [bx, by] = project(hoopPoint(hoop.tilt, -150 + (phase / 1.6) * 260));
+        if (hoop === batter) continue;
+        const [bx, by] = project(hoopPoint(hoop.tilt, angle));
         ctx.beginPath();
         ctx.arc(bx, by, 5, 0, 7);
         ctx.fillStyle = hoop.color;
         ctx.fill();
+      }
+      if (batter) {
+        const grip = (t: number) => hoopPoint(batter.tilt, angle, BAT_KNOB + t * BAT_LENGTH);
+        const shoulder: Vec = [hx, 0.05, 1.4];
+        const hands = grip(0.1);
+        const elbow: Vec = [(shoulder[0] + hands[0]) / 2, (shoulder[1] + hands[1]) / 2, (shoulder[2] + hands[2]) / 2 - 0.14];
+        ctx.lineCap = "round";
+        ctx.lineJoin = "round";
+        path([shoulder, elbow, hands], theme["muted-foreground"], 3);
+        ctx.lineCap = "butt";
+        ctx.lineJoin = "miter";
+        drawBat(batter.tilt, angle, batter.color);
+        for (const t of [0.07, 0.15]) {
+          const [gx, gy] = project(grip(t));
+          ctx.beginPath();
+          ctx.arc(gx, gy, 3.5, 0, 7);
+          ctx.fillStyle = theme["muted-foreground"];
+          ctx.fill();
+        }
       }
       const [cx, cy] = project(CONTACT);
       ctx.beginPath();
