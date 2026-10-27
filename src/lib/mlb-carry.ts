@@ -5,8 +5,8 @@ import type { Tables } from "@/lib/database-schema";
 // The carry study, written once per offseason by mlbmodel (v2.carry.build): one jsonb row of aggregates for the study
 // sections and one row per hitter-season. Rates are derived here from raw counts.
 
-export type CarryHitterRow = Tables<"mlb", "carry_hitters">;
-export type CarryMinorRow = Tables<"mlb", "carry_minors">;
+export type CarryHitterRow = Omit<Tables<"mlb", "carry_hitters">, "updated_at">;
+export type CarryMinorRow = Omit<Tables<"mlb", "carry_minors">, "updated_at">;
 export type MinorLevel = "aaa" | "fsl";
 
 export interface MinorSummary {
@@ -90,6 +90,10 @@ export interface CarryStudy {
   minors: Record<MinorLevel, MinorSummary>;
 }
 
+/** The slices of the study the swing lab and the leaderboard read in the browser. */
+export type LabStudy = Pick<CarryStudy, "season" | "lab" | "swing_types"> & { changers: Pick<CarryStudy["changers"], "coefficients"> };
+export type LeaderboardStudy = Pick<CarryStudy, "season" | "swing_types">;
+
 export interface CarryData {
   study: CarryStudy | null;
   updatedAt: string | null;
@@ -98,6 +102,9 @@ export interface CarryData {
 }
 
 const PAGE = 1000;
+const HITTER_COLUMNS =
+  "player_id, season, player_name, team, bats, pa, ab, h, tb, hr, bb, hbp, sf, so, swings, whiffs, n_air, carry, carry_raw, physics, backspin, sidespin, tilt, attack, bat_speed, lab_carry";
+const MINOR_COLUMNS = "player_id, season, level, player_name, team, pa, hr, n_air, carry, carry_raw, exit_velo";
 
 export const fetchCarry = cache(async (): Promise<CarryData> => {
   const signal = AbortSignal.timeout(10_000);
@@ -115,7 +122,7 @@ export const fetchCarry = cache(async (): Promise<CarryData> => {
   for (let from = 0; ; from += PAGE) {
     const res = await supabase
       .from("carry_hitters")
-      .select("*")
+      .select(HITTER_COLUMNS)
       .order("season", { ascending: true })
       .order("player_id", { ascending: true })
       .range(from, from + PAGE - 1)
@@ -129,9 +136,9 @@ export const fetchCarry = cache(async (): Promise<CarryData> => {
   for (let from = 0; ; from += PAGE) {
     const res = await supabase
       .from("carry_minors")
-      .select("*")
+      .select(MINOR_COLUMNS)
+      .eq("season", row.season)
       .order("level", { ascending: true })
-      .order("season", { ascending: true })
       .order("player_id", { ascending: true })
       .range(from, from + PAGE - 1)
       .abortSignal(signal);

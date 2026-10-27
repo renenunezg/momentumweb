@@ -307,11 +307,11 @@ export default async function MlbCarryPage() {
             batted balls; the season line comes from the hitters who changed.
           </p>
         </Prose>
-        <SwingLab study={study} hitters={current} />
+        <SwingLab study={{ season, lab: study.lab, swing_types: study.swing_types, changers: { coefficients: study.changers.coefficients } }} hitters={current} />
       </Section>
 
       <Section id="leaderboard" question="Every hitter" title="Carry leaderboard">
-        <CarryLeaderboard hitters={current} study={study} />
+        <CarryLeaderboard hitters={current} study={{ season, swing_types: study.swing_types }} />
       </Section>
 
       <Section id="minors" question="Below the majors" title="Carry in Triple-A and the Florida State League">

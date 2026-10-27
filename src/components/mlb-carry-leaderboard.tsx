@@ -4,7 +4,7 @@ import { useDeferredValue, useMemo, useState } from "react";
 import { InfoTip } from "@/components/info-tip";
 import { PlayerCell } from "@/components/player-cell";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { slashLine, swingType, type CarryHitterRow, type CarryStudy } from "@/lib/mlb-carry";
+import { slashLine, swingType, type CarryHitterRow, type LeaderboardStudy } from "@/lib/mlb-carry";
 import { mlbTeamIdentity } from "@/lib/mlb-teams";
 import { mlbPlayerHeadshotUrl } from "@/lib/player-headshots";
 import { cn } from "@/lib/utils";
@@ -28,7 +28,7 @@ function value(row: CarryHitterRow, key: SortKey): number | null {
   return row[key];
 }
 
-export function CarryLeaderboard({ hitters, study }: { hitters: CarryHitterRow[]; study: CarryStudy }) {
+export function CarryLeaderboard({ hitters, study }: { hitters: CarryHitterRow[]; study: LeaderboardStudy }) {
   const [sortKey, setSortKey] = useState<SortKey>("carry");
   const [dir, setDir] = useState<"asc" | "desc">("desc");
   const [query, setQuery] = useState("");

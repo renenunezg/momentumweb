@@ -13,7 +13,7 @@ import {
   swingType,
   type CarryHitterRow,
   type CarryOutcome,
-  type CarryStudy,
+  type LabStudy,
 } from "@/lib/mlb-carry";
 
 const GENERIC = "generic";
@@ -50,7 +50,7 @@ function Slider({ label, value, onChange, base }: { label: string; value: number
   );
 }
 
-export function SwingLab({ study, hitters }: { study: CarryStudy; hitters: CarryHitterRow[] }) {
+export function SwingLab({ study, hitters }: { study: LabStudy; hitters: CarryHitterRow[] }) {
   const theme = useChartTheme();
   const options = useMemo(
     () => hitters.filter((h) => h.lab_carry?.length).sort((a, b) => a.player_name.localeCompare(b.player_name)),
