@@ -12,3 +12,8 @@ export function nflPlayerHeadshotUrl(
 ): string {
   return `https://a.espncdn.com/combiner/i?img=/i/headshots/nfl/players/full/${athleteId}.png&w=${size}`;
 }
+
+// MLB's people CDN serves major and minor leaguers by Stats API person id (the same link the MLB tables store).
+export function mlbPlayerHeadshotUrl(playerId: number): string {
+  return `https://img.mlbstatic.com/mlb-photos/image/upload/w_213,q_auto:best/v1/people/${playerId}/headshot/67/current`;
+}

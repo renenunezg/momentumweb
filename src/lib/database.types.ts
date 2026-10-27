@@ -1872,6 +1872,162 @@ export type Database = {
         }
         Relationships: []
       }
+      carry_hitters: {
+        Row: {
+          ab: number
+          attack: number | null
+          backspin: number | null
+          bat_speed: number | null
+          bats: string | null
+          bb: number
+          carry: number
+          carry_raw: number
+          h: number
+          hbp: number
+          hr: number
+          lab_carry: number[] | null
+          n_air: number
+          pa: number
+          physics: number | null
+          player_id: number
+          player_name: string
+          season: number
+          sf: number
+          sidespin: number | null
+          so: number
+          swings: number | null
+          tb: number
+          team: string | null
+          tilt: number | null
+          updated_at: string
+          whiffs: number | null
+        }
+        Insert: {
+          ab: number
+          attack?: number | null
+          backspin?: number | null
+          bat_speed?: number | null
+          bats?: string | null
+          bb: number
+          carry: number
+          carry_raw: number
+          h: number
+          hbp: number
+          hr: number
+          lab_carry?: number[] | null
+          n_air: number
+          pa: number
+          physics?: number | null
+          player_id: number
+          player_name: string
+          season: number
+          sf: number
+          sidespin?: number | null
+          so: number
+          swings?: number | null
+          tb: number
+          team?: string | null
+          tilt?: number | null
+          updated_at?: string
+          whiffs?: number | null
+        }
+        Update: {
+          ab?: number
+          attack?: number | null
+          backspin?: number | null
+          bat_speed?: number | null
+          bats?: string | null
+          bb?: number
+          carry?: number
+          carry_raw?: number
+          h?: number
+          hbp?: number
+          hr?: number
+          lab_carry?: number[] | null
+          n_air?: number
+          pa?: number
+          physics?: number | null
+          player_id?: number
+          player_name?: string
+          season?: number
+          sf?: number
+          sidespin?: number | null
+          so?: number
+          swings?: number | null
+          tb?: number
+          team?: string | null
+          tilt?: number | null
+          updated_at?: string
+          whiffs?: number | null
+        }
+        Relationships: []
+      }
+      carry_minors: {
+        Row: {
+          carry: number
+          carry_raw: number
+          exit_velo: number
+          hr: number
+          level: string
+          n_air: number
+          pa: number
+          player_id: number
+          player_name: string
+          season: number
+          team: string | null
+          updated_at: string
+        }
+        Insert: {
+          carry: number
+          carry_raw: number
+          exit_velo: number
+          hr: number
+          level: string
+          n_air: number
+          pa: number
+          player_id: number
+          player_name: string
+          season: number
+          team?: string | null
+          updated_at?: string
+        }
+        Update: {
+          carry?: number
+          carry_raw?: number
+          exit_velo?: number
+          hr?: number
+          level?: string
+          n_air?: number
+          pa?: number
+          player_id?: number
+          player_name?: string
+          season?: number
+          team?: string | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      carry_study: {
+        Row: {
+          model_version: string
+          payload: Json
+          season: number
+          updated_at: string
+        }
+        Insert: {
+          model_version: string
+          payload: Json
+          season: number
+          updated_at?: string
+        }
+        Update: {
+          model_version?: string
+          payload?: Json
+          season?: number
+          updated_at?: string
+        }
+        Relationships: []
+      }
       experiment_runs: {
         Row: {
           best_cv_mae: number | null
