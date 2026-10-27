@@ -133,7 +133,7 @@ export function SwingLab({ study, hitters }: { study: LabStudy; hitters: CarryHi
           label={`Swing plane at ${(baseTilt ?? 32).toFixed(0)} degrees and adjusted to ${((baseTilt ?? 32) + dTilt).toFixed(0)} degrees`}
           hoops={[
             { tilt: baseTilt ?? 32, color: theme["muted-foreground"], dashed: true },
-            { tilt: (baseTilt ?? 32) + dTilt, color: theme["chart-1"] },
+            { tilt: (baseTilt ?? 32) + dTilt, color: theme["brand-highlight"] },
           ]}
         />
       </div>

@@ -123,7 +123,10 @@ export default async function MlbCarryPage() {
   const bottom = ranked[ranked.length - 1];
   const marks = [ranked[0], ranked[1], ranked[ranked.length - 2], ranked[ranked.length - 1]].filter(Boolean);
   const highlight = new Set(marks.map((h) => h.player_name));
-  const everyBall = Object.entries(study.puzzle.every_ball).map(([id, points]) => ({ name: names.get(Number(id)) ?? id, points }));
+  const mean = (points: [number, number][]) => points.reduce((sum, [expected, actual]) => sum + actual - expected, 0) / points.length;
+  const everyBall = Object.entries(study.puzzle.every_ball)
+    .map(([id, points]) => ({ name: names.get(Number(id)) ?? id, points }))
+    .sort((a, b) => mean(b.points) - mean(a.points));
   const pairs = yearPairs(hitters).filter((p) => p.season === season - 1);
   const flat = [...qualified].filter((h) => h.tilt != null).sort((a, b) => (a.tilt ?? 0) - (b.tilt ?? 0));
   const coors = study.air.parks.find((p) => p.venue === "Coors Field");

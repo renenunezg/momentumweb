@@ -25,6 +25,7 @@ const TOKENS = [
   "negative",
   "accent-blue",
   "accent-amber",
+  "brand-highlight",
 ] as const;
 
 type Token = (typeof TOKENS)[number];
@@ -50,6 +51,7 @@ const FALLBACK: ChartTheme = {
   negative: "oklch(0.48 0.14 25)",
   "accent-blue": "oklch(0.45 0.09 250)",
   "accent-amber": "oklch(0.52 0.10 65)",
+  "brand-highlight": "#12e57a",
 };
 
 export function useChartTheme(): ChartTheme {

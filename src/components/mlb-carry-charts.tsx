@@ -21,20 +21,31 @@ import type { CarryStudy } from "@/lib/mlb-carry";
 
 const signed = (v: number, digits = 1) => `${v > 0 ? "+" : ""}${v.toFixed(digits)}`;
 
-function Legend({ items }: { items: { label: string; color: string; dashed?: boolean }[] }) {
+type LegendMark = "line" | "dash" | "dot" | "ring";
+
+function Legend({ items }: { items: { label: string; color: string; mark?: LegendMark }[] }) {
   return (
     <div className="flex flex-wrap gap-4 text-xs text-muted-foreground">
       {items.map((i) => (
         <span key={i.label} className="inline-flex items-center gap-1.5">
-          <span
-            className="inline-block h-0 w-4"
-            style={{ borderTop: `${i.dashed ? "2px dashed" : "3px solid"} ${i.color}` }}
-          />
+          {i.mark === "dot" || i.mark === "ring" ? (
+            <span
+              className="inline-block h-2 w-2 rounded-full"
+              style={i.mark === "dot" ? { background: i.color } : { border: `1.5px solid ${i.color}` }}
+            />
+          ) : (
+            <span className="inline-block h-0 w-4" style={{ borderTop: `${i.mark === "dash" ? "2px dashed" : "3px solid"} ${i.color}` }} />
+          )}
           {i.label}
         </span>
       ))}
     </div>
   );
+}
+
+/** Hollow marker for a scatter's second series, so two series differ by shape as well as color. */
+function Ring({ cx, cy, stroke }: { cx?: number; cy?: number; stroke?: string }) {
+  return cx == null || cy == null ? null : <circle cx={cx} cy={cy} r={3.5} fill="none" stroke={stroke} strokeWidth={1.5} />;
 }
 
 /** Every hitter's average carry as a histogram, with chosen hitters marked. */
@@ -64,7 +75,7 @@ export function CarryDistribution({ values, marks }: { values: number[]; marks: 
           />
           <Bar dataKey="count" radius={[3, 3, 0, 0]} maxBarSize={24} label={{ dataKey: "mark", position: "top", fontSize: 10, fill: theme.foreground }}>
             {data.map((d) => (
-              <Cell key={d.lo} fill={d.mark ? theme["chart-1"] : theme.border} />
+              <Cell key={d.lo} fill={d.mark ? theme["brand-highlight"] : theme.border} />
             ))}
           </Bar>
         </BarChart>
@@ -77,11 +88,11 @@ export function CarryDistribution({ values, marks }: { values: number[]; marks: 
 export function EveryBall({ series }: { series: { name: string; points: [number, number][] }[] }) {
   const theme = useChartTheme();
   const axis = chartAxisProps(theme);
-  const colors = [theme["chart-1"], theme["chart-3"]];
-  const shapes = ["circle", "triangle"] as const;
+  const colors = [theme["brand-highlight"], theme["chart-1"]];
   return (
     <div className="space-y-2">
-      <Legend items={[...series.map((s, i) => ({ label: s.name, color: colors[i] })), { label: "League average", color: theme["muted-foreground"], dashed: true }]} />
+      <Legend items={[...series.map((s, i) => ({ label: s.name, color: colors[i], mark: i === 0 ? ("dot" as const) : ("ring" as const) })),
+        { label: "League average", color: theme["muted-foreground"], mark: "dash" }]} />
       <div role="img" aria-label={`Expected versus actual distance for every ball in the air by ${series.map((s) => s.name).join(" and ")}`}>
         <ResponsiveContainer width="100%" height={320}>
           <ScatterChart margin={{ top: 8, right: 8, left: 0, bottom: 16 }}>
@@ -93,7 +104,8 @@ export function EveryBall({ series }: { series: { name: string; points: [number,
             <ReferenceLine segment={[{ x: 150, y: 150 }, { x: 475, y: 475 }]} stroke={theme["muted-foreground"]} strokeDasharray="5 4" />
             <Tooltip contentStyle={chartTooltipStyle(theme)} cursor={false} />
             {series.map((s, i) => (
-              <Scatter key={s.name} name={s.name} data={s.points.map(([x, y]) => ({ x, y }))} fill={colors[i]} fillOpacity={0.7} shape={shapes[i]} />
+              <Scatter key={s.name} name={s.name} data={s.points.map(([x, y]) => ({ x, y }))} fill={colors[i]} fillOpacity={0.8}
+                shape={i === 0 ? "circle" : <Ring stroke={colors[i]} />} />
             ))}
           </ScatterChart>
         </ResponsiveContainer>
@@ -119,7 +131,7 @@ export function CarryRepeat({ pairs, highlight }: { pairs: { name: string; x: nu
           <Tooltip contentStyle={chartTooltipStyle(theme)} cursor={false}
             formatter={(v) => `${signed(Number(v))} ft`} labelFormatter={() => ""} />
           <Scatter data={pairs} fill={theme.border} />
-          <Scatter data={marked} fill={theme["chart-1"]} label={{ dataKey: "name", position: "right", fontSize: 11, fill: theme.foreground }} />
+          <Scatter data={marked} fill={theme["brand-highlight"]} label={{ dataKey: "name", position: "right", fontSize: 11, fill: theme.foreground }} />
         </ScatterChart>
       </ResponsiveContainer>
     </div>
@@ -138,7 +150,7 @@ export function ParkCarry({ parks }: { parks: { venue: string; elevation: number
   return (
     <div className="space-y-2">
       <Legend items={[{ label: "Measured carry at the park", color: theme["chart-1"] },
-        ...(withAir ? [{ label: "Air alone (elevation and temperature)", color: theme["chart-2"] }] : [])]} />
+        ...(withAir ? [{ label: "Air alone (elevation and temperature)", color: theme["brand-highlight"] }] : [])]} />
       <div role="img" aria-label="Measured carry by ballpark next to the flight model's air effect">
         <ResponsiveContainer width="100%" height={Math.max(260, data.length * 22)}>
           <BarChart data={data} layout="vertical" margin={{ top: 4, right: 16, left: 8, bottom: 4 }} barGap={1}>
@@ -150,7 +162,7 @@ export function ParkCarry({ parks }: { parks: { venue: string; elevation: number
               labelFormatter={(l, p) => `${l}${p?.[0]?.payload?.elevation != null ? ` · ${Number(p[0].payload.elevation).toLocaleString()} ft elevation` : ""}`}
               formatter={(v, name) => [`${signed(Number(v))} ft`, name === "measured" ? "Measured" : "Air alone"]} />
             <Bar dataKey="measured" fill={theme["chart-1"]} barSize={7} radius={2} />
-            {withAir && <Bar dataKey="air" fill={theme["chart-2"]} barSize={7} radius={2} />}
+            {withAir && <Bar dataKey="air" fill={theme["brand-highlight"]} barSize={7} radius={2} />}
           </BarChart>
         </ResponsiveContainer>
       </div>
@@ -165,7 +177,7 @@ export function SpinCurve({ curve }: { curve: CarryStudy["spin_curve"] }) {
   const data = curve.rpm.map((rpm, i) => ({ rpm, league: curve.league[i], coors: curve.coors[i] }));
   return (
     <div className="space-y-2">
-      <Legend items={[{ label: "League-average air", color: theme["chart-1"] }, { label: "Coors Field air", color: theme["chart-3"], dashed: true }]} />
+      <Legend items={[{ label: "League-average air", color: theme["chart-1"] }, { label: "Coors Field air", color: theme["brand-highlight"], mark: "dash" }]} />
       <div role="img" aria-label={`Distance of a ${curve.exit} mph, ${curve.launch} degree fly ball against backspin`}>
         <ResponsiveContainer width="100%" height={260}>
           <LineChart data={data} margin={{ top: 8, right: 16, left: 0, bottom: 16 }}>
@@ -175,7 +187,7 @@ export function SpinCurve({ curve }: { curve: CarryStudy["spin_curve"] }) {
             <YAxis {...axis} domain={["dataMin - 10", "dataMax + 10"]} unit=" ft" width={52} />
             <Tooltip contentStyle={chartTooltipStyle(theme)} formatter={(v) => `${v} ft`} labelFormatter={(l) => `${Number(l).toLocaleString()} rpm`} />
             <Line dataKey="league" name="League air" stroke={theme["chart-1"]} strokeWidth={2} dot={false} />
-            <Line dataKey="coors" name="Coors air" stroke={theme["chart-3"]} strokeWidth={2} strokeDasharray="6 4" dot={false} />
+            <Line dataKey="coors" name="Coors air" stroke={theme["brand-highlight"]} strokeWidth={2} strokeDasharray="6 4" dot={false} />
           </LineChart>
         </ResponsiveContainer>
       </div>
@@ -200,7 +212,7 @@ export function SidespinBars({ rows }: { rows: CarryStudy["sidespin"] }) {
                 <YAxis {...axis} width={32} />
                 <ReferenceLine y={0} stroke={theme["rule-strong"]} />
                 <Tooltip contentStyle={chartTooltipStyle(theme)} cursor={{ fill: theme.grid }} formatter={(v) => signed(Number(v))} />
-                <Bar dataKey={key} fill={key === "curve" ? theme["chart-2"] : theme["chart-3"]} maxBarSize={24} radius={2} />
+                <Bar dataKey={key} fill={key === "curve" ? theme["chart-1"] : theme["brand-highlight"]} maxBarSize={24} radius={2} />
               </BarChart>
             </ResponsiveContainer>
           </div>
@@ -225,7 +237,7 @@ export function TiltCarry({ points, highlight }: { points: { name: string; x: nu
           <ZAxis range={[20, 20]} />
           <Tooltip contentStyle={chartTooltipStyle(theme)} cursor={false} labelFormatter={() => ""} />
           <Scatter data={points.filter((p) => !highlight.has(p.name))} fill={theme.border} />
-          <Scatter data={points.filter((p) => highlight.has(p.name))} fill={theme["chart-1"]}
+          <Scatter data={points.filter((p) => highlight.has(p.name))} fill={theme["brand-highlight"]}
             label={{ dataKey: "name", position: "right", fontSize: 11, fill: theme.foreground }} />
         </ScatterChart>
       </ResponsiveContainer>
@@ -237,8 +249,8 @@ export function TiltCarry({ points, highlight }: { points: { name: string; x: nu
 export function ExplainedBars({ explained }: { explained: CarryStudy["explained"] }) {
   const theme = useChartTheme();
   const rows = [
-    { label: "Spin from the measured swing", value: explained.share_without_steep_correction, color: theme["chart-2"] },
-    { label: "Adding the steep-swing correction", value: explained.share, color: theme["chart-1"] },
+    { label: "Spin from the measured swing", value: explained.share_without_steep_correction, color: theme["chart-1"] },
+    { label: "Adding the steep-swing correction", value: explained.share, color: theme["brand-highlight"] },
     { label: "Most any model could explain", value: explained.ceiling, color: theme.border },
   ];
   return (
@@ -265,7 +277,7 @@ export function ChangerBars({ groups, outcome, label }: {
   const format = outcome === "ops" ? (v: number) => signed(v * 1000, 0) : (v: number) => signed(v);
   const theme = useChartTheme();
   const axis = chartAxisProps(theme);
-  const colors = [theme["chart-2"], theme["chart-2"], theme.border, theme["chart-3"], theme["chart-3"]];
+  const colors = [theme["chart-1"], theme["chart-1"], theme.border, theme["brand-highlight"], theme["brand-highlight"]];
   return (
     <div className="space-y-1">
       <p className="text-xs text-muted-foreground">{label}</p>

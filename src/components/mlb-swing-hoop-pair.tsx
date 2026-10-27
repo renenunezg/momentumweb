@@ -8,8 +8,8 @@ import type { CarryHitterRow } from "@/lib/mlb-carry";
 export function SwingHoopPair({ flat, steep }: { flat: CarryHitterRow; steep: CarryHitterRow }) {
   const theme = useChartTheme();
   const items = [
-    { row: flat, color: theme["chart-1"], dashed: false },
-    { row: steep, color: theme["chart-3"], dashed: true },
+    { row: flat, color: theme["brand-highlight"], dashed: false },
+    { row: steep, color: theme["chart-1"], dashed: true },
   ];
   return (
     <div className="space-y-2">
