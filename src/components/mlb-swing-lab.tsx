@@ -142,8 +142,10 @@ export function SwingLab({ study, hitters }: { study: LabStudy; hitters: CarryHi
         <div className="border-y border-rule-strong py-3">
           <p className="text-xs uppercase tracking-wider text-muted-foreground">Carry change</p>
           <p className="font-mono text-2xl tabular-nums">{signed(carry)} ft</p>
-          <p className="text-xs text-muted-foreground">
-            Per ball in the air, from the collision and flight physics on {hitter ? "his own" : "the league's"} {study.season} batted balls.
+          <p className="text-xs leading-relaxed text-muted-foreground">
+            Per ball in the air, from rerunning the collision and flight physics on {hitter ? "his own" : "the league's"} {study.season} batted balls
+            with every ball&apos;s exit velocity and launch angle held fixed. It is what the same contact would carry with the spin the new swing
+            puts on it, not a forecast of the contact a new swing would make; the season line below is the observed version.
           </p>
         </div>
         <table className="w-full text-sm">
@@ -186,7 +188,8 @@ export function SwingLab({ study, hitters }: { study: LabStudy; hitters: CarryHi
           </p>
         )}
         <p className="text-xs leading-relaxed text-muted-foreground">
-          Season-line changes come from {coefs.n} hitters whose swings changed between seasons (bat speed held constant), shown with a one-standard-error range.
+          Season-line changes come from {coefs.n} hitters whose swings changed between seasons (bat speed held constant), shown with a
+          one-standard-error range that carries the fitted coefficients&apos; correlation.
           Those swings changed naturally, so the numbers describe what tended to follow a change, not what a change guarantees.
         </p>
       </div>

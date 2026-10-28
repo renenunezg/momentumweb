@@ -6,7 +6,7 @@ import { PlayerCell } from "@/components/player-cell";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import type { CarryMinorRow, MinorLevel, MinorSummary } from "@/lib/mlb-carry";
 import { mlbPlayerHeadshotUrl } from "@/lib/player-headshots";
-import { cn } from "@/lib/utils";
+import { cn, foldSearch } from "@/lib/utils";
 
 const LEVELS: { key: MinorLevel; label: string }[] = [
   { key: "aaa", label: "Triple-A" },
@@ -27,7 +27,8 @@ export function CarryMinors({ rows, summaries, season }: { rows: CarryMinorRow[]
   const [sortKey, setSortKey] = useState<SortKey>("carry");
   const [dir, setDir] = useState<"asc" | "desc">("desc");
   const [query, setQuery] = useState("");
-  const search = useDeferredValue(query.trim().toLowerCase());
+  const [limit, setLimit] = useState(ROWS);
+  const search = useDeferredValue(foldSearch(query.trim()));
   const summary = summaries[level];
   const label = LEVELS.find((l) => l.key === level)!.label;
 
@@ -35,7 +36,7 @@ export function CarryMinors({ rows, summaries, season }: { rows: CarryMinorRow[]
     () =>
       rows
         .filter((r) => r.level === level && r.season === season && r.n_air >= summary.qualified_air)
-        .filter((r) => !search || r.player_name.toLowerCase().includes(search))
+        .filter((r) => !search || foldSearch(r.player_name).includes(search))
         .sort((a, b) => (dir === "desc" ? b[sortKey] - a[sortKey] : a[sortKey] - b[sortKey])),
     [rows, level, season, summary.qualified_air, search, sortKey, dir],
   );
@@ -101,7 +102,7 @@ export function CarryMinors({ rows, summaries, season }: { rows: CarryMinorRow[]
             </TableRow>
           </TableHeader>
           <TableBody>
-            {shown.slice(0, ROWS).map((r) => (
+            {shown.slice(0, limit).map((r) => (
               <TableRow key={`${r.player_id}-${r.level}`}>
                 <TableCell className="whitespace-nowrap">
                   <PlayerCell athleteId={String(r.player_id)} headshotUrl={mlbPlayerHeadshotUrl(r.player_id)} name={r.player_name}
@@ -115,6 +116,11 @@ export function CarryMinors({ rows, summaries, season }: { rows: CarryMinorRow[]
           </TableBody>
         </Table>
       </div>
+      {shown.length > limit && (
+        <button type="button" onClick={() => setLimit(limit + ROWS)} className="text-sm text-muted-foreground underline-offset-4 hover:text-foreground hover:underline">
+          Show {Math.min(ROWS, shown.length - limit)} more of {shown.length}
+        </button>
+      )}
     </div>
   );
 }

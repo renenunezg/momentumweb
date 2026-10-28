@@ -25,6 +25,19 @@ import { mlbPlayerHeadshotUrl } from "@/lib/player-headshots";
 export const revalidate = 3600;
 
 const QUALIFIED = 80;
+const SECTIONS = [
+  { id: "puzzle", label: "The puzzle" },
+  { id: "skill", label: "Is it real?" },
+  { id: "air", label: "The air" },
+  { id: "spin", label: "Spin" },
+  { id: "swing", label: "The swing" },
+  { id: "explained", label: "How much it explains" },
+  { id: "types", label: "Swing types" },
+  { id: "changers", label: "Changers" },
+  { id: "lab", label: "Swing lab" },
+  { id: "leaderboard", label: "Leaderboard" },
+  { id: "minors", label: "Minors" },
+];
 
 export async function generateMetadata(): Promise<Metadata> {
   const { study } = await fetchCarry();
@@ -148,6 +161,12 @@ export default async function MlbCarryPage() {
         <LastUpdated timestamp={updatedAt} schedule="Updates each offseason" />
       </PageHeader>
 
+      <nav aria-label="Sections" className="flex flex-wrap gap-x-4 gap-y-1.5 font-mono text-xs uppercase tracking-wider text-muted-foreground">
+        {SECTIONS.map((s) => (
+          <a key={s.id} href={`#${s.id}`} className="hover:text-foreground">{s.label}</a>
+        ))}
+      </nav>
+
       <Prose>
         <p>
           Exit velocity and launch angle say how a ball left the bat. They do not say how far it will fly: two balls struck alike can land
@@ -159,10 +178,10 @@ export default async function MlbCarryPage() {
       <div className="grid grid-cols-3 gap-3 border-y border-rule-strong [&>div]:py-3 sm:gap-4">
         <KpiCard compact label="Most carry" value={top?.player_name ?? "–"} sub={top ? `${signed(top.carry)} ft per ball` : ""}
           tooltip="Average feet beyond the league distance for the same exit velocity, launch angle, direction, ballpark and month; hitters with 80+ balls in the air." />
-        <KpiCard compact label="Repeatable" value={`r = ${study.repeatability.split_half.toFixed(2)}`} sub="split-half reliability"
-          tooltip="How well one half of a hitter's season predicts the other half, corrected to a full season." />
-        <KpiCard compact label="Swing physics explains" value={pct(ex.share)} sub={`of ${pct(ex.ceiling)} explainable`}
-          tooltip="Share of hitters' carry differences the swing's collision and flight physics predicts in a season it was not fit on." />
+        <KpiCard compact label="Repeatable" value={`r = ${study.repeatability.full_season.toFixed(2)}`} sub="estimated full-season reliability"
+          tooltip={`One half of a hitter's season predicts the other half at ${study.repeatability.split_half.toFixed(2)}; scaled to a full season (Spearman-Brown) that is ${study.repeatability.full_season.toFixed(2)}.`} />
+        <KpiCard compact label="Swing physics explains" value={pct(ex.share)} sub={`${pct(ex.ceiling)} ceiling`}
+          tooltip={`Share of the differences between hitters' season carry that the swing's collision and flight physics predicts in a season it was not fit on. Sampling noise caps any model near ${pct(ex.ceiling)} of the same variance, so the swing covers ${pct(ex.share / ex.ceiling)} of what is explainable.`} />
       </div>
 
       <Section id="puzzle" question="The puzzle" title="Same exit velocity, same launch angle, different distance">
@@ -198,7 +217,8 @@ export default async function MlbCarryPage() {
         <Prose>
           <p>
             Among {qualified.length} hitters with {QUALIFIED}+ balls in the air, one half of a season predicts the other at{" "}
-            {study.repeatability.split_half.toFixed(2)}, and one season predicts the next at {study.repeatability.year_to_year.toFixed(2)}.
+            {study.repeatability.split_half.toFixed(2)}, which puts a full season&apos;s reliability near {study.repeatability.full_season.toFixed(2)},
+            and one season predicts the next at {study.repeatability.year_to_year.toFixed(2)}.
             Here carry also removes the ballpark, the month, and the direction of the ball, so a hitter&apos;s home park and summer air
             do not count as his.
           </p>
@@ -262,8 +282,9 @@ export default async function MlbCarryPage() {
           <p>
             Measured swing physics predicts {pct(ex.share_without_steep_correction)}{" "}of hitters&apos; carry differences in a season it was
             not fit on. Steep swings carry less than their measured attack angle implies, consistent with a steep barrel still rising faster
-            at contact than it is measured just before; correcting for it lifts the share to {pct(ex.share)}. Sampling noise caps any model
-            near {pct(ex.ceiling)}.
+            at contact than it is measured just before; correcting for it, on the same hitters and the same carry, lifts the share to{" "}
+            {pct(ex.share)}. Sampling noise caps any model near {pct(ex.ceiling)} of that same variance, so the swing accounts for about{" "}
+            {pct(ex.share / ex.ceiling)} of the carry that is explainable at all.
           </p>
           <p>
             The rest is not all noise: what physics leaves unexplained still repeats from one season to the next (r ={" "}
@@ -307,7 +328,7 @@ export default async function MlbCarryPage() {
         <Prose>
           <p>
             Pick a hitter or a generic one and change his swing. Carry comes from rerunning the collision and flight physics on his own
-            batted balls; the season line comes from the hitters who changed.
+            batted balls with each ball&apos;s contact held fixed; the season line comes from the hitters who changed.
           </p>
         </Prose>
         <SwingLab study={{ season, lab: study.lab, swing_types: study.swing_types, changers: { coefficients: study.changers.coefficients } }} hitters={current} />

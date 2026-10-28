@@ -12,6 +12,7 @@ export type MinorLevel = "aaa" | "fsl";
 export interface MinorSummary {
   seasons: number[];
   split_half: number;
+  full_season: number;
   year_to_year: number;
   qualified: number;
   qualified_air: number;
@@ -45,22 +46,22 @@ export interface SwingTypeRow {
   whiff: number;
 }
 
-export type Coef = [estimate: number, se: number];
-
 export type CarryOutcome = "ba" | "obp" | "slg" | "ops" | "hr600" | "so600" | "bb600" | "carry";
 
+/** Per outcome: the fitted change per degree of tilt, per degree of attack angle at the mean whiff rate, the extra per degree of
+ *  attack angle per standard deviation of whiff rate, and per mph of bat speed, with their covariance in that order. */
 export interface ChangerCoefficients {
   n: number;
   whiff_mean: number;
   whiff_sd: number;
-  outcomes: Record<CarryOutcome, { d_tilt: Coef; d_attack: Coef; d_attack_x_whiff: Coef; d_bat_speed: Coef }>;
+  outcomes: Record<CarryOutcome, { d_tilt: number; d_attack: number; d_attack_x_whiff: number; d_bat_speed: number; cov: number[][] }>;
 }
 
 export interface CarryStudy {
   season: number;
   model_version: string;
   puzzle: { balls: PuzzleBall[]; every_ball: Record<string, [expected: number, actual: number][]> };
-  repeatability: { split_half: number; year_to_year: number; hitters: number };
+  repeatability: { split_half: number; full_season: number; year_to_year: number; hitters: number };
   air: {
     ft_per_density_measured: number;
     ft_per_density_model: number;
@@ -196,8 +197,9 @@ export function labCarry(grid: number[], steps: number[], dTilt: number, dAttack
   return top * (1 - t.f) + bottom * t.f;
 }
 
-/** Expected change in one outcome for a swing change, with a one-standard-error range; whiffZ is the hitter's whiff rate
- *  in standard deviations from the changer sample's mean. The terms' errors are treated as independent. */
+/** Expected change in one outcome for a swing change at constant bat speed, with its standard error; whiffZ is the hitter's
+ *  whiff rate in standard deviations from the changer sample's mean. The change is linear in the coefficients, so its
+ *  variance is g' cov g for the gradient g. */
 export function changerEffect(
   coefs: ChangerCoefficients,
   outcome: CarryOutcome,
@@ -206,9 +208,8 @@ export function changerEffect(
   whiffZ: number,
 ): { estimate: number; se: number } {
   const c = coefs.outcomes[outcome];
-  const estimate = c.d_tilt[0] * dTilt + (c.d_attack[0] + c.d_attack_x_whiff[0] * whiffZ) * dAttack;
-  const se = Math.sqrt(
-    (c.d_tilt[1] * dTilt) ** 2 + (c.d_attack[1] * dAttack) ** 2 + (c.d_attack_x_whiff[1] * whiffZ * dAttack) ** 2,
-  );
-  return { estimate, se };
+  const g = [dTilt, dAttack, whiffZ * dAttack, 0];
+  const estimate = c.d_tilt * g[0] + c.d_attack * g[1] + c.d_attack_x_whiff * g[2];
+  const variance = g.reduce((sum, gi, i) => sum + gi * g.reduce((row, gj, j) => row + c.cov[i][j] * gj, 0), 0);
+  return { estimate, se: Math.sqrt(Math.max(variance, 0)) };
 }

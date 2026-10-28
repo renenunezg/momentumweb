@@ -8,6 +8,11 @@ export function cn(...inputs: ClassValue[]) {
 // Empty values render as an en dash everywhere on the site.
 export const EMPTY = "–";
 
+// Case- and accent-insensitive text for client-side name search: "pena" matches "Peña".
+export function foldSearch(text: string): string {
+  return text.normalize("NFD").replace(/\p{M}/gu, "").toLowerCase();
+}
+
 export function formatOdds(odds: number | null | undefined): string {
   if (odds == null) return EMPTY;
   const rounded = Math.round(odds);

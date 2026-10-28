@@ -7,7 +7,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { slashLine, swingType, type CarryHitterRow, type LeaderboardStudy } from "@/lib/mlb-carry";
 import { mlbTeamIdentity } from "@/lib/mlb-teams";
 import { mlbPlayerHeadshotUrl } from "@/lib/player-headshots";
-import { cn } from "@/lib/utils";
+import { cn, foldSearch } from "@/lib/utils";
 
 type SortKey = "carry" | "physics" | "unexplained" | "backspin" | "tilt" | "attack" | "bat_speed" | "n_air";
 const ROWS = 50;
@@ -20,7 +20,7 @@ const COLUMNS: { key: SortKey; label: string; tip: string; format: (v: number) =
   { key: "backspin", label: "Backspin", tip: "Estimated backspin relative to the league at the same launch angle, in rpm. Relative only: public data cannot pin the absolute level.", format: (v) => `${v > 0 ? "+" : ""}${v.toFixed(0)}` },
   { key: "tilt", label: "Tilt", tip: "Swing path tilt at a belt-high pitch. Lower is a flatter swing plane.", format: (v) => `${v.toFixed(0)}°` },
   { key: "attack", label: "Attack", tip: "Attack angle at a belt-high pitch: how steeply the barrel rises at contact.", format: (v) => `${v.toFixed(0)}°` },
-  { key: "bat_speed", label: "Bat speed", tip: "Average bat speed (mph) on tracked swings.", format: (v) => v.toFixed(1) },
+  { key: "bat_speed", label: "Bat speed", tip: "Average bat speed (mph) on competitive swings: the fastest 90% of his tracked swings, as Baseball Savant defines them.", format: (v) => v.toFixed(1) },
 ];
 
 function value(row: CarryHitterRow, key: SortKey): number | null {
@@ -33,10 +33,11 @@ export function CarryLeaderboard({ hitters, study }: { hitters: CarryHitterRow[]
   const [dir, setDir] = useState<"asc" | "desc">("desc");
   const [query, setQuery] = useState("");
   const [minAir, setMinAir] = useState(80);
-  const search = useDeferredValue(query.trim().toLowerCase());
+  const [limit, setLimit] = useState(ROWS);
+  const search = useDeferredValue(foldSearch(query.trim()));
 
   const rows = useMemo(() => {
-    const filtered = hitters.filter((h) => h.n_air >= minAir && (!search || h.player_name.toLowerCase().includes(search)));
+    const filtered = hitters.filter((h) => h.n_air >= minAir && (!search || foldSearch(h.player_name).includes(search)));
     return filtered.sort((a, b) => {
       const va = value(a, sortKey);
       const vb = value(b, sortKey);
@@ -98,7 +99,7 @@ export function CarryLeaderboard({ hitters, study }: { hitters: CarryHitterRow[]
             </TableRow>
           </TableHeader>
           <TableBody>
-            {rows.slice(0, ROWS).map((h) => {
+            {rows.slice(0, limit).map((h) => {
               const line = slashLine(h);
               return (
                 <TableRow key={h.player_id}>
@@ -125,6 +126,11 @@ export function CarryLeaderboard({ hitters, study }: { hitters: CarryHitterRow[]
           </TableBody>
         </Table>
       </div>
+      {rows.length > limit && (
+        <button type="button" onClick={() => setLimit(limit + ROWS)} className="text-sm text-muted-foreground underline-offset-4 hover:text-foreground hover:underline">
+          Show {Math.min(ROWS, rows.length - limit)} more of {rows.length}
+        </button>
+      )}
     </div>
   );
 }
