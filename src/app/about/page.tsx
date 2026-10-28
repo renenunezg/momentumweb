@@ -25,7 +25,7 @@ const strengths = [
   },
   {
     title: "Forecast evaluation",
-    body: "Calibration, Brier and log-loss scoring, walk-forward validation on untouched holdouts, and benchmarking against efficient markets, with the record kept in public.",
+    body: "Calibration, Brier and log-loss scoring, walk-forward validation with each model's holdout status stated, and benchmarking against efficient markets, with the record kept in public.",
   },
   {
     title: "Data engineering",

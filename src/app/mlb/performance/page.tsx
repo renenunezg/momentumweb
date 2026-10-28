@@ -11,6 +11,7 @@ import { aggregateLedger } from "@/lib/betting-aggs";
 import { fetchFullBetLedger } from "@/lib/bet-ledger";
 import { PerformanceTabs } from "./tabs";
 import { LastUpdated } from "@/components/last-updated";
+import { PlayerModelPerformance } from "@/components/player-model-performance";
 
 export const revalidate = 3600;
 export const metadata: Metadata = {
@@ -131,6 +132,7 @@ export default async function PerformancePage() {
         posteriorSigmas={posteriorSigmas}
         liveKpis={liveKpis}
       />
+      <PlayerModelPerformance sport="mlb" />
     </PageShell>
   );
 }

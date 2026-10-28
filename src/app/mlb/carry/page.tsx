@@ -234,7 +234,7 @@ export default async function MlbCarryPage() {
             measurements, predicts {Math.abs(study.air.ft_per_density_model).toFixed(0)} feet per unit of air density (kg/m³); the
             data measure {Math.abs(study.air.ft_per_density_measured).toFixed(0)}.
             {coors && ` At Coors Field balls carry ${signed(coors.measured)} feet against the league, and its air alone accounts for ${signed(coors.air)}.`}{" "}
-            The game-time wind report, by contrast, barely registers in the data, so it is left out.
+            The posted game-time wind, by contrast, barely registers in the data: about 0.5 feet per m/s of tailwind where the flight model expects 5 to 10, so it is left out.
           </p>
         </Prose>
         <ParkCarry parks={study.air.parks} />
@@ -245,8 +245,8 @@ export default async function MlbCarryPage() {
           <p>
             A ball with backspin pushes air down behind it and is pushed up in return, the same lift that keeps a golf ball aloft. For a{" "}
             {curve.exit} mph fly ball at {curve.launch}°, going from no backspin to 1,000 rpm adds {at(1000) - at(0)} feet. Past about{" "}
-            {peakRpm.toLocaleString()} rpm more spin adds nothing, and the drag the spin creates starts to cost distance. Hitters lose
-            carry by putting too little backspin on the ball far more than they gain by putting on extra.
+            {peakRpm.toLocaleString()} rpm more spin adds nothing, and the drag the spin creates starts to cost distance. Because the curve
+            flattens, a ball short of typical backspin loses far more carry than a ball with extra backspin gains.
           </p>
         </Prose>
         <SpinCurve curve={curve} />
@@ -311,7 +311,8 @@ export default async function MlbCarryPage() {
           <p>
             Comparing each hitter with himself a season later: those who flattened by 1.5° or more gained {signed(flattened.carry)} feet of
             carry and {signed(flattened.ops * 1000, 0)} points of OPS against hitters who held steady; those who steepened by as much changed
-            by {signed(steepened.carry)} feet and {signed(steepened.ops * 1000, 0)} points. Carry follows the swing; production follows
+            by {signed(steepened.carry)} feet and {signed(steepened.ops * 1000, 0)} points. These are natural changes measured against hitters who held steady, not experiments: a hitter who
+            steepens after a poor season would be expected to rebound somewhat regardless. Carry follows the swing; production follows
             something more.
           </p>
         </Prose>
@@ -347,7 +348,8 @@ export default async function MlbCarryPage() {
         <p className="text-xs text-muted-foreground">
           Method: regular-season Statcast from 2021 (carry) and 2024 (bat tracking). Flight uses Nathan&apos;s drag and lift coefficients (Analysis
           of Baseball Trajectories, 2017) with a fitted drag rise below about {study.physics.cd_transition_mph} mph; the collision follows Cross
-          and Nathan (2006) and Kensrud, Nathan and Smith (2016). Spin is estimated, not measured: rpm figures are relative to the league.
+          and Nathan (2006) and Kensrud, Nathan and Smith (2016). Spin is estimated, not measured: rpm figures are relative to the league. The drag rise, spin scale and steep-swing
+          correction were set on 2026 batted balls and checked on 2025, after about twenty candidate explanations were screened the same way.
           {bottom && ` Least carry this season: ${bottom.player_name} (${signed(bottom.carry)} ft).`}
         </p>
       </Prose>

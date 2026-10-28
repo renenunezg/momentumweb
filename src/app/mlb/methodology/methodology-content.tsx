@@ -645,35 +645,39 @@ export function MethodologyContent({
             exit velocity, pitch velocity and movement, outs above average, arm strength. A trait&apos;s
             weights are a bounded ridge fit of the player&apos;s own next-season value of that trait on
             the inputs, and the Grade&apos;s weights a second ridge of next-season runs above average on
-            the traits plus a shrunk three-season outcome record. Both are fitted on the 2021 to 2025
-            development pairs with each pair held out in turn; 2026 chooses nothing.
+            the traits, a shrunk three-season outcome record, and seasonal age. A hitter with a thin
+            major-league record shrinks toward his translated Triple-A record instead of the position
+            mean, and his Triple-A Statcast enters the inputs with a same-season level offset. Both
+            fits use the {MLB_PLAYER_EVALUATION.devSeasons[0]} to {MLB_PLAYER_EVALUATION.devSeasons[MLB_PLAYER_EVALUATION.devSeasons.length - 1]} development
+            pairs with each pair held out in turn.
           </p>
           <p>
             <strong>Trade value</strong> prices the projection over the player&apos;s remaining control
-            years from Baseball-Reference contract data: projected wins each season after the age
+            years from Baseball-Reference contract data: projected FanGraphs WAR each season after the age
             curve, times the price of a win, minus salary, discounted 8 percent a year. Pre-arbitration
             seasons pay the league minimum, arbitration seasons a fitted share of market value, options
-            go the way of whoever holds them. The price of a win is the slope of average annual value on
-            this model&apos;s own projected wins across free-agent contracts signed since 2024. It comes
-            out well below the published rate because the projections are calibrated and compressed:
-            a star projects lower here than in public systems, so long star contracts read as negative.
-            A player with no control years left shows a one-season <strong>Market value</strong> instead.
+            go the way of whoever holds them. The price of a win, about $9.9 million per projected WAR,
+            is fitted on verified free-agent contract values above the league minimum with separate
+            prices for batters, starters and relievers; it is calibrated to those contracts, not yet
+            validated against ones signed after the fit. A player with no control years left shows a
+            one-season <strong>Market value</strong> instead.
           </p>
           <p>
-            <strong>Impact</strong> is descriptive: this season&apos;s plate appearances valued by run
-            expectancy, plus fielding and baserunning runs, above a replacement-level player at the
-            position, in wins. Replacement level and the positional scale are the conventional ones; the
-            measured alternatives were biased by who kept playing and by outs above average being
-            relative to each position already.
+            <strong>Impact</strong> is descriptive: FanGraphs wins above replacement for the completed
+            season, read from the MLB Stats API. It is the public number, not a projection, and it
+            anchors the season-by-season outlook.
           </p>
           <p>
-            On the {MLB_PLAYER_EVALUATION.inputSeason} to {MLB_PLAYER_EVALUATION.outcomeSeason} holdout,
-            the Grade&apos;s rank correlation with next-season runs was {MLB_PLAYER_EVALUATION.groups[0].grade.toFixed(3)} for
-            hitters against {MLB_PLAYER_EVALUATION.groups[0].priorXwoba.toFixed(3)} for prior-season xwOBA
-            and {MLB_PLAYER_EVALUATION.groups[0].marcel.toFixed(3)} for a Marcel projection,
-            {" "}{MLB_PLAYER_EVALUATION.groups[1].grade.toFixed(3)} for starters against {MLB_PLAYER_EVALUATION.groups[1].priorProduction.toFixed(3)} for
-            prior production, and {MLB_PLAYER_EVALUATION.groups[2].grade.toFixed(3)} for relievers
-            against {MLB_PLAYER_EVALUATION.groups[2].marcel.toFixed(3)} for Marcel. A player is graded once his season-equivalent sample
+            The current grade has no untouched test yet. Its development pairs run {MLB_PLAYER_EVALUATION.devSeasons[0]} to {MLB_PLAYER_EVALUATION.devSeasons[1]} through {MLB_PLAYER_EVALUATION.devSeasons[MLB_PLAYER_EVALUATION.devSeasons.length - 2]} to {MLB_PLAYER_EVALUATION.devSeasons[MLB_PLAYER_EVALUATION.devSeasons.length - 1]},
+            and the {MLB_PLAYER_EVALUATION.holdoutPair[0]} to {MLB_PLAYER_EVALUATION.holdoutPair[1]} pair is the first its design never saw. Held out one pair at
+            a time, its rank correlation with next-season runs averages {MLB_PLAYER_EVALUATION.groups[0].grade.toFixed(2)} for hitters
+            against {MLB_PLAYER_EVALUATION.groups[0].marcel.toFixed(2)} for a Marcel projection, {MLB_PLAYER_EVALUATION.groups[1].grade.toFixed(2)} for
+            starters against {MLB_PLAYER_EVALUATION.groups[1].marcel.toFixed(2)}, and {MLB_PLAYER_EVALUATION.groups[2].grade.toFixed(2)} for relievers
+            against {MLB_PLAYER_EVALUATION.groups[2].marcel.toFixed(2)}; hyperparameters were chosen on the same pairs, so these are development
+            results. The previous version, scored once on the {MLB_PLAYER_EVALUATION.previous.inputSeason} to {MLB_PLAYER_EVALUATION.previous.outcomeSeason} pair it never saw, reached
+            {" "}{MLB_PLAYER_EVALUATION.previous.groups[0].grade.toFixed(2)} for hitters against {MLB_PLAYER_EVALUATION.previous.groups[0].priorXwoba.toFixed(2)} for prior-season xwOBA,
+            a gap within sampling noise. A month-by-month comparison with the public projection systems
+            is on the performance page as it is computed. A player is graded once his season-equivalent sample
             reaches 100 plate appearances or batters faced; below that the page shows no number.
           </p>
         </div>

@@ -64,14 +64,18 @@ async function MlbResults() {
   const report = MLB_PLAYER_EVALUATION;
   if (current.data.model_version !== report.modelVersion)
     return <Unavailable failed={false} />;
+  const first = report.devSeasons[0];
+  const last = report.devSeasons[report.devSeasons.length - 1];
+  const previous = report.previous;
   return (
     <div className="space-y-5">
       <div className="space-y-2">
         <h3 className="text-lg">Predicting next-season production</h3>
         <p className="text-sm text-muted-foreground">
-          {report.inputSeason} inputs → {report.outcomeSeason} outcomes. Rank
-          correlation with next-season runs; higher is better. Each baseline
-          uses the same players within its group.
+          Development pairs {first} to {first + 1} through {last - 1} to {last}, each held out in
+          turn: the grade fitted on the other pairs ranks the held-out season. Rank correlation
+          with next-season runs above average per 600 PA, 180 IP or 65 IP; higher is better, and
+          each baseline uses the same players within its group.
         </p>
       </div>
       <div className="grid gap-4 lg:grid-cols-3">
@@ -80,33 +84,29 @@ async function MlbResults() {
             <div>
               <h4 className="font-semibold">{result.label}</h4>
               <p className="text-xs text-muted-foreground">
-                {result.n} players
+                about {result.n} players per pair, {report.pairs} pairs
               </p>
             </div>
             <CorrelationBar label="Player grade" value={result.grade} />
-            {result.priorXwoba != null && (
-              <CorrelationBar
-                label="Prior xwOBA"
-                value={result.priorXwoba}
-                baseline
-              />
-            )}
-            <CorrelationBar
-              label="Prior production"
-              value={result.priorProduction}
-              baseline
-            />
-            <CorrelationBar
-              label="Marcel projection"
-              value={result.marcel}
-              baseline
-            />
+            <CorrelationBar label="Shrunk outcome record" value={result.shrunkOnly} baseline />
+            <CorrelationBar label="Prior production" value={result.priorProduction} baseline />
+            <CorrelationBar label="Marcel projection" value={result.marcel} baseline />
           </article>
         ))}
       </div>
+      <p className="text-sm text-muted-foreground">
+        Hyperparameters were chosen on these same pairs, so this is a development result, not a
+        holdout. The {report.holdoutPair[0]} to {report.holdoutPair[1]} pair is the first the
+        design never saw and will be reported untouched when it arrives. The previous version
+        ({previous.modelVersion}), scored once on the {previous.inputSeason} to {previous.outcomeSeason} pair
+        it never saw, reached {formatNumber(previous.groups[0].grade, 2)} for batters against{" "}
+        {formatNumber(previous.groups[0].priorXwoba, 2)} for prior-season xwOBA (within sampling noise),{" "}
+        {formatNumber(previous.groups[1].grade, 2)} for starters and {formatNumber(previous.groups[2].grade, 2)} for relievers.
+      </p>
       <p className="text-xs text-muted-foreground">
-        Correlation runs from -1 to +1, with zero at the center. This evaluates
-        production rankings; it does not validate trade prices or WAR accuracy.
+        Correlation runs from -1 to +1, with zero at the center. This evaluates production rankings
+        among players who returned with 100 plate appearances or batters faced; it does not validate
+        trade prices or WAR accuracy, and it is not a comparison with the public projection systems.
       </p>
       <LastUpdated
         timestamp={report.fittedAt}
@@ -145,9 +145,10 @@ async function CfbResults() {
       <div className="space-y-2">
         <h3 className="text-lg">How consistently player value repeats</h3>
         <p className="text-sm text-muted-foreground">
-          Published split-half correlations for the {data.season}{" "}
-          player-value model. This measures repeatability of credited production, not the
-          grade&apos;s next-season forecast accuracy.
+          Odd-game against even-game correlation of opponent-adjusted EPA credit per
+          game for the {data.season} player-value model ({data.value_model_version}).
+          These are the value model&apos;s reliabilities, not the grade&apos;s, and they
+          measure repeatability of credited production, not next-season forecast accuracy.
         </p>
       </div>
       <div className="grid gap-4 sm:grid-cols-2">
