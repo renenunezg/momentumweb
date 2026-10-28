@@ -2,6 +2,7 @@
 
 import { useDeferredValue, useMemo, useState } from "react";
 import { ParkCarry } from "@/components/mlb-carry-charts";
+import { Pager } from "@/components/pager";
 import { PlayerCell } from "@/components/player-cell";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import type { CarryMinorRow, MinorLevel, MinorSummary } from "@/lib/mlb-carry";
@@ -12,7 +13,7 @@ const LEVELS: { key: MinorLevel; label: string }[] = [
   { key: "aaa", label: "Triple-A" },
   { key: "fsl", label: "Florida State League" },
 ];
-const ROWS = 50;
+const PAGE_SIZE = 25;
 type SortKey = "carry" | "carry_raw" | "exit_velo" | "n_air" | "hr";
 const COLUMNS: { key: SortKey; label: string; format: (v: number) => string }[] = [
   { key: "n_air", label: "Air balls", format: (v) => v.toFixed(0) },
@@ -27,7 +28,7 @@ export function CarryMinors({ rows, summaries, season }: { rows: CarryMinorRow[]
   const [sortKey, setSortKey] = useState<SortKey>("carry");
   const [dir, setDir] = useState<"asc" | "desc">("desc");
   const [query, setQuery] = useState("");
-  const [limit, setLimit] = useState(ROWS);
+  const [page, setPage] = useState(0);
   const search = useDeferredValue(foldSearch(query.trim()));
   const summary = summaries[level];
   const label = LEVELS.find((l) => l.key === level)!.label;
@@ -40,6 +41,8 @@ export function CarryMinors({ rows, summaries, season }: { rows: CarryMinorRow[]
         .sort((a, b) => (dir === "desc" ? b[sortKey] - a[sortKey] : a[sortKey] - b[sortKey])),
     [rows, level, season, summary.qualified_air, search, sortKey, dir],
   );
+  const totalPages = Math.max(1, Math.ceil(shown.length / PAGE_SIZE));
+  const current = Math.min(page, totalPages - 1);
 
   return (
     <div className="space-y-4">
@@ -49,7 +52,10 @@ export function CarryMinors({ rows, summaries, season }: { rows: CarryMinorRow[]
             key={l.key}
             type="button"
             aria-pressed={level === l.key}
-            onClick={() => setLevel(l.key)}
+            onClick={() => {
+              setLevel(l.key);
+              setPage(0);
+            }}
             className="rounded border border-border px-2 py-0.5 text-sm text-muted-foreground hover:text-foreground aria-pressed:border-foreground/50 aria-pressed:text-foreground"
           >
             {l.label}
@@ -69,12 +75,16 @@ export function CarryMinors({ rows, summaries, season }: { rows: CarryMinorRow[]
           <span className="block text-xs text-muted-foreground">Search</span>
           <input
             value={query}
-            onChange={(e) => setQuery(e.target.value)}
+            onChange={(e) => {
+              setQuery(e.target.value);
+              setPage(0);
+            }}
             placeholder="Search hitters"
             className="w-56 rounded-md border border-border bg-background px-2 py-1.5 text-sm"
           />
         </label>
         <span className="text-xs text-muted-foreground">{shown.length} hitters, {label} {season}</span>
+        <Pager page={current} totalPages={totalPages} onPage={setPage} />
       </div>
       <div className="overflow-x-auto">
         <Table>
@@ -91,6 +101,7 @@ export function CarryMinors({ rows, summaries, season }: { rows: CarryMinorRow[]
                         setSortKey(c.key);
                         setDir("desc");
                       }
+                      setPage(0);
                     }}
                     className={cn("inline-flex items-center gap-1 font-mono text-[11px] uppercase tracking-wider", c.key === sortKey ? "text-primary" : "text-muted-foreground hover:text-foreground")}
                   >
@@ -102,7 +113,7 @@ export function CarryMinors({ rows, summaries, season }: { rows: CarryMinorRow[]
             </TableRow>
           </TableHeader>
           <TableBody>
-            {shown.slice(0, limit).map((r) => (
+            {shown.slice(current * PAGE_SIZE, (current + 1) * PAGE_SIZE).map((r) => (
               <TableRow key={`${r.player_id}-${r.level}`}>
                 <TableCell className="whitespace-nowrap">
                   <PlayerCell athleteId={String(r.player_id)} headshotUrl={mlbPlayerHeadshotUrl(r.player_id)} name={r.player_name}
@@ -116,11 +127,9 @@ export function CarryMinors({ rows, summaries, season }: { rows: CarryMinorRow[]
           </TableBody>
         </Table>
       </div>
-      {shown.length > limit && (
-        <button type="button" onClick={() => setLimit(limit + ROWS)} className="text-sm text-muted-foreground underline-offset-4 hover:text-foreground hover:underline">
-          Show {Math.min(ROWS, shown.length - limit)} more of {shown.length}
-        </button>
-      )}
+      <div className="flex justify-end">
+        <Pager page={current} totalPages={totalPages} onPage={setPage} />
+      </div>
     </div>
   );
 }

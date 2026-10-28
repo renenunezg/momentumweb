@@ -6,6 +6,7 @@ import { PlayerCell } from "@/components/player-cell";
 import { mlbTeamIdentity } from "@/lib/mlb-teams";
 import { mlbPlayerHeadshotUrl } from "@/lib/player-headshots";
 import { useChartTheme } from "@/lib/chart-theme";
+import { foldSearch } from "@/lib/utils";
 import {
   changerEffect,
   labCarry,
@@ -23,6 +24,7 @@ const PROFILES = [
   { key: "power", label: "Low contact (high whiff)", z: 1 },
 ] as const;
 const NATURAL_CHANGE = 3;
+const MATCHES = 8;
 const STATS: { key: CarryOutcome; label: string; rate: boolean }[] = [
   { key: "ba", label: "BA", rate: true },
   { key: "obp", label: "OBP", rate: true },
@@ -57,9 +59,22 @@ export function SwingLab({ study, hitters }: { study: LabStudy; hitters: CarryHi
     [hitters],
   );
   const [pick, setPick] = useState<string>(GENERIC);
+  const [query, setQuery] = useState("");
   const [profile, setProfile] = useState<(typeof PROFILES)[number]["key"]>("average");
   const [dTilt, setDTilt] = useState(0);
   const [dAttack, setDAttack] = useState(0);
+
+  const needle = foldSearch(query.trim());
+  const matches = useMemo(
+    () => (needle ? options.filter((h) => foldSearch(h.player_name).includes(needle)).slice(0, MATCHES) : []),
+    [options, needle],
+  );
+  const choose = (id: string) => {
+    setPick(id);
+    setQuery("");
+    setDTilt(0);
+    setDAttack(0);
+  };
 
   const hitter = options.find((h) => String(h.player_id) === pick) ?? null;
   const coefs = study.changers.coefficients;
@@ -84,27 +99,46 @@ export function SwingLab({ study, hitters }: { study: LabStudy; hitters: CarryHi
       <div className="space-y-4">
         <label className="block space-y-1">
           <span className="text-sm text-muted-foreground">Hitter</span>
-          <select
-            value={pick}
-            onChange={(e) => {
-              setPick(e.target.value);
-              setDTilt(0);
-              setDAttack(0);
+          <input
+            value={query}
+            onChange={(e) => setQuery(e.target.value)}
+            onKeyDown={(e) => {
+              if (e.key === "Enter" && matches[0]) choose(String(matches[0].player_id));
             }}
+            placeholder={hitter ? "Search another hitter" : "Search a hitter, or stay generic"}
             className="w-full rounded-md border border-border bg-background px-2 py-1.5 text-sm"
-          >
-            <option value={GENERIC}>Generic hitter</option>
-            {options.map((h) => (
-              <option key={h.player_id} value={h.player_id}>
-                {h.player_name}{h.team ? ` (${h.team})` : ""}
-              </option>
-            ))}
-          </select>
+          />
         </label>
+        {matches.length > 0 && (
+          <ul role="listbox" aria-label="Matching hitters" className="divide-y divide-border rounded-md border border-border text-sm">
+            {matches.map((h) => (
+              <li key={h.player_id}>
+                <button
+                  type="button"
+                  role="option"
+                  aria-selected={String(h.player_id) === pick}
+                  onClick={() => choose(String(h.player_id))}
+                  className="flex w-full items-center justify-between px-2 py-1.5 text-left hover:bg-muted"
+                >
+                  <span>{h.player_name}</span>
+                  <span className="font-mono text-xs text-muted-foreground">{h.team ?? ""}</span>
+                </button>
+              </li>
+            ))}
+          </ul>
+        )}
+        {needle && matches.length === 0 && (
+          <p className="text-xs text-muted-foreground">No match. The lab covers {options.length} hitters with {study.lab.min_balls}+ spin balls this season.</p>
+        )}
         {hitter && (
-          <PlayerCell athleteId={String(hitter.player_id)} headshotUrl={mlbPlayerHeadshotUrl(hitter.player_id)} name={hitter.player_name}
-            team={hitter.team ?? "–"} position={line ? `${line.ops.toFixed(3).replace(/^0/, "")} OPS, ${hitter.hr} HR` : null}
-            logo={mlbTeamIdentity(hitter.team)} />
+          <div className="flex flex-wrap items-center justify-between gap-2">
+            <PlayerCell athleteId={String(hitter.player_id)} headshotUrl={mlbPlayerHeadshotUrl(hitter.player_id)} name={hitter.player_name}
+              team={hitter.team ?? "–"} position={line ? `${line.ops.toFixed(3).replace(/^0/, "")} OPS, ${hitter.hr} HR` : null}
+              logo={mlbTeamIdentity(hitter.team)} />
+            <button type="button" onClick={() => choose(GENERIC)} className="text-xs text-muted-foreground underline-offset-4 hover:text-foreground hover:underline">
+              Back to the generic hitter
+            </button>
+          </div>
         )}
         {!hitter && (
           <div className="flex flex-wrap gap-1.5" role="group" aria-label="Generic hitter's contact">

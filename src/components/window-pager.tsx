@@ -1,6 +1,7 @@
 "use client";
 
 import { useMemo, useState } from "react";
+import { Pager } from "@/components/pager";
 import { ToggleGroup } from "@/components/toggle-group";
 
 const WINDOWS = [
@@ -68,31 +69,7 @@ export function WindowPager({
         value={windowKey}
         onChange={onWindow}
       />
-      {totalPages > 1 && (
-        <nav aria-label="Pagination" className="flex items-center gap-2 font-mono text-xs">
-          <button
-            type="button"
-            aria-label="Previous page"
-            onClick={() => onPage(Math.max(0, page - 1))}
-            disabled={page === 0}
-            className="px-2 py-1 text-muted-foreground hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:opacity-30"
-          >
-            {"<"}
-          </button>
-          <span className="text-muted-foreground">
-            {page + 1} / {totalPages}
-          </span>
-          <button
-            type="button"
-            aria-label="Next page"
-            onClick={() => onPage(Math.min(totalPages - 1, page + 1))}
-            disabled={page >= totalPages - 1}
-            className="px-2 py-1 text-muted-foreground hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:opacity-30"
-          >
-            {">"}
-          </button>
-        </nav>
-      )}
+      <Pager page={page} totalPages={totalPages} onPage={onPage} />
     </div>
   );
 }

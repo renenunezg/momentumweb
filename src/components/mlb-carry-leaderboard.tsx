@@ -2,6 +2,7 @@
 
 import { useDeferredValue, useMemo, useState } from "react";
 import { InfoTip } from "@/components/info-tip";
+import { Pager } from "@/components/pager";
 import { PlayerCell } from "@/components/player-cell";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { slashLine, swingType, type CarryHitterRow, type LeaderboardStudy } from "@/lib/mlb-carry";
@@ -10,7 +11,7 @@ import { mlbPlayerHeadshotUrl } from "@/lib/player-headshots";
 import { cn, foldSearch } from "@/lib/utils";
 
 type SortKey = "carry" | "physics" | "unexplained" | "backspin" | "tilt" | "attack" | "bat_speed" | "n_air";
-const ROWS = 50;
+const PAGE_SIZE = 25;
 
 const COLUMNS: { key: SortKey; label: string; tip: string; format: (v: number) => string }[] = [
   { key: "n_air", label: "Air balls", tip: "Balls hit in the air (10 to 50 degrees, 90+ mph) this season.", format: (v) => v.toFixed(0) },
@@ -33,7 +34,7 @@ export function CarryLeaderboard({ hitters, study }: { hitters: CarryHitterRow[]
   const [dir, setDir] = useState<"asc" | "desc">("desc");
   const [query, setQuery] = useState("");
   const [minAir, setMinAir] = useState(80);
-  const [limit, setLimit] = useState(ROWS);
+  const [page, setPage] = useState(0);
   const search = useDeferredValue(foldSearch(query.trim()));
 
   const rows = useMemo(() => {
@@ -47,12 +48,16 @@ export function CarryLeaderboard({ hitters, study }: { hitters: CarryHitterRow[]
     });
   }, [hitters, minAir, search, sortKey, dir]);
 
+  const totalPages = Math.max(1, Math.ceil(rows.length / PAGE_SIZE));
+  const current = Math.min(page, totalPages - 1);
+
   const onSort = (key: SortKey) => {
     if (key === sortKey) setDir(dir === "desc" ? "asc" : "desc");
     else {
       setSortKey(key);
       setDir("desc");
     }
+    setPage(0);
   };
 
   return (
@@ -62,18 +67,29 @@ export function CarryLeaderboard({ hitters, study }: { hitters: CarryHitterRow[]
           <span className="block text-xs text-muted-foreground">Search</span>
           <input
             value={query}
-            onChange={(e) => setQuery(e.target.value)}
+            onChange={(e) => {
+              setQuery(e.target.value);
+              setPage(0);
+            }}
             placeholder="Junior Caminero"
             className="w-56 rounded-md border border-border bg-background px-2 py-1.5 text-sm"
           />
         </label>
         <label className="space-y-1">
           <span className="block text-xs text-muted-foreground">Minimum air balls</span>
-          <select value={minAir} onChange={(e) => setMinAir(Number(e.target.value))} className="rounded-md border border-border bg-background px-2 py-1.5 text-sm">
+          <select
+            value={minAir}
+            onChange={(e) => {
+              setMinAir(Number(e.target.value));
+              setPage(0);
+            }}
+            className="rounded-md border border-border bg-background px-2 py-1.5 text-sm"
+          >
             {[50, 80, 120].map((n) => <option key={n} value={n}>{n}</option>)}
           </select>
         </label>
         <span className="text-xs text-muted-foreground">{rows.length} hitters, {study.season}</span>
+        <Pager page={current} totalPages={totalPages} onPage={setPage} />
       </div>
       <div className="overflow-x-auto">
         <Table>
@@ -99,7 +115,7 @@ export function CarryLeaderboard({ hitters, study }: { hitters: CarryHitterRow[]
             </TableRow>
           </TableHeader>
           <TableBody>
-            {rows.slice(0, limit).map((h) => {
+            {rows.slice(current * PAGE_SIZE, (current + 1) * PAGE_SIZE).map((h) => {
               const line = slashLine(h);
               return (
                 <TableRow key={h.player_id}>
@@ -126,11 +142,9 @@ export function CarryLeaderboard({ hitters, study }: { hitters: CarryHitterRow[]
           </TableBody>
         </Table>
       </div>
-      {rows.length > limit && (
-        <button type="button" onClick={() => setLimit(limit + ROWS)} className="text-sm text-muted-foreground underline-offset-4 hover:text-foreground hover:underline">
-          Show {Math.min(ROWS, rows.length - limit)} more of {rows.length}
-        </button>
-      )}
+      <div className="flex justify-end">
+        <Pager page={current} totalPages={totalPages} onPage={setPage} />
+      </div>
     </div>
   );
 }
