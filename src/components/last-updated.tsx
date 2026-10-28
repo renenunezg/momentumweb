@@ -21,11 +21,22 @@ function subscribe(onChange: () => void) {
   return () => window.clearInterval(id);
 }
 
-// The server renders no age: a clock reading in cached HTML makes every
-// regeneration differ from the last, which bills an ISR write even when the
-// data is unchanged.
-function serverAge() {
-  return "";
+// The server renders the absolute time, which only changes when the data
+// does: an age in cached HTML would make every regeneration differ from the
+// last and bill an ISR write even when nothing changed. The client swaps in
+// the age after hydration. A fixed zone keeps the server and client strings
+// identical through hydration.
+const absolute = new Intl.DateTimeFormat("en-US", {
+  month: "short",
+  day: "numeric",
+  hour: "numeric",
+  minute: "2-digit",
+  timeZone: "America/New_York",
+  timeZoneName: "short",
+});
+
+function formatAbsolute(ts: string | null): string {
+  return ts ? absolute.format(new Date(ts)) : "unknown";
 }
 
 export function LastUpdated({
@@ -38,7 +49,7 @@ export function LastUpdated({
   const age = useSyncExternalStore(
     subscribe,
     () => formatRelative(timestamp),
-    serverAge,
+    () => formatAbsolute(timestamp),
   );
 
   return (
