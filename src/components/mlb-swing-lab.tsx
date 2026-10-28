@@ -188,8 +188,8 @@ export function SwingLab({ study, hitters }: { study: LabStudy; hitters: CarryHi
           </p>
         )}
         <p className="text-xs leading-relaxed text-muted-foreground">
-          Season-line changes come from {coefs.n} hitters whose swings changed between seasons (bat speed held constant), shown with a
-          one-standard-error range that carries the fitted coefficients&apos; correlation.
+          Season-line changes come from {coefs.n} season-to-season changes by {coefs.n_hitters} hitters (bat speed held constant), shown
+          with a one-standard-error range that carries the fitted coefficients&apos; correlation and treats each hitter&apos;s seasons as one cluster.
           Those swings changed naturally, so the numbers describe what tended to follow a change, not what a change guarantees.
         </p>
       </div>

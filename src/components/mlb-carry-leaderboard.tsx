@@ -17,10 +17,10 @@ const COLUMNS: { key: SortKey; label: string; tip: string; format: (v: number) =
   { key: "carry", label: "Carry", tip: "Average feet beyond the league distance for the same exit velocity, launch angle, direction, ballpark and month.", format: (v) => `${v > 0 ? "+" : ""}${v.toFixed(1)}` },
   { key: "physics", label: "Swing physics", tip: "The part of his carry the collision and flight physics of his measured swing explains.", format: (v) => `${v > 0 ? "+" : ""}${v.toFixed(1)}` },
   { key: "unexplained", label: "Unexplained", tip: "Carry minus swing physics.", format: (v) => `${v > 0 ? "+" : ""}${v.toFixed(1)}` },
-  { key: "backspin", label: "Backspin", tip: "Estimated backspin relative to the league at the same launch angle, in rpm. Relative only: public data cannot pin the absolute level.", format: (v) => `${v > 0 ? "+" : ""}${v.toFixed(0)}` },
+  { key: "backspin", label: "Backspin vs league", tip: "Estimated backspin relative to the league at the same launch angle, in rpm. Relative only: public data cannot pin the absolute level.", format: (v) => `${v > 0 ? "+" : ""}${v.toFixed(0)}` },
   { key: "tilt", label: "Tilt", tip: "Swing path tilt at a belt-high pitch. Lower is a flatter swing plane.", format: (v) => `${v.toFixed(0)}°` },
   { key: "attack", label: "Attack", tip: "Attack angle at a belt-high pitch: how steeply the barrel rises at contact.", format: (v) => `${v.toFixed(0)}°` },
-  { key: "bat_speed", label: "Bat speed", tip: "Average bat speed (mph) on competitive swings: the fastest 90% of his tracked swings, as Baseball Savant defines them.", format: (v) => v.toFixed(1) },
+  { key: "bat_speed", label: "Bat speed", tip: "Average bat speed (mph) over the fastest 90% of his tracked swings, after Savant's competitive-swing rule; the two averages run close but are not identical.", format: (v) => v.toFixed(1) },
 ];
 
 function value(row: CarryHitterRow, key: SortKey): number | null {
