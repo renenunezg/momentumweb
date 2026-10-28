@@ -21,6 +21,7 @@ const MLB_PATHS: Record<string, string[]> = {
   model_edge_buckets: ["/mlb/performance"],
   posterior_sigmas: ["/mlb/performance"],
   player_values: ["/mlb/players"],
+  player_value_models: ["/mlb/performance", "/mlb/methodology"], // The evaluation view reads this row.
   player_traits: [], // Details use their API route's CDN window.
   prospect_values: ["/mlb/prospects"], // Filtered pages use their API route's CDN window.
   player_season_stats: ["/mlb/prospects"], // Player cards read theirs through the details route's CDN window.
