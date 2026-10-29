@@ -286,7 +286,7 @@ export const TRAIT_SECTION_LABELS: Record<TraitSection, { label: string; tip: st
   ...KIND_LABELS,
   grade_inputs: {
     label: "Grade inputs",
-    tip: "Traits used in this position’s published grade. Striped bars are inferred from teammates or unit results.",
+    tip: "Traits used in this position’s published grade.",
   },
   context: {
     label: "More context",

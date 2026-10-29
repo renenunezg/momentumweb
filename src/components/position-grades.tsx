@@ -43,6 +43,38 @@ const INFERRED_FILL = {
     "repeating-linear-gradient(45deg, transparent 0 3px, color-mix(in oklch, var(--background) 45%, transparent) 3px 6px)",
 };
 
+// How a trait's bar is drawn. The card rows and their legend share it so the
+// legend never describes a style the bars do not use.
+function barLook(trait: GradedPlayerTrait | undefined) {
+  const kind = isMeasureKind(trait?.kind) ? trait.kind : null;
+  return {
+    kind,
+    inferred: trait?.kind === "inferred",
+    style: kind === "style" || kind === "role",
+    dimmed: kind != null ? kind === "noise" : !(trait?.in_grade ?? false),
+  };
+}
+
+function BarLegend({ traits }: { traits: GradedPlayerTrait[] }) {
+  const looks = traits.map(barLook);
+  const items = [
+    { label: "Measured", swatch: "bg-primary", show: true },
+    { label: "Inferred from teammates or unit results", swatch: "bg-accent-blue", fill: INFERRED_FILL, show: looks.some((l) => l.inferred) },
+    { label: "Style, not quality", swatch: "bg-muted-foreground", show: looks.some((l) => l.style) },
+    { label: "Not graded", swatch: "bg-primary opacity-40", show: looks.some((l) => l.dimmed) },
+  ].filter((item) => item.show);
+  return (
+    <ul aria-label="Bar key" className="flex flex-wrap gap-x-4 gap-y-1 text-[11px] text-muted-foreground">
+      {items.map((item) => (
+        <li key={item.label} className="flex items-center gap-1.5">
+          <span aria-hidden="true" className={cn("h-1.5 w-4 rounded-[1px]", item.swatch)} style={item.fill} />
+          {item.label}
+        </li>
+      ))}
+    </ul>
+  );
+}
+
 // One trait line: the rows of a position's cards, in display order, with the
 // kind each belongs to so the card can head each section once.
 interface TraitLine {
@@ -63,9 +95,7 @@ function TraitRow({
 }) {
   const { label, tip } = traitLabel(name, sport);
   const inGrade = trait?.in_grade ?? false;
-  const inferred = trait?.kind === "inferred";
-  const kind = isMeasureKind(trait?.kind) ? trait.kind : null;
-  const style = kind === "style" || kind === "role";
+  const { kind, inferred, style, dimmed } = barLook(trait);
   const noise = kind === "noise";
   const reliability = trait?.reliability ?? null;
   const pct = trait?.percentile ?? null;
@@ -76,7 +106,6 @@ function TraitRow({
       : inGrade
         ? tip
         : `${tip} Not used in the ${group} grade.`;
-  const dimmed = kind != null ? noise : !inGrade;
   return (
     <div
       className={cn(
@@ -283,6 +312,7 @@ function GradeCard({
             })}
           </Accordion.Root>
         )}
+        {player && <BarLegend traits={player.traits.filter((t) => lines.some((line) => line.name === t.trait))} />}
       </div>
   );
   if (desktop) {
@@ -358,9 +388,7 @@ function CompareRow({
 }) {
   const { label, tip } = traitLabel(name, sport);
   const sample = left ?? right;
-  const kind = isMeasureKind(sample?.kind) ? sample.kind : null;
-  const style = kind === "style" || kind === "role";
-  const dimmed = kind != null ? kind === "noise" : !(sample?.in_grade ?? false);
+  const { style, dimmed } = barLook(sample);
   const reliability = sample?.reliability ?? null;
   const pct = (t: GradedPlayerTrait | undefined) => t?.percentile ?? null;
   const bar = (t: GradedPlayerTrait | undefined, color: string, fromRight: boolean) => (
@@ -665,7 +693,7 @@ export default function PositionGrades({
           ? `${matches.length} player${matches.length === 1 ? "" : "s"} match “${query.trim()}”${group === ALL ? "" : ` in the ${group}`}, best grade first`
           : `Top ${visible.length} of ${matches.length} ${group === ALL ? "" : `${group} `}${position} · ${graded} graded this week`}
         <InfoTip
-          text={`Percentiles among ${copy.pool} at the position this week. ${sport === "cfb" ? "Grade inputs contribute to the rating; More context does not. Solid bars use recorded plays or stats; striped bars are inferred from teammates or unit results. Dimmed: not graded." : "Solid: directly measured. Striped: inferred. Grey: style, not quality. Dimmed: not graded. The r is the stat’s reliability over 8 games: how well odd and even games agree, scaled to 8 games."}`}
+          text={`Percentiles among ${copy.pool} at the position this week. ${sport === "cfb" ? "Grade inputs contribute to the rating; More context does not. Each player card has a key to its bar colors." : "Each player card has a key to its bar colors. The r is the stat’s reliability over 8 games: how well odd and even games agree, scaled to 8 games."}`}
           label="How to read the bars"
         />
       </p>
