@@ -1,6 +1,15 @@
 import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
+  // Prerendering fans out to every page at once, and the Nano Supabase
+  // instance answers a burst of ~70 concurrent reads with statement timeouts,
+  // failing the deploy. Four pages at a time, each retried once, keeps the
+  // build inside what the database can serve.
+  experimental: {
+    cpus: 2,
+    staticGenerationMaxConcurrency: 2,
+    staticGenerationRetryCount: 1,
+  },
   async redirects() {
     // Legacy pre-/mlb URLs: keep old bookmarks and indexed links working.
     return [
