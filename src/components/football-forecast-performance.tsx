@@ -338,7 +338,8 @@ export function FootballForecastPerformance({
             <p className="text-xs text-muted-foreground">
               Segments grade the published line. Market columns use only the games in
               that segment with a closing spread. A segment marked thin has
-              fewer than 30 games.
+              fewer than 30 games. The graded games behind this tab are on the{" "}
+              <a href="/data" className="underline underline-offset-4">data page</a> as CSV.
             </p>
           </>
         )}

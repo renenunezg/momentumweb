@@ -31,6 +31,7 @@ const DATA_ROUTES = [
 ];
 const PROSE_ROUTES = [
   "/about",
+  "/data",
   "/blog",
   "/mlb/methodology",
   "/cfb/methodology",

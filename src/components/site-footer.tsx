@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { CONTACT_EMAIL, SOCIAL_LINKS } from "@/lib/site";
 
 export function ContactLine({ className }: { className?: string }) {
@@ -20,6 +21,12 @@ export function SiteFooter() {
       <div className="mx-auto flex w-full max-w-7xl min-w-0 flex-col gap-3 px-page-gutter py-section text-sm sm:flex-row sm:items-center sm:justify-between">
         <ContactLine className="text-muted-foreground" />
         <nav aria-label="Social" className="flex items-center gap-4">
+          <Link
+            href="/data"
+            className="type-eyebrow text-muted-foreground transition-colors hover:text-foreground"
+          >
+            Data
+          </Link>
           {SOCIAL_LINKS.map(({ label, href }) => (
             <a
               key={href}

@@ -204,7 +204,8 @@ export function PerformanceTabs({
               {dailyEvals.length > 0 && <>, {formatDate(dailyEvals[0].date)} to {formatDate(dailyEvals[dailyEvals.length - 1].date)}</>},
               v1 and v2 pooled, regular season and postseason. Completed games with no stored
               forecast or an even 50/50 probability are not counted. The coin flip is the only
-              reference shown; a market baseline on the same games is not published yet.
+              reference shown; a market baseline on the same games is not published yet.{" "}
+              <a href="/mlb/api/export/predictions.csv" className="underline underline-offset-4">Download the graded predictions (CSV)</a>.
             </p>
 
             <Section title="Accuracy by market">
@@ -286,7 +287,8 @@ export function PerformanceTabs({
                   v1 through May 11 and v2 from May 12, regular season and postseason, at quarter-Kelly
                   stakes. The record applies today&apos;s edge gate (4.5 percent on moneyline and run line,
                   6.5 percent on totals) to every past prediction, so some plays shown on the day are not
-                  counted. Prices are the best pregame line published, not a closing line.
+                  counted. Prices are the best pregame line published, not a closing line.{" "}
+                  <a href="/mlb/api/export/ledger.csv" className="underline underline-offset-4">Download the ledger (CSV)</a>.
                 </p>
                 <div className={KPI_ROW}>
                   <KpiCard

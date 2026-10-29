@@ -510,7 +510,7 @@ export function PickPolicy({
         >
           View forecast history
         </Link>
-        .
+        {sport === "nhl" ? "." : <>, or download every recorded decision from the <Link href="/data" className="underline underline-offset-4">data page</Link>.</>}
       </p>
     </div>
   );
