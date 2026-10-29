@@ -21,7 +21,7 @@ export const revalidate = 3600;
 export const metadata: Metadata = {
   title: "College Football Model Performance",
   description:
-    "Forecast accuracy of the college football model against the market, plus the record, ROI, and closing-line results of its recommended moneyline, spread and total predictions.",
+    "Forecast accuracy of the college football model against the closing line, plus the record, ROI, and recorded prices of its recommended moneyline, spread and total predictions.",
 };
 
 export default async function PerformancePage({

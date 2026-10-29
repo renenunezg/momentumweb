@@ -410,9 +410,11 @@ export function PickPolicy({
   return (
     <div className="space-y-2 text-xs leading-relaxed text-muted-foreground">
       <p>
-        One recommended side per game and market. Prices and decisions are
-        frozen when first published. Later forecasts do not rewrite a prediction. A
-        changed kickoff voids the original prediction.
+        One recommended side per game and market. A decision can be replaced
+        until the game starts by a newer model or policy, and the original stays
+        archived; line movement alone never changes one. Once a game starts, the
+        recorded side, line and price cannot change, and that record is what is
+        graded. A changed kickoff voids the original prediction.
       </p>
       {sport === "nhl" ? (
         <p>
@@ -456,6 +458,13 @@ export function PickPolicy({
           total probabilities use integer scores. Historical calibration is
           diagnostic, not a publication gate. Estimated EV does not establish a
           real advantage over the market. There are no additional exposure caps.
+          Results on this page pool every policy version recorded this season,
+          nfl-picks-v2 through v5; each prediction keeps the rules and price it
+          was recorded under, and through week 8 of 2026, 33 of the 59
+          recommendations were volume-floor predictions. Through October 6, 2026
+          prices were the best of DraftKings, FanDuel and BetMGM from The Odds
+          API; since October 11 they are DraftKings&apos; line as shown on
+          ESPN&apos;s scoreboard, which carries no book timestamp.
         </p>
       ) : (
         <p>
@@ -479,6 +488,14 @@ export function PickPolicy({
           have correlated outcomes and their shared exposure is flagged.
           Pushes return the stake and moneyline ties are void. Recommendations
           remain active for research; estimated edges are not validated profits.
+          Results on this page pool every policy version recorded this season,
+          cfb-picks-v5, v6, v7 and v11; each prediction keeps the rules and price
+          it was recorded under. Prices are the best available among nine
+          bookmakers in The Odds API feed, several of them offshore, so the record
+          assumes access to all of them. On October 12, 2026 the week 7 slate
+          published under v8 was replaced by v11 decisions before any game
+          started; the 15 original predictions are archived and would have
+          scored +1.96u against the +1.23u of their replacements.
         </p>
       )}
       <p>

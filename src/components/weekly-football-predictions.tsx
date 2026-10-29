@@ -20,6 +20,7 @@ import {
   pickLabel,
   usesPairedMoneylineBlend,
   usesKeyNumberSpread,
+  usesBlendedTotal,
   pickQualification,
   type PickMarket,
   type WeeklyGame,
@@ -144,7 +145,7 @@ export function WeeklyFootballPredictions({
           <p>Times shown in {SITE_TIME_LABEL}.</p>
           <p>
             {league === "cfb"
-              ? "Win probabilities follow each prediction's recorded pricing policy. Moneylines under v9/v10 retain 20% model weight; v10 spreads use a 20% model/history margin blend with football key numbers. Exploratory predictions are labeled. Pushes are listed separately."
+              ? "Win probabilities follow each prediction's recorded pricing policy. Under v11, moneylines keep 20% model weight against the paired market, spreads blend 20% model and history with 80% market margin using football key numbers, and totals use the published 50/50 blend. Exploratory predictions are labeled. Pushes are listed separately."
               : "Model probability is the model's chance that the selected side wins, with pushes listed separately. It is not a confidence score or a guarantee."}
           </p>
         </div>
@@ -368,9 +369,9 @@ function GamePredictions({
               <span>{pick.provider}</span>
               <span
                 className="font-mono tabular-nums"
-                title={usesPairedMoneylineBlend(pick) ? "Win probability from a 20% model and 80% paired-market blend in margin space." : usesKeyNumberSpread(pick) ? "Win probability from a 20% model/history and 80% market margin blend with football key-number weights." : pick.policy_version === "cfb-picks-v10" ? "Win probability from the published 50% model and 50% market total; pushes are separate." : "Model probability that this selection wins; pushes are separate."}
+                title={usesPairedMoneylineBlend(pick) ? "Win probability from a 20% model and 80% paired-market blend in margin space." : usesKeyNumberSpread(pick) ? "Win probability from a 20% model/history and 80% market margin blend with football key-number weights." : usesBlendedTotal(pick) ? "Win probability from the published 50% model and 50% market total; pushes are separate." : "Model probability that this selection wins; pushes are separate."}
               >
-                {usesPairedMoneylineBlend(pick) || pick.policy_version === "cfb-picks-v10" ? "Blended probability" : "Model probability"}{" "}
+                {usesPairedMoneylineBlend(pick) || usesKeyNumberSpread(pick) || usesBlendedTotal(pick) ? "Blended probability" : "Model probability"}{" "}
                 <span className="font-semibold text-foreground">
                   {formatPct(pick.win_probability)}
                 </span>

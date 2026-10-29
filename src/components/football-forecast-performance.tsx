@@ -125,6 +125,11 @@ export function FootballForecastPerformance({
     .filter((m): m is FootballPerformanceMetric => m != null);
   // Segments grade the published line, like the headline.
   const publishedSource = livePublished?.prediction_source ?? "pure_model";
+  const composition = copy.compositionKind
+    ? live.metrics.filter(
+        (m) => m.segment_kind === copy.compositionKind && m.prediction_source === "market_informed",
+      )
+    : [];
   const publishedSegments = live.metrics.filter(
     (m) =>
       m.prediction_source === publishedSource && m.segment_kind !== "overall",
@@ -150,13 +155,13 @@ export function FootballForecastPerformance({
       <section className="space-y-section">
         <div className="space-y-2">
           <h2 className="type-section">
-            {live.season ?? "Live"} season, graded as played
+            {live.season ?? "Live"} season, graded as played: {copy.seasonLabel}
           </h2>
           <p className="max-w-4xl text-sm text-muted-foreground leading-relaxed">
             Every row is a frozen record: the projection published before
             kickoff, {copy.closingLine}, and the final score. Nothing is re-fit
             or re-priced after a result is known. The closing line is the bar
-            the model is measured against, not an input to it.
+            the model is measured against, not an input to it. {copy.versions}
           </p>
         </div>
 
@@ -206,7 +211,7 @@ export function FootballForecastPerformance({
               <KpiCard
                 label="Model closer"
                 value={formatPct(livePublished?.closer_than_market_share)}
-                tooltip="Share of games where the published margin was closer to the actual margin than the closing spread. Ties excluded."
+                tooltip="Share of games where the published margin was closer to the actual margin than the closing spread. A tie counts as not closer."
               />
               <KpiCard
                 label="80% coverage"
@@ -215,6 +220,20 @@ export function FootballForecastPerformance({
                 tooltip="Share of results inside the published 80% range. Target: 80%. Much higher suggests overly wide ranges; much lower suggests overly narrow ranges."
               />
             </div>
+
+            {composition.length > 0 && (
+              <p className="max-w-4xl text-xs text-muted-foreground">
+                The headline pools every graded game. By opponent classification:{" "}
+                {composition.map((m, i) => (
+                  <span key={m.segment}>
+                    {i > 0 && "; "}
+                    {m.segment} {m.games} games, gap {formatSigned(m.model_minus_market_mae, 2)}
+                  </span>
+                ))}
+                . An FCS closing line is usually a single sportsbook&apos;s number.
+                No interval is published for any gap yet.
+              </p>
+            )}
 
             <div className="space-y-2">
               <h3 className="type-subsection">By prediction source</h3>
@@ -280,7 +299,8 @@ export function FootballForecastPerformance({
                 source&apos;s 50, 80, and 90 percent intervals: the pure
                 model&apos;s frozen ones, and for the published line the
                 dispersion predictions are priced with. The published total is graded
-                only for games published since it existed.
+                only for games published since it existed, so its Total MAE rests on
+                fewer games than the other two rows.
                 {livePublished?.probability_games ? (
                   <>
                     {" "}

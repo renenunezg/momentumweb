@@ -92,7 +92,8 @@ export function MethodologyContent({ example }: { example: PickExample | null })
           Totals get one extra step: league scoring and pace keep a preseason
           prior that fades with a six-week half-life, and a linear correction
           fitted on 2016 through 2021 pulls extreme totals toward 45. On 2022
-          through 2025 that cut total error from 10.62 to 10.54 points. That
+          through 2025 that trimmed total error by about a hundredth of a
+          point, inside noise. That
           is the model&apos;s own total; the published total then moves
           halfway toward the sportsbook total, as described under Market
           Blend.
@@ -199,15 +200,20 @@ export function MethodologyContent({ example }: { example: PickExample | null })
           selected on 2016 through 2021. Seasons 2022 through 2025 were not used for selection, but I
           have looked at them repeatedly, so I call them retrospective
           validation rather than a clean holdout. The first prospective test
-          is the 2026 season, graded live.
+          is the 2026 season, graded live; its weeks were published by several
+          model versions, and each game is graded on the version published
+          before its kickoff. The historical preseason prior uses each team&apos;s
+          actual week 1 starter as its quarterback for 2016 to 2024, a small
+          hindsight a live run would not have.
         </p>
         <p className={p}>
-          On 2022 through 2025 the blended line runs about a tenth of a point
-          behind the closing spread&apos;s mean absolute error, and the pure
-          model about four tenths behind. Beating the close consistently is
-          rare enough that I would suspect leakage before skill, so the gap is
-          the number I report. Interval coverage on those seasons sits at the
-          nominal rates.
+          On 2022 through 2025 the pure model runs about a third of a point of
+          mean absolute error behind the closing spread. The backtest&apos;s
+          published line used the closing line as half its input, so its own
+          gap is not a forecast result and is not compared. Beating the close
+          consistently is rare enough that I would suspect leakage before
+          skill, so the gap is the number I report. Interval coverage on those
+          seasons sits at the nominal rates.
         </p>
       </Section>
 
@@ -233,9 +239,14 @@ export function MethodologyContent({ example }: { example: PickExample | null })
           offers fill the slate and are recorded as floor predictions.
         </p>
         <p className={p}>
-          Each prediction freezes its exact line, price, book and decision time and
+          Each prediction records its exact line, price, book and decision time and
           settles on that contract: pushes return the stake and moneyline ties
-          are void. The database rejects late insertions and edits. A game
+          are void. A pending prediction can be revised before kickoff only when
+          the expected starting quarterback changes; the database rejects
+          insertions and edits once a game has started. Through October 6, 2026
+          prices were the best of DraftKings, FanDuel and BetMGM from The Odds
+          API; since October 11 they are DraftKings&apos; line as shown on
+          ESPN&apos;s scoreboard, with no book timestamp. A game
           with a missing quote, a stale forecast or an unidentified starting
           quarterback is a No Play, never backfilled. The gate has not been
           tuned on live outcomes, and estimated EV does not establish a real

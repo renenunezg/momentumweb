@@ -42,7 +42,7 @@ export function BacktestKpis({
       <KpiCard
         label="Model closer"
         value={formatPct(overall.modelBeatsMarket)}
-        tooltip="Share of games where the model’s margin was closer to the actual margin than the closing spread. Ties excluded."
+        tooltip="Share of games where the model’s margin was closer to the actual margin than the closing spread. A tie counts as not closer."
       />
     </div>
   );

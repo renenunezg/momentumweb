@@ -384,10 +384,11 @@ export function CfbPlayoffViewer({
             certainty.
           </p>
           <p>
-            Historical selection Brier error was 0.03432 versus 0.03468 for the
-            learned committee model. Lower is better. The comparison covers only
-            two twelve-team seasons; championship odds do not have a separate
-            historical calibration claim.
+            On the 2024 and 2025 twelve-team fields the record-based selector and
+            a learned committee model scored about the same (Brier 0.034 against
+            0.035, each ahead in one season). That was a retrospective comparison
+            on the seasons used to choose the selector; championship odds have no
+            separate historical calibration claim.
           </p>
           <ul className="list-disc space-y-1 pl-5">
             {payload.limitations.map((note) => (

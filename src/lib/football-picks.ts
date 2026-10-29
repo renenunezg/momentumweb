@@ -298,6 +298,10 @@ export function usesKeyNumberSpread(pick: Pick<WeeklyPick, "market" | "policy_ve
   return pick.market === "spreads" && ["cfb-picks-v10", "cfb-picks-v11"].includes(pick.policy_version);
 }
 
+export function usesBlendedTotal(pick: Pick<WeeklyPick, "market" | "policy_version">): boolean {
+  return pick.market === "totals" && ["cfb-picks-v10", "cfb-picks-v11"].includes(pick.policy_version);
+}
+
 export const QUALIFICATION_LABELS: Record<string, string> = {
   edge_qualified: "Edge-qualified",
   exploratory: "Exploratory",

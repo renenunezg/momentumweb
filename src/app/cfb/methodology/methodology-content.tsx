@@ -81,7 +81,7 @@ const flowNodes = [
     labelColor: "text-primary",
     items: [
       { label: "Margin and total", sub: "Bivariate Student-t per game" },
-      { label: "Calibrated intervals", sub: "50/80/95% checked on holdout" },
+      { label: "Calibrated intervals", sub: "50/80/95% checked on 2023 to 2025 validation seasons" },
       { label: "Predictions", sub: "One side per game per market, flat unit" },
       { label: "Supabase publish", sub: "The only interface to this site" },
     ],
@@ -196,8 +196,8 @@ export function MethodologyContent({ example }: { example: PickExample | null })
           <p>
             What the model offers is coverage and calibration. It rates all 266 D1
             teams, including FCS programs the market barely prices, its 50/80/95%
-            intervals were checked on three holdout seasons, and every prediction
-            is frozen before kickoff and graded in public on the{" "}
+            intervals were checked on the 2023 to 2025 validation seasons, and the
+            last decision before kickoff is the one graded in public on the{" "}
             <Link href="/cfb/performance" className="underline underline-offset-2 hover:text-foreground">
               Performance page
             </Link>
@@ -208,11 +208,11 @@ export function MethodologyContent({ example }: { example: PickExample | null })
               { label: "Prediction target", val: "Home margin and game total, joint distribution" },
               { label: "Rating unit", val: "Points per possession, offense and defense per team" },
               { label: "Rating engine", val: "Bayesian linear model blended with a points-only rating" },
-              { label: "Training data", val: "2019–2025 play-by-play; holdout 2023–2025" },
+              { label: "Training data", val: "2019–2025 play-by-play; validation 2023–2025" },
               { label: "Home field", val: "Refit weekly from a 2.5 ± 1.5 point prior" },
               { label: "In-game model", val: "3-parameter Gaussian on the final margin" },
               { label: "Kickoff anchor", val: "Published market-informed line, sd 15.35 points" },
-              { label: "Predictions", val: "Moneyline, spread and total at a flat unit (cfb-picks-v7)" },
+              { label: "Predictions", val: "Moneyline, spread and total at a flat unit (cfb-picks-v11)" },
             ].map(({ label, val }) => (
               <Card key={label} size="sm"><CardContent>
                 <p className="type-eyebrow text-muted-foreground">{label}</p>
@@ -378,9 +378,9 @@ export function MethodologyContent({ example }: { example: PickExample | null })
             The model&apos;s own (pure) margin is half this fit and half a points-only ridge
             rating over every completed game with a final score, including FCS
             games with no play-by-play, carried across seasons with a 9-point
-            prior. On the 2023&ndash;2025 holdout the blend cut margin error by
-            0.19 points on Division I games with a closing line, and the
-            score-only games cut another 0.06. Two frozen corrections come last,
+            prior. On the 2023&ndash;2025 validation seasons the blend cut margin
+            error by about 0.2 points on Division I games with a closing line,
+            and the score-only games by less than a tenth, both inside noise. Two frozen corrections come last,
             fitted on 2020&ndash;2022 and checked on 2023&ndash;2025: a small
             margin adjustment from 14 process features of each team&apos;s earlier
             games, and a 0.8-point reduction to the total.
@@ -576,16 +576,17 @@ export function MethodologyContent({ example }: { example: PickExample | null })
         <div className="space-y-4 text-sm leading-relaxed">
           <p>
             Predictions come from a separate policy, currently{" "}
-            <span className="font-mono">cfb-picks-v7</span>, that selects at most
+            <span className="font-mono">cfb-picks-v11</span>, that selects at most
             one side per game and market, and every edge is measured after
-            shrinking toward the market the prediction is priced against. Spreads are priced from a
-            market-informed margin: the pure margin mixed with a rating fitted to
-            the closing lines of earlier games (weight 0.55 through week 3, 0.35
-            after), then averaged with the consensus spread. Totals use the published total, the
+            shrinking toward the market the prediction is priced against. Spreads
+            blend 20% model and history margin with 80% frozen market margin and
+            apply football key-number weights. Totals use the published total, the
             model total averaged with the sportsbook total. Moneylines keep only 0.2 of the
-            model&apos;s disagreement with the market. Probabilities use the
+            model&apos;s disagreement with the vig-free median market. Probabilities use the
             measured dispersion of results around these lines (15.35 points for
             margin, 15.93 for total), not the pure model&apos;s wider spread.
+            Earlier predictions this season were made under v5, v6 and v7 and keep
+            their rules; the record on the performance page pools them.
           </p>
           <p>
             A prediction needs the priced line at least 2 points beyond the
@@ -599,13 +600,14 @@ export function MethodologyContent({ example }: { example: PickExample | null })
           </p>
           <p>
             Every prediction records the exact line, price, book and decision time, then
-            settles at that frozen contract at a flat one unit, along with the
-            CFBD median closing line and the points by which the prediction beat it. If
-            a newer model version no longer makes an open prediction, the fresh decision
-            replaces it before kickoff; line movement alone never does. The
-            half-market blend improved holdout margin error from 13.28 to 12.31
-            points while the closing line stayed better at 11.99, so it is not
-            independent skill, and the gates have not been tuned on live
+            settles at that contract at a flat one unit, along with the CFBD median
+            closing line. A decision can be replaced until kickoff by a newer model
+            or policy, with the original archived; line movement alone never
+            changes one, and after kickoff the database refuses edits. The price
+            is the best of nine bookmakers in The Odds API feed, several offshore.
+            The half-market blend improved validation-season margin error from
+            13.3 to 12.3 points while the closing line stayed better at 12.0, so
+            it is not independent skill, and the gates have not been tuned on live
             outcomes. Results are on the{" "}
             <Link href="/cfb/performance" className="underline underline-offset-2 hover:text-foreground">
               Performance page
@@ -619,7 +621,7 @@ export function MethodologyContent({ example }: { example: PickExample | null })
       <SectionCard
         id="backtest"
         title="Backtest vs the Closing Line"
-        subtitle="Frozen walk-forward, 2021 to 2025. The market is better, and by a consistent amount."
+        subtitle="June 2026 base model, walk-forward 2021 to 2025. The market is better every season."
       >
         <div className="space-y-4 text-sm leading-relaxed">
           <p>
@@ -654,11 +656,14 @@ export function MethodologyContent({ example }: { example: PickExample | null })
           <p>
             The market wins every season, as expected: the closing line
             aggregates injury news, weather and sharper private models. The table
-            is the frozen walk-forward of the base engine; the later points-only
-            blend trimmed about a quarter point of holdout error and the closing
-            line is still ahead. What the model can claim is calibration: on the
-            untouched 2023&ndash;2025 holdout (2,258 games) the 50/80/95% margin
-            intervals covered 51.6%, 80.1% and 94.2% of outcomes.
+            is the frozen walk-forward of the June 2026 base engine, which was
+            replaced on August 1, 2026; the served model&apos;s own walk-forward
+            will replace it here once published. What the model can claim is
+            calibration: on the 2023&ndash;2025 validation seasons (2,258 games),
+            which were used to compare model revisions and so are not an
+            untouched test, the 50/80/95% margin intervals covered 52%, 80% and
+            94% of outcomes. The only untouched tests are the live 2026 record
+            and the pre-registered 2026 grade endpoint.
           </p>
           <p>
             A backtest describes seasons that already happened, and the portal,
@@ -714,7 +719,7 @@ export function MethodologyContent({ example }: { example: PickExample | null })
             keeps the distribution from collapsing as time expires.
           </p>
           <p>
-            On the 2023&ndash;2025 holdout (400,878 play states across 2,258 games)
+            On the 2023&ndash;2025 seasons held out of this fit (400,878 play states across 2,258 games)
             the model scores 0.4073 log loss and 0.1328 Brier and passes
             calibration checks in every quarter and score-margin bucket. There
             are no momentum or streak features; this is the reference any such
@@ -758,7 +763,7 @@ export function MethodologyContent({ example }: { example: PickExample | null })
             15.445 points: the standard deviation of actual margins around the
             closing spread over 3,794 development-season games. Rescoring the
             frozen baseline on identical play boundaries with only the anchor
-            swapped, on the 2023&ndash;2025 holdout:
+            swapped, on the 2023&ndash;2025 validation seasons:
           </p>
           <Table>
             <TableHeader>
@@ -809,7 +814,7 @@ export function MethodologyContent({ example }: { example: PickExample | null })
       <SectionCard
         id="momentum"
         title="Momentum: Tested and Rejected"
-        subtitle="Two attempts at a momentum layer, both worse on holdout, both shelved"
+        subtitle="Two attempts at a momentum layer, neither better on the validation seasons, both shelved"
       >
         <div className="space-y-4 text-sm leading-relaxed">
           <p>
@@ -822,9 +827,9 @@ export function MethodologyContent({ example }: { example: PickExample | null })
           </p>
           <p>
             Version one used cumulative totals and improved the development
-            seasons by 0.0030 of log loss; on holdout it was worse by 0.0004.
+            seasons by 0.003 of log loss; on the 2023 to 2025 validation seasons it was no better (0.0004 worse, inside noise).
             Version two weighted recent plays with a 120-play half-life and was
-            worse on holdout by 0.0006. My read is that whatever is real in a hot
+            no better on those seasons either (0.0006 worse). My read is that whatever is real in a hot
             streak reaches the scoreboard quickly, and the scoreboard is already
             in the model. Momentum work is paused until I have a structurally
             different formulation.
@@ -921,7 +926,7 @@ export function MethodologyContent({ example }: { example: PickExample | null })
             Because it is Gaussian throughout, the posterior has a closed form:
             what a NUTS sampler does for the MLB model on this site, NumPy linear
             algebra does here. Nothing needs a GPU, every artifact is a parquet
-            file, and added complexity has to win on holdout. So far, momentum
+            file, and added complexity has to win on seasons it was not fit on. So far, momentum
             could not.
           </Notice>
         </div>

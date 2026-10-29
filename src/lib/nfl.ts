@@ -134,7 +134,7 @@ export async function fetchForecastAccuracy(source: "live" | "backtest") {
     overall:
       | (import("@/lib/backtest-metrics").SliceMetrics & { pureMae: number })
       | null;
-    bySeason: import("@/lib/backtest-metrics").SliceMetrics[];
+    bySeason: (import("@/lib/backtest-metrics").SliceMetrics & { pureMae: number })[];
     completed: number;
     missingForecast: number;
     missingClose: number;

@@ -23,6 +23,14 @@ export interface FootballPerformanceCopy {
   // score".
   closingLine: string;
   cadence: string;
+  // Status of the live season, after "<season> season, graded as played".
+  seasonLabel: string;
+  // Which model versions published the live record; the metrics table carries
+  // no version column yet, so this is copy kept in step with the model repo.
+  versions: string;
+  // A segment kind whose rows describe the composition of the headline, shown
+  // under the KPIs so a pooled gap is not read as one population.
+  compositionKind?: string;
   // Segment tables shown in the main section, in order.
   segments: { kind: string; title: string }[];
   // Segment tables folded into the diagnostics disclosure, with its note.
