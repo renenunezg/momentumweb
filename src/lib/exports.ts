@@ -1,4 +1,4 @@
-import { supabase, supabaseCfb, supabaseNfl } from "@/lib/supabase";
+import { supabaseMlbCached, supabaseCfb, supabaseNfl } from "@/lib/supabase";
 import { toPage, type CsvExport } from "@/lib/csv-export";
 
 // The export behind each /api/export route, with the columns a reader needs to
@@ -43,7 +43,7 @@ export const mlbLedgerExport: CsvExport = {
   filename: "mlb-prediction-ledger.csv",
   columns: MLB_LEDGER_COLUMNS,
   page: (from, to) =>
-    toPage(supabase
+    toPage(supabaseMlbCached
       .from("bet_ledger_v")
       .select(MLB_LEDGER_COLUMNS.join(","))
       .order("date", { ascending: true })
@@ -57,7 +57,7 @@ export const mlbPredictionsExport: CsvExport = {
   filename: "mlb-graded-predictions.csv",
   columns: MLB_PREDICTION_COLUMNS,
   page: (from, to) =>
-    toPage(supabase
+    toPage(supabaseMlbCached
       .from("model_outputs_season_unified")
       .select(MLB_PREDICTION_COLUMNS.join(","))
       .order("date", { ascending: true })

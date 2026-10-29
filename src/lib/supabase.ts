@@ -53,6 +53,15 @@ function cachedPublicFetch(sport: string): typeof fetch {
   };
 }
 
+// The CSV exports read MLB tables through the same hour-long tagged cache the
+// football clients use, so a crawler cannot turn CDN misses into repeated
+// full-table reads. The uncached client above stays for the live games page.
+export const supabaseMlbCached = createClient<Database, "mlb">(url, anonKey, {
+  db: { schema: "mlb" },
+  auth: anonAuth("mlb-cached"),
+  global: { fetch: cachedPublicFetch("mlb") },
+});
+
 export const supabaseCfb = createClient<Database, "cfb">(url, anonKey, {
   db: { schema: "cfb" },
   auth: anonAuth("cfb"),
