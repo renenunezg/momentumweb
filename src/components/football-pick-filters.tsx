@@ -119,7 +119,7 @@ export function PickFilters({
           ? "Date range uses kickoff dates (UTC). 7D and 14D include today and the preceding days, including pending games in that window. Future dates appear under All time."
           : "Date range uses the date a decision was recorded (UTC), including pending games."}{" "}
         Choosing a market lists
-        its recommended picks only; No Play decisions appear under All markets.
+        its recommended predictions only; No Play decisions appear under All markets.
       </p>
     </form>
   );

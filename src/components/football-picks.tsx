@@ -52,11 +52,11 @@ export function PickCountNote({
       {market === "all" ? (
         <>
           {count} recorded market decisions.{games} No Play decisions are shown
-          for context and excluded from the pick record and ROI.
+          for context and excluded from the prediction record and ROI.
         </>
       ) : (
         <>
-          {count} recommended {MARKET_LABELS[market].toLowerCase()} picks.
+          {count} recommended {MARKET_LABELS[market].toLowerCase()} predictions.
           {games} No Play decisions are listed under All markets.
         </>
       )}
@@ -93,15 +93,15 @@ export function PickKpis({
       <KpiCard
         label="Net profit"
         value={settled ? `${formatSigned(metric?.profit_units, 2)}u` : missing}
-        sub="Flat 1u per recommended pick"
+        sub="Flat 1u per recommended prediction"
       />
       <KpiCard
         label="ROI"
         value={unavailable ? missing : formatPct(metric?.roi)}
-        tooltip="Profit divided by settled stakes at recorded odds. Includes pushes; excludes pending and void picks."
+        tooltip="Profit divided by settled stakes at recorded odds. Includes pushes; excludes pending and void predictions."
       />
       <KpiCard
-        label="Picks settled"
+        label="Predictions settled"
         value={unavailable ? missing : String(settled)}
         sub={
           unavailable
@@ -112,7 +112,7 @@ export function PickKpis({
       <KpiCard
         label="Average EV"
         value={unavailable ? missing : formatPct(metric?.average_ev)}
-        tooltip="Average expected profit per unit when recommended, including pending picks. A forecast, not realized profit."
+        tooltip="Average expected profit per unit when recommended, including pending predictions. A forecast, not realized profit."
       />
     </div>
   );
@@ -137,7 +137,7 @@ export function PickTable({
         <TableCaption className="sr-only">{caption}</TableCaption>
         <TableHeader>
           <TableRow>
-            <TableHead>Market / pick</TableHead>
+            <TableHead>Market / prediction</TableHead>
             <TableHead className="text-right">Odds</TableHead>
             <TableHead className="hidden text-right sm:table-cell">
               EV
@@ -181,7 +181,7 @@ export function PickTable({
                     </span>
                   </div>
                   {game.policy_version.startsWith("cfb-") && shownPicks > 1 && (
-                    <p className="mt-1 text-xs text-muted-foreground">{shownPicks} shown picks · {shownPicks}u · Shared-game exposure</p>
+                    <p className="mt-1 text-xs text-muted-foreground">{shownPicks} shown predictions · {shownPicks}u · Shared-game exposure</p>
                   )}
                 </th>
               </TableRow>
@@ -347,7 +347,7 @@ export function PickBreakdown({
         <TableHeader>
           <TableRow>
             <TableHead>Segment</TableHead>
-            <TableHead className="text-right">Picks</TableHead>
+            <TableHead className="text-right">Predictions</TableHead>
             <TableHead className="text-right">W-L-P</TableHead>
             <TableHead className="text-right">Win rate</TableHead>
             <TableHead className="text-right">Pending</TableHead>
@@ -411,43 +411,43 @@ export function PickPolicy({
     <div className="space-y-2 text-xs leading-relaxed text-muted-foreground">
       <p>
         One recommended side per game and market. Prices and decisions are
-        frozen when first published. Later forecasts do not rewrite a pick. A
-        changed kickoff voids the original pick.
+        frozen when first published. Later forecasts do not rewrite a prediction. A
+        changed kickoff voids the original prediction.
       </p>
       {sport === "nhl" ? (
         <p>
-          NHL picks v2 prices the published forecast, which blends the model
+          NHL prediction policy v2 prices the published forecast, which blends the model
           halfway with the market. A moneyline is recommended when the
           published win probability beats the posted price&apos;s break-even
           probability by at least 4.5 percentage points with positive
           estimated EV; a total when the published total differs from the
           posted line by at least half a goal. A game without a two-sided
-          price is No Play. Picks through October 9, 2026 (v1) used the model
+          price is No Play. Predictions through October 9, 2026 (v1) used the model
           alone with the spreadsheet&apos;s thresholds of 13 percentage points
           and one goal. Prices come from the NHL&apos;s partner sportsbook
           feed (DraftKings and FanDuel), the better of the two, and must be
-          dated within 24 hours of publication. Each pick risks 1 unit; the
+          dated within 24 hours of publication. Each prediction risks 1 unit; the
           fractional Kelly stake the sheet computed is shown for reference
-          only. A moved, postponed or cancelled game voids its pick; totals
+          only. A moved, postponed or cancelled game voids its prediction; totals
           push on the line; there are no moneyline ties. Estimated EV does not
-          establish a real betting advantage.
+          establish a real advantage over the market.
         </p>
       ) : sport === "nfl" ? (
         <p>
-          NFL picks v5 requires the priced line to sit at least 2.0 points
+          NFL prediction policy v5 requires the priced line to sit at least 2.0 points
           beyond the price&apos;s break-even line, plus positive estimated EV.
           Spreads are priced from the published blended margin, totals from
           the published total, and moneylines from the market margin moved 0.2 of
           the way toward the pure model, with fixed dispersions of 12.82
-          points for margins and 13.28 for totals. If fewer than 5 picks
+          points for margins and 13.28 for totals. If fewer than 5 predictions
           qualify in a week, the highest-edge positive-EV offers are promoted
-          and recorded as volume-floor picks. Each pick risks 1 unit.
+          and recorded as volume-floor predictions. Each prediction risks 1 unit.
           Prices require an opposing quote, an exact kickoff, a verified game
           match, an explicitly configured available bookmaker, and an update
           within one hour. Schedule receipts must be within 24 hours,
           expected-QB depth charts within 48 hours, and the forecast within
           seven days. The underlying QB identity must also be dated within 48
-          hours. Missing source receipts or expected QBs block a pick. Non-QB
+          hours. Missing source receipts or expected QBs block a prediction. Non-QB
           injuries are not modeled and remain flagged; this is not comprehensive
           injury clearance. Confirmed cancellations, postponements, and changed
           kickoffs void the original contract. Unconfirmed missing games stay
@@ -455,27 +455,27 @@ export function PickPolicy({
           stake. Margin probabilities use discrete key-number margins and
           total probabilities use integer scores. Historical calibration is
           diagnostic, not a publication gate. Estimated EV does not establish a
-          real betting advantage. There are no additional exposure caps.
+          real advantage over the market. There are no additional exposure caps.
         </p>
       ) : (
         <p>
-          CFB research picks v11 use fresh paired bookmaker moneylines, remove
-          each book&apos;s vig, and take the median market probability. Its
+          CFB research prediction policy v11 uses fresh paired bookmaker moneylines, removes
+          each book&apos;s vig, and takes the median market probability. Its
           equivalent margin receives 80% weight and the pure model margin 20%;
           the blended margin determines win probability. Moneylines need positive
           estimated EV and at least 2.0 probability-equivalent points of edge;
           they cannot be promoted to fill the weekly quota. Spreads blend 20%
           model/history with 80% frozen market margin and apply development-fitted
           football key-number weights, with 15.35-point dispersion. Totals retain
-          the published 50/50 blend and 15.93-point dispersion. The 15-pick research target
+          the published 50/50 blend and 15.93-point dispersion. The 15-prediction research target
           can promote positive-EV spreads and totals only. Each market is capped
           at half the available exploratory slots, rounded up, after shortlisting.
-          Capped slots stay empty; qualified picks are unchanged. These exploratory picks
-          are labeled and evaluated separately from edge-qualified picks. Each pick records
-          its policy and probability source; earlier picks retain their original
+          Capped slots stay empty; qualified predictions are unchanged. These exploratory predictions
+          are labeled and evaluated separately from edge-qualified predictions. Each prediction records
+          its policy and probability source; earlier predictions retain their original
           rules and prices. Prices need a fresh opposing quote, matching
           kickoff, and verified game identity. Incomplete inputs remain No Play.
-          Each pick uses one research unit. Multiple picks on the same game
+          Each prediction uses one research unit. Multiple predictions on the same game
           have correlated outcomes and their shared exposure is flagged.
           Pushes return the stake and moneyline ties are void. Recommendations
           remain active for research; estimated edges are not validated profits.
@@ -486,7 +486,7 @@ export function PickPolicy({
           ? `Recording began ${new Date(firstDecision).toISOString().slice(0, 10)} for this selection.`
           : "Recommendation recording starts with the first publish after activation."}{" "}
         Earlier forecasts remain in accuracy history and are not counted as past
-        picks.{" "}
+        predictions.{" "}
         <Link
           href={`/${sport}/history?view=accuracy`}
           className="underline underline-offset-4"

@@ -25,9 +25,9 @@ import { pageNumber } from "@/lib/utils";
 
 export const revalidate = 3600;
 export const metadata: Metadata = {
-  title: "NHL Forecast and Pick History",
+  title: "NHL Forecast and Prediction History",
   description:
-    "Every graded NHL forecast with its accuracy and calibration, plus each moneyline and total pick with the side, line and price recorded before puck drop.",
+    "Every graded NHL forecast with its accuracy and calibration, plus each moneyline and total prediction with the side, line and price recorded before puck drop.",
 };
 
 type Params = {
@@ -57,7 +57,7 @@ export default async function HistoryPage({
             </PageDescription>
           </div>
           <Link href="/nhl/history?view=picks" className="text-sm underline underline-offset-4">
-            Pick history
+            Prediction history
           </Link>
         </PageHeader>
         <NhlForecastAccuracy source={source} page="history" />
@@ -83,10 +83,10 @@ export default async function HistoryPage({
     <PageShell>
       <PageHeader>
         <div>
-          <PageTitle>NHL Pick History</PageTitle>
+          <PageTitle>NHL Prediction History</PageTitle>
           <PageDescription>
             The side, line, and price recorded before puck drop, with each
-            pick&apos;s result.
+            prediction&apos;s result.
           </PageDescription>
         </div>
         <Link href="/nhl/history?view=accuracy" className="text-sm underline underline-offset-4">
@@ -104,7 +104,7 @@ export default async function HistoryPage({
       <PickKpis metric={metric} unavailable={history.unavailable} />
       {history.unavailable ? (
         <Notice role="status">
-          Recommendation history is currently unavailable. Forecast history
+          Prediction history is currently unavailable. Forecast history
           remains available.
         </Notice>
       ) : history.rows.length ? (
@@ -117,7 +117,7 @@ export default async function HistoryPage({
         <Notice>
           {market === "all"
             ? "No recorded decisions match this selection. Decisions appear each game-day morning once the season starts."
-            : "No recommended picks match this selection. No Play decisions are listed under All markets."}
+            : "No recommended predictions match this selection. No Play decisions are listed under All markets."}
         </Notice>
       )}
       <PickPolicy sport="nhl" firstDecision={metric?.first_decision_at} />

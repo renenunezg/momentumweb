@@ -80,8 +80,8 @@ export default function NhlLiveProbabilityContent({ gameId, away, home }: {
       </>}
       <p className="border-t border-border pt-3 text-xs leading-relaxed text-muted-foreground">
         Based on the score, time remaining, power plays, and empty nets, anchored on the published pregame
-        expected goals for this game. Overtime and the shootout are an even split. Pregame picks stay fixed;
-        live probabilities do not include live betting odds, goalies, or injuries.{" "}
+        expected goals for this game. Overtime and the shootout are an even split. Pregame predictions stay fixed;
+        live probabilities do not include live sportsbook odds, goalies, or injuries.{" "}
         Fair odds are derived from these probabilities without bookmaker margin.
       </p>
     </div>

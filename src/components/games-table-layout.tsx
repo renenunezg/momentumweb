@@ -43,11 +43,11 @@ export function GamesTableLayout({
           <TableHead className={showTotals ? "text-center" : "text-right"}>Win</TableHead>
           <TableHead className={showTotals ? "text-center" : "text-right"}>Edge</TableHead>
           <TableHead className={showTotals ? "text-center" : "text-right"}>Model / Book</TableHead>
-          <TableHead className={showTotals ? "text-center" : "text-right"}>{showTotals ? "ML pick" : "Play"}</TableHead>
+          <TableHead className={showTotals ? "text-center" : "text-right"}>{showTotals ? "ML prediction" : "Play"}</TableHead>
           {showTotals && (
             <>
               <TableHead className="border-l border-border text-center">Proj. total</TableHead>
-              <TableHead className={showTotals ? "text-center" : "text-right"}>Total pick</TableHead>
+              <TableHead className={showTotals ? "text-center" : "text-right"}>Total prediction</TableHead>
             </>
           )}
         </TableRow>

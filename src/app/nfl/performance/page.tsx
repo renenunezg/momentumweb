@@ -25,7 +25,7 @@ export const revalidate = 3600;
 export const metadata: Metadata = {
   title: "NFL Model Performance",
   description:
-    "Forecast accuracy of the NFL model against the market, plus the record, ROI, and frozen-price results of its recommended moneyline, spread and total picks.",
+    "Forecast accuracy of the NFL model against the market, plus the record, ROI, and frozen-price results of its recommended moneyline, spread and total predictions.",
 };
 
 export default async function PerformancePage({
@@ -79,8 +79,8 @@ export default async function PerformancePage({
             NFL Model Performance
           </PageTitle>
           <PageDescription className="max-w-2xl">
-            How the NFL model&apos;s moneyline, spread and total picks have
-            done: recommended picks, the prices recorded at the time, and graded
+            How the NFL model&apos;s moneyline, spread and total predictions have
+            done: recommended predictions, the prices recorded at the time, and graded
             results.
           </PageDescription>
         </div>
@@ -88,7 +88,7 @@ export default async function PerformancePage({
           href={historyUrl}
           className="text-sm underline underline-offset-4"
         >
-          View pick history
+          View prediction history
         </Link>
       </PageHeader>
       <FootballPerformanceTabs sport="nfl" active="picks" query={query}>
@@ -104,7 +104,7 @@ export default async function PerformancePage({
           <PickKpis metric={metric} unavailable={summary.unavailable} />
           {summary.unavailable ? (
             <Notice role="status">
-              Recommendation results are currently unavailable. Forecast
+              Prediction results are currently unavailable. Forecast
               accuracy remains available in its tab.
             </Notice>
           ) : !metric?.picks ? (

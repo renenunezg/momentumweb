@@ -2,7 +2,7 @@
 
 import { useMemo, useState } from "react";
 import type { ModelEvaluation } from "@/lib/types";
-import { cn } from "@/lib/utils";
+import { formatPct } from "@/lib/utils";
 import {
   LineChart,
   Line,
@@ -10,74 +10,43 @@ import {
   YAxis,
   CartesianGrid,
   Tooltip,
-  Legend,
   ReferenceLine,
   ResponsiveContainer,
 } from "recharts";
 import { V2_CUTOVER_DATE } from "@/lib/constants";
-import {
-  chartAxisProps,
-  chartTooltipStyle,
-  useChartTheme,
-} from "@/lib/chart-theme";
+import { chartAxisProps, chartTooltipStyle, useChartTheme } from "@/lib/chart-theme";
+import { ToggleGroup } from "@/components/toggle-group";
 
-interface AccuracyChartProps {
-  data: ModelEvaluation[];
-}
-
-type SeriesKey = "ml_accuracy" | "run_line_accuracy" | "totals_accuracy" | "total_accuracy";
+type SeriesKey = "total_accuracy" | "ml_accuracy" | "run_line_accuracy" | "totals_accuracy";
 
 interface Series {
   key: SeriesKey;
   correct: keyof ModelEvaluation;
   predictions: keyof ModelEvaluation;
   name: string;
-  token: "chart-1" | "chart-2" | "chart-3" | "chart-4";
-  dashed?: boolean;
 }
 
 const SERIES: Series[] = [
-  {
-    key: "ml_accuracy",
-    correct: "ml_correct",
-    predictions: "ml_predictions",
-    name: "ML Accuracy",
-    token: "chart-1",
-  },
-  {
-    key: "run_line_accuracy",
-    correct: "run_line_correct",
-    predictions: "run_line_predictions",
-    name: "Run Line",
-    token: "chart-2",
-  },
-  {
-    key: "totals_accuracy",
-    correct: "totals_correct",
-    predictions: "totals_predictions",
-    name: "Totals",
-    token: "chart-4",
-  },
-  {
-    key: "total_accuracy",
-    correct: "total_correct",
-    predictions: "total_predictions",
-    name: "Pick Acc",
-    token: "chart-3",
-    dashed: true,
-  },
+  { key: "total_accuracy", correct: "total_correct", predictions: "total_predictions", name: "All predictions" },
+  { key: "ml_accuracy", correct: "ml_correct", predictions: "ml_predictions", name: "Moneyline" },
+  { key: "run_line_accuracy", correct: "run_line_correct", predictions: "run_line_predictions", name: "Run line" },
+  { key: "totals_accuracy", correct: "totals_correct", predictions: "totals_predictions", name: "Totals" },
 ];
 
-const WINDOWS = [7, 14, 30] as const;
-type WindowDays = (typeof WINDOWS)[number];
+const WINDOWS = [
+  { key: "7", label: "7 days" },
+  { key: "14", label: "14 days" },
+  { key: "30", label: "30 days" },
+] as const;
+type WindowKey = (typeof WINDOWS)[number]["key"];
+
+type Point = Record<string, string | number | null>;
+
+const MIN_WINDOW_PREDICTIONS = 20;
 
 function formatDateLabel(dateStr: string) {
   const date = new Date(dateStr + "T00:00:00");
-  return date.toLocaleDateString("en-US", { month: "short", day: "2-digit" });
-}
-
-function formatPercent(value: number) {
-  return `${(value * 100).toFixed(0)}%`;
+  return date.toLocaleDateString("en-US", { month: "short", day: "numeric" });
 }
 
 function count(row: ModelEvaluation, field: keyof ModelEvaluation): number {
@@ -90,12 +59,14 @@ function count(row: ModelEvaluation, field: keyof ModelEvaluation): number {
  *
  * A mean of daily rates would weight a two-game day the same as a fifteen-game
  * day, so each point is sum(correct) / sum(predictions) across the window.
- * Points before the window is fully populated are left null rather than shown
- * on a partial denominator.
+ * Points before the window is fully populated, or with fewer than
+ * MIN_WINDOW_PREDICTIONS behind them, are left null rather than shown: late in
+ * the season a market can go days with a handful of predictions, and a 0-for-2
+ * window would draw as a collapse to 0%.
  */
-function rollingAccuracy(data: ModelEvaluation[], windowDays: WindowDays) {
+function rollingAccuracy(data: ModelEvaluation[], windowDays: number): Point[] {
   return data.map((row, i) => {
-    const point: Record<string, string | number | null> = { date: row.date };
+    const point: Point = { date: row.date };
     if (i < windowDays - 1) {
       for (const series of SERIES) point[series.key] = null;
       return point;
@@ -108,144 +79,109 @@ function rollingAccuracy(data: ModelEvaluation[], windowDays: WindowDays) {
         correct += count(day, series.correct);
         predictions += count(day, series.predictions);
       }
-      point[series.key] = predictions > 0 ? correct / predictions : null;
+      point[series.key] = predictions >= MIN_WINDOW_PREDICTIONS ? correct / predictions : null;
     }
     return point;
   });
 }
 
 /**
- * Pooled accuracy sits in a narrow band well inside [0, 1], so a fixed
- * full-range axis flattens every series. Fit the axis to the data instead,
- * padded and always including the 0.5 coin-flip baseline.
+ * One axis for every panel, so a market that looks higher is higher. Pooled
+ * accuracy sits in a narrow band, so the axis fits the data (always including
+ * the 50% coin flip) and snaps outward to 5% steps.
  */
-function accuracyDomain(
-  points: Record<string, string | number | null>[],
-): [number, number] {
+function sharedDomain(points: Point[]): [number, number] {
   const values = points.flatMap((point) =>
     SERIES.map((series) => point[series.key]).filter(
-      (value): value is number =>
-        typeof value === "number" && Number.isFinite(value),
+      (value): value is number => typeof value === "number" && Number.isFinite(value),
     ),
   );
   if (values.length === 0) return [0.3, 0.7];
-  const min = Math.min(...values, 0.5);
-  const max = Math.max(...values, 0.5);
-  const pad = Math.max((max - min) * 0.15, 0.02);
-  // Snap outward to 5% steps so the axis lands on round ticks.
   const step = 0.05;
   return [
-    Math.max(0, Math.floor((min - pad) / step) * step),
-    Math.min(1, Math.ceil((max + pad) / step) * step),
+    Math.max(0, Math.floor((Math.min(...values, 0.5) - 0.02) / step) * step),
+    Math.min(1, Math.ceil((Math.max(...values, 0.5) + 0.02) / step) * step),
   ];
 }
 
-export function AccuracyChart({ data }: AccuracyChartProps) {
+// Small multiples: one market per panel on a shared axis, each with its
+// season-to-date record, instead of four tangled lines on one plot.
+export function AccuracyChart({ data }: { data: ModelEvaluation[] }) {
   const theme = useChartTheme();
   const axis = chartAxisProps(theme);
-  const [windowDays, setWindow] = useState<WindowDays>(14);
+  const [windowKey, setWindowKey] = useState<WindowKey>("14");
+  const windowDays = Number(windowKey);
   const points = useMemo(() => rollingAccuracy(data, windowDays), [data, windowDays]);
-  const domain = accuracyDomain(points);
-  const range =
-    data.length > 0
-      ? `, ${formatDateLabel(data[0].date)} to ${formatDateLabel(data[data.length - 1].date)}`
-      : "";
-  const [isolated, setIsolated] = useState<SeriesKey | null>(null);
-  const isHidden = (key: SeriesKey) => isolated !== null && isolated !== key;
-  const handleLegendClick = (entry: { dataKey?: string | number | ((obj: unknown) => unknown) }) => {
-    const key = typeof entry.dataKey === "string" ? (entry.dataKey as SeriesKey) : null;
-    if (!key) return;
-    setIsolated((prev) => (prev === key ? null : key));
-  };
+  const domain = sharedDomain(points);
+  const ticks = [domain[0], 0.5, domain[1]].filter((t, i, all) => all.indexOf(t) === i);
+  const showCutover = data.some((d) => d.date <= V2_CUTOVER_DATE) && data.some((d) => d.date > V2_CUTOVER_DATE);
 
   return (
-    <div>
-      <div className="mb-3 flex flex-wrap items-baseline justify-between gap-x-4 gap-y-2">
-        <p className="text-xs text-muted-foreground">
-          Pooled over a trailing {windowDays}-day window: correct picks divided
-          by picks made, not an average of daily rates.
+    <div className="space-y-4">
+      <div className="flex flex-wrap items-center justify-between gap-3">
+        <p className="type-meta text-muted-foreground">
+          Trailing {windowDays}-day accuracy, pooled across the window and shown once at least {MIN_WINDOW_PREDICTIONS} predictions back it. The dashed line at 50% is a coin flip.
         </p>
-        <div className="flex items-center gap-1">
-          {WINDOWS.map((option) => (
-            <button
-              key={option}
-              type="button"
-              onClick={() => setWindow(option)}
-              aria-pressed={windowDays === option}
-              className={cn(
-                "type-eyebrow px-2 py-1 transition-colors",
-                windowDays === option
-                  ? "text-primary underline underline-offset-4"
-                  : "text-muted-foreground hover:text-foreground"
-              )}
-            >
-              {option}d
-            </button>
-          ))}
-        </div>
+        <ToggleGroup label="Window" options={WINDOWS} value={windowKey} onChange={setWindowKey} variant="pill" />
       </div>
-      <div
-        role="img"
-        aria-label={`Rolling ${windowDays}-day accuracy for moneyline, run line, totals, and overall picks by day${range}`}
-      >
-      <ResponsiveContainer width="100%" height={400}>
-        <LineChart
-          data={points}
-          margin={{ top: 8, right: 16, left: 8, bottom: 8 }}
-        >
-        <CartesianGrid
-          vertical={false}
-          stroke={theme.grid}
-          strokeWidth={1}
-        />
-        <XAxis dataKey="date" tickFormatter={formatDateLabel} {...axis} />
-        <YAxis domain={domain} tickFormatter={formatPercent} {...axis} />
-        <Tooltip
-          formatter={(value) => formatPercent(Number(value))}
-          labelFormatter={(label) => formatDateLabel(String(label))}
-          cursor={{ stroke: theme.border, strokeWidth: 1 }}
-          contentStyle={chartTooltipStyle(theme)}
-        />
-        <Legend
-          wrapperStyle={{ fontFamily: "var(--font-sans)", fontSize: "11px", cursor: "pointer" }}
-          onClick={handleLegendClick}
-        />
-        {/* Coin-flip baseline: the number every accuracy series is judged against. */}
-        <ReferenceLine
-          y={0.5}
-          stroke={theme["muted-foreground"]}
-          strokeWidth={1}
-        />
-        <ReferenceLine
-          x={V2_CUTOVER_DATE}
-          stroke={theme["muted-foreground"]}
-          strokeDasharray="4 2"
-          label={{
-            value: "v2",
-            position: "insideTopRight",
-            fill: theme["muted-foreground"],
-            fontSize: 10,
-            fontFamily: "var(--font-sans)",
-          }}
-        />
-        {SERIES.map((series) => (
-          <Line
-            key={series.key}
-            type="monotone"
-            dataKey={series.key}
-            name={series.name}
-            stroke={theme[series.token]}
-            strokeWidth={1.5}
-            strokeDasharray={series.dashed ? "4 2" : undefined}
-            dot={false}
-            activeDot={{ r: 3 }}
-            connectNulls={false}
-            hide={isHidden(series.key)}
-          />
-        ))}
-        </LineChart>
-      </ResponsiveContainer>
+      <div className="grid gap-x-6 gap-y-5 sm:grid-cols-2 lg:grid-cols-4">
+        {SERIES.map((series) => {
+          let correct = 0;
+          let predictions = 0;
+          for (const day of data) {
+            correct += count(day, series.correct);
+            predictions += count(day, series.predictions);
+          }
+          return (
+            <figure key={series.key} className="min-w-0">
+              <figcaption className="flex items-baseline justify-between gap-2">
+                <span className="type-label font-semibold">{series.name}</span>
+                <span className="tabular-nums">
+                  <span className="type-subsection">{predictions > 0 ? formatPct(correct / predictions, 1) : "–"}</span>
+                  <span className="ml-1.5 type-meta text-muted-foreground">
+                    {correct}/{predictions}
+                  </span>
+                </span>
+              </figcaption>
+              <div
+                role="img"
+                aria-label={`${series.name}: trailing ${windowDays}-day accuracy by day, ${predictions > 0 ? formatPct(correct / predictions, 1) : "no"} correct over the season`}
+              >
+                <ResponsiveContainer width="100%" height={150}>
+                  <LineChart data={points} margin={{ top: 8, right: 4, left: 0, bottom: 0 }}>
+                    <CartesianGrid vertical={false} stroke={theme.grid} strokeWidth={1} />
+                    <XAxis dataKey="date" tickFormatter={formatDateLabel} minTickGap={40} {...axis} />
+                    <YAxis domain={domain} ticks={ticks} tickFormatter={(v) => formatPct(Number(v), 0)} width={40} {...axis} />
+                    <Tooltip
+                      formatter={(value) => [formatPct(Number(value), 1), series.name]}
+                      labelFormatter={(label) => formatDateLabel(String(label))}
+                      cursor={{ stroke: theme.border, strokeWidth: 1 }}
+                      contentStyle={chartTooltipStyle(theme)}
+                    />
+                    <ReferenceLine y={0.5} stroke={theme["chart-comparison"]} strokeDasharray="6 4" strokeWidth={1} />
+                    {showCutover && (
+                      <ReferenceLine x={V2_CUTOVER_DATE} stroke={theme.border} strokeWidth={1} />
+                    )}
+                    <Line
+                      type="monotone"
+                      dataKey={series.key}
+                      stroke={theme["chart-primary"]}
+                      strokeWidth={2}
+                      dot={false}
+                      activeDot={{ r: 4 }}
+                      connectNulls={false}
+                      isAnimationActive={false}
+                    />
+                  </LineChart>
+                </ResponsiveContainer>
+              </div>
+            </figure>
+          );
+        })}
       </div>
+      {showCutover && (
+        <p className="type-meta text-muted-foreground">The thin vertical line marks the switch to the v2 model.</p>
+      )}
     </div>
   );
 }

@@ -277,7 +277,7 @@ export function FootballForecastPerformance({
                 its own. Coverage is the share of results inside each
                 source&apos;s 50, 80, and 90 percent intervals: the pure
                 model&apos;s frozen ones, and for the published line the
-                dispersion picks are priced with. The published total is graded
+                dispersion predictions are priced with. The published total is graded
                 only for games published since it existed.
                 {livePublished?.probability_games ? (
                   <>

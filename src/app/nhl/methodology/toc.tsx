@@ -9,7 +9,7 @@ const sections = [
   { id: "goal-map", label: "Goal Map" },
   { id: "matchup", label: "Ratings and Matchup" },
   { id: "market", label: "Market Blend" },
-  { id: "picks", label: "Pricing and Picks" },
+  { id: "picks", label: "Pricing and Predictions" },
   { id: "backtest", label: "Backtest" },
   { id: "limits", label: "Limits" },
   { id: "stack", label: "Tech Stack" },

@@ -103,7 +103,7 @@ export default async function NflForecastHistory({
         href="/nfl/history?view=picks"
         className="text-sm underline underline-offset-4"
       >
-        Pick history
+        Prediction history
       </Link>
 
       <SeasonLinks

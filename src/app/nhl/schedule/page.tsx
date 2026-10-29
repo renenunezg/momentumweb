@@ -94,7 +94,7 @@ export default async function SchedulePage() {
       <p className="max-w-4xl text-sm leading-relaxed text-muted-foreground">
         Projections use the ratings as of the morning run. The partner
         sportsbooks post lines only for the current slate, so book columns fill
-        in on game day and picks are decided then.
+        in on game day and predictions are decided then.
       </p>
       <LocalKickoffs>
         <Table>

@@ -274,8 +274,8 @@ export default async function SchedulePage() {
 
       <p className="max-w-4xl text-xs text-muted-foreground">
         Proj score is away&ndash;home expected points. Diff is model line minus
-        market line. Market total is the consensus total when the total pick
-        was decided, and nothing here is betting advice. QB marks a projected
+        market line. Market total is the consensus total when the total prediction
+        was decided, and nothing here is wagering advice. QB marks a projected
         starter whose value differs meaningfully from the QB play baked into
         the team&apos;s rating; N marks a neutral site.
       </p>

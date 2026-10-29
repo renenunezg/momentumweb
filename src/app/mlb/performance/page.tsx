@@ -17,7 +17,7 @@ export const revalidate = 3600;
 export const metadata: Metadata = {
   title: "MLB Model Performance",
   description:
-    "Calibration, Brier score, and betting ROI of the MLB model's win probabilities and run totals against the closing line, updated nightly.",
+    "Calibration, Brier score, and prediction ROI of the MLB model's win probabilities and run totals against the closing line, plus how the player grades rank later production. Updated nightly.",
 };
 
 export default async function PerformancePage() {
@@ -53,7 +53,7 @@ export default async function PerformancePage() {
       .order("refit_date", { ascending: false })
       .limit(20),
     fetchFullBetLedger().catch((error: unknown) => {
-      console.error("MLB betting ledger unavailable:", error instanceof Error ? error.message : "read failed");
+      console.error("MLB prediction ledger unavailable:", error instanceof Error ? error.message : "read failed");
       return null;
     }),
   ]);
@@ -118,12 +118,10 @@ export default async function PerformancePage() {
           schedule="Updates nightly ~midnight PT"
         />
       </PageHeader>
-      <p className="max-w-4xl text-sm text-muted-foreground leading-relaxed">
-        How the MLB model&apos;s win probabilities and run totals have held
-        up: calibration, Brier score, and betting results against the closing
-        line, scored overnight after every game.
+      <p className="max-w-3xl type-body text-muted-foreground">
+        How the MLB model&apos;s win probabilities and run totals have held up,
+        scored overnight after every game.
       </p>
-      {ledger === null && <p role="status" className="text-sm text-muted-foreground">Betting results are temporarily unavailable.</p>}
       <PerformanceTabs
         evaluations={evaluations}
         calibration={calibration}
@@ -131,8 +129,8 @@ export default async function PerformancePage() {
         residuals={residuals}
         posteriorSigmas={posteriorSigmas}
         liveKpis={liveKpis}
+        players={<PlayerModelPerformance sport="mlb" />}
       />
-      <PlayerModelPerformance sport="mlb" />
     </PageShell>
   );
 }

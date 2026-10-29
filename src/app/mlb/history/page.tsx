@@ -24,7 +24,7 @@ export const revalidate = 3600;
 export const metadata: Metadata = {
   title: "MLB Prediction History",
   description:
-    "Every MLB prediction this season next to the final score: moneyline, run line, and total picks frozen before first pitch, with results by team and date.",
+    "Every MLB prediction this season next to the final score: moneyline, run line, and total predictions frozen before first pitch, with results by team and date.",
 };
 const PAGE_SIZE = 50;
 
@@ -230,7 +230,7 @@ export default async function HistoryPage({
 
       <p className="max-w-4xl text-sm text-muted-foreground leading-relaxed">
         Every MLB prediction this season next to the final score: the
-        moneyline, run line, and total picks frozen before first pitch and
+        moneyline, run line, and total predictions frozen before first pitch and
         how each one graded.
       </p>
 
@@ -444,7 +444,7 @@ export default async function HistoryPage({
           <div className="flex items-center justify-between pt-2">
             <p className="text-sm text-muted-foreground">
               Showing {offset + 1}-{Math.min(offset + PAGE_SIZE, totalRows)} of{" "}
-              {totalRows} {sidePick ? "picks" : "rows"}
+              {totalRows} {sidePick ? "predictions" : "rows"}
             </p>
             <div className="flex items-center gap-2">
               {page > 1 ? (

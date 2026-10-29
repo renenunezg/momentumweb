@@ -18,7 +18,7 @@ export const dynamic = "force-dynamic";
 export const metadata: Metadata = {
   title: "MLB Predictions Today",
   description:
-    "Today's MLB win probabilities, projected run totals, and model picks from a hierarchical Bayesian simulation of every plate appearance, refreshed each morning and graded against the closing line.",
+    "Today's MLB win probabilities, projected run totals, and model predictions from a hierarchical Bayesian simulation of every plate appearance, refreshed each morning and graded against the closing line.",
 };
 
 async function fetchLiveScores(): Promise<Map<number, LiveScore>> {
@@ -182,9 +182,9 @@ export default async function Page() {
       </PageHeader>
 
       <p className="max-w-4xl text-sm text-muted-foreground leading-relaxed">
-        Win probabilities, projected run totals, and picks for every MLB game
+        Win probabilities, projected run totals, and predictions for every MLB game
         today, from a Bayesian model that simulates each plate appearance.
-        Picks freeze at first pitch and are graded against the closing line.
+        Predictions freeze at first pitch and are graded against the closing line.
       </p>
 
       {outputsError || gamesError ? (

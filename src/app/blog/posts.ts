@@ -43,13 +43,13 @@ First was teaching the simulator about ground-ball matchups. When the sim record
 
 Second was bumping the number of posterior draws. v2 samples K=30 random posterior realizations per game and concatenates the resulting run distributions, and I figured more draws would widen the band. The opposite happened, because more draws pulls each game closer to its posterior mean rather than away from it. Variance got worse, ended up at -6.3%, and I reverted it.
 
-Third was weather, and this is the one I was actually excited about going in. Every sharp will tell you wind and temperature are the biggest unpriced inputs in baseball, so I built the whole thing out, pulling per-game temp/wind from the MLB Stats API live feed (the official scorer records it in the boxscore weather block) and fitting coefficients on 363k PAs with park, batter-rate, and pitcher-rate controls. Wind blowing out lifted HR rate, warm air lifted HR and 2B, and the coefficients came out clean and significant (HR-wind +0.0105, p<.001; HR-temp +0.0103, p<.001). I wired it into the simulator and reran the backtest. Moneyline ticked up a hair, totals cratered. On a 16-day window they went from -19% to -41%, which is too small a window to mean much by itself (39 bets), but on the full window weather's effect on totals was essentially zero anyway, -19.0% vs -18.2%. The most physically motivated input I had did nothing for the actual problem.
+Third was weather, and this is the one I was actually excited about going in. Every sharp will tell you wind and temperature are the biggest unpriced inputs in baseball, so I built the whole thing out, pulling per-game temp/wind from the MLB Stats API live feed (the official scorer records it in the boxscore weather block) and fitting coefficients on 363k PAs with park, batter-rate, and pitcher-rate controls. Wind blowing out lifted HR rate, warm air lifted HR and 2B, and the coefficients came out clean and significant (HR-wind +0.0105, p<.001; HR-temp +0.0103, p<.001). I wired it into the simulator and reran the backtest. Moneyline ticked up a hair, totals cratered. On a 16-day window they went from -19% to -41%, which is too small a window to mean much by itself (39 predictions), but on the full window weather's effect on totals was essentially zero anyway, -19.0% vs -18.2%. The most physically motivated input I had did nothing for the actual problem.
 
-That's three serious attempts from inside the same modeling frame, and none of them moved the number. The thing that finally made the situation clear was the edge-bucket diagnostic, where you grade every candidate bet by the model's edge and bucket the outcomes. ML and RL come out cleanly edge-monotonic, meaning more model edge correlates with more ROI, exactly the shape you'd want from a working model. Totals don't do that at all. Every bucket loses, and there's no relationship between the model's edge and the actual outcome. That isn't a threshold problem and it isn't a selection problem, it's the run distribution being structurally wrong for the totals market.
+That's three serious attempts from inside the same modeling frame, and none of them moved the number. The thing that finally made the situation clear was the edge-bucket diagnostic, where you grade every candidate prediction by the model's edge and bucket the outcomes. ML and RL come out cleanly edge-monotonic, meaning more model edge correlates with more ROI, exactly the shape you'd want from a working model. Totals don't do that at all. Every bucket loses, and there's no relationship between the model's edge and the actual outcome. That isn't a threshold problem and it isn't a selection problem, it's the run distribution being structurally wrong for the totals market.
 
 Which brings me to the question I probably should have been asking earlier, which is whether modeling totals as a mathematical distribution over expected runs is just inherently the wrong frame for that market. Maybe totals needs its own isolated model rather than a derivation off the same engine that prices the other two. Or maybe the deeper issue is that baseball's run distribution is too clustered, too sequence-dependent, too random for any aggregate-runs approach to find a real edge on a totals book in the first place. A 2.4-run MAE on game totals is a fine baseball number in the abstract, but it's useless for a market set at 8.5 where the line moves on half a run and you're off by five times that.
 
-I don't have an answer yet. Totals are off for now, \`TOTALS_ENABLED = False\`, one boolean in \`backend/strategy.py\`, and they stay off until I can actually point at a reason to believe a fix worked, instead of squinting at a 39-bet window and hoping.`,
+I don't have an answer yet. Totals are off for now, \`TOTALS_ENABLED = False\`, one boolean in \`backend/strategy.py\`, and they stay off until I can actually point at a reason to believe a fix worked, instead of squinting at a 39-prediction window and hoping.`,
   },
   {
     slug: "v2-coming",
@@ -74,11 +74,11 @@ After a bit of research this brought me to isotonic regression, since it maps pr
 
 I later regretted this decision somewhat, since isotonic regression can overfit aggressively on smaller samples.
 
-After testing on the first month of the season and evaluating against sharp betting markets, the initial betting results looked encouraging:
+After testing on the first month of the season and evaluating against sharp sportsbook markets, the initial prediction results looked encouraging:
 
 ![Accuracy over time](/blog/accuracy_over_time.png)
 
-ROI was positive across several betting segments, particularly underdogs and run lines:
+ROI was positive across several segments, particularly underdogs and run lines:
 
 | Category | ROI | Record |
 |----------|-----|--------|
@@ -88,11 +88,11 @@ ROI was positive across several betting segments, particularly underdogs and run
 | Overs | -1.6% | 43-47 |
 | Unders | -23.2% | 28-41 |
 
-**Average line on underdog bets: +111**
+**Average line on underdog predictions: +111**
 
 ![ROI by segment](/blog/roi_by_segment.png)
 
-However, betting performance over a one-month sample is extremely noisy and easy to misinterpret. Positive ROI alone does not necessarily imply that the underlying probability estimates are strong.
+However, prediction results over a one-month sample are extremely noisy and easy to misinterpret. Positive ROI alone does not necessarily imply that the underlying probability estimates are strong.
 
 The more important story appeared in the probability performance metrics themselves.
 
@@ -100,11 +100,11 @@ The more important story appeared in the probability performance metrics themsel
 
 ![MAE over time](/blog/mae_over_time.png)
 
-Despite some positive betting outcomes, the model's probability predictions were only marginally better than random.
+Despite some positive prediction results, the model's probability predictions were only marginally better than random.
 
 Brier score, which measures calibration quality, suggested that the model outputs were only negligibly better than coin-flip probabilities. Meanwhile, MAE settled around 2.4 runs of average error, which is a respectable baseline for baseball scoring prediction.
 
-The real issue wasn't the 2.4 runs of MAE on its own. It was that the whole setup is locked to a point estimate, so even when the model picks the right side of a bet, it has nothing to say about how the run distribution is actually shaped. That matters most on totals, where the line is asking a distributional question and a single number can't answer it.
+The real issue wasn't the 2.4 runs of MAE on its own. It was that the whole setup is locked to a point estimate, so even when the model predicts the right side of a line, it has nothing to say about how the run distribution is actually shaped. That matters most on totals, where the line is asking a distributional question and a single number can't answer it.
 
 That realization pushed me toward a simulation-based Bayesian framework for v2.
 

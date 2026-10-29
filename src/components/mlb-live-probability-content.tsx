@@ -71,7 +71,7 @@ export default function LiveProbabilityContent({ gamePk, away, home }: { gamePk:
       </>}
       <p className="border-t border-border pt-3 text-xs leading-relaxed text-muted-foreground">
         Based on score, inning, runners, outs, and count using league-average teams.
-        Pregame picks stay fixed; live probabilities do not include team strength or betting odds.
+        Pregame predictions stay fixed; live probabilities do not include team strength or sportsbook odds.
         Fair odds are derived from these probabilities without bookmaker margin.
       </p>
     </div>

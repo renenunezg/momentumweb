@@ -21,7 +21,7 @@ export const dynamic = "force-dynamic";
 export const metadata: Metadata = {
   title: "NHL Predictions Today",
   description:
-    "Today's NHL win probabilities, expected goals, fair prices against the partner sportsbooks, and model picks, with live scores.",
+    "Today's NHL win probabilities, expected goals, fair prices against the partner sportsbooks, and model predictions, with live scores.",
 };
 
 async function fetchLiveScores(date: string): Promise<Map<string, NhlLiveGame>> {
@@ -134,9 +134,9 @@ export default async function Page({
         />
       </PageHeader>
       <p className="max-w-4xl text-sm leading-relaxed text-muted-foreground">
-        Win probabilities, expected goals, and picks for every NHL game today,
+        Win probabilities, expected goals, and predictions for every NHL game today,
         from a Poisson model. Model and partner-book prices are shown side by
-        side. Picks retain their frozen prices from publication.
+        side. Predictions retain their frozen prices from publication.
       </p>
       <SlateSummary stats={[
         { label: "Games", value: matchups.length },
@@ -160,7 +160,7 @@ export default async function Page({
       {hasCorroboratedPicks && (
         <Notice>
           Both teams&apos; book prices and edges use verified pregame quotes from
-          the forecast time. Picks retain their published prices. &quot;No quote&quot;
+          the forecast time. Predictions retain their published prices. &quot;No quote&quot;
           means no verified pregame price is available for that team.
         </Notice>
       )}

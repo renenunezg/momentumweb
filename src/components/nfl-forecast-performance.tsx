@@ -18,7 +18,7 @@ const COPY = {
   ],
   diagnostics: {
     note:
-      "These explain forecast error, not betting records. QB adjustment is the larger of the two teams' expected-starter adjustments the model applied before kickoff, so it separates games where the model priced a quarterback change from games where it did not. Projected winning margin is the absolute model margin: under 3 means the model expects either team to win by fewer than 3 points, regardless of the sportsbook line. Favorite, underdog, over and under pick records are in Recommendations.",
+      "These explain forecast error, not prediction results. QB adjustment is the larger of the two teams' expected-starter adjustments the model applied before kickoff, so it separates games where the model priced a quarterback change from games where it did not. Projected winning margin is the absolute model margin: under 3 means the model expects either team to win by fewer than 3 points, regardless of the sportsbook line. Favorite, underdog, over and under prediction records are in Prediction results.",
     segments: [
       { kind: "qb_adjustment", title: "By QB adjustment (points)" },
       {

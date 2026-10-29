@@ -23,11 +23,14 @@ interface MetricLineChartProps {
   dataKey: keyof ModelEvaluation;
   name: string;
   formatter?: (value: number) => string;
+  // A dashed comparison line the metric is judged against (a coin flip's Brier).
+  baseline?: number;
+  height?: number;
 }
 
 function formatDateLabel(dateStr: string) {
   const date = new Date(dateStr + "T00:00:00");
-  return date.toLocaleDateString("en-US", { month: "short", day: "2-digit" });
+  return date.toLocaleDateString("en-US", { month: "short", day: "numeric" });
 }
 
 export function MetricLineChart({
@@ -35,6 +38,8 @@ export function MetricLineChart({
   dataKey,
   name,
   formatter = (v: number) => v.toFixed(3),
+  baseline,
+  height = 220,
 }: MetricLineChartProps) {
   const theme = useChartTheme();
   const axis = chartAxisProps(theme);
@@ -45,37 +50,30 @@ export function MetricLineChart({
 
   return (
     <div role="img" aria-label={`${name} by day${range}`}>
-    <ResponsiveContainer width="100%" height={300}>
-      <LineChart data={data} margin={{ top: 8, right: 16, left: 8, bottom: 8 }}>
+    <ResponsiveContainer width="100%" height={height}>
+      <LineChart data={data} margin={{ top: 8, right: 4, left: -8, bottom: 0 }}>
         <CartesianGrid vertical={false} stroke={theme.grid} strokeWidth={1} />
-        <XAxis dataKey="date" tickFormatter={formatDateLabel} {...axis} />
-        <YAxis tickFormatter={(v: number) => formatter(v)} {...axis} />
+        <XAxis dataKey="date" tickFormatter={formatDateLabel} minTickGap={40} {...axis} />
+        <YAxis tickFormatter={(v: number) => formatter(v)} width={48} {...axis} />
         <Tooltip
           formatter={(value) => formatter(Number(value))}
           labelFormatter={(label) => formatDateLabel(String(label))}
           cursor={{ stroke: theme.border, strokeWidth: 1 }}
           contentStyle={chartTooltipStyle(theme)}
         />
-        <ReferenceLine
-          x={V2_CUTOVER_DATE}
-          stroke={theme["muted-foreground"]}
-          strokeDasharray="4 2"
-          label={{
-            value: "v2",
-            position: "insideTopRight",
-            fill: theme["muted-foreground"],
-            fontSize: 10,
-            fontFamily: "var(--font-sans)",
-          }}
-        />
+        <ReferenceLine x={V2_CUTOVER_DATE} stroke={theme.border} strokeWidth={1} />
+        {baseline != null && (
+          <ReferenceLine y={baseline} stroke={theme["chart-comparison"]} strokeDasharray="6 4" strokeWidth={1} />
+        )}
         <Line
           type="monotone"
           dataKey={dataKey as string}
           name={name}
-          stroke={theme["chart-1"]}
-          strokeWidth={1.5}
+          stroke={theme["chart-primary"]}
+          strokeWidth={2}
           dot={false}
-          activeDot={{ r: 3 }}
+          activeDot={{ r: 4 }}
+          isAnimationActive={false}
         />
       </LineChart>
     </ResponsiveContainer>

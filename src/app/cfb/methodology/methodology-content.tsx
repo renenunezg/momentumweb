@@ -82,7 +82,7 @@ const flowNodes = [
     items: [
       { label: "Margin and total", sub: "Bivariate Student-t per game" },
       { label: "Calibrated intervals", sub: "50/80/95% checked on holdout" },
-      { label: "Picks", sub: "One side per game per market, flat unit" },
+      { label: "Predictions", sub: "One side per game per market, flat unit" },
       { label: "Supabase publish", sub: "The only interface to this site" },
     ],
   },
@@ -189,7 +189,7 @@ export function MethodologyContent({ example }: { example: PickExample | null })
             Across 3,853 backtested games from 2021 through 2025 its average margin
             error is 13.40 points against the closing line&apos;s 12.14, and the
             market wins every season. So the published line, total and scores
-            are blended halfway to the market, picks are priced from those
+            are blended halfway to the market, predictions are priced from those
             market-informed numbers, and the in-game model anchors on the
             published line instead of the pure model&apos;s number.
           </p>
@@ -212,7 +212,7 @@ export function MethodologyContent({ example }: { example: PickExample | null })
               { label: "Home field", val: "Refit weekly from a 2.5 ± 1.5 point prior" },
               { label: "In-game model", val: "3-parameter Gaussian on the final margin" },
               { label: "Kickoff anchor", val: "Published market-informed line, sd 15.35 points" },
-              { label: "Picks", val: "Moneyline, spread and total at a flat unit (cfb-picks-v7)" },
+              { label: "Predictions", val: "Moneyline, spread and total at a flat unit (cfb-picks-v7)" },
             ].map(({ label, val }) => (
               <Card key={label} size="sm"><CardContent>
                 <p className="type-eyebrow text-muted-foreground">{label}</p>
@@ -226,14 +226,14 @@ export function MethodologyContent({ example }: { example: PickExample | null })
       {/* Example pick */}
       <SectionCard
         id="example"
-        title="Example: How a Pick Is Priced"
-        subtitle="The next recommended pick on the slate, rebuilt from its frozen row"
+        title="Example: How a Prediction Is Priced"
+        subtitle="The next recommended prediction on the slate, rebuilt from its frozen row"
       >
         {example ? (
           <FootballPickExample example={example} />
         ) : (
           <p className="text-sm text-muted-foreground">
-            No recommended pick is stored yet. This fills in once the weekly
+            No recommended prediction is stored yet. This fills in once the weekly
             update publishes a slate with a qualifying edge.
           </p>
         )}
@@ -561,7 +561,7 @@ export function MethodologyContent({ example }: { example: PickExample | null })
           <p>
             The market comparison view flags any offer where the published line
             or total sees at least 4 points of edge with positive EV. Those flags are review
-            diagnostics, not picks: the biggest raw edges usually involve FCS
+            diagnostics, not predictions: the biggest raw edges usually involve FCS
             opponents with thin data.
           </p>
         </div>
@@ -570,15 +570,15 @@ export function MethodologyContent({ example }: { example: PickExample | null })
       {/* Picks */}
       <SectionCard
         id="picks"
-        title="Picks"
+        title="Predictions"
         subtitle="A versioned policy that shrinks toward the market before it measures an edge, graded at a flat unit"
       >
         <div className="space-y-4 text-sm leading-relaxed">
           <p>
-            Picks come from a separate policy, currently{" "}
+            Predictions come from a separate policy, currently{" "}
             <span className="font-mono">cfb-picks-v7</span>, that selects at most
             one side per game and market, and every edge is measured after
-            shrinking toward the market being bet into. Spreads are priced from a
+            shrinking toward the market the prediction is priced against. Spreads are priced from a
             market-informed margin: the pure margin mixed with a rating fitted to
             the closing lines of earlier games (weight 0.55 through week 3, 0.35
             after), then averaged with the consensus spread. Totals use the published total, the
@@ -588,20 +588,20 @@ export function MethodologyContent({ example }: { example: PickExample | null })
             margin, 15.93 for total), not the pure model&apos;s wider spread.
           </p>
           <p>
-            A pick needs the priced line at least 2 points beyond the
+            A prediction needs the priced line at least 2 points beyond the
             price&apos;s break-even line, plus positive EV, from a forecast no
             more than a week old with no missing input beyond the always-on
             injury flag, a paired two-sided quote and a price under an hour old.
-            If fewer than 15 picks clear the gate in a week, the highest-edge
+            If fewer than 15 predictions clear the gate in a week, the highest-edge
             positive-EV offers fill the gap and are labeled as volume-floor
-            picks, which is a product choice and not a calibration result.
+            predictions, which is a product choice and not a calibration result.
             Anything else is a No Play.
           </p>
           <p>
-            Every pick records the exact line, price, book and decision time, then
+            Every prediction records the exact line, price, book and decision time, then
             settles at that frozen contract at a flat one unit, along with the
-            CFBD median closing line and the points by which the pick beat it. If
-            a newer model version no longer makes an open pick, the fresh decision
+            CFBD median closing line and the points by which the prediction beat it. If
+            a newer model version no longer makes an open prediction, the fresh decision
             replaces it before kickoff; line movement alone never does. The
             half-market blend improved holdout margin error from 13.28 to 12.31
             points while the closing line stayed better at 11.99, so it is not
@@ -734,7 +734,7 @@ export function MethodologyContent({ example }: { example: PickExample | null })
             score, the clock and possession; the scoreboard feed carries no
             field position, so that term is left out. The pregame expectation
             is the published market-informed line, with the 15.35-point
-            dispersion picks are priced with.
+            dispersion predictions are priced with.
           </p>
         </div>
       </SectionCard>
@@ -880,8 +880,8 @@ export function MethodologyContent({ example }: { example: PickExample | null })
             uncertainty.
           </p>
           <p>
-            Estimated EV does not establish a real betting advantage, and nothing
-            on this site is betting advice.
+            Estimated EV does not establish a real advantage over the market, and nothing
+            on this site is wagering advice.
           </p>
           <p>
             Live win probability reads a scoreboard feed, so it sees the score,

@@ -118,7 +118,7 @@ export function SeasonWinsTable({
         </label>
         <ComparisonGaps
           title="Where the season outlook has moved"
-          description="Projected full-season wins minus the frozen preseason sportsbook total. The baseline informs the model; this is a change in outlook, not a live betting edge. Follows the conference and division filters."
+          description="Projected full-season wins minus the frozen preseason sportsbook total. The baseline informs the model; this is a change in outlook, not a live edge over the market. Follows the conference and division filters."
           negativeLabel="Below preseason total"
           positiveLabel="Above preseason total"
           unit="wins"

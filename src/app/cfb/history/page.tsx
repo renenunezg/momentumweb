@@ -24,9 +24,9 @@ import { pageNumber } from "@/lib/utils";
 
 export const revalidate = 3600;
 export const metadata: Metadata = {
-  title: "College Football Forecast and Pick History",
+  title: "College Football Forecast and Prediction History",
   description:
-    "Every graded college football forecast and backtest game against the closing line, plus each moneyline, spread and total pick with the side, line, and odds recorded before kickoff.",
+    "Every graded college football forecast and backtest game against the closing line, plus each moneyline, spread and total prediction with the side, line, and odds recorded before kickoff.",
 };
 
 type Params = {
@@ -65,11 +65,11 @@ export default async function HistoryPage({
       <PageHeader>
         <div>
           <PageTitle>
-            College Football Pick History
+            College Football Prediction History
           </PageTitle>
           <PageDescription>
             The side, line, and odds recorded before kickoff, with each
-            pick&apos;s result.
+            prediction&apos;s result.
           </PageDescription>
         </div>
         <Link
@@ -90,7 +90,7 @@ export default async function HistoryPage({
       <PickKpis metric={metric} unavailable={history.unavailable} />
       {history.unavailable ? (
         <Notice role="status">
-          Recommendation history is currently unavailable. Forecast history
+          Prediction history is currently unavailable. Forecast history
           remains available.
         </Notice>
       ) : history.rows.length ? (
@@ -102,8 +102,8 @@ export default async function HistoryPage({
       ) : (
         <Notice>
           {market === "all"
-            ? "No recorded decisions match this selection. Recommendations will appear here when the model next publishes qualifying picks or No Play decisions."
-            : "No recommended picks match this selection. No Play decisions are listed under All markets."}
+            ? "No recorded decisions match this selection. Recommendations will appear here when the model next publishes qualifying predictions or No Play decisions."
+            : "No recommended predictions match this selection. No Play decisions are listed under All markets."}
         </Notice>
       )}
       <PickPolicy firstDecision={metric?.first_decision_at} />

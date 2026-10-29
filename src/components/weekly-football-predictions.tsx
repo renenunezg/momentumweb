@@ -144,7 +144,7 @@ export function WeeklyFootballPredictions({
           <p>Times shown in {SITE_TIME_LABEL}.</p>
           <p>
             {league === "cfb"
-              ? "Win probabilities follow each pick's recorded pricing policy. Moneylines under v9/v10 retain 20% model weight; v10 spreads use a 20% model/history margin blend with football key numbers. Exploratory picks are labeled. Pushes are listed separately."
+              ? "Win probabilities follow each prediction's recorded pricing policy. Moneylines under v9/v10 retain 20% model weight; v10 spreads use a 20% model/history margin blend with football key numbers. Exploratory predictions are labeled. Pushes are listed separately."
               : "Model probability is the model's chance that the selected side wins, with pushes listed separately. It is not a confidence score or a guarantee."}
           </p>
         </div>
@@ -314,7 +314,7 @@ function GamePredictions({
       </CardHeader>
       {league === "cfb" && game.gamePickCount > 1 && (
         <p className="border-t border-border bg-muted/15 px-3 py-1.5 text-[11px] text-muted-foreground">
-          {game.gamePickCount} picks · {game.gamePickCount}u · Shared-game exposure
+          {game.gamePickCount} predictions · {game.gamePickCount}u · Shared-game exposure
         </p>
       )}
       <CardContent

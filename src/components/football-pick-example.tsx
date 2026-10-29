@@ -117,7 +117,7 @@ export function FootballPickExample({ example }: { example: PickExample }) {
       </div>
 
       <p className="text-sm">
-        Pick: <span className="font-medium">{lineLabel(example)}</span> at{" "}
+        Prediction: <span className="font-medium">{lineLabel(example)}</span> at{" "}
         <span className="font-mono">{formatOdds(example.price)}</span>
         {example.provider ? ` (${example.provider})` : ""}, one unit.
         {settled ? (
@@ -245,9 +245,9 @@ export function FootballPickExample({ example }: { example: PickExample }) {
           Every number above is read from the frozen recommendation row and the projection it was
           priced from; the bars are recomputed from the stored mean, standard deviation
           {example.weights ? ", degrees of freedom and key-number multipliers" : " and degrees of freedom"}{" "}
-          with the same arithmetic the policy uses. The pick clears when the priced line sits at
+          with the same arithmetic the policy uses. The prediction clears when the priced line sits at
           least 2.0 points beyond the price&apos;s break-even line and EV is positive; when too few
-          picks clear in a week, the highest-edge positive-EV offers fill the slate. Spread picks
+          predictions clear in a week, the highest-edge positive-EV offers fill the slate. Spread predictions
           are priced from the published line, totals from the published total, and moneylines from the market margin moved 0.2 of the
           way toward the pure model.
         </p>

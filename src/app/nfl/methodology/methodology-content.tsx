@@ -33,24 +33,24 @@ export function MethodologyContent({ example }: { example: PickExample | null })
           every Tuesday on the season&apos;s play-by-play: no Elo chain,
           nothing carried by hand. Around it sit a starting quarterback
           adjustment, an offseason prior, and a capped blend toward the
-          betting market that sets the published line, total, projected scores
+          sportsbook market that sets the published line, total, projected scores
           and team ratings. The pure and blended lines are both graded against
-          the closing spread, and picks go into a frozen ledger at a flat one
+          the closing spread, and predictions go into a frozen ledger at a flat one
           unit.
         </p>
       </Section>
 
-      <Section id="example" title="Example: How a Pick Is Priced">
+      <Section id="example" title="Example: How a Prediction Is Priced">
         <p className={p}>
-          The next recommended pick on the slate, rebuilt from its frozen row.
+          The next recommended prediction on the slate, rebuilt from its frozen row.
           Once every game has kicked off it shows the most recently settled
-          pick instead.
+          prediction instead.
         </p>
         {example ? (
           <FootballPickExample example={example} />
         ) : (
           <p className={p}>
-            No recommended pick is stored yet. This fills in once the Tuesday
+            No recommended prediction is stored yet. This fills in once the Tuesday
             run publishes a slate with a qualifying edge.
           </p>
         )}
@@ -211,12 +211,12 @@ export function MethodologyContent({ example }: { example: PickExample | null })
         </p>
       </Section>
 
-      <Section id="picks" title="Picks">
+      <Section id="picks" title="Predictions">
         <p className={p}>
-          Picks come from a versioned policy, currently{" "}
+          Predictions come from a versioned policy, currently{" "}
           <span className="font-mono">nfl-picks-v5</span>, that selects at
           most one side per game and market across moneylines, spreads and
-          totals. A pick needs the priced line to sit at least two points
+          totals. A prediction needs the priced line to sit at least two points
           beyond the offered price&apos;s break-even line, plus positive
           estimated EV. An edge in points holds favorites and underdogs to the
           same standard.
@@ -229,17 +229,17 @@ export function MethodologyContent({ example }: { example: PickExample | null })
           model total moved halfway toward the sportsbook total. All three use the spread of
           actual results around the priced line (12.8 points on margins, 13.3
           on totals), not the engine&apos;s wider uncertainty. If fewer than
-          five picks clear the gate in a week, the highest-edge positive-EV
-          offers fill the slate and are recorded as floor picks.
+          five predictions clear the gate in a week, the highest-edge positive-EV
+          offers fill the slate and are recorded as floor predictions.
         </p>
         <p className={p}>
-          Each pick freezes its exact line, price, book and decision time and
+          Each prediction freezes its exact line, price, book and decision time and
           settles on that contract: pushes return the stake and moneyline ties
           are void. The database rejects late insertions and edits. A game
           with a missing quote, a stale forecast or an unidentified starting
           quarterback is a No Play, never backfilled. The gate has not been
           tuned on live outcomes, and estimated EV does not establish a real
-          betting advantage. Record and ROI are on the{" "}
+          advantage over the market. Record and ROI are on the{" "}
           <Link href="/nfl/performance" className={link}>
             Performance page
           </Link>
@@ -282,8 +282,8 @@ export function MethodologyContent({ example }: { example: PickExample | null })
           quarterback, weather, mid-season coaching changes, or motivation.
           Weeks one through four lean heavily on the preseason prior. The
           published line&apos;s accuracy partly reflects the market&apos;s;
-          the pure line is the model alone. The picks ledger is a few weeks
-          old, so its record is a small sample. Nothing here is betting
+          the pure line is the model alone. The prediction ledger is a few weeks
+          old, so its record is a small sample. Nothing here is wagering
           advice.
         </p>
       </Section>

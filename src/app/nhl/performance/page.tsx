@@ -23,7 +23,7 @@ export const revalidate = 3600;
 export const metadata: Metadata = {
   title: "NHL Model Performance",
   description:
-    "Win-probability accuracy and calibration of the NHL model on the live season and the backtest, plus the record, ROI, and frozen-price results of its moneyline and total picks.",
+    "Win-probability accuracy and calibration of the NHL model on the live season and the backtest, plus the record, ROI, and frozen-price results of its moneyline and total predictions.",
 };
 
 export default async function PerformancePage({
@@ -62,13 +62,13 @@ export default async function PerformancePage({
         <div>
           <PageTitle>NHL Model Performance</PageTitle>
           <PageDescription className="max-w-2xl">
-            How the NHL model&apos;s moneyline and total picks have done:
-            recommended picks, the partner-book prices recorded at the time,
+            How the NHL model&apos;s moneyline and total predictions have done:
+            recommended predictions, the partner-book prices recorded at the time,
             and graded results.
           </PageDescription>
         </div>
         <Link href={`/nhl/history?${query}&view=picks`} className="text-sm underline underline-offset-4">
-          View pick history
+          View prediction history
         </Link>
       </PageHeader>
       <FootballPerformanceTabs sport="nhl" active="picks" query={query}>
@@ -84,7 +84,7 @@ export default async function PerformancePage({
           <PickKpis metric={metric} unavailable={summary.unavailable} />
           {summary.unavailable ? (
             <Notice role="status">
-              Recommendation results are currently unavailable. Forecast
+              Prediction results are currently unavailable. Forecast
               accuracy remains available in its tab.
             </Notice>
           ) : !metric?.picks ? (

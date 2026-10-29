@@ -154,7 +154,7 @@ export default async function ForecastHistory({
         href="/cfb/history?view=picks"
         className="text-sm underline underline-offset-4"
       >
-        Pick history
+        Prediction history
       </Link>
 
       <SeasonLinks

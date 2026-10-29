@@ -36,7 +36,7 @@ export function FootballPickDetails({
       >
         {children}
         <span className="mt-1 flex items-center gap-1 text-[11px] text-muted-foreground group-hover:text-foreground">
-          Why this pick <ArrowUpRight className="size-3" aria-hidden="true" />
+          Why this prediction <ArrowUpRight className="size-3" aria-hidden="true" />
         </span>
       </DialogTrigger>
       <DialogContent ref={dialogRef} initialFocus={dialogRef}>
@@ -85,7 +85,7 @@ function PickDetailsContent({
   return (
     <>
       <div className="space-y-1 pr-9">
-        <p className="type-eyebrow text-muted-foreground">{league === "cfb" ? "Recorded research pick" : "Recorded prediction"}</p>
+        <p className="type-eyebrow text-muted-foreground">{league === "cfb" ? "Recorded research prediction" : "Recorded prediction"}</p>
         <DialogTitle className="type-section">{pickLabel(pick)}</DialogTitle>
         <DialogDescription className="text-sm text-muted-foreground">
           {pick.away_team} at {pick.home_team}
@@ -108,7 +108,7 @@ function PickDetailsContent({
             </span>
           </div>
           {pick.reason === "volume_floor" && (
-            <p className="mt-3 text-xs text-muted-foreground">{research?.softCap ? "Included under the weekly research target and market cap, with no replacement picks." : "Included for exploration under the earlier weekly pick minimum."} It has positive estimated EV but does not clear the standard two-point selection threshold (measured in forecast points, not probability percentage points). Its results are tracked separately.</p>
+            <p className="mt-3 text-xs text-muted-foreground">{research?.softCap ? "Included under the weekly research target and market cap, with no replacement predictions." : "Included for exploration under the earlier weekly prediction minimum."} It has positive estimated EV but does not clear the standard two-point selection threshold (measured in forecast points, not probability percentage points). Its results are tracked separately.</p>
           )}
           <dl className="my-5 grid grid-cols-2 gap-4">
             <div>
@@ -170,11 +170,11 @@ function PickDetailsContent({
               ].map(([label, value]) => <div key={label} className="flex items-baseline justify-between gap-3"><dt className="text-muted-foreground">{label}</dt><dd className="shrink-0 font-mono tabular-nums">{formatSigned(Number(value), 2)} pts</dd></div>)}
             </dl>
             <p className="mt-3 text-xs text-muted-foreground">A quote difference can reflect different books or capture times; it does not prove line movement.</p>
-            {research.postseason && <p className="mt-2 text-xs text-muted-foreground">Postseason results are a separate research context. This flag does not establish player availability or change the pick.</p>}
+            {research.postseason && <p className="mt-2 text-xs text-muted-foreground">Postseason results are a separate research context. This flag does not establish player availability or change the prediction.</p>}
           </section>
         )}
         <section>
-          <h3 className="mb-2 text-xs font-medium text-muted-foreground">{blendedMoneyline ? "Published forecast context" : "Forecast used for this pick"}</h3>
+          <h3 className="mb-2 text-xs font-medium text-muted-foreground">{blendedMoneyline ? "Published forecast context" : "Forecast used for this prediction"}</h3>
           <dl className="grid grid-cols-2 gap-3">
             <div className="rounded-lg border border-border p-3">
               <dt className="text-xs text-muted-foreground">Total points</dt>
@@ -194,7 +194,7 @@ function PickDetailsContent({
               ? "Totals retain the published 50% model and 50% market blend with 15.93-point pricing dispersion. Expected profit is an estimate, not a guaranteed return."
               : "Expected profit is a model estimate, not a guaranteed return."}</p>
         {league === "cfb" && gamePickCount != null && gamePickCount > 1 && (
-          <p className="text-xs text-muted-foreground">{gamePickCount} picks share this game: {gamePickCount} research units in total, one per pick. Their outcomes are correlated.</p>
+          <p className="text-xs text-muted-foreground">{gamePickCount} predictions share this game: {gamePickCount} research units in total, one per prediction. Their outcomes are correlated.</p>
         )}
         <details className="border-t border-border pt-3 text-xs text-muted-foreground">
           <summary className="cursor-pointer font-medium text-foreground">Forecast details &amp; decision record</summary>

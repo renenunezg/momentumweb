@@ -1,6 +1,7 @@
 import { NavigationLink as Link } from "@/components/navigation-link";
 import type { ReactNode } from "react";
 import { cn } from "@/lib/utils";
+import { TAB_ITEM, TAB_LIST, TAB_OFF, TAB_ON } from "@/components/view-tabs";
 import type { PickSport } from "@/lib/football-picks";
 
 export function FootballPerformanceTabs({
@@ -18,7 +19,7 @@ export function FootballPerformanceTabs({
     <>
       <nav
         aria-label="Performance view"
-        className="flex gap-1 overflow-x-auto border-b border-border"
+        className={TAB_LIST}
       >
         {[
           {
@@ -28,7 +29,7 @@ export function FootballPerformanceTabs({
           },
           {
             key: "picks",
-            label: "Recommendations",
+            label: "Prediction results",
             href: `/${sport}/performance?${query}&view=picks`,
           },
           {
@@ -41,12 +42,7 @@ export function FootballPerformanceTabs({
             key={view.key}
             href={view.href}
             aria-current={active === view.key ? "page" : undefined}
-            className={cn(
-              "shrink-0 border-b-2 px-3 py-2 text-sm",
-              active === view.key
-                ? "border-primary text-primary"
-                : "border-transparent text-muted-foreground hover:text-foreground",
-            )}
+            className={cn(TAB_ITEM, active === view.key ? TAB_ON : TAB_OFF)}
           >
             {view.label}
           </Link>

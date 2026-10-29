@@ -34,9 +34,9 @@ import {
 
 export const revalidate = 3600;
 export const metadata: Metadata = {
-  title: "College Football Spread Projections and Picks",
+  title: "College Football Spread Projections and Predictions",
   description:
-    "Model spreads, projected scores, and totals for every FBS and FCS game this week, compared against the market line with recorded moneyline, spread and total picks.",
+    "Model spreads, projected scores, and totals for every FBS and FCS game this week, compared against the market line with recorded moneyline, spread and total predictions.",
 };
 
 const isFbs = (game: CfbGameProjection) =>
@@ -293,7 +293,7 @@ export default async function SchedulePage() {
       </p>
 
       <p className="text-xs text-muted-foreground">
-        Picks show the line and odds frozen when recommended, not a live quote.
+        Predictions show the line and odds frozen when recommended, not a live quote.
         No Play means the market did not qualify.{" "}
         <Link href="/cfb/history?view=picks" className="underline underline-offset-4">
           View recorded decisions and results
@@ -326,9 +326,9 @@ export default async function SchedulePage() {
               <TableHead className="text-center">Proj score</TableHead>
               <TableHead className="text-center">Model total</TableHead>
               <TableHead className="text-center">Market total</TableHead>
-              <TableHead>Moneyline pick</TableHead>
-              <TableHead>Spread pick</TableHead>
-              <TableHead>Total pick</TableHead>
+              <TableHead>Moneyline prediction</TableHead>
+              <TableHead>Spread prediction</TableHead>
+              <TableHead>Total prediction</TableHead>
             </TableRow>
           </TableHeader>
           {slates.map(({ slate, hidden, games }) => (
@@ -389,8 +389,8 @@ export default async function SchedulePage() {
         Proj score is the published away&ndash;home expected points, which
         agree with the Model Line and the published total. Diff is model line
         minus
-        market line. Market total is the consensus total when the total pick was
-        decided. Picks require qualifying probabilities, prices, and input
+        market line. Market total is the consensus total when the total prediction was
+        decided. Predictions require qualifying probabilities, prices, and input
         flags; a large point difference alone does not qualify. A star marks a
         team whose rating inputs are incomplete; N marks a neutral site.
       </p>

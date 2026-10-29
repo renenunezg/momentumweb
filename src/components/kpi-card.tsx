@@ -14,15 +14,15 @@ interface KpiCardProps {
 export function KpiCard({ label, value, sub, tooltip, compact = false }: KpiCardProps) {
   return (
     <div className={cn("flex min-w-0 flex-col gap-0.5", compact && "items-center text-center")}>
-      <span className={cn("type-eyebrow text-muted-foreground inline-flex items-center gap-1", compact ? "text-[10px] sm:text-xs" : "text-xs")}>
+      <span className="inline-flex items-center gap-1 type-eyebrow text-muted-foreground">
         {label}
         {tooltip && <InfoTip text={tooltip} />}
       </span>
-      <span className={cn("font-mono font-bold tabular-nums", compact ? "text-sm sm:text-base" : "text-base")}>
+      <span className={cn("tabular-nums", compact ? "type-subsection" : "type-section")}>
         {value}
       </span>
       {sub && (
-        <span className={cn("font-mono text-muted-foreground tabular-nums", compact ? "text-[11px] sm:text-xs" : "text-xs")}>
+        <span className="type-meta tabular-nums text-muted-foreground">
           {sub}
         </span>
       )}

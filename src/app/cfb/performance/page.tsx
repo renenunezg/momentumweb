@@ -21,7 +21,7 @@ export const revalidate = 3600;
 export const metadata: Metadata = {
   title: "College Football Model Performance",
   description:
-    "Forecast accuracy of the college football model against the market, plus the record, ROI, and closing-line results of its recommended moneyline, spread and total picks.",
+    "Forecast accuracy of the college football model against the market, plus the record, ROI, and closing-line results of its recommended moneyline, spread and total predictions.",
 };
 
 export default async function PerformancePage({
@@ -76,7 +76,7 @@ export default async function PerformancePage({
           </PageTitle>
           <PageDescription className="max-w-2xl">
             How the college football model&apos;s moneyline, spread and total
-            picks have done: recommended picks, the prices recorded at the time,
+            predictions have done: recommended predictions, the prices recorded at the time,
             and graded results.
           </PageDescription>
         </div>
@@ -84,7 +84,7 @@ export default async function PerformancePage({
           href={historyUrl}
           className="text-sm underline underline-offset-4"
         >
-          View pick history
+          View prediction history
         </Link>
       </PageHeader>
       <CfbPerformanceTabs active="picks" query={query}>
@@ -99,7 +99,7 @@ export default async function PerformancePage({
           <PickKpis metric={metric} unavailable={summary.unavailable} />
           {summary.unavailable ? (
             <Notice role="status">
-              Recommendation results are currently unavailable. Forecast
+              Prediction results are currently unavailable. Forecast
               accuracy remains available in its tab.
             </Notice>
           ) : !metric?.picks ? (
@@ -130,8 +130,8 @@ export default async function PerformancePage({
             rows={summary.metrics.filter((m) => m.segment_kind === "qualification")}
           />
           <p className="text-xs text-muted-foreground">
-            Overall results include every recorded recommendation at one unit per pick.
-            Exploratory picks fall below the standard edge threshold and contribute toward the weekly research target.
+            Overall results include every recorded recommendation at one unit per prediction.
+            Exploratory predictions fall below the standard edge threshold and contribute toward the weekly research target.
           </p>
           {(["h2h", "spreads", "totals"] as const)
             .filter((value) => market === "all" || value === market)

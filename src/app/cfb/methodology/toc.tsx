@@ -10,7 +10,7 @@ const sections = [
   { id: "units", label: "Unit Ratings" },
   { id: "preseason", label: "Preseason" },
   { id: "projections", label: "Projections" },
-  { id: "picks", label: "Picks" },
+  { id: "picks", label: "Predictions" },
   { id: "backtest", label: "Backtest" },
   { id: "ingame", label: "In-Game" },
   { id: "anchor", label: "Market Anchor" },

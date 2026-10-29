@@ -425,7 +425,7 @@ function History({ rows, meta, week }: { rows: CfbHeismanHistory[]; meta: CfbPla
               <TableHead>Season</TableHead>
               <TableHead>Winner</TableHead>
               <TableHead className="hidden text-right sm:table-cell">Vote share</TableHead>
-              <TableHead>Model pick</TableHead>
+              <TableHead>Model&apos;s predicted winner</TableHead>
               <TableHead className="text-right">Winner&apos;s predicted rank</TableHead>
               <TableHead className="hidden text-right sm:table-cell">Winner&apos;s value rank</TableHead>
             </TableRow>

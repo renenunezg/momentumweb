@@ -83,7 +83,7 @@ function TeamRow({
 export function GamesTable({ matchups }: { matchups: GameMatchup[] }) {
   return (
     <GamesTableLayout
-      caption="Today's games with model picks and live scores"
+      caption="Today's games with model predictions and live scores"
       projectionLabel="xR"
     >
       {matchups.map((matchup) => {
