@@ -8,6 +8,29 @@ export type FootballPerformanceMetric =
   | CfbPerformanceMetric
   | NflPerformanceMetric;
 
+// The 95 percent paired bootstrap interval on model_minus_market_mae. The two
+// schemas name the columns differently; both are null until the grading run
+// that publishes them.
+export function gapInterval(m: FootballPerformanceMetric): [number, number] | null {
+  const lo = "model_minus_market_mae_lo_95" in m ? m.model_minus_market_mae_lo_95 : m.model_minus_market_mae_ci_low;
+  const hi = "model_minus_market_mae_hi_95" in m ? m.model_minus_market_mae_hi_95 : m.model_minus_market_mae_ci_high;
+  return lo == null || hi == null ? null : [lo, hi];
+}
+
+// Overall rows of the latest graded season in one request, for pages that
+// cite the headline without rendering the tab.
+export async function fetchOverallMetrics(
+  query: () => PromiseLike<{ data: unknown; error: { message: string } | null }>,
+): Promise<{ season: number | null; metrics: FootballPerformanceMetric[] }> {
+  const { data, error } = await query();
+  if (error) throw new Error(error.message);
+  // The generated row types a prediction_source as text; the metric type
+  // narrows it to the three sources the pipeline writes.
+  const rows = (data ?? []) as FootballPerformanceMetric[];
+  const season = rows[0]?.season ?? null;
+  return { season, metrics: rows.filter((m) => m.season === season) };
+}
+
 export interface FootballLivePerformance {
   season: number | null;
   metrics: FootballPerformanceMetric[];

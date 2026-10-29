@@ -1,13 +1,14 @@
 import { formatSiteTimestamp } from "@/lib/site-time";
 import type { ReactNode } from "react";
 import { Notice } from "@/components/notice";
-import type {
-  FootballLivePerformance,
-  FootballPerformanceCopy,
-  FootballPerformanceMetric,
+import {
+  gapInterval,
+  type FootballLivePerformance,
+  type FootballPerformanceCopy,
+  type FootballPerformanceMetric,
 } from "@/lib/football-performance";
 import type { CfbPredictionSource } from "@/lib/types";
-import { formatNumber, formatPct, formatSigned } from "@/lib/utils";
+import { describeGap, formatNumber, formatPct, formatSigned } from "@/lib/utils";
 import { KpiCard } from "@/components/kpi-card";
 import {
   Table,
@@ -130,9 +131,18 @@ export function FootballForecastPerformance({
         (m) => m.segment_kind === copy.compositionKind && m.prediction_source === "market_informed",
       )
     : [];
+  // Published by the model repo once per version that forecast a live game;
+  // until then the sport's copy names them.
+  const versionRows = live.metrics.filter(
+    (m) => m.segment_kind === "model_version" && m.prediction_source === publishedSource,
+  );
+  const headlineGap = livePublished ? gapInterval(livePublished) : null;
+  const headlineVerdict = livePublished?.model_minus_market_mae != null
+    ? describeGap(livePublished.model_minus_market_mae, headlineGap?.[0] ?? null, headlineGap?.[1] ?? null)
+    : null;
   const publishedSegments = live.metrics.filter(
     (m) =>
-      m.prediction_source === publishedSource && m.segment_kind !== "overall",
+      m.prediction_source === publishedSource && m.segment_kind !== "overall" && m.segment_kind !== "model_version",
   );
   const segmentRows = (kind: string) =>
     publishedSegments.filter((m) => m.segment_kind === kind);
@@ -161,7 +171,10 @@ export function FootballForecastPerformance({
             Every row is a frozen record: the projection published before
             kickoff, {copy.closingLine}, and the final score. Nothing is re-fit
             or re-priced after a result is known. The closing line is the bar
-            the model is measured against, not an input to it. {copy.versions}
+            the model is measured against, not an input to it.{" "}
+            {versionRows.length > 0
+              ? "Each game is graded on the model version published before its kickoff; the by-version table lists them."
+              : copy.versions}
           </p>
         </div>
 
@@ -205,8 +218,8 @@ export function FootballForecastPerformance({
               <KpiCard
                 label="Gap to market"
                 value={formatSigned(livePublished?.model_minus_market_mae, 2)}
-                sub="points (lower is better)"
-                tooltip="Model error minus closing-spread error on the same games. Positive means the market was more accurate."
+                sub={headlineGap ? `${formatSigned(headlineGap[0], 2)} to ${formatSigned(headlineGap[1], 2)}, ${headlineVerdict?.verdict === "clear of zero" ? "market ahead, clear of zero" : headlineVerdict?.verdict === "behind, clear of zero" ? "model ahead, clear of zero" : "within noise"}` : "points, no interval published yet"}
+                tooltip="Model error minus closing-spread error on the same games. Positive means the market was more accurate. The range is a 95 percent paired bootstrap interval over games."
               />
               <KpiCard
                 label="Model closer"
@@ -227,11 +240,11 @@ export function FootballForecastPerformance({
                 {composition.map((m, i) => (
                   <span key={m.segment}>
                     {i > 0 && "; "}
-                    {m.segment} {m.games} games, gap {formatSigned(m.model_minus_market_mae, 2)}
+                    {m.segment} {m.games} games, gap {describeGap(m.model_minus_market_mae ?? 0, gapInterval(m)?.[0] ?? null, gapInterval(m)?.[1] ?? null).text}
                   </span>
                 ))}
                 . An FCS closing line is usually a single sportsbook&apos;s number.
-                No interval is published for any gap yet.
+                {composition.some((m) => gapInterval(m)) ? " Ranges are 95 percent paired bootstrap intervals." : " No interval is published for these gaps yet."}
               </p>
             )}
 
@@ -251,6 +264,7 @@ export function FootballForecastPerformance({
                       <TableHead className="text-right">Bias</TableHead>
                       <TableHead className="text-right">Total MAE</TableHead>
                       <TableHead className="text-right">50 / 80 / 90</TableHead>
+                      <TableHead className="text-right">Brier / log loss</TableHead>
                       <TableHead className="text-right">Gap</TableHead>
                       <TableHead className="text-right">Closer</TableHead>
                     </TableRow>
@@ -279,8 +293,15 @@ export function FootballForecastPerformance({
                             ? "–"
                             : `${formatPct(m.coverage_50, 0)} / ${formatPct(m.coverage_80, 0)} / ${formatPct(m.coverage_90, 0)}`}
                         </TableCell>
+                        <TableCell className={mutedNumCell}>
+                          {m.brier_score == null
+                            ? "–"
+                            : `${formatNumber(m.brier_score, 3)} / ${formatNumber(m.log_loss, 3)}`}
+                        </TableCell>
                         <TableCell className={numCell}>
-                          {formatSigned(m.model_minus_market_mae, 2)}
+                          {m.model_minus_market_mae == null
+                            ? "–"
+                            : describeGap(m.model_minus_market_mae, gapInterval(m)?.[0] ?? null, gapInterval(m)?.[1] ?? null).text}
                         </TableCell>
                         <TableCell className={numCell}>
                           {formatPct(m.closer_than_market_share)}
@@ -307,11 +328,17 @@ export function FootballForecastPerformance({
                     Home win probability from the published pregame line scores
                     Brier {formatNumber(livePublished.brier_score, 3)} and log
                     loss {formatNumber(livePublished.log_loss, 3)} over{" "}
-                    {livePublished.probability_games} games.
+                    {livePublished.probability_games} games
+                    {liveClosing?.brier_score != null
+                      ? <>; the closing line, priced on the same scale over the same games, scores {formatNumber(liveClosing.brier_score, 3)} and {formatNumber(liveClosing.log_loss, 3)}.</>
+                      : "; the closing line's Brier on the same games is not published yet."}
                   </>
                 ) : null}
+                {" "}Gap ranges, where shown, are 95 percent paired bootstrap intervals over games.
               </p>
             </div>
+
+            <SegmentTable title="By model version" rows={versionRows} />
 
             {copy.segments.map((segment) => (
               <SegmentTable

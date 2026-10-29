@@ -51,9 +51,12 @@ export default async function NflForecastHistory({
   const page = pageNumber(params.page);
   const offset = (page - 1) * PAGE_SIZE;
 
+  // The backtest table's model_margin is the old half-closing-line blend; the
+  // pure model is the forecast, as on the performance page.
+  const modelColumn = source === "live" ? "model_margin" : "pure_model_margin";
   let query = relation()
     .select(
-      "game_id,season,week,home_team,away_team,neutral_site,home_points,away_points,closing_spread,model_margin,actual_margin",
+      `game_id,season,week,home_team,away_team,neutral_site,home_points,away_points,closing_spread,${modelColumn},actual_margin`,
       { count: "exact" },
     )
     .order("season", { ascending: false })
@@ -68,7 +71,9 @@ export default async function NflForecastHistory({
     relation().select("season").order("season", { ascending: false }).limit(1),
   ]);
 
-  const rows = (data ?? []) as NflBacktestPrediction[];
+  const rows = ((data ?? []) as unknown as (NflBacktestPrediction & { pure_model_margin?: number | null })[]).map((r) =>
+    source === "live" ? r : { ...r, model_margin: r.pure_model_margin ?? null },
+  );
   const totalRows = count ?? 0;
   const totalPages = Math.max(1, Math.ceil(totalRows / PAGE_SIZE));
   const latestSeason = seasonsRes.data?.[0]?.season ?? null;
@@ -95,7 +100,7 @@ export default async function NflForecastHistory({
       <p className="max-w-4xl text-sm text-muted-foreground leading-relaxed">
         {source === "live"
           ? "Actual published pregame forecasts alongside final scores and nflverse closing lines. The last forecast received before kickoff is preserved; missing forecasts or closes stay blank."
-          : "Every graded prediction from the historical walk-forward backtest, next to the closing spread and final margin."}{" "}
+          : "Every graded prediction from the historical walk-forward backtest: the pure model's margin, next to the closing spread and final margin."}{" "}
         Lines are quoted for the home team.
       </p>
 

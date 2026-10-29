@@ -68,29 +68,31 @@ async function HistoricalBacktest() {
   }
 
   const { overall, bySeason, seasons } = metricsBySeason(backtest);
+  const versions = [...new Set(backtest.map((r) => r.model_version))].filter((v) => v != null);
+  const classes = [...new Set(backtest.map((r) => r.classification))].filter((v) => v != null);
   return (
     <section className="space-y-section">
       <div className="flex items-start justify-between gap-4">
         <h2 className="type-section">
-          Historical walk-forward backtest (June 2026 base model, since replaced)
+          Historical walk-forward backtest (pure model{versions.length > 0 ? `, ${versions.join(", ")}` : ""})
         </h2>
         {seasons.length > 0 && (
           <div className="text-xs text-muted-foreground">
             Frozen, {seasons[0]}&ndash;{seasons[seasons.length - 1]}
+            {classes.length > 0 && `, ${classes.join(", ")}`}
           </div>
         )}
       </div>
 
       <p className="max-w-4xl text-sm text-muted-foreground leading-relaxed">
         Every prediction below was made walking forward through each season with
-        only the data available at the time, then frozen in June 2026. They come
-        from that month&apos;s base engine, pure model with no market blend, which
-        was replaced on August 1, 2026; the served model&apos;s own walk-forward
-        has not been published to this table yet, so read these as the record of
-        an earlier model, not of the one grading live above. The market benchmark
-        is the closing spread: the strongest public forecast of a game&apos;s
-        margin. Beating it consistently is rare, and the model is measured
-        against it, not against a naive baseline.
+        only the data available at the time, then frozen with the model version
+        named above. They come from the pure model with no market blend, so they
+        are historical stand-ins for the model&apos;s own skill, not for the
+        published line; regular season and postseason games are included. The
+        market benchmark is the closing spread: the strongest public forecast of
+        a game&apos;s margin. Beating it consistently is rare, and the model is
+        measured against it, not against a naive baseline.
       </p>
 
       {!overall ? (
@@ -101,7 +103,7 @@ async function HistoricalBacktest() {
         <>
           <BacktestKpis
             overall={overall}
-            gamesTooltip="Regular-season games with a model prediction, a closing spread, and a final score: FBS vs FBS plus FBS vs FCS games."
+            gamesTooltip="Games with a model prediction, a closing spread, and a final score, in the classes named above, regular season and postseason."
           />
           <BacktestSeasonTable bySeason={bySeason} overall={overall} />
         </>

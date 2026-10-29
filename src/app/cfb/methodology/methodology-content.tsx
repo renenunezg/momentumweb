@@ -108,12 +108,16 @@ const pipelineSteps = [
   { num: "06", name: "Publish", desc: "Serving tables written to the Supabase cfb schema" },
 ];
 
+// joint_scoring_v13 walk-forward, FBS vs FBS including postseason, as
+// published to cfb.backtest_predictions on 2026-10-29; the performance page
+// recomputes the same table from the rows.
 const backtestRows = [
-  { season: "2021", model: "13.60", market: "12.49" },
-  { season: "2022", model: "13.86", market: "12.28" },
-  { season: "2023", model: "13.26", market: "12.00" },
-  { season: "2024", model: "13.46", market: "12.02" },
-  { season: "2025", model: "12.84", market: "11.93" },
+  { season: "2020", model: "13.05", market: "12.75" },
+  { season: "2021", model: "13.10", market: "12.51" },
+  { season: "2022", model: "12.53", market: "12.07" },
+  { season: "2023", model: "12.66", market: "12.17" },
+  { season: "2024", model: "12.82", market: "12.03" },
+  { season: "2025", model: "12.23", market: "11.79" },
 ];
 
 const preseasonWeights = [
@@ -186,9 +190,10 @@ export function MethodologyContent({ example }: { example: PickExample | null })
           </p>
           <p>
             <strong>The pregame model does not beat the closing spread.</strong>{" "}
-            Across 3,853 backtested games from 2021 through 2025 its average margin
-            error is 13.40 points against the closing line&apos;s 12.14, and the
-            market wins every season. So the published line, total and scores
+            Across 4,227 FBS-vs-FBS games walked forward from 2020 through 2025
+            (joint_scoring_v13, the served pure model) its average margin error is
+            12.71 points against the closing line&apos;s 12.19, and the market wins
+            every season. So the published line, total and scores
             are blended halfway to the market, predictions are priced from those
             market-informed numbers, and the in-game model anchors on the
             published line instead of the pure model&apos;s number.
@@ -621,7 +626,7 @@ export function MethodologyContent({ example }: { example: PickExample | null })
       <SectionCard
         id="backtest"
         title="Backtest vs the Closing Line"
-        subtitle="June 2026 base model, walk-forward 2021 to 2025. The market is better every season."
+        subtitle="joint_scoring_v13 walk-forward, FBS vs FBS, 2020 to 2025. The market is better every season."
       >
         <div className="space-y-4 text-sm leading-relaxed">
           <p>
@@ -648,17 +653,18 @@ export function MethodologyContent({ example }: { example: PickExample | null })
               ))}
               <TableRow className="border-t-2">
                 <TableCell className="text-xs font-semibold">Pooled</TableCell>
-                <TableCell className="text-right font-mono text-xs font-semibold">13.40</TableCell>
-                <TableCell className="text-right font-mono text-xs font-semibold">12.14</TableCell>
+                <TableCell className="text-right font-mono text-xs font-semibold">12.71</TableCell>
+                <TableCell className="text-right font-mono text-xs font-semibold">12.19</TableCell>
               </TableRow>
             </TableBody>
           </Table>
           <p>
             The market wins every season, as expected: the closing line
             aggregates injury news, weather and sharper private models. The table
-            is the frozen walk-forward of the June 2026 base engine, which was
-            replaced on August 1, 2026; the served model&apos;s own walk-forward
-            will replace it here once published. What the model can claim is
+            is the served pure model&apos;s walk-forward, published to the public
+            backtest table with its version; the June 2026 base engine&apos;s
+            earlier table (13.40 against 12.14 on 3,853 games, 2021 to 2025) is
+            superseded. What the model can claim is
             calibration: on the 2023&ndash;2025 validation seasons (2,258 games),
             which were used to compare model revisions and so are not an
             untouched test, the 50/80/95% margin intervals covered 52%, 80% and

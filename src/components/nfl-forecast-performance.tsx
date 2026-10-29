@@ -70,7 +70,7 @@ export default function ForecastPerformance({
 // for reference and never compared with the close.
 const SELECTION_SEASONS = new Set(["2016", "2017", "2018", "2019", "2020", "2021"]);
 
-type BacktestSlice = SliceMetrics & { pureMae: number };
+type BacktestSlice = SliceMetrics & { pureMae: number; closingBlendMae: number | null };
 
 // A games-weighted mean of per-season MAEs is the pooled MAE exactly.
 function pool(label: string, rows: BacktestSlice[]): BacktestSlice | null {
@@ -83,6 +83,7 @@ function pool(label: string, rows: BacktestSlice[]): BacktestSlice | null {
     games,
     modelMae: mean((r) => r.modelMae),
     pureMae: mean((r) => r.pureMae),
+    closingBlendMae: rows.every((r) => r.closingBlendMae != null) ? mean((r) => r.closingBlendMae as number) : null,
     marketMae: mean((r) => r.marketMae),
     modelBeatsMarket: mean((r) => r.modelBeatsMarket),
     bias: mean((r) => r.bias),
@@ -98,7 +99,7 @@ function PureRow({ m, strong }: { m: BacktestSlice; strong?: boolean }) {
       <TableCell className={cell}>{formatNumber(m.pureMae, 2)}</TableCell>
       <TableCell className={cell}>{formatNumber(m.marketMae, 2)}</TableCell>
       <TableCell className={cell}>{formatSigned(m.pureMae - m.marketMae, 2)}</TableCell>
-      <TableCell className={`${cell} text-muted-foreground`}>{formatNumber(m.modelMae, 2)}</TableCell>
+      <TableCell className={`${cell} text-muted-foreground`}>{formatNumber(m.closingBlendMae, 2)}</TableCell>
     </TableRow>
   );
 }
@@ -116,16 +117,19 @@ async function HistoricalBacktest() {
   const selection = pool("2016 to 2021, parameter selection", bySeason.filter((m) => SELECTION_SEASONS.has(m.label)));
   const evaluation = pool("2022 to 2025, retrospective evaluation", bySeason.filter((m) => !SELECTION_SEASONS.has(m.label)));
   const overall = accuracy?.overall ?? null;
+  const stamp = accuracy?.modelVersion
+    ? `${accuracy.modelVersion}${accuracy.generatedAt ? `, generated ${accuracy.generatedAt.slice(0, 10)}` : ""}`
+    : "no version or generation date stored yet";
 
   return (
     <section className="space-y-section">
       <div className="flex items-start justify-between gap-4">
         <h2 className="type-section">
-          Historical walk-forward backtest
+          Historical walk-forward backtest (pure model)
         </h2>
         {seasons.length > 0 && (
           <div className="text-xs text-muted-foreground">
-            {seasons[0]}&ndash;{seasons[seasons.length - 1]}, regenerated with each full publish
+            {seasons[0]}&ndash;{seasons[seasons.length - 1]}, {stamp}
           </div>
         )}
       </div>
@@ -133,8 +137,9 @@ async function HistoricalBacktest() {
       <p className="max-w-4xl text-sm text-muted-foreground leading-relaxed">
         Every prediction below was made walking forward through each season with
         only the data available at the time. The table is regenerated from the
-        current model whenever the backtest is republished, so it is not a frozen
-        artifact and carries no version or date yet. Seasons 2016 through 2021
+        current model whenever the backtest is republished and is stamped with
+        the version and date that produced it once the publish records them.
+        Seasons 2016 through 2021
         chose the hyperparameters; 2022 through 2025 were not used for selection
         but have been examined repeatedly, so they are retrospective evaluation,
         not a clean holdout. The historical preseason prior uses each team&apos;s

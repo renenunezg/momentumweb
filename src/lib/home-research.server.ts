@@ -1,8 +1,9 @@
 import "server-only";
 import { cache, type CSSProperties } from "react";
 import { supabase, supabaseCfb, supabaseNfl, supabaseNhl } from "@/lib/supabase";
-import { fetchLatestRatings as fetchCfbRatings, fetchLivePerformance } from "@/lib/cfb";
-import { fetchForecastAccuracy as fetchNflAccuracy, fetchLatestRatings as fetchNflRatings } from "@/lib/nfl";
+import { fetchLatestRatings as fetchCfbRatings } from "@/lib/cfb";
+import { fetchLatestRatings as fetchNflRatings } from "@/lib/nfl";
+import { fetchOverallMetrics, gapInterval } from "@/lib/football-performance";
 import { fetchForecastAccuracy as fetchNhlAccuracy, fetchLatestRatings as fetchNhlRatings } from "@/lib/nhl";
 import {
   FORWARD_SYSTEM_LABELS,
@@ -169,13 +170,13 @@ function forecastRow(
   digits: number,
   extent: number,
   sample: string,
-  model = `${sport.toUpperCase()} published line, market-informed`,
+  ci: [number, number] | null = null,
+  diff = ours - theirs,
 ): ComparisonRow {
-  const diff = ours - theirs;
   return {
     key: `${sport}-forecast`,
     href: `/${sport}/performance`,
-    model,
+    model: `${sport.toUpperCase()} published line, market-informed`,
     benchmark: "Closing line",
     measure,
     ours: ours.toFixed(digits),
@@ -184,29 +185,33 @@ function forecastRow(
     digits,
     extent,
     lowerIsBetter: true,
-    verdict: verdictOf(diff, null, true),
-    hasInterval: false,
+    verdict: verdictOf(diff, ci, true),
+    hasInterval: ci != null,
     sample,
   };
 }
 
-// The published, market-informed forecast is graded, as on the performance page.
-async function cfbForecastRow(): Promise<ComparisonRow[]> {
-  const performance = await fetchLivePerformance();
-  const overall = new Map(performance.metrics.filter((m) => m.segment_kind === "overall").map((m) => [m.prediction_source, m]));
-  const published = overall.get("market_informed") ?? overall.get("pure_model");
-  const market = overall.get("closing_market");
-  if (!published?.games || published.margin_mae == null || market?.margin_mae == null) return [];
-  return [forecastRow("cfb", "Margin MAE, points", published.margin_mae, market.margin_mae, 2, 1, `${published.games} games, ${performance.season}`)];
+// The published, market-informed line is graded, as on the performance page:
+// the same overall rows, read in one request, with the gap and its interval
+// as the model repo published them.
+async function footballForecastRow(
+  sport: "cfb" | "nfl",
+  query: () => PromiseLike<{ data: unknown; error: { message: string } | null }>,
+  sampleNote: string,
+): Promise<ComparisonRow[]> {
+  const { season, metrics } = await fetchOverallMetrics(query);
+  const bySource = new Map(metrics.map((m) => [m.prediction_source, m]));
+  const published = bySource.get("market_informed") ?? bySource.get("pure_model");
+  const market = bySource.get("closing_market");
+  if (!published?.games || published.margin_mae == null || market?.margin_mae == null || published.model_minus_market_mae == null) return [];
+  return [forecastRow(sport, "Margin MAE, points", published.margin_mae, market.margin_mae, 2, 1,
+    `${published.games} games, ${season}${sampleNote}`, gapInterval(published), published.model_minus_market_mae)];
 }
 
-async function nflForecastRow(): Promise<ComparisonRow[]> {
-  const accuracy = await fetchNflAccuracy("live");
-  const latest = accuracy.bySeason.reduce<(typeof accuracy.bySeason)[number] | null>(
-    (best, slice) => (!best || Number(slice.label) > Number(best.label) ? slice : best), null);
-  if (!latest?.games) return [];
-  return [forecastRow("nfl", "Margin MAE, points", latest.modelMae, latest.marketMae, 2, 1, `${latest.games} games, ${latest.label}, first live season`)];
-}
+const cfbForecastRow = () => footballForecastRow("cfb", () =>
+  supabaseCfb.from("performance_metrics").select("*").eq("segment_kind", "overall").order("season", { ascending: false }).limit(3), "");
+const nflForecastRow = () => footballForecastRow("nfl", () =>
+  supabaseNfl.from("performance_metrics").select("*").eq("segment_kind", "overall").order("season", { ascending: false }).limit(3), ", first live season");
 
 // The closing moneyline is scored once 30 live games carry one, the site's
 // thin-sample line; model and market are scored on the same games.

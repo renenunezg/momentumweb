@@ -181,6 +181,16 @@ export default async function PerformancePage({
                 )}
             />
           </>
+          <PickBreakdown
+            title="By policy version"
+            rows={summary.metrics
+              .filter((m) => m.segment_kind === "policy")
+              .sort((a, b) => (a.segment ?? "").localeCompare(b.segment ?? "", undefined, { numeric: true }))}
+          />
+          <p className="text-xs text-muted-foreground">
+            Results on this page pool every policy version above; each prediction keeps the rules
+            and price it was recorded under.
+          </p>
           <PickPolicy sport="nfl" firstDecision={metric?.first_decision_at} />
         </div>
       </FootballPerformanceTabs>

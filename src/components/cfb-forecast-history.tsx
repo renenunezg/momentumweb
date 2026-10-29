@@ -12,7 +12,6 @@ import {
 } from "@/components/graded-history";
 
 const PAGE_SIZE = 50;
-const FIRST_BACKTEST_SEASON = 2021;
 
 // The live record carries the pure projection and the blend; the history
 // table grades the blend, which is the line the site published.
@@ -52,8 +51,13 @@ export default async function ForecastHistory({
   const page = pageNumber(params.page);
   const offset = (page - 1) * PAGE_SIZE;
 
-  const [liveSeason, backtestSeasonRes] = await Promise.all([
+  const [liveSeason, firstBacktestRes, backtestSeasonRes] = await Promise.all([
     fetchLiveGradedSeason(),
+    supabaseCfb
+      .from("backtest_predictions")
+      .select("season")
+      .order("season", { ascending: true })
+      .limit(1),
     supabaseCfb
       .from("backtest_predictions")
       .select("season")
@@ -102,11 +106,12 @@ export default async function ForecastHistory({
 
   const totalPages = Math.max(1, Math.ceil(totalRows / PAGE_SIZE));
   const latestBacktestSeason = backtestSeasonRes.data?.[0]?.season ?? null;
+  const firstBacktestSeason = firstBacktestRes.data?.[0]?.season ?? null;
   const backtestSeasons =
-    latestBacktestSeason == null
+    latestBacktestSeason == null || firstBacktestSeason == null
       ? []
       : Array.from(
-          { length: latestBacktestSeason - FIRST_BACKTEST_SEASON + 1 },
+          { length: latestBacktestSeason - firstBacktestSeason + 1 },
           (_, i) => String(latestBacktestSeason - i),
         );
 

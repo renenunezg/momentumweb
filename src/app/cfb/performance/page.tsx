@@ -1,4 +1,5 @@
 import { formatSiteTimestamp } from "@/lib/site-time";
+import { formatPct, formatSigned } from "@/lib/utils";
 import { PlayerModelPerformance } from "@/components/player-model-performance";
 import { PageDescription, PageHeader, PageShell, PageTitle } from "@/components/page-layout";
 import type { Metadata } from "next";
@@ -182,6 +183,27 @@ export default async function PerformancePage({
                 )}
             />
           </>
+          <PickBreakdown
+            title="By policy version"
+            rows={summary.metrics
+              .filter((m) => m.segment_kind === "policy")
+              .sort((a, b) => (a.segment ?? "").localeCompare(b.segment ?? "", undefined, { numeric: true }))}
+          />
+          <p className="text-xs text-muted-foreground">
+            Results on this page pool every policy version above; each prediction keeps the rules
+            and price it was recorded under.
+          </p>
+          {metric?.clv_market_points_sample ? (
+            <p className="text-xs text-muted-foreground">
+              Closing line value from the decision-time median line, not the shopped price:{" "}
+              {formatSigned(metric.average_clv_market_points, 2)} points over {metric.clv_market_points_sample} spread and total
+              predictions, {formatPct(metric.clv_market_points_positive_share)} positive
+              {metric.clv_market_probability_sample
+                ? <>; moneylines {formatSigned((metric.average_clv_market_probability ?? 0) * 100, 1)} points of win probability over {metric.clv_market_probability_sample}</>
+                : null}
+              . Positive means the market moved toward the prediction.
+            </p>
+          ) : null}
           <PickPolicy firstDecision={metric?.first_decision_at} />
         </div>
       </CfbPerformanceTabs>

@@ -240,6 +240,16 @@ export function PickTable({
                           </p>
                         )}
                         <p>Model: {pick.model_version}</p>
+                        {pick.odds_source && (
+                          <p>
+                            Price source:{" "}
+                            {pick.odds_source === "espn"
+                              ? "ESPN scoreboard (DraftKings line, no book timestamp)"
+                              : pick.odds_source === "odds_api"
+                                ? "The Odds API (timestamped book quote)"
+                                : pick.odds_source}
+                          </p>
+                        )}
                         {pick.execution_eligibility_verified !== undefined && (
                           <p>
                             Bookmaker availability:{" "}
@@ -458,13 +468,12 @@ export function PickPolicy({
           total probabilities use integer scores. Historical calibration is
           diagnostic, not a publication gate. Estimated EV does not establish a
           real advantage over the market. There are no additional exposure caps.
-          Results on this page pool every policy version recorded this season,
-          nfl-picks-v2 through v5; each prediction keeps the rules and price it
-          was recorded under, and through week 8 of 2026, 33 of the 59
-          recommendations were volume-floor predictions. Through October 6, 2026
-          prices were the best of DraftKings, FanDuel and BetMGM from The Odds
-          API; since October 11 they are DraftKings&apos; line as shown on
-          ESPN&apos;s scoreboard, which carries no book timestamp.
+          Through week 8 of 2026, 33 of the 59 recommendations were volume-floor
+          predictions; each row in the history and the export records its reason.
+          Each prediction also records its price source: The Odds API (a
+          timestamped quote, best of DraftKings, FanDuel and BetMGM) through
+          October 6, 2026, and ESPN&apos;s scoreboard (DraftKings&apos; line, no
+          book timestamp) from October 11.
         </p>
       ) : (
         <p>
@@ -488,14 +497,16 @@ export function PickPolicy({
           have correlated outcomes and their shared exposure is flagged.
           Pushes return the stake and moneyline ties are void. Recommendations
           remain active for research; estimated edges are not validated profits.
-          Results on this page pool every policy version recorded this season,
-          cfb-picks-v5, v6, v7 and v11; each prediction keeps the rules and price
-          it was recorded under. Prices are the best available among nine
-          bookmakers in The Odds API feed, several of them offshore, so the record
-          assumes access to all of them. On October 12, 2026 the week 7 slate
-          published under v8 was replaced by v11 decisions before any game
-          started; the 15 original predictions are archived and would have
-          scored +1.96u against the +1.23u of their replacements.
+          Prices are the best available among nine bookmakers in The Odds API
+          feed, several of them offshore, so the record assumes access to all of
+          them. A recommended prediction stays in the graded record unless a
+          newer model version replaces it before kickoff; a later price move that
+          turns the open decision into a No Play does not remove it. On October
+          12, 2026 the week 7 slate published under v8 was replaced by v11
+          decisions before any game started; the 15 original predictions are
+          archived in the model repository&apos;s pick ledger as superseded
+          before kickoff and would have scored +1.96u against the +1.23u of their
+          replacements.
         </p>
       )}
       <p>

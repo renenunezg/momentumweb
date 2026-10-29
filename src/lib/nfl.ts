@@ -130,14 +130,20 @@ export async function fetchForecastAccuracy(source: "live" | "backtest") {
     { get: true },
   );
   if (error) throw error;
+  // For the backtest, modelMae, modelBeatsMarket and bias describe the pure
+  // model and closingBlendMae the old half-closing-line line; live rows carry
+  // the published line as modelMae and no blend.
   return data as unknown as {
     overall:
-      | (import("@/lib/backtest-metrics").SliceMetrics & { pureMae: number })
+      | (import("@/lib/backtest-metrics").SliceMetrics & { pureMae: number; closingBlendMae: number | null })
       | null;
-    bySeason: (import("@/lib/backtest-metrics").SliceMetrics & { pureMae: number })[];
+    bySeason: (import("@/lib/backtest-metrics").SliceMetrics & { pureMae: number; closingBlendMae: number | null })[];
     completed: number;
     missingForecast: number;
     missingClose: number;
+    primarySource: "pure_model" | "published";
+    modelVersion: string | null;
+    generatedAt: string | null;
   };
 }
 
