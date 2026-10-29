@@ -50,6 +50,7 @@ export const fetchLatestRatings = cache(
       .order("season", { ascending: false })
       .order("week", { ascending: false })
       .limit(1);
+    if (latestRes.error) throw latestRes.error;
     const latest = latestRes.data?.[0];
     if (!latest) return { ratings: [], season: null, week: null };
 
@@ -59,6 +60,7 @@ export const fetchLatestRatings = cache(
       .eq("season", latest.season)
       .eq("week", latest.week)
       .order("power_rating", { ascending: false });
+    if (ratingsRes.error) throw ratingsRes.error;
     return {
       ratings: (ratingsRes.data ?? []) as NflTeamRating[],
       season: latest.season,
@@ -181,6 +183,7 @@ export async function fetchNflLivePerformance(): Promise<FootballLivePerformance
     metrics: [],
     lastGradedAt: null,
     latestKickoff: null,
+    unavailable: false,
   };
   const latestRes = await supabaseNfl
     .from("graded_games")
@@ -188,8 +191,12 @@ export async function fetchNflLivePerformance(): Promise<FootballLivePerformance
     .order("season", { ascending: false })
     .order("graded_at", { ascending: false })
     .limit(1);
+  if (latestRes.error) {
+    console.error("nfl graded games fetch failed:", latestRes.error.message);
+    return { ...empty, unavailable: true };
+  }
   const latest = latestRes.data?.[0];
-  if (latestRes.error || !latest) return empty;
+  if (!latest) return empty;
 
   const [metricsRes, kickoffRes] = await Promise.all([
     supabaseNfl
@@ -204,15 +211,17 @@ export async function fetchNflLivePerformance(): Promise<FootballLivePerformance
       .order("start_date", { ascending: false })
       .limit(1),
   ]);
-  if (metricsRes.error) {
-    console.error("nfl performance metrics fetch failed:", metricsRes.error.message);
-    return empty;
+  const readError = metricsRes.error ?? kickoffRes.error;
+  if (readError) {
+    console.error("nfl performance metrics fetch failed:", readError.message);
+    return { ...empty, unavailable: true };
   }
   return {
     season: latest.season,
     metrics: (metricsRes.data ?? []) as NflPerformanceMetric[],
     lastGradedAt: latest.graded_at,
     latestKickoff: kickoffRes.data?.[0]?.start_date ?? null,
+    unavailable: false,
   };
 }
 
@@ -230,10 +239,7 @@ async function fetchGradeIndex(season: number): Promise<IndexRow[]> {
       .eq("trait", "grade")
       .order("athlete_id", { ascending: true })
       .range(from, from + PAGE - 1);
-    if (res.error) {
-      console.error("nfl position traits index fetch failed:", res.error.message);
-      return rows;
-    }
+    if (res.error) throw res.error;
     rows.push(...((res.data ?? []) as IndexRow[]));
     if ((res.data?.length ?? 0) < PAGE) return rows;
   }
@@ -250,7 +256,10 @@ export async function fetchNflPlayerTraitRows(season: number, ids: string[]): Pr
         .limit(PAGE),
     ),
   );
-  return parts.flatMap((res) => (res.data ?? []) as NflPositionTrait[]);
+  return parts.flatMap((res) => {
+    if (res.error) throw res.error;
+    return (res.data ?? []) as NflPositionTrait[];
+  });
 }
 
 export const fetchNflPositionGrades = cache(async (): Promise<PositionGrades> => {

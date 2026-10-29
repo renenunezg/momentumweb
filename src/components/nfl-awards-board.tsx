@@ -4,6 +4,7 @@ import { useMemo, useState } from "react";
 import { PlayerHeadshot } from "@/components/player-headshot";
 import type { AwardBoard, AwardKey } from "@/lib/nfl-awards-types";
 import { seasonLine } from "@/lib/nfl-awards-format";
+import { formatSigned } from "@/lib/utils";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 
 const LABELS: Record<string, string> = {
@@ -75,7 +76,7 @@ export function NflAwardsBoard({ rows, award }: { rows: AwardBoard[]; award: Awa
           </div>
         </details></TableCell>
         <TableCell className="min-w-44 whitespace-normal align-top text-xs text-muted-foreground">{seasonLine(row)}</TableCell>
-        <TableCell className="text-right align-top font-mono tabular-nums">{row.rank_change == null ? "Unavailable" : row.rank_change === 0 ? "0" : `${row.rank_change > 0 ? "+" : ""}${row.rank_change}`}</TableCell>
+        <TableCell className="text-right align-top font-mono tabular-nums">{row.rank_change == null ? "Unavailable" : formatSigned(row.rank_change, 0)}</TableCell>
         <TableCell className="text-right align-top font-mono tabular-nums">{row.performance_rank == null ? "Unavailable" : `#${row.performance_rank}`}</TableCell>
         <TableCell className="text-right align-top font-mono tabular-nums">{row.win_probability == null ? <span className="font-sans text-xs text-muted-foreground">Experimental</span> : `${(row.win_probability * 100).toFixed(1)}%`}</TableCell>
       </TableRow>)}

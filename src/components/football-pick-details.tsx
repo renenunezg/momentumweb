@@ -13,7 +13,7 @@ import {
 import { formatSiteTimestamp } from "@/lib/site-time";
 import { pickLabel, pickReason, pickQualification, pickResearchContext, usesKeyNumberSpread, usesPairedMoneylineBlend, type WeeklyPick } from "@/lib/football-picks";
 import type { FootballLeague } from "@/lib/football-slates";
-import { breakEvenProbability } from "@/lib/pick-pricing";
+import { impliedProbability } from "@/lib/utils";
 import { formatNumber, formatOdds, formatPct, formatSigned } from "@/lib/utils";
 
 export function FootballPickDetails({
@@ -71,7 +71,7 @@ function PickDetailsContent({
   // Include pushes so break-even and win probability use the same scale.
   const breakEven =
     pick.price != null && pick.push_probability != null
-      ? breakEvenProbability(pick.price) * (1 - pick.push_probability)
+      ? impliedProbability(pick.price) * (1 - pick.push_probability)
       : null;
   const probabilityEdge =
     pick.win_probability != null && breakEven != null

@@ -17,12 +17,11 @@ import { chartAxisProps, chartTooltipStyle, useChartTheme } from "@/lib/chart-th
 import { MARKET_LABELS } from "@/lib/football-picks";
 import type { PickExample } from "@/lib/football-pick-example";
 import {
-  breakEvenProbability,
   integerBins,
   pickRegion,
   type PickRegion,
 } from "@/lib/pick-pricing";
-import { formatOdds, formatPct, formatSigned } from "@/lib/utils";
+import { formatOdds, formatPct, formatSigned, impliedProbability } from "@/lib/utils";
 
 function lineLabel(example: PickExample): string {
   if (example.market === "h2h") return `${example.selection} ML`;
@@ -81,7 +80,7 @@ export function FootballPickExample({ example }: { example: PickExample }) {
     push: theme["muted-foreground"],
     loss: theme.grid,
   };
-  const breakEven = breakEvenProbability(example.price);
+  const breakEven = impliedProbability(example.price);
   const conditionalWin = example.winProbability / (1 - example.pushProbability);
   const settled = example.outcome === "win" || example.outcome === "loss" || example.outcome === "push";
   const kickoff = example.startDate

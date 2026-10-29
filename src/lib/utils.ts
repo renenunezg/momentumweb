@@ -25,6 +25,12 @@ export function foldSearch(text: string): string {
   return text.normalize("NFD").replace(/\p{M}/gu, "").toLowerCase();
 }
 
+// Implied probability of an American price, vig included: the break-even
+// win rate for a bet at that price.
+export function impliedProbability(american: number): number {
+  return american > 0 ? 100 / (american + 100) : -american / (-american + 100);
+}
+
 export function formatOdds(odds: number | null | undefined): string {
   if (odds == null) return EMPTY;
   const rounded = Math.round(odds);

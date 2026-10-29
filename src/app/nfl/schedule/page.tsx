@@ -5,7 +5,7 @@ import { fetchLatestRatings, fetchTeams } from "@/lib/nfl";
 import { formatHomeLine, marketHomeLine } from "@/lib/football";
 import { groupFootballSlates } from "@/lib/football-slates";
 import type { NflGameProjection, NflMarketComparison } from "@/lib/types";
-import { formatNumber } from "@/lib/utils";
+import { formatNumber, formatSigned } from "@/lib/utils";
 import { LastUpdated } from "@/components/last-updated";
 import { KickoffCell, SlateRow } from "@/components/kickoff-cells";
 import { liveKey } from "@/lib/football-live";
@@ -53,7 +53,7 @@ function qbMarker(adjustment: number | null): ScheduleMarker | null {
   if (Math.abs(qb) < 1.5) return null;
   return {
     label: "QB",
-    note: `QB adjustment ${qb > 0 ? "+" : ""}${qb.toFixed(1)} pts: the projected starter differs meaningfully from the QB play in the team's rating.`,
+    note: `QB adjustment ${formatSigned(qb, 1)} pts: the projected starter differs meaningfully from the QB play in the team's rating.`,
   };
 }
 
@@ -64,6 +64,7 @@ export default async function SchedulePage() {
     .order("season", { ascending: false })
     .order("week", { ascending: false })
     .limit(1);
+  if (latestRes.error) throw latestRes.error;
   const latest = latestRes.data?.[0];
 
   if (!latest) {
@@ -97,6 +98,9 @@ export default async function SchedulePage() {
     fetchTeams(),
     fetchLatestRatings(),
   ]);
+
+  const readError = projRes.error ?? marketRes.error ?? totalRes.error;
+  if (readError) throw readError;
 
   // Ratings arrive sorted by power_rating desc, so position is the league
   // rank, the same number the ratings page shows.

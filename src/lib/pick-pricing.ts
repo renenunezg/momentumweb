@@ -129,13 +129,18 @@ export interface PickOffer {
 // against the home spread, totals against the posted total. Half-point lines
 // never push; integer lines push on the line itself.
 export function pickRegion(offer: PickOffer, outcome: number): PickRegion {
+  // A spread or total without its line cannot be settled; a silent zero would
+  // grade it as a pick'em.
+  if (offer.market !== "h2h" && offer.point == null) {
+    throw new Error(`${offer.market} offer has no line`);
+  }
   if (offer.market === "totals") {
-    const line = offer.point ?? 0;
+    const line = offer.point as number;
     if (outcome === line) return "push";
     const over = outcome > line;
     return over === (offer.side === "over") ? "win" : "loss";
   }
-  const point = offer.market === "h2h" ? 0 : (offer.point ?? 0);
+  const point = offer.market === "h2h" ? 0 : (offer.point as number);
   const homeSpread = offer.side === "home" ? point : -point;
   const edge = outcome + homeSpread;
   if (Math.abs(edge) < 1e-9) return "push";
@@ -171,9 +176,4 @@ export function pickProbabilities(
   const out = { win: 0, push: 0, loss: 0 };
   for (const bin of bins) out[pickRegion(offer, bin.value)] += bin.probability;
   return out;
-}
-
-// Implied probability of an American price, vig included.
-export function breakEvenProbability(price: number): number {
-  return price > 0 ? 100 / (price + 100) : -price / (-price + 100);
 }

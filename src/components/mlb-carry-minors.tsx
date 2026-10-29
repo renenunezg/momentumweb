@@ -8,7 +8,7 @@ import { PlayerCell } from "@/components/player-cell";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import type { CarryMinorRow, MinorLevel, MinorSummary } from "@/lib/mlb-carry";
 import { mlbPlayerHeadshotUrl } from "@/lib/player-headshots";
-import { cn, foldSearch } from "@/lib/utils";
+import { cn, foldSearch, formatSigned } from "@/lib/utils";
 
 const LEVELS: { key: MinorLevel; label: string }[] = [
   { key: "aaa", label: "Triple-A" },
@@ -18,8 +18,8 @@ const PAGE_SIZE = 25;
 type SortKey = "carry" | "carry_raw" | "exit_velo" | "n_air" | "hr";
 const COLUMNS: { key: SortKey; label: string; format: (v: number) => string }[] = [
   { key: "n_air", label: "Air balls", format: (v) => v.toFixed(0) },
-  { key: "carry", label: "Carry", format: (v) => `${v > 0 ? "+" : ""}${v.toFixed(1)}` },
-  { key: "carry_raw", label: "Unadjusted", format: (v) => `${v > 0 ? "+" : ""}${v.toFixed(1)}` },
+  { key: "carry", label: "Carry", format: (v) => formatSigned(v, 1) },
+  { key: "carry_raw", label: "Unadjusted", format: (v) => formatSigned(v, 1) },
   { key: "exit_velo", label: "Exit velo", format: (v) => v.toFixed(1) },
   { key: "hr", label: "HR", format: (v) => v.toFixed(0) },
 ];

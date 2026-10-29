@@ -1,5 +1,6 @@
 import { cache } from "react";
 import { supabase, supabaseCfb, supabaseNfl } from "@/lib/supabase";
+import { formatSigned } from "@/lib/utils";
 import type { Tables } from "@/lib/database-schema";
 
 // Player-grade evaluations the model repos publish for the performance pages:
@@ -121,8 +122,7 @@ export const fetchMlbForwardEvaluation = cache(
 
 /** "+0.05 (+0.01 to +0.10)", with the interval's verdict for the caption. */
 export function describeGap(diff: number, lo: number | null, hi: number | null, decimals = 2) {
-  const sign = (v: number) => `${v > 0 ? "+" : v < 0 ? "-" : ""}${Math.abs(v).toFixed(decimals)}`;
-  const text = lo == null || hi == null ? sign(diff) : `${sign(diff)} (${sign(lo)} to ${sign(hi)})`;
+  const text = lo == null || hi == null ? formatSigned(diff, decimals) : `${formatSigned(diff, decimals)} (${formatSigned(lo, decimals)} to ${formatSigned(hi, decimals)})`;
   const verdict = lo == null || hi == null ? null : lo > 0 ? "clear of zero" : hi < 0 ? "behind, clear of zero" : "within noise";
   return { text, verdict };
 }

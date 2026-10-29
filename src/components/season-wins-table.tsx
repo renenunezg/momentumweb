@@ -14,7 +14,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { cn } from "@/lib/utils";
+import { cn, formatSigned } from "@/lib/utils";
 
 const views = [
   { key: "all", label: "All" },
@@ -250,7 +250,7 @@ export function SeasonWinsTable({
                 <TableCell className="text-right">
                   {row.difference == null
                     ? "–"
-                    : `${row.difference >= 0 ? "+" : ""}${row.difference.toFixed(1)}`}
+                    : formatSigned(row.difference, 1)}
                 </TableCell>
               </TableRow>
             ))}

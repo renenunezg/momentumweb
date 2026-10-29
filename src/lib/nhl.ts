@@ -28,6 +28,10 @@ export const fetchLatestRatings = cache(
       .select("as_of")
       .order("as_of", { ascending: false })
       .limit(1);
+    if (latestRes.error) {
+      console.error("nhl ratings fetch failed:", latestRes.error.message);
+      return { ratings: [], asOf: null };
+    }
     const asOf = latestRes.data?.[0]?.as_of;
     if (!asOf) return { ratings: [], asOf: null };
     const { data, error } = await supabaseNhl
@@ -172,22 +176,3 @@ export function bestMoneyline(
   return best;
 }
 
-export function americanToImplied(price: number): number {
-  return price > 0 ? 100 / (price + 100) : -price / (-price + 100);
-}
-
-// Home win probability of a two-sided close with the vig removed
-// proportionally, the same definition the accuracy RPC scores.
-export function closingHomeProb(
-  homePrice: number | null,
-  awayPrice: number | null,
-): number | null {
-  if (homePrice == null || awayPrice == null) return null;
-  const home = americanToImplied(homePrice);
-  return home / (home + americanToImplied(awayPrice));
-}
-
-export const PROVIDER_NAMES: Record<string, string> = {
-  draftkings: "DraftKings",
-  fanduel: "FanDuel",
-};

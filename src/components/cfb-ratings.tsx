@@ -49,7 +49,7 @@ const marketStrength = (row: CfbTeamRating) => ({
 });
 
 const LIMITED: LimitedDataRule = {
-  isLimited: (r) => (r.missing_input_count ?? 0) >= 4,
+  isLimited: (r) => r.missing_input_count != null && r.missing_input_count >= 4,
   rowNote:
     "Several rating inputs are unavailable for this team; treat the rating as degraded.",
   allNote:

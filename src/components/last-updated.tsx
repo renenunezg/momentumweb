@@ -5,6 +5,7 @@ import { useSyncExternalStore } from "react";
 function formatRelative(ts: string | null): string {
   if (!ts) return "unknown";
   const then = new Date(ts).getTime();
+  if (Number.isNaN(then)) return "unknown";
   const now = Date.now();
   const diffSec = Math.max(0, Math.floor((now - then) / 1000));
   if (diffSec < 60) return `${diffSec}s ago`;
@@ -36,7 +37,8 @@ const absolute = new Intl.DateTimeFormat("en-US", {
 });
 
 function formatAbsolute(ts: string | null): string {
-  return ts ? absolute.format(new Date(ts)) : "unknown";
+  const date = ts ? new Date(ts) : null;
+  return date && !Number.isNaN(date.getTime()) ? absolute.format(date) : "unknown";
 }
 
 export function LastUpdated({

@@ -18,8 +18,8 @@ import {
 } from "recharts";
 import { chartAxisProps, chartTooltipStyle, useChartTheme } from "@/lib/chart-theme";
 import type { CarryStudy } from "@/lib/mlb-carry";
+import { formatSigned as signed } from "@/lib/utils";
 
-const signed = (v: number, digits = 1) => `${v > 0 ? "+" : ""}${v.toFixed(digits)}`;
 
 type LegendMark = "line" | "dash" | "dot" | "ring";
 

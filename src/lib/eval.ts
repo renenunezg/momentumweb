@@ -1,3 +1,5 @@
+import { impliedProbability } from "./utils.ts";
+
 // Per-game tally math, ported from backend/evaluate_model.py:_compute_base_row.
 // Only covers the count columns shown on the Evaluation History table.
 // Regression / probabilistic / financial metrics stay with the nightly batch.
@@ -218,8 +220,10 @@ export function computeSegmentRow(rows: EvalRow[]): SegmentRow {
     for (const r of mlBets) {
       const am = r.moneyline as number;
       const dec = americanToDecimal(am);
-      let stake = r.kelly_quarter_ml ?? 0;
-      if (stake <= 0) stake = 0.01;
+      // The ledger view grades only bets with a positive stake; a row with
+      // none is not a bet, so it is not invented as one here either.
+      const stake = r.kelly_quarter_ml;
+      if (stake == null || stake <= 0) continue;
       const won = r.actual_win === 1;
       const payout = won ? stake * dec : 0;
       if (am < 0) {
@@ -245,7 +249,7 @@ export function computeSegmentRow(rows: EvalRow[]): SegmentRow {
     let pSum = 0;
     for (const r of mlBets) {
       const am = r.moneyline as number;
-      pSum += am > 0 ? 100 / (am + 100) : -am / (-am + 100);
+      pSum += impliedProbability(am);
     }
     const meanP = pSum / mlBets.length;
     const avgAmerican =
@@ -272,8 +276,8 @@ export function computeSegmentRow(rows: EvalRow[]): SegmentRow {
     const am = dir === "over" ? r.total_over_odds : r.total_under_odds;
     if (am == null) continue;
     const dec = americanToDecimal(am);
-    let stake = r.kelly_quarter_total ?? 0;
-    if (stake <= 0) stake = 0.01;
+    const stake = r.kelly_quarter_total;
+    if (stake == null || stake <= 0) continue;
     // A push returns the stake: it counts as a bet with zero P&L.
     const payout = push ? stake : v === 1 ? stake * dec : 0;
     const win = v === 1 ? 1 : 0;

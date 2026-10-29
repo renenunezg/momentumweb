@@ -14,5 +14,6 @@ const timestamp = new Intl.DateTimeFormat("en-US", {
 });
 
 export function formatSiteTimestamp(value: string): string {
-  return timestamp.format(new Date(value));
+  const date = new Date(value);
+  return Number.isNaN(date.getTime()) ? value : timestamp.format(date);
 }

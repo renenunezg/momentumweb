@@ -2,6 +2,7 @@ import { SITE_TIME_ZONE } from "./site-time.ts";
 export { SITE_TIME_ZONE } from "./site-time.ts";
 
 import { pickLabel, type PickMarket } from "./football-picks.ts";
+import { formatSigned } from "./utils.ts";
 
 // One day of recommended picks across every model, normalized so the home
 // page can list an MLB run line next to an NFL spread without knowing which
@@ -126,7 +127,7 @@ export function mlbGamePicks(rows: MlbPickRow[]): DailyPick[] {
         label:
           row.spread == null
             ? `${row.team} RL`
-            : `${row.team} ${row.spread > 0 ? "+" : ""}${row.spread}`,
+            : `${row.team} ${formatSigned(row.spread, 1)}`,
         price: row.spread_odds,
         probability: row.p_cover,
       });

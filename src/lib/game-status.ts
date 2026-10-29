@@ -63,8 +63,9 @@ export function gameStatus(matchup: GameMatchup): GameStatus {
     return half ? `${half} ${inning}` : `Inn ${inning}`;
   })();
 
-  const startTime = matchup.start_time
-    ? new Date(matchup.start_time).toLocaleTimeString("en-US", {
+  const start = matchup.start_time ? new Date(matchup.start_time) : null;
+  const startTime = start && !Number.isNaN(start.getTime())
+    ? start.toLocaleTimeString("en-US", {
         hour: "numeric",
         minute: "2-digit",
         timeZone: "America/Los_Angeles",

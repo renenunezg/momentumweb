@@ -58,6 +58,9 @@ export default async function PerformancePage() {
     }),
   ]);
 
+  const readError =
+    evalRes.error ?? calRes.error ?? edgeRes.error ?? residRes.error ?? latestRes.error ?? sigmasRes.error;
+  if (readError) console.error("MLB performance read failed:", readError.message);
   const evaluations = (evalRes.data ?? []) as ModelEvaluation[];
   const lastUpdated: string | null = latestRes.data?.[0]?.created_at ?? null;
   const calibration = (calRes.data ?? []) as CalibrationBin[];
@@ -82,6 +85,7 @@ export default async function PerformancePage() {
       .from("model_outputs_season_unified")
       .select("game_pk, team, expected_runs")
       .in("game_pk", finalGames.map((g) => g.game_pk));
+    if (predRes.error) throw predRes.error;
 
     residuals = (predRes.data ?? [])
       .map((r) => {
@@ -94,14 +98,14 @@ export default async function PerformancePage() {
       .filter((v): v is number => v != null);
   }
 
-  if (evaluations.length === 0) {
+  if (readError || evaluations.length === 0) {
     return (
       <PageShell>
         <PageTitle>
           MLB Model Performance
         </PageTitle>
         <p className="text-muted-foreground">
-          {evalRes.error ? "Performance data is temporarily unavailable." : "No evaluation data available yet."}
+          {readError ? "Performance data is temporarily unavailable." : "No evaluation data available yet."}
         </p>
       </PageShell>
     );

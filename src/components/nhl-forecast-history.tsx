@@ -10,7 +10,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { closingHomeProb } from "@/lib/nhl";
+import { closingHomeProb } from "@/lib/nhl-format";
 import { supabaseNhl } from "@/lib/supabase";
 import { cn, formatNumber, formatPct } from "@/lib/utils";
 
@@ -60,9 +60,11 @@ export async function NhlForecastHistory() {
         </TableHeader>
         <TableBody>
           {rows.map((r) => {
-            const homeWon = (r.home_goals ?? 0) > (r.away_goals ?? 0);
-            const favoredHome = (r.home_win_prob ?? 0.5) > 0.5;
-            const hit = r.home_win_prob != null && homeWon === favoredHome;
+            // A row missing a score or a forecast is shown but not judged.
+            const hit =
+              r.home_goals != null && r.away_goals != null && r.home_win_prob != null
+                ? r.home_goals > r.away_goals === r.home_win_prob > 0.5
+                : null;
             return (
               <TableRow key={r.game_id}>
                 <TableCell className="whitespace-nowrap text-xs text-muted-foreground">
@@ -79,7 +81,7 @@ export async function NhlForecastHistory() {
                 </TableCell>
                 <TableCell className={num}>{formatNumber(r.away_lambda, 2)}</TableCell>
                 <TableCell className={num}>{formatNumber(r.home_lambda, 2)}</TableCell>
-                <TableCell className={cn(num, r.home_win_prob != null && (hit ? "text-positive" : "text-negative"))}>
+                <TableCell className={cn(num, hit != null && (hit ? "text-positive" : "text-negative"))}>
                   {formatPct(r.home_win_prob)}
                 </TableCell>
                 {hasClose && (

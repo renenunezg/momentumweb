@@ -5,20 +5,21 @@ import { InfoTip } from "@/components/info-tip";
 import { Pager } from "@/components/pager";
 import { PlayerCell } from "@/components/player-cell";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { slashLine, swingType, type CarryHitterRow, type LeaderboardStudy } from "@/lib/mlb-carry";
+import type { CarryHitterRow, LeaderboardStudy } from "@/lib/mlb-carry";
+import { slashLine, swingType } from "@/lib/mlb-carry-format";
 import { mlbTeamIdentity } from "@/lib/mlb-teams";
 import { mlbPlayerHeadshotUrl } from "@/lib/player-headshots";
-import { cn, foldSearch } from "@/lib/utils";
+import { cn, foldSearch, formatSigned } from "@/lib/utils";
 
 type SortKey = "carry" | "physics" | "unexplained" | "backspin" | "tilt" | "attack" | "bat_speed" | "n_air";
 const PAGE_SIZE = 25;
 
 const COLUMNS: { key: SortKey; label: string; tip: string; format: (v: number) => string }[] = [
   { key: "n_air", label: "Air balls", tip: "Balls hit in the air (10 to 50 degrees, 90+ mph) this season.", format: (v) => v.toFixed(0) },
-  { key: "carry", label: "Carry", tip: "Average feet beyond the league distance for the same exit velocity, launch angle, direction, ballpark and month.", format: (v) => `${v > 0 ? "+" : ""}${v.toFixed(1)}` },
-  { key: "physics", label: "Swing physics", tip: "The part of his carry the collision and flight physics of his measured swing explains.", format: (v) => `${v > 0 ? "+" : ""}${v.toFixed(1)}` },
-  { key: "unexplained", label: "Unexplained", tip: "Carry minus swing physics.", format: (v) => `${v > 0 ? "+" : ""}${v.toFixed(1)}` },
-  { key: "backspin", label: "Backspin vs league", tip: "Estimated backspin relative to the league at the same launch angle, in rpm. Relative only: public data cannot pin the absolute level.", format: (v) => `${v > 0 ? "+" : ""}${v.toFixed(0)}` },
+  { key: "carry", label: "Carry", tip: "Average feet beyond the league distance for the same exit velocity, launch angle, direction, ballpark and month.", format: (v) => formatSigned(v, 1) },
+  { key: "physics", label: "Swing physics", tip: "The part of his carry the collision and flight physics of his measured swing explains.", format: (v) => formatSigned(v, 1) },
+  { key: "unexplained", label: "Unexplained", tip: "Carry minus swing physics.", format: (v) => formatSigned(v, 1) },
+  { key: "backspin", label: "Backspin vs league", tip: "Estimated backspin relative to the league at the same launch angle, in rpm. Relative only: public data cannot pin the absolute level.", format: (v) => formatSigned(v, 0) },
   { key: "tilt", label: "Tilt", tip: "Swing path tilt at a belt-high pitch. Lower is a flatter swing plane.", format: (v) => `${v.toFixed(0)}°` },
   { key: "attack", label: "Attack", tip: "Attack angle at a belt-high pitch: how steeply the barrel rises at contact.", format: (v) => `${v.toFixed(0)}°` },
   { key: "bat_speed", label: "Bat speed", tip: "Average bat speed (mph) over the fastest 90% of his tracked swings, after Savant's competitive-swing rule; the two averages run close but are not identical.", format: (v) => v.toFixed(1) },

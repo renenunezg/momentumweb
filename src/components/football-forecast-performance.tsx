@@ -160,7 +160,9 @@ export function FootballForecastPerformance({
           </p>
         </div>
 
-        {!livePure ? (
+        {live.unavailable ? (
+          <Notice role="status">Live grading is temporarily unavailable.</Notice>
+        ) : !livePure ? (
           <p className="text-sm text-muted-foreground">
             No completed {live.season ?? "2026"} games have been graded yet.
             Live performance appears here once the first week is final.

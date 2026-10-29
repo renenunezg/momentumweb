@@ -54,6 +54,7 @@ export const fetchLatestRatings = cache(async (): Promise<{
     .order("season", { ascending: false })
     .order("week", { ascending: false })
     .limit(1);
+  if (latestRes.error) throw latestRes.error;
   const latest = latestRes.data?.[0];
   if (!latest) return { ratings: [], season: null, week: null };
 
@@ -63,6 +64,7 @@ export const fetchLatestRatings = cache(async (): Promise<{
     .eq("season", latest.season)
     .eq("week", latest.week)
     .order("power_rating", { ascending: false });
+  if (ratingsRes.error) throw ratingsRes.error;
   return {
     ratings: (ratingsRes.data ?? []) as CfbTeamRating[],
     season: latest.season,
@@ -150,6 +152,7 @@ export interface CfbLivePerformance {
   metrics: CfbPerformanceMetric[];
   lastGradedAt: string | null;
   latestKickoff: string | null;
+  unavailable: boolean;
 }
 
 // Live-season grading for the most recent graded season. Every number here
@@ -161,6 +164,7 @@ export async function fetchLivePerformance(): Promise<CfbLivePerformance> {
     metrics: [],
     lastGradedAt: null,
     latestKickoff: null,
+    unavailable: false,
   };
   const latestRes = await supabaseCfb
     .from("graded_games")
@@ -168,8 +172,12 @@ export async function fetchLivePerformance(): Promise<CfbLivePerformance> {
     .order("season", { ascending: false })
     .order("graded_at", { ascending: false })
     .limit(1);
+  if (latestRes.error) {
+    console.error("cfb graded games fetch failed:", latestRes.error.message);
+    return { ...empty, unavailable: true };
+  }
   const latest = latestRes.data?.[0];
-  if (latestRes.error || !latest) return empty;
+  if (!latest) return empty;
 
   const [metricsRes, kickoffRes] = await Promise.all([
     supabaseCfb
@@ -184,26 +192,29 @@ export async function fetchLivePerformance(): Promise<CfbLivePerformance> {
       .order("start_date", { ascending: false })
       .limit(1),
   ]);
-  if (metricsRes.error) {
-    console.error("cfb performance metrics fetch failed:", metricsRes.error.message);
-    return empty;
+  const readError = metricsRes.error ?? kickoffRes.error;
+  if (readError) {
+    console.error("cfb performance metrics fetch failed:", readError.message);
+    return { ...empty, unavailable: true };
   }
   return {
     season: latest.season,
     metrics: (metricsRes.data ?? []) as CfbPerformanceMetric[],
     lastGradedAt: latest.graded_at,
     latestKickoff: kickoffRes.data?.[0]?.start_date ?? null,
+    unavailable: false,
   };
 }
 
 // The most recent season with graded live games, used by the history page to
 // decide which tab is live and which are backtest.
 export async function fetchLiveGradedSeason(): Promise<number | null> {
-  const { data } = await supabaseCfb
+  const { data, error } = await supabaseCfb
     .from("graded_games")
     .select("season")
     .order("season", { ascending: false })
     .limit(1);
+  if (error) throw error;
   return data?.[0]?.season ?? null;
 }
 
@@ -274,8 +285,9 @@ export const fetchHeismanTracker = cache(async (): Promise<CfbHeismanTracker> =>
       .eq("season", latest.season)
       .limit(1),
   ]);
-  if (valuesRes.error) {
-    console.error("cfb player values fetch failed:", valuesRes.error.message);
+  const firstError = valuesRes.error ?? boardWeekRes.error ?? historyRes.error ?? metaRes.error;
+  if (firstError) {
+    console.error("cfb heisman tracker fetch failed:", firstError.message);
     return EMPTY_TRACKER;
   }
   const values = (valuesRes.data ?? []) as CfbPlayerValue[];
@@ -290,7 +302,7 @@ export const fetchHeismanTracker = cache(async (): Promise<CfbHeismanTracker> =>
       .in("athlete_id", leaders)
       .order("week", { ascending: true }),
     boardWeek == null
-      ? Promise.resolve({ data: [] as CfbHeismanBoardRow[] })
+      ? Promise.resolve({ data: [] as CfbHeismanBoardRow[], error: null })
       : supabaseCfb
           .from("heisman_board")
           .select("*")
@@ -300,6 +312,11 @@ export const fetchHeismanTracker = cache(async (): Promise<CfbHeismanTracker> =>
           .limit(BOARD_ROWS),
   ]);
 
+  const secondError = trajectoryRes.error ?? boardRes.error;
+  if (secondError) {
+    console.error("cfb heisman tracker fetch failed:", secondError.message);
+    return EMPTY_TRACKER;
+  }
   return {
     season: latest.season,
     week: latest.week,
@@ -336,10 +353,7 @@ async function fetchGradeIndex(season: number): Promise<IndexRow[]> {
       .eq("trait", "grade")
       .order("athlete_id", { ascending: true })
       .range(from, from + PAGE - 1);
-    if (res.error) {
-      console.error("cfb position traits index fetch failed:", res.error.message);
-      return rows;
-    }
+    if (res.error) throw res.error;
     rows.push(...((res.data ?? []) as IndexRow[]));
     if ((res.data?.length ?? 0) < PAGE) return rows;
   }
@@ -356,7 +370,10 @@ export async function fetchPlayerTraitRows(season: number, ids: string[]): Promi
         .limit(PAGE)
     )
   );
-  return parts.flatMap((res) => (res.data ?? []) as CfbPositionTrait[]);
+  return parts.flatMap((res) => {
+    if (res.error) throw res.error;
+    return (res.data ?? []) as CfbPositionTrait[];
+  });
 }
 
 export const fetchPositionGrades = cache(async (): Promise<CfbPositionGrades> => {

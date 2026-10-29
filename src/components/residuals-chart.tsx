@@ -1,5 +1,6 @@
 "use client";
 
+import { formatSigned } from "@/lib/utils";
 import {
   BarChart,
   Bar,
@@ -50,12 +51,11 @@ export function ResidualsChart({ residuals }: ResidualsChartProps) {
     <div>
       <p className="text-xs text-muted-foreground mb-2">
         {residuals.length} graded team-games · mean bias{" "}
-        {mean >= 0 ? "+" : ""}
-        {mean.toFixed(2)} runs
+        {formatSigned(mean, 2)} runs
       </p>
       <div
         role="img"
-        aria-label={`Histogram of actual minus predicted runs across ${residuals.length} graded team-games, mean bias ${mean >= 0 ? "+" : ""}${mean.toFixed(2)} runs`}
+        aria-label={`Histogram of actual minus predicted runs across ${residuals.length} graded team-games, mean bias ${formatSigned(mean, 2)} runs`}
       >
       <ResponsiveContainer width="100%" height={300}>
         <BarChart

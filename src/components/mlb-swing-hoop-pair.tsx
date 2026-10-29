@@ -3,6 +3,7 @@
 import { SwingHoop } from "@/components/mlb-swing-hoop";
 import { useChartTheme } from "@/lib/chart-theme";
 import type { CarryHitterRow } from "@/lib/mlb-carry";
+import { formatSigned } from "@/lib/utils";
 
 /** The flattest and steepest swing planes among qualified hitters, drawn together. */
 export function SwingHoopPair({ flat, steep }: { flat: CarryHitterRow; steep: CarryHitterRow }) {
@@ -17,7 +18,7 @@ export function SwingHoopPair({ flat, steep }: { flat: CarryHitterRow; steep: Ca
         {items.map(({ row, color, dashed }) => (
           <span key={row.player_id} className="inline-flex items-center gap-1.5">
             <span className="inline-block h-0 w-4" style={{ borderTop: `${dashed ? "2px dashed" : "3px solid"} ${color}` }} />
-            {row.player_name}: {row.tilt?.toFixed(0)}° tilt, {row.carry > 0 ? "+" : ""}{row.carry.toFixed(1)} ft carry
+            {row.player_name}: {row.tilt?.toFixed(0)}° tilt, {formatSigned(row.carry, 1)} ft carry
           </span>
         ))}
         <span>Drag to rotate</span>

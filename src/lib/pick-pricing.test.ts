@@ -1,9 +1,7 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import {
-  breakEvenProbability,
-  pickProbabilities,
-} from "./pick-pricing.ts";
+import { pickProbabilities } from "./pick-pricing.ts";
+import { impliedProbability } from "./utils.ts";
 
 // Stored NFL key-number multipliers (margin_distribution_v2), as published on
 // every nfl.recommendations row for 2026 week 1.
@@ -79,7 +77,7 @@ test("NFL spread pick reproduces stored key-number probabilities", () => {
   );
   close(p.win, 0.54905072599849);
   close(p.push, 0.0518175475456757);
-  close(p.win / (1 - p.push) - breakEvenProbability(-110), 0.0552464633344051, 5e-6);
+  close(p.win / (1 - p.push) - impliedProbability(-110), 0.0552464633344051, 5e-6);
 });
 
 test("NFL moneyline pick reproduces stored probabilities with tie mass", () => {

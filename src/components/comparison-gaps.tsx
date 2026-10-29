@@ -1,4 +1,5 @@
 import { useId } from "react";
+import { formatSigned } from "@/lib/utils";
 
 type ComparisonGap = {
   id: string | number;
@@ -22,7 +23,7 @@ export function ComparisonGaps({ title, description, rows, negativeLabel, positi
     row.difference != null && Number.isFinite(row.difference));
   const visible = [...available].sort((a, b) => Math.abs(b.difference) - Math.abs(a.difference) || a.label.localeCompare(b.label)).slice(0, 6);
   const extent = Math.max(1, ...visible.map((row) => Math.abs(row.difference)));
-  const signed = (value: number) => `${value > 0 ? "+" : ""}${value.toFixed(digits)}`;
+  const signed = (value: number) => formatSigned(value, digits);
 
   return (
     <section aria-labelledby={headingId} className="space-y-3 border-y border-border py-5">

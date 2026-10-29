@@ -6,16 +6,9 @@ import { PlayerCell } from "@/components/player-cell";
 import { mlbTeamIdentity } from "@/lib/mlb-teams";
 import { mlbPlayerHeadshotUrl } from "@/lib/player-headshots";
 import { useChartTheme } from "@/lib/chart-theme";
-import { foldSearch } from "@/lib/utils";
-import {
-  changerEffect,
-  labCarry,
-  slashLine,
-  swingType,
-  type CarryHitterRow,
-  type CarryOutcome,
-  type LabStudy,
-} from "@/lib/mlb-carry";
+import { foldSearch, formatSigned as signed } from "@/lib/utils";
+import type { CarryHitterRow, CarryOutcome, LabStudy } from "@/lib/mlb-carry";
+import { changerEffect, labCarry, slashLine, swingType } from "@/lib/mlb-carry-format";
 
 const GENERIC = "generic";
 const PROFILES = [
@@ -35,8 +28,7 @@ const STATS: { key: CarryOutcome; label: string; rate: boolean }[] = [
 ];
 
 const rate = (v: number) => v.toFixed(3).replace(/^0/, "").replace(/^-0/, "-");
-const signedRate = (v: number) => `${v >= 0 ? "+" : "-"}${rate(Math.abs(v))}`;
-const signed = (v: number, d = 1) => `${v >= 0 ? "+" : "-"}${Math.abs(v).toFixed(d)}`;
+const signedRate = (v: number) => signed(v, 3).replace(/^([+-])0/, "$1");
 
 function Slider({ label, value, onChange, base }: { label: string; value: number; onChange: (v: number) => void; base: number | null }) {
   return (
@@ -44,7 +36,7 @@ function Slider({ label, value, onChange, base }: { label: string; value: number
       <span className="flex items-baseline justify-between text-sm">
         <span className="text-muted-foreground">{label}</span>
         <span className="font-mono tabular-nums">
-          {base != null ? `${base.toFixed(0)}° → ${(base + value).toFixed(0)}°` : `${value > 0 ? "+" : ""}${value}°`}
+          {base != null ? `${base.toFixed(0)}° → ${(base + value).toFixed(0)}°` : `${signed(value, 0)}°`}
         </span>
       </span>
       <input type="range" min={-6} max={6} step={1} value={value} onChange={(e) => onChange(Number(e.target.value))} className="w-full accent-primary" />

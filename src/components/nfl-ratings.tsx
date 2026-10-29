@@ -33,7 +33,7 @@ const VIEWS = [
 type View = (typeof VIEWS)[number]["key"];
 
 const LIMITED: LimitedDataRule = {
-  isLimited: (r) => (r.missing_input_count ?? 0) >= 1,
+  isLimited: (r) => r.missing_input_count != null && r.missing_input_count >= 1,
   rowNote:
     "A preseason rating input is unavailable for this team; treat the rating as degraded.",
   allNote:

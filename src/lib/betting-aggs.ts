@@ -1,14 +1,11 @@
 import type { BetLedgerRow, LiveKpis } from "./types";
+import { impliedProbability } from "./utils.ts";
 
 // Mirrors backend/metrics.py::financial_summary + segment_summary so the
 // Performance betting tab computes the same numbers live as the nightly
 // model_evaluation snapshot, without depending on it.
 
 const ANNUAL_FACTOR = 252;
-
-function impliedFromAmerican(odds: number): number {
-  return odds > 0 ? 100 / (odds + 100) : -odds / (-odds + 100);
-}
 
 function safeRound(x: number, decimals: number): number {
   const f = 10 ** decimals;
@@ -123,7 +120,7 @@ export function aggregateLedger(rows: BetLedgerRow[]): LiveKpis {
   let avgMlLine: number | null = null;
   if (mlRows.length) {
     const meanImplied =
-      mlRows.reduce((a, r) => a + impliedFromAmerican(r.american_odds as number), 0) /
+      mlRows.reduce((a, r) => a + impliedProbability(r.american_odds as number), 0) /
       mlRows.length;
     const avgAmerican =
       meanImplied >= 0.5

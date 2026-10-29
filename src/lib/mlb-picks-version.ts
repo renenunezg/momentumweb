@@ -25,6 +25,11 @@ export async function fetchPicksVersion(today: string) {
       .order("updated_at", { ascending: false })
       .limit(1),
   ]);
+  const error = outputs.error ?? games.error;
+  if (error) {
+    console.error("MLB picks version read failed:", error.message);
+    return null;
+  }
   return latestStamp([
     outputs.data?.[0]?.updated_at,
     games.data?.[0]?.updated_at,

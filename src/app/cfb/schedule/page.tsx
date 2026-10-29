@@ -77,6 +77,7 @@ export default async function SchedulePage() {
     .order("season", { ascending: false })
     .order("week", { ascending: false })
     .limit(1);
+  if (latestRes.error) throw latestRes.error;
   const latest = latestRes.data?.[0];
 
   if (!latest) {
@@ -104,6 +105,8 @@ export default async function SchedulePage() {
     fetchLatestRatings(),
   ]);
 
+  if (projRes.error) throw projRes.error;
+
   // Ratings arrive sorted by power_rating desc, so position is the D1 rank,
   // the same number the ratings page shows.
   const rankByTeam = new Map(ratings.map((r, i) => [r.team_id, i + 1]));
@@ -127,6 +130,8 @@ export default async function SchedulePage() {
         { data: [], error: null },
         { data: [], error: null },
       ];
+  if (marketRes.error) throw marketRes.error;
+  if (pickRes.error) throw pickRes.error;
   const fbsGameCount = games.filter(isFbs).length;
   const marketByGame = new Map(
     ((marketRes.data ?? []) as CfbMarketComparison[]).map((m) => [
@@ -213,7 +218,7 @@ export default async function SchedulePage() {
           team:
             g.away_team_id != null ? teams.get(g.away_team_id) : undefined,
           rank: awayRank,
-          markers: [(g.away_missing_input_count ?? 0) >= 4 && DEGRADED],
+          markers: [g.away_missing_input_count != null && g.away_missing_input_count >= 4 && DEGRADED],
         },
         home: {
           name: g.home_team,
@@ -222,7 +227,7 @@ export default async function SchedulePage() {
           rank: homeRank,
           markers: [
             g.neutral_site && NEUTRAL,
-            (g.home_missing_input_count ?? 0) >= 4 && DEGRADED,
+            g.home_missing_input_count != null && g.home_missing_input_count >= 4 && DEGRADED,
           ],
         },
         // Rows published before the blended scores existed carry only the

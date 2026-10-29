@@ -13,6 +13,8 @@ export interface FootballLivePerformance {
   metrics: FootballPerformanceMetric[];
   lastGradedAt: string | null;
   latestKickoff: string | null;
+  // A failed read is reported as such; an empty season is a different state.
+  unavailable: boolean;
 }
 
 export interface FootballPerformanceCopy {

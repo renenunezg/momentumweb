@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { cn } from "@/lib/utils";
+import { cn, formatSigned as signed } from "@/lib/utils";
 import type { ReactNode } from "react";
 import { PageDescription, PageHeader, PageSection, PageShell, PageTitle } from "@/components/page-layout";
 import { KpiCard } from "@/components/kpi-card";
@@ -49,7 +49,6 @@ export async function generateMetadata(): Promise<Metadata> {
   };
 }
 
-const signed = (v: number, d = 1) => `${v > 0 ? "+" : v < 0 ? "-" : ""}${Math.abs(v).toFixed(d)}`;
 const pct = (v: number) => `${Math.round(v * 100)}%`;
 const rate = (v: number) => v.toFixed(3).replace(/^0/, "");
 

@@ -21,8 +21,8 @@ import {
   fetchLatestSnapshots,
   fetchProjections,
   fetchTeams,
-  PROVIDER_NAMES,
 } from "@/lib/nhl";
+import { PROVIDER_NAMES } from "@/lib/nhl-format";
 import { fetchNhlDecisions, pickLabel } from "@/lib/nhl-picks";
 import { cn, formatNumber, formatOdds, formatPct } from "@/lib/utils";
 

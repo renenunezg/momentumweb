@@ -4,8 +4,8 @@ import { TeamLogo } from "@/components/team-logo";
 import { TableCell, TableRow } from "@/components/ui/table";
 import { GamesTableLayout, GameMatchupHeader } from "@/components/games-table-layout";
 import { NhlLiveProbabilityDialog } from "@/components/nhl-live-probability-dialog";
-import { cn, formatNumber, formatOdds, formatPct } from "@/lib/utils";
-import { americanToImplied, PROVIDER_NAMES } from "@/lib/nhl";
+import { cn, formatNumber, formatOdds, formatPct, formatSigned, impliedProbability } from "@/lib/utils";
+import { PROVIDER_NAMES } from "@/lib/nhl-format";
 import type { NhlDecision } from "@/lib/nhl-picks";
 import type { NhlLiveGame } from "@/lib/nhl-live";
 import type { NhlGameProjection, NhlTeamIdentity } from "@/lib/types";
@@ -61,7 +61,7 @@ function TeamRow({
   const price = picked ? moneyline.price : book?.price;
   const edge = picked
     ? moneyline.probability_edge
-    : book ? win - americanToImplied(book.price) : null;
+    : book ? win - impliedProbability(book.price) : null;
   const provider = picked
     ? moneyline.provider ?? providerName(moneyline.provider_key ?? "")
     : book ? providerName(book.provider) : null;
@@ -105,7 +105,7 @@ function TeamRow({
       >
         {edge == null
           ? <span className="text-xs font-normal">No quote</span>
-          : `${edge > 0 ? "+" : ""}${formatPct(edge)}`}
+          : `${formatSigned(edge * 100, 1)}%`}
       </TableCell>
       <TableCell className="text-center tabular-nums">
         <span>{formatOdds(fair)}</span>
