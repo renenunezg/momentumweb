@@ -3,7 +3,7 @@
 import { usePathname } from "next/navigation";
 import { NavigationLink as Link } from "@/components/navigation-link";
 import { cn } from "@/lib/utils";
-import { TAB_ITEM, TAB_LIST, TAB_OFF, TAB_ON } from "@/components/view-tabs";
+import { TAB_ITEM, TAB_LIST, TAB_OFF, TAB_ON } from "@/lib/tab-styles";
 
 // The player pages under one Players nav entry. Links rather than a tablist:
 // each is its own route with its own data and metadata.

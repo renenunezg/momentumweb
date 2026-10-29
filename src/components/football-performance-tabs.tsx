@@ -1,7 +1,7 @@
 import { NavigationLink as Link } from "@/components/navigation-link";
 import type { ReactNode } from "react";
 import { cn } from "@/lib/utils";
-import { TAB_ITEM, TAB_LIST, TAB_OFF, TAB_ON } from "@/components/view-tabs";
+import { TAB_ITEM, TAB_LIST, TAB_OFF, TAB_ON } from "@/lib/tab-styles";
 import type { PickSport } from "@/lib/football-picks";
 
 export function FootballPerformanceTabs({
