@@ -100,7 +100,7 @@ function TraitRow({
           )}
           <span
             className={cn(
-              "type-eyebrow w-10 rounded-sm px-1 text-center",
+              "type-eyebrow whitespace-nowrap rounded-sm px-1 text-center",
               inGrade ? "bg-muted text-positive" : "invisible"
             )}
           >
