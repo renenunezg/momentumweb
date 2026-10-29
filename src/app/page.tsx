@@ -8,6 +8,9 @@ import { HomeComparisons } from "@/components/home-comparisons";
 import { CarryFigure, PositionGapFigure, SystemComparisonFigure } from "@/components/home-figures";
 import { HomePowerRatings } from "@/components/home-power-ratings";
 import { HomeTabs } from "@/components/home-tabs";
+import { DailyPicks } from "@/components/daily-picks";
+import { SITE_TIME_ZONE, siteDate } from "@/lib/daily-picks";
+import { fetchDailyPicks } from "@/lib/daily-picks-fetch";
 import {
   fetchCarryPuzzle,
   fetchComparisons,
@@ -45,6 +48,18 @@ function Eyebrow({ children }: { children: ReactNode }) {
 
 const listJoin = (items: string[]) =>
   items.length <= 1 ? items.join("") : `${items.slice(0, -1).join(", ")} and ${items.at(-1)}`;
+
+async function TodayPredictions() {
+  const today = siteDate();
+  const sports = await fetchDailyPicks(today);
+  const dateLabel = new Date(`${today}T12:00:00Z`).toLocaleDateString("en-US", {
+    timeZone: SITE_TIME_ZONE,
+    weekday: "long",
+    month: "short",
+    day: "numeric",
+  });
+  return <DailyPicks sports={sports} dateLabel={dateLabel} />;
+}
 
 async function LeadStudy() {
   const lead = await fetchMlbLead().catch(() => null);
@@ -199,6 +214,12 @@ export default function Home() {
           </div>
           <ContactLine className="type-meta text-muted-foreground" />
         </header>
+
+        <div className="border-b border-rule-strong py-2">
+          <Suspense fallback={<Loading />}>
+            <TodayPredictions />
+          </Suspense>
+        </div>
 
         <Suspense fallback={<Loading />}>
           <LeadStudy />

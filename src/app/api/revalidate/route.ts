@@ -12,8 +12,8 @@ const SPORTS = new Set(["mlb", "cfb", "nfl", "nhl"]);
 // MLB's uncached Supabase client also serves live games, so its static pages
 // need explicit paths. Include consumers of the season-unified and ledger views.
 const MLB_PATHS: Record<string, string[]> = {
-  games: ["/mlb/history", "/mlb/performance", "/mlb/methodology"],
-  model_outputs: ["/mlb/history", "/mlb/performance", "/mlb/methodology"],
+  games: ["/", "/mlb/history", "/mlb/performance", "/mlb/methodology"],
+  model_outputs: ["/", "/mlb/history", "/mlb/performance", "/mlb/methodology"],
   model_outputs_season: ["/mlb/history", "/mlb/performance"],
   model_outputs_season_v1_archive: ["/mlb/history", "/mlb/performance"],
   model_evaluation: ["/mlb/performance"],
