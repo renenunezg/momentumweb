@@ -12,16 +12,16 @@ const SPORTS = new Set(["mlb", "cfb", "nfl", "nhl"]);
 // MLB's uncached Supabase client also serves live games, so its static pages
 // need explicit paths. Include consumers of the season-unified and ledger views.
 const MLB_PATHS: Record<string, string[]> = {
-  games: ["/", "/mlb/history", "/mlb/performance", "/mlb/methodology"],
-  model_outputs: ["/", "/mlb/history", "/mlb/performance", "/mlb/methodology"],
-  model_outputs_season: ["/", "/mlb/history", "/mlb/performance"],
-  model_outputs_season_v1_archive: ["/", "/mlb/history", "/mlb/performance"],
-  model_evaluation: ["/", "/mlb/performance"],
+  games: ["/mlb/history", "/mlb/performance", "/mlb/methodology"],
+  model_outputs: ["/mlb/history", "/mlb/performance", "/mlb/methodology"],
+  model_outputs_season: ["/mlb/history", "/mlb/performance"],
+  model_outputs_season_v1_archive: ["/mlb/history", "/mlb/performance"],
+  model_evaluation: ["/mlb/performance"],
   model_calibration: ["/mlb/performance"],
   model_edge_buckets: ["/mlb/performance"],
   posterior_sigmas: ["/mlb/performance"],
   player_values: ["/mlb/players"],
-  player_value_models: ["/mlb/performance", "/mlb/methodology"], // The evaluation view reads this row.
+  player_value_models: ["/", "/mlb/performance", "/mlb/methodology"], // The evaluation view reads this row.
   player_traits: [], // Details use their API route's CDN window.
   prospect_values: ["/mlb/prospects"], // Filtered pages use their API route's CDN window.
   player_season_stats: ["/mlb/prospects"], // Player cards read theirs through the details route's CDN window.
