@@ -283,8 +283,8 @@ export default async function MlbCarryPage() {
       <Section id="explained" question="How much does the swing explain?" title="A bit over half, and an open question">
         <Prose>
           <p>
-            Measured swing physics predicts {pct(ex.share_without_steep_correction)}{" "}of hitters&apos; carry differences in a season it was
-            not fit on. Steep swings carry less than their measured attack angle implies, consistent with a steep barrel still rising faster
+            Measured swing physics predicts {pct(ex.share_without_steep_correction)}{" "}of hitters&apos; carry differences in 2025, a season
+            not used for the slope (the constants were fitted on 2026 and checked on 2025). Steep swings carry less than their measured attack angle implies, consistent with a steep barrel still rising faster
             at contact than it is measured just before; correcting for it, on the same hitters and the same carry, lifts the share to{" "}
             {pct(ex.share)}. Sampling noise caps any model near {pct(ex.ceiling)} of that same variance, so the swing accounts for about{" "}
             {pct(ex.share / ex.ceiling)} of the carry that is explainable at all.
