@@ -84,7 +84,7 @@ function TeamPicker<T extends RatingRow>({
       <div className="min-w-0 space-y-2">
         <label
           htmlFor={inputId}
-          className="font-mono text-xs uppercase tracking-wider text-muted-foreground"
+          className="type-eyebrow text-muted-foreground"
         >
           {label}
         </label>
@@ -410,7 +410,7 @@ export function FootballTeamComparison<T extends RatingRow, U extends UnitRow>({
     <div className="space-y-section">
       {projections.games.length > 0 && (
         <label className="block space-y-2 text-xs text-muted-foreground">
-          <span className="font-mono uppercase tracking-wider">
+          <span className="type-eyebrow">
             Published matchup
           </span>
           <select
@@ -530,7 +530,7 @@ export function FootballTeamComparison<T extends RatingRow, U extends UnitRow>({
                     name={row.team}
                     className="size-9 sm:size-11"
                   />
-                  <h2 className="font-heading text-xl sm:text-3xl">
+                  <h2 className="type-section">
                     {row.team}
                   </h2>
                 </div>
@@ -553,7 +553,7 @@ export function FootballTeamComparison<T extends RatingRow, U extends UnitRow>({
         <div className="grid gap-5 border-t border-border p-4 sm:grid-cols-3 sm:p-5">
           {overallMetrics.map(([label, key]) => (
             <div key={key} className="space-y-3">
-              <h3 className="font-heading text-sm">{label}</h3>
+              <h3 className="type-subsection">{label}</h3>
               <RatingBars
                 compact
                 extent={overallExtent}
@@ -572,7 +572,7 @@ export function FootballTeamComparison<T extends RatingRow, U extends UnitRow>({
 
       <section className="space-y-4" aria-label="Unit comparison">
         <div className="flex flex-wrap items-center justify-between gap-3">
-          <h2 className="flex items-center gap-2 font-heading text-lg">
+          <h2 className="type-section flex items-center gap-2">
             <BarChart3 className="size-5 text-muted-foreground" />
             Unit comparison
           </h2>
@@ -638,7 +638,7 @@ export function FootballTeamComparison<T extends RatingRow, U extends UnitRow>({
                       className="size-9"
                     />
                     <div className="min-w-0">
-                      <h3 className="font-heading text-lg sm:text-xl">
+                      <h3 className="type-subsection">
                         {offense.team} on offense
                       </h3>
                       <p className="mt-1 text-xs text-muted-foreground">
@@ -658,7 +658,7 @@ export function FootballTeamComparison<T extends RatingRow, U extends UnitRow>({
 
                       return (
                         <article key={play} className="space-y-4 p-4 sm:p-5">
-                          <h4 className="border-b border-border pb-2 font-heading text-lg">
+                          <h4 className="type-subsection border-b border-border pb-2">
                             {play === "pass"
                               ? "Through the air"
                               : "On the ground"}
@@ -727,7 +727,7 @@ export function FootballTeamComparison<T extends RatingRow, U extends UnitRow>({
                 key={column.key}
                 className="space-y-4 rounded-lg border border-border bg-card p-4"
               >
-                <h3 className="font-heading">{column.name}</h3>
+                <h3 className="type-subsection">{column.name}</h3>
                 <RatingBars
                   extent={unitExtent}
                   entries={[

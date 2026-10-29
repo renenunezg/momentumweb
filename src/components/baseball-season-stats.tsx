@@ -16,7 +16,7 @@ export function BaseballSeasonStats({ stats }: { stats: BaseballSeasonStatsData 
         { label: "Underlying skills", metrics: stats.underlying },
       ].map(({ label, metrics }) => (
         <div key={label} className="space-y-1.5">
-          <h4 className="text-[10px] uppercase tracking-wider text-muted-foreground">{label}</h4>
+          <h4 className="type-eyebrow text-muted-foreground">{label}</h4>
           <dl className="grid grid-cols-4 gap-px overflow-hidden rounded-sm border border-border bg-border sm:grid-cols-8">
             {metrics.map((metric) => (
               <div key={metric.label} className="min-w-0 bg-background px-2 py-2.5 sm:px-3">

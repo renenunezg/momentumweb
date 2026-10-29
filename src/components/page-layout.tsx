@@ -24,20 +24,20 @@ export function PageHeader({ className, ...props }: ComponentProps<"header">) {
   return (
     <header
       data-slot="page-header"
-      className={cn("flex flex-wrap items-start justify-between gap-4 border-l-4 border-[var(--brand-highlight)] py-1 pl-5", className)}
+      className={cn("flex flex-wrap items-end justify-between gap-4", className)}
       {...props}
     />
   );
 }
 
 export function PageTitle({ className, ...props }: ComponentProps<"h1">) {
-  return <h1 className={cn("font-heading text-3xl font-normal leading-tight tracking-tight text-primary sm:text-4xl", className)} {...props} />;
+  return <h1 className={cn("type-title text-foreground", className)} {...props} />;
 }
 
 export function PageDescription({ className, ...props }: ComponentProps<"p">) {
   return (
     <p
-      className={cn("mt-heading text-sm leading-relaxed text-muted-foreground", className)}
+      className={cn("mt-heading max-w-3xl type-body text-muted-foreground", className)}
       {...props}
     />
   );

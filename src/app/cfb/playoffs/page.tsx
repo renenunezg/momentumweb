@@ -38,7 +38,7 @@ export default async function CfbPlayoffsPage() {
     <PageShell width="wide">
       <PageHeader>
         <div>
-          <p className="mb-2 font-mono text-[11px] uppercase tracking-[.2em] text-muted-foreground">
+          <p className="type-eyebrow mb-2 text-muted-foreground">
             CFB / Playoff forecast
           </p>
           <PageTitle>The road to twelve</PageTitle>
@@ -56,7 +56,7 @@ export default async function CfbPlayoffsPage() {
         <CfbPlayoffViewer payload={payload} identities={identities} />
       ) : (
         <section className="rounded-xl border border-dashed border-border p-8 text-center sm:p-16">
-          <h2 className="font-heading text-2xl">
+          <h2 className="type-section">
             The playoff forecast is not available yet
           </h2>
           <p className="mt-3 text-sm text-muted-foreground">

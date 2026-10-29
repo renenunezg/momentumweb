@@ -45,7 +45,7 @@ function SegmentTable({
   if (rows.length === 0) return null;
   return (
     <div className="space-y-2">
-      <h3 className="font-heading text-base">{title}</h3>
+      <h3 className="type-subsection">{title}</h3>
       <div className="overflow-x-auto">
         <Table>
           <TableCaption className="sr-only">{title}</TableCaption>
@@ -135,7 +135,7 @@ export function FootballForecastPerformance({
   return (
     <div className="space-y-8">
       <div className="flex items-start justify-between gap-4">
-        <h2 className="font-heading text-xl">
+        <h2 className="type-section">
           Forecast accuracy
         </h2>
         <div className="text-right text-xs text-muted-foreground">
@@ -149,7 +149,7 @@ export function FootballForecastPerformance({
 
       <section className="space-y-section">
         <div className="space-y-2">
-          <h2 className="font-heading text-lg">
+          <h2 className="type-section">
             {live.season ?? "Live"} season, graded as played
           </h2>
           <p className="max-w-4xl text-sm text-muted-foreground leading-relaxed">
@@ -215,7 +215,7 @@ export function FootballForecastPerformance({
             </div>
 
             <div className="space-y-2">
-              <h3 className="font-heading text-base">By prediction source</h3>
+              <h3 className="type-subsection">By prediction source</h3>
               <div className="overflow-x-auto">
                 <Table>
                   <TableCaption className="sr-only">

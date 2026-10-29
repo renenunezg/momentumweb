@@ -102,7 +102,7 @@ export function TeamLabel({ name, team, rank, markers = [] }: MatchupSide) {
             marker && (
               <span
                 key={marker.label}
-                className="ml-2 whitespace-nowrap font-mono text-[10px] font-normal uppercase tracking-wider opacity-70"
+                className="type-eyebrow ml-2 whitespace-nowrap opacity-70"
                 title={marker.note}
               >
                 {marker.label}

@@ -178,7 +178,7 @@ export function MethodologyContent({
               { label: "Sizing rule", val: "Quarter-Kelly on flagged ML and RL plays; totals off" },
             ].map(({ label, val }) => (
               <Card key={label} size="sm"><CardContent>
-                <p className="font-mono text-xs uppercase tracking-wider text-muted-foreground">{label}</p>
+                <p className="type-eyebrow text-muted-foreground">{label}</p>
                 <p className="mt-0.5 text-sm font-medium">{val}</p>
               </CardContent></Card>
             ))}
@@ -270,7 +270,7 @@ export function MethodologyContent({
           </ChangelogEntry>
 
           <details className="group">
-            <summary className="cursor-pointer select-none rounded-sm border border-border bg-muted/40 px-3 py-2 text-xs uppercase tracking-wider text-muted-foreground hover:bg-muted">
+            <summary className="type-eyebrow cursor-pointer select-none rounded-sm border border-border bg-muted/40 px-3 py-2 text-muted-foreground hover:bg-muted">
               See full changelog (2 older entries)
             </summary>
             <div className="mt-6 space-y-section">
@@ -311,7 +311,7 @@ export function MethodologyContent({
             {flowNodes.map((node, i) => (
               <div key={node.group} className="flex min-w-0 md:flex-1 md:flex-col">
                 <div className={`rounded-sm border ${node.color} p-3 flex-1`}>
-                  <p className={`mb-2 font-mono text-[10px] uppercase tracking-widest font-semibold ${node.labelColor}`}>
+                  <p className={`mb-2 type-eyebrow ${node.labelColor}`}>
                     {node.group}
                   </p>
                   <ul className="space-y-1.5">
@@ -411,7 +411,7 @@ export function MethodologyContent({
             effects simple additive terms.
           </p>
 
-          <p className="font-mono text-xs uppercase tracking-wider text-muted-foreground">
+          <p className="type-eyebrow text-muted-foreground">
             Generative model (batter, schematic)
           </p>
           <FormulaBlock>
@@ -450,7 +450,7 @@ export function MethodologyContent({
             move most under park and K, whose wOBA weight is zero, does not move at all.
           </p>
 
-          <p className="font-mono text-xs uppercase tracking-wider text-muted-foreground">
+          <p className="type-eyebrow text-muted-foreground">
             Sampler diagnostics (4 chains, 2000 draws, 2500 tune)
           </p>
           <Table>
@@ -497,7 +497,7 @@ export function MethodologyContent({
             noise.
           </p>
 
-          <p className="font-mono text-xs uppercase tracking-wider text-muted-foreground">
+          <p className="type-eyebrow text-muted-foreground">
             Per-PA outcome sampler (vectorized)
           </p>
           <FormulaBlock>
@@ -539,7 +539,7 @@ export function MethodologyContent({
             Workloads are refreshed daily from MLB boxscores.
           </p>
 
-          <p className="font-mono text-xs uppercase tracking-wider text-muted-foreground">
+          <p className="type-eyebrow text-muted-foreground">
             Variance decomposition (per-game total runs)
           </p>
           <FormulaBlock>

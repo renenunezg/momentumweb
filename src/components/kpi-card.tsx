@@ -14,7 +14,7 @@ interface KpiCardProps {
 export function KpiCard({ label, value, sub, tooltip, compact = false }: KpiCardProps) {
   return (
     <div className={cn("flex min-w-0 flex-col gap-0.5", compact && "items-center text-center")}>
-      <span className={cn("uppercase tracking-wider text-muted-foreground inline-flex items-center gap-1", compact ? "text-[10px] sm:text-xs" : "text-xs")}>
+      <span className={cn("type-eyebrow text-muted-foreground inline-flex items-center gap-1", compact ? "text-[10px] sm:text-xs" : "text-xs")}>
         {label}
         {tooltip && <InfoTip text={tooltip} />}
       </span>

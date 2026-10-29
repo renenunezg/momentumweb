@@ -89,7 +89,7 @@ function TableHead({
       data-slot="table-head"
       scope={scope}
       className={cn(
-        "h-8 px-[var(--table-cell-x)] py-2 text-left align-middle font-mono text-xs font-normal uppercase tracking-wider whitespace-nowrap text-muted-foreground [&:has([role=checkbox])]:pr-0",
+        "type-eyebrow h-8 px-[var(--table-cell-x)] py-2 text-left align-middle whitespace-nowrap text-muted-foreground [&:has([role=checkbox])]:pr-0",
         className
       )}
       {...props}

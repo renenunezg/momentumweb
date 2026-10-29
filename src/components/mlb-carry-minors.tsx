@@ -90,7 +90,7 @@ export function CarryMinors({ rows, summaries, season }: { rows: CarryMinorRow[]
         <Table>
           <TableHeader>
             <TableRow>
-              <TableHead className="font-mono text-[11px] uppercase tracking-wider text-muted-foreground">Hitter</TableHead>
+              <TableHead className="type-eyebrow text-muted-foreground">Hitter</TableHead>
               {COLUMNS.map((c) => (
                 <TableHead key={c.key} className="whitespace-nowrap text-right" aria-sort={c.key === sortKey ? (dir === "desc" ? "descending" : "ascending") : undefined}>
                   <button
@@ -103,7 +103,7 @@ export function CarryMinors({ rows, summaries, season }: { rows: CarryMinorRow[]
                       }
                       setPage(0);
                     }}
-                    className={cn("inline-flex items-center gap-1 font-mono text-[11px] uppercase tracking-wider", c.key === sortKey ? "text-primary" : "text-muted-foreground hover:text-foreground")}
+                    className={cn("type-eyebrow inline-flex items-center gap-1", c.key === sortKey ? "text-primary" : "text-muted-foreground hover:text-foreground")}
                   >
                     {c.label}
                     {c.key === sortKey && <span aria-hidden="true">{dir === "desc" ? "▼" : "▲"}</span>}

@@ -293,7 +293,7 @@ function ValueBoard({
                   />
                   {row.fcs_play_share > FCS_HEAVY_SHARE && (
                     <span
-                      className="ml-[46px] font-mono text-[10px] uppercase tracking-wider text-accent-amber"
+                      className="type-eyebrow ml-[46px] text-accent-amber"
                       title="More than 30 percent of this player's credited plays came against FCS opponents, which count half."
                     >
                       FCS-heavy
@@ -480,7 +480,7 @@ function Method({ meta }: { meta: CfbPlayerModelMeta | null }) {
   return (
     <div className="max-w-4xl space-y-section text-sm leading-relaxed">
       <section className="space-y-2">
-        <h3 className="font-heading text-base">Play credit</h3>
+        <h3 className="type-subsection">Play credit</h3>
         <p className="text-muted-foreground">
           Every play&apos;s expected points added is split among the players
           the stat feed credits on it with fixed shares; the remainder belongs
@@ -530,7 +530,7 @@ function Method({ meta }: { meta: CfbPlayerModelMeta | null }) {
       </section>
 
       <section className="space-y-2">
-        <h3 className="font-heading text-base">Opponent adjustment and replacement</h3>
+        <h3 className="type-subsection">Opponent adjustment and replacement</h3>
         <p className="text-muted-foreground">
           Each credited play is measured against what an average player
           produces on that channel against the unit he faced, using the unit
@@ -589,7 +589,7 @@ function Method({ meta }: { meta: CfbPlayerModelMeta | null }) {
       </section>
 
       <section className="space-y-2">
-        <h3 className="font-heading text-base">Ballot model</h3>
+        <h3 className="type-subsection">Ballot model</h3>
         <p className="text-muted-foreground">
           Predicted vote share is a conditional logit: within a season, a
           softmax over the candidate pool, so shares sum to one like a ballot.

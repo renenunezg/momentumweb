@@ -635,7 +635,7 @@ export async function PlayerModelPerformance({
 }) {
   return (
     <section aria-label="Player model performance" className="space-y-5">
-      <h2 className="font-heading text-xl text-primary">
+      <h2 className="type-section">
         Player model performance
       </h2>
       {sport === "mlb" ? (

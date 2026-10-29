@@ -100,7 +100,7 @@ function TraitRow({
           )}
           <span
             className={cn(
-              "w-10 rounded-sm px-1 text-center font-mono text-[9px] uppercase tracking-wider",
+              "type-eyebrow w-10 rounded-sm px-1 text-center",
               inGrade ? "bg-muted text-positive" : "invisible"
             )}
           >
@@ -164,7 +164,7 @@ function Headline({
 }) {
   return (
     <div className="flex min-w-0 flex-col items-center gap-1 text-center">
-      <span className="inline-flex items-center gap-1 text-[10px] uppercase tracking-wider text-muted-foreground">
+      <span className="type-eyebrow inline-flex items-center gap-1 text-muted-foreground">
         {label} <InfoTip text={tip} label={tipLabel} />
       </span>
       <span className={cn("font-mono text-xl font-bold tabular-nums leading-tight", positive && "text-positive")}>{value}</span>
@@ -430,7 +430,7 @@ function ComparePanel({
       <div className={cn("grid gap-3 sm:flex sm:flex-wrap", align === "right" ? "justify-end text-right" : "text-left")}>
         {items.map((item) => (
           <div key={item.label} className={cn("flex flex-col", align === "right" ? "items-end" : "items-start")}>
-            <span className="text-[10px] uppercase tracking-wider text-muted-foreground">{item.label}</span>
+            <span className="type-eyebrow text-muted-foreground">{item.label}</span>
             <span className="font-mono text-lg font-bold tabular-nums leading-tight">{item.value}</span>
             <span className="font-mono text-[11px] tabular-nums text-muted-foreground">{item.sub}</span>
           </div>
@@ -443,13 +443,13 @@ function ComparePanel({
       <div className="grid grid-cols-2 items-start gap-3">
         <Identity row={rows[0]} logo={logoFor(rows[0].team)} />
         <div className="col-span-2 row-start-1 flex items-center justify-between gap-2">
-          <span className="font-mono text-[10px] uppercase tracking-wider text-muted-foreground">
+          <span className="type-eyebrow text-muted-foreground">
             {rows[0].positionGroup} comparison
           </span>
           <button
             type="button"
             onClick={onClear}
-            className="rounded-sm border border-border px-1.5 py-0.5 font-mono text-[10px] uppercase tracking-wider text-muted-foreground hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+            className="type-eyebrow rounded-sm border border-border px-1.5 py-0.5 text-muted-foreground hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
           >
             clear
           </button>
@@ -471,7 +471,7 @@ function ComparePanel({
           {sections.map((section) => (
             <div key={section.kind ?? "traits"} className="space-y-1.5">
               {section.kind && (
-                <div className="flex items-center justify-center gap-1.5 pt-1 font-mono text-[10px] uppercase tracking-wider text-muted-foreground">
+                <div className="type-eyebrow flex items-center justify-center gap-1.5 pt-1 text-muted-foreground">
                   {TRAIT_SECTION_LABELS[section.kind].label}
                   <InfoTip text={TRAIT_SECTION_LABELS[section.kind].tip} label={`What are ${TRAIT_SECTION_LABELS[section.kind].label} measures?`} />
                 </div>

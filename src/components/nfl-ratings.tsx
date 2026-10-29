@@ -77,6 +77,7 @@ export default function NflRatings({
         ? undefined
         : {
             label: `Change in rating since week ${prior.week}`,
+            short: `Since wk ${prior.week}`,
             value: (r) => {
               const before = prior.ratings[r.team_abbr];
               return before == null ? null : r.power_rating - before;

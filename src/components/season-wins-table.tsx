@@ -85,7 +85,7 @@ export function SeasonWinsTable({
         aria-label={label}
         onClick={() => selectSort(key)}
         className={cn(
-          "font-mono text-xs uppercase tracking-wider focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring",
+          "type-eyebrow focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring",
           sort === key && "text-foreground underline underline-offset-4",
         )}
       >
@@ -109,7 +109,7 @@ export function SeasonWinsTable({
     >
       <ViewTabPanel value={view} className="space-y-3">
         <label className="flex flex-wrap items-center gap-3 text-sm">
-          <span className="font-mono text-xs uppercase tracking-wider text-muted-foreground">Division</span>
+          <span className="type-eyebrow text-muted-foreground">Division</span>
           <select aria-label="Season wins division" value={division} onChange={(event) => setDivision(event.target.value)}
             className="rounded-md border bg-background px-3 py-2 text-sm text-foreground focus-visible:outline-2 focus-visible:outline-offset-2">
             <option value="all">All divisions</option>

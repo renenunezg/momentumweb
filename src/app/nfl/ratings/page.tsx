@@ -58,7 +58,7 @@ export default async function RatingsPage() {
             NFL Power Ratings
           </PageTitle>
           {weekLabel && (
-            <PageDescription className="font-mono text-xs uppercase tracking-wider">
+            <PageDescription className="type-eyebrow">
               {weekLabel}
             </PageDescription>
           )}

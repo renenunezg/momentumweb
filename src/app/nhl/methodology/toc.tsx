@@ -36,7 +36,7 @@ export function TableOfContents() {
 
   return (
     <nav aria-label="On this page" className="hidden lg:block">
-      <ul className="sticky top-6 space-y-1 font-mono text-xs uppercase tracking-wider">
+      <ul className="type-eyebrow sticky top-6 space-y-1">
         {sections.map(({ id, label }) => (
           <li key={id}>
             <a

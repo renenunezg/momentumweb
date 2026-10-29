@@ -46,7 +46,7 @@ export default async function HeismanPage() {
       <PageHeader>
         <div>
           <PageTitle>Heisman Trophy Tracker</PageTitle>
-          <PageDescription className="font-mono text-xs uppercase tracking-wider">
+          <PageDescription className="type-eyebrow">
             {season} · Through week {week}
           </PageDescription>
         </div>

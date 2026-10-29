@@ -167,14 +167,14 @@ export function SwingLab({ study, hitters }: { study: LabStudy; hitters: CarryHi
           label={`Swing plane at ${(baseTilt ?? 32).toFixed(0)} degrees and adjusted to ${((baseTilt ?? 32) + dTilt).toFixed(0)} degrees`}
           hoops={[
             { tilt: baseTilt ?? 32, color: theme["muted-foreground"], dashed: true },
-            { tilt: (baseTilt ?? 32) + dTilt, color: theme["brand-highlight"] },
+            { tilt: (baseTilt ?? 32) + dTilt, color: theme.highlight },
           ]}
         />
       </div>
 
       <div className="space-y-4">
         <div className="border-y border-rule-strong py-3">
-          <p className="text-xs uppercase tracking-wider text-muted-foreground">Carry change</p>
+          <p className="type-eyebrow text-muted-foreground">Carry change</p>
           <p className="font-mono text-2xl tabular-nums">{signed(carry)} ft</p>
           <p className="text-xs leading-relaxed text-muted-foreground">
             Per ball in the air, from rerunning the collision and flight physics on {hitter ? "his own" : "the league's"} {study.season} batted balls

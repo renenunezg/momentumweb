@@ -193,7 +193,7 @@ function PlayerCard({ row, detail, failed, onRetry }: {
       </div>
       <div className="grid grid-cols-2 divide-x divide-border border-y border-border py-3 text-center md:hidden [&>div]:min-w-0 [&>div]:px-1.5 sm:[&>div]:px-3">
         <div>
-          <div className="flex min-h-8 items-center justify-center gap-1 text-[10px] uppercase tracking-wider text-muted-foreground">
+          <div className="type-eyebrow flex min-h-8 items-center justify-center gap-1 text-muted-foreground">
             {head.label} <InfoTip text={`${head.tip} ${PRICE_TIP}`} label={`What is ${head.label}?`} />
           </div>
           <div className={cn("font-mono text-lg font-bold tabular-nums sm:text-2xl", (head.value ?? 0) >= 0 ? "text-positive" : "text-destructive")}>
@@ -208,7 +208,7 @@ function PlayerCard({ row, detail, failed, onRetry }: {
           </div>
         </div>
         <div>
-          <div className="flex min-h-8 items-center justify-center gap-1 text-[10px] uppercase tracking-wider text-muted-foreground">
+          <div className="type-eyebrow flex min-h-8 items-center justify-center gap-1 text-muted-foreground">
             Impact <InfoTip text={IMPACT_TIP} label="What is Impact?" />
           </div>
           <div className="font-mono text-lg font-bold tabular-nums sm:text-2xl">{row.impact_war == null ? EMPTY : formatSigned(row.impact_war, 1)}</div>
@@ -226,7 +226,7 @@ function PlayerCard({ row, detail, failed, onRetry }: {
             if (traits.length === 0) return null;
             return (
               <div key={panel} className="space-y-1.5">
-                <div className="flex items-center justify-between text-[10px] uppercase tracking-wider text-muted-foreground">
+                <div className="type-eyebrow flex items-center justify-between text-muted-foreground">
                   <span>{PANEL_LABELS[panel] ?? panel}</span>
                   <span className="font-mono">{formatNumber(panelGrade(detail, panel), 0)}</span>
                 </div>
@@ -241,7 +241,7 @@ function PlayerCard({ row, detail, failed, onRetry }: {
       {stats && <BaseballSeasonStats stats={stats} />}
       {detail != null && detail.outlook.length > 0 && (
         <div className="space-y-1.5">
-          <div className="inline-flex items-center gap-1 text-[10px] uppercase tracking-wider text-muted-foreground">
+          <div className="type-eyebrow inline-flex items-center gap-1 text-muted-foreground">
             Control-year outlook <InfoTip text={`${OUTLOOK_TIP} ${PLAYING_TIME_TIP}`} label="What is the outlook?" />
           </div>
           <div className="grid grid-cols-3 gap-2 sm:grid-cols-5 lg:grid-cols-6">
@@ -380,7 +380,7 @@ function SortHeader({
       <button
         type="button"
         onClick={() => onSort(sortKey)}
-        className={cn("inline-flex items-center gap-1 font-mono text-[11px] uppercase tracking-wider", active ? "text-primary" : "text-muted-foreground hover:text-foreground")}
+        className={cn("type-eyebrow inline-flex items-center gap-1", active ? "text-primary" : "text-muted-foreground hover:text-foreground")}
       >
         {label}
         {active && <span aria-hidden="true">{dir === "desc" ? "▼" : "▲"}</span>}
@@ -598,8 +598,8 @@ export default function MlbPlayerValues({ index }: { index: PlayerValueIndex[] }
       <Table>
         <TableHeader>
           <TableRow>
-            <TableHead className="w-8 font-mono text-[11px] uppercase tracking-wider text-muted-foreground">#</TableHead>
-            <TableHead className="font-mono text-[11px] uppercase tracking-wider text-muted-foreground">Player</TableHead>
+            <TableHead className="type-eyebrow w-8 text-muted-foreground">#</TableHead>
+            <TableHead className="type-eyebrow text-muted-foreground">Player</TableHead>
             <SortHeader label="Age" sortKey="age" active={sortKey === "age"} dir={sortDir} onSort={onSort} />
             <SortHeader label="Grade" sortKey="grade" active={sortKey === "grade"} dir={sortDir} onSort={onSort} tip={GRADE_TIP} />
             <SortHeader label={pitcherList ? "Stuff" : "Bat"} sortKey="bat" active={sortKey === "bat"} dir={sortDir} onSort={onSort} className="hidden md:table-cell" />
@@ -660,7 +660,7 @@ export default function MlbPlayerValues({ index }: { index: PlayerValueIndex[] }
                     <TableCell className="hidden font-mono tabular-nums md:table-cell">{fld == null ? EMPTY : Math.round(fld)}</TableCell>
                     <TableCell className={cn("whitespace-nowrap text-right font-mono font-bold tabular-nums", row.grade == null ? "text-muted-foreground" : (head.value ?? 0) >= 0 ? "text-positive" : "text-destructive")}>
                       {row.grade == null ? EMPTY : formatMillions(head.value)}
-                      {row.grade != null && head.label === "Market value" && <span className="ml-1 font-normal text-[10px] uppercase text-muted-foreground"> mkt</span>}
+                      {row.grade != null && head.label === "Market value" && <span className="type-eyebrow ml-1 text-muted-foreground"> mkt</span>}
                     </TableCell>
                     <TableCell className="hidden text-right font-mono tabular-nums lg:table-cell">{formatNumber(row.projected_war, 1)}</TableCell>
                     <TableCell className="hidden text-right font-mono tabular-nums lg:table-cell">{ratio == null ? EMPTY : formatMillions(ratio)}</TableCell>

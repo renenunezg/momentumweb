@@ -26,7 +26,7 @@ export default async function PredictionsPage() {
     <PageShell>
       <PageHeader>
         <div>
-          <p className="mb-2 font-mono text-xs uppercase tracking-wider text-muted-foreground">
+          <p className="type-eyebrow mb-2 text-muted-foreground">
             {season != null ? `${season} · Week ${week}` : "Current week"}
           </p>
           <PageTitle>

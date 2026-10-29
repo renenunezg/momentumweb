@@ -82,7 +82,7 @@ export default async function SchedulePage() {
       <PageHeader>
         <div>
           <PageTitle>NHL Schedule and Projections</PageTitle>
-          <PageDescription className="font-mono text-xs uppercase tracking-wider">
+          <PageDescription className="type-eyebrow">
             Next {DAYS} days · {games.length} games
           </PageDescription>
         </div>

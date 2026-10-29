@@ -55,8 +55,8 @@ const rate = (v: number) => v.toFixed(3).replace(/^0/, "");
 function Section({ id, title, question, children }: { id: string; title: string; question: string; children: ReactNode }) {
   return (
     <PageSection id={id} className="scroll-mt-6 border-t border-rule-strong pt-6">
-      <p className="font-mono text-xs uppercase tracking-wider text-muted-foreground">{question}</p>
-      <h2 className="font-heading text-2xl leading-tight text-primary">{title}</h2>
+      <p className="type-eyebrow text-muted-foreground">{question}</p>
+      <h2 className="type-section">{title}</h2>
       {children}
     </PageSection>
   );
@@ -72,7 +72,7 @@ function TypeTable({ rows, caption }: { rows: SwingTypeRow[]; caption: string })
       <table className="w-full min-w-[34rem] text-sm">
         <caption className="pb-2 text-left text-xs text-muted-foreground">{caption}</caption>
         <thead>
-          <tr className="text-left font-mono text-[11px] uppercase tracking-wider text-muted-foreground">
+          <tr className="type-eyebrow text-left text-muted-foreground">
             <th className="py-1 font-normal">Type</th>
             {["Hitters", "Carry", "Grounders", "BA / OBP / SLG", "OPS", "HR per 600", "K per 600"].map((h) => (
               <th key={h} className="py-1 text-right font-normal">{h}</th>
@@ -156,12 +156,12 @@ export default async function MlbCarryPage() {
       <PageHeader>
         <div>
           <PageTitle>Carry</PageTitle>
-          <PageDescription className="font-mono text-xs uppercase tracking-wider">Through the {season} season</PageDescription>
+          <PageDescription className="type-eyebrow">Through the {season} season</PageDescription>
         </div>
         <LastUpdated timestamp={updatedAt} schedule="Updates each offseason" />
       </PageHeader>
 
-      <nav aria-label="Sections" className="flex flex-wrap gap-x-4 gap-y-1.5 font-mono text-xs uppercase tracking-wider text-muted-foreground">
+      <nav aria-label="Sections" className="type-eyebrow flex flex-wrap gap-x-4 gap-y-1.5 text-muted-foreground">
         {SECTIONS.map((s) => (
           <a key={s.id} href={`#${s.id}`} className="hover:text-foreground">{s.label}</a>
         ))}

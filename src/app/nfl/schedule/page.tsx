@@ -178,7 +178,7 @@ export default async function SchedulePage() {
       <PageHeader>
         <div>
           <PageTitle>NFL Schedule and Projections</PageTitle>
-          <PageDescription className="font-mono text-xs uppercase tracking-wider">
+          <PageDescription className="type-eyebrow">
             {latest.season} · Week {latest.week} · {games.length} games
           </PageDescription>
         </div>

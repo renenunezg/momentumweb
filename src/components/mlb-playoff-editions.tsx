@@ -38,7 +38,7 @@ export function MlbPlayoffEditions({
       {editions.map(({ stage: key, forecast }) => (
         <ViewTabPanel key={key} value={key} className="space-y-section">
           <div className="space-y-heading">
-            <h2 className="font-heading text-xl">
+            <h2 className="type-section">
               Before the {STAGE_NAMES[key]}
             </h2>
             <p className="text-sm text-muted-foreground">

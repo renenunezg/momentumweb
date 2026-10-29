@@ -97,11 +97,11 @@ export function GamesTable({ matchups }: { matchups: GameMatchup[] }) {
               status={
                 <>
                   {status.isFinal && (
-                    <span className="text-[10px] uppercase tracking-wider text-muted-foreground">Final</span>
+                    <span className="type-eyebrow text-muted-foreground">Final</span>
                   )}
                   {status.isLive && (
                     <span className="inline-flex items-center gap-1.5">
-                      <span className="text-[10px] uppercase tracking-wider text-primary">{status.liveLabel}</span>
+                      <span className="type-eyebrow text-primary">{status.liveLabel}</span>
                       <MlbBaseOutState bases={matchup.bases} outs={matchup.outs} />
                     </span>
                   )}
@@ -109,7 +109,7 @@ export function GamesTable({ matchups }: { matchups: GameMatchup[] }) {
                     <MlbLiveProbabilityDialog gamePk={matchup.game_pk} away={matchup.away_team} home={matchup.home_team} />
                   )}
                   {status.lineupsPending && (
-                    <span className="text-[10px] uppercase tracking-wider text-muted-foreground">Lineups pending</span>
+                    <span className="type-eyebrow text-muted-foreground">Lineups pending</span>
                   )}
                 </>
               }

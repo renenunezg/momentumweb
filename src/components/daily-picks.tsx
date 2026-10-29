@@ -34,7 +34,7 @@ export function DailyPicks({
         <summary className="flex cursor-pointer items-center justify-between gap-4 rounded-sm py-2 focus-visible:outline-2 focus-visible:outline-offset-4">
           <h2
             id="today-heading"
-            className="font-mono text-xs uppercase tracking-wider text-muted-foreground"
+            className="type-eyebrow text-muted-foreground"
           >
             Today&apos;s predictions
           </h2>
@@ -69,7 +69,7 @@ export function DailyPicks({
                     </div>
                     <Link
                       href={sport.href}
-                      className="font-mono text-xs uppercase tracking-wider text-muted-foreground transition-colors hover:text-foreground"
+                      className="type-eyebrow text-muted-foreground transition-colors hover:text-foreground"
                     >
                       All &rarr;
                     </Link>
@@ -100,7 +100,7 @@ export function DailyPicks({
                                   className="flex items-baseline justify-between gap-3 text-xs"
                                 >
                                   <span className="flex min-w-0 items-baseline gap-2">
-                                    <span className="w-16 shrink-0 font-mono text-[10px] uppercase tracking-wider text-muted-foreground">
+                                    <span className="type-eyebrow w-16 shrink-0 text-muted-foreground">
                                       {MARKET_LABELS[pick.market]}
                                     </span>
                                     <span className="truncate font-medium">

@@ -1,5 +1,17 @@
 import { clsx, type ClassValue } from "clsx"
-import { twMerge } from "tailwind-merge"
+import { extendTailwindMerge } from "tailwind-merge"
+
+// The type-* roles in globals.css set size, line height and weight together, so
+// a later role (or text size) on the same element replaces an earlier one.
+const twMerge = extendTailwindMerge({
+  extend: {
+    classGroups: {
+      "font-size": [
+        { type: ["display", "title", "section", "subsection", "body", "prose", "label", "meta", "eyebrow", "value"] },
+      ],
+    },
+  },
+})
 
 export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs))

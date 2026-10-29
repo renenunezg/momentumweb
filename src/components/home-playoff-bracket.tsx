@@ -45,7 +45,7 @@ export function HomePlayoffBracket({ forecast }: { forecast: PlayoffForecast }) 
         const divisions = [championship.node.left, championship.node.right].map((id) => bracket.find((series) => series.node.id === id)!);
         return (
           <section key={league} aria-label={`${league} projected bracket`} className="space-y-content">
-            <h4 className="font-heading text-base">{league === "AL" ? "American League" : "National League"}</h4>
+            <h4 className="type-subsection">{league === "AL" ? "American League" : "National League"}</h4>
             <div className="grid grid-cols-3 gap-content text-xs text-muted-foreground">
               <span>Wild Card</span><span>Division Series</span><span>{league}CS</span>
             </div>
@@ -71,7 +71,7 @@ export function HomePlayoffBracket({ forecast }: { forecast: PlayoffForecast }) 
         );
       })}
       <section aria-label="Projected World Series" className="space-y-content border-t border-border pt-section">
-        <h4 className="font-heading text-base">World Series</h4>
+        <h4 className="type-subsection">World Series</h4>
         <ProjectedSeries series={final} teams={teams} fullNames />
         <div className="flex items-center gap-content py-heading">
           <Trophy className="h-5 w-5 shrink-0 text-primary" aria-hidden="true" />

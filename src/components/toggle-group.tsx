@@ -1,26 +1,26 @@
 "use client";
 
 import { cn } from "@/lib/utils";
+import { TAB_ITEM, TAB_LIST, TAB_OFF, TAB_ON } from "@/components/view-tabs";
 
 const VARIANTS = {
   underline: {
-    group: "flex items-center font-mono text-xs uppercase tracking-wider",
-    button: "border-b-2 px-3 py-2 uppercase transition-colors",
-    on: "border-[var(--brand-highlight)] text-primary",
-    off: "border-transparent text-muted-foreground hover:text-foreground",
+    group: TAB_LIST,
+    button: TAB_ITEM,
+    on: TAB_ON,
+    off: TAB_OFF,
   },
   pill: {
-    group: "inline-flex rounded-sm border border-border p-0.5 font-mono text-xs",
-    button: "px-3 py-1 transition-colors",
-    on: "bg-[var(--brand-highlight)] text-[var(--brand-ink)]",
+    group: "inline-flex rounded-lg border border-border bg-card p-0.5",
+    button: "rounded-md px-3 py-1.5 type-label font-semibold transition-colors",
+    on: "bg-primary text-primary-foreground",
     off: "text-muted-foreground hover:text-foreground",
   },
   chip: {
     group: "flex flex-wrap gap-1.5",
-    button:
-      "rounded-md border px-2 py-1 font-mono text-[11px] uppercase tracking-wider transition-colors",
-    on: "border-[var(--brand-highlight)] bg-[var(--brand-highlight)] text-[var(--brand-ink)]",
-    off: "border-border text-muted-foreground hover:text-foreground",
+    button: "rounded-lg border px-2.5 py-1 type-label font-semibold transition-colors",
+    on: "border-primary bg-primary text-primary-foreground",
+    off: "border-border bg-card text-muted-foreground hover:text-foreground",
   },
 } as const;
 

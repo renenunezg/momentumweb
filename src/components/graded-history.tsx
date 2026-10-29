@@ -141,7 +141,7 @@ export function SeasonLinks({
   return (
     <nav
       aria-label="Season"
-      className="flex flex-wrap items-center gap-0 font-mono text-xs uppercase tracking-wider"
+      className="type-eyebrow flex flex-wrap items-center gap-0"
     >
       {options.map((o) => (
         <Link

@@ -28,16 +28,16 @@ export default async function AwardsPage({ searchParams }: {
     ...(s == null ? {} : { season: String(s) }), ...(w == null ? {} : { week: String(w) }) })}`;
   return <PageShell>
     <PageHeader><div>
-      <p className="mb-2 font-mono text-xs uppercase tracking-widest text-muted-foreground">The race, week by week</p>
+      <p className="type-eyebrow mb-2 text-muted-foreground">The race, week by week</p>
       <PageTitle>NFL MVP and Awards Tracker</PageTitle>
       <PageDescription className="max-w-2xl">Award forecasts alongside on-field performance. Follow the leaders, see what drives their rankings, and revisit each weekly snapshot.</PageDescription>
     </div>{meta && <LastUpdated timestamp={meta.as_of} schedule="Updates after completed weekly games" />}</PageHeader>
     <PlayerSectionTabs sections={NFL_PLAYER_SECTIONS} />
-    <nav aria-label="NFL awards" className="flex flex-wrap border-b border-rule-strong font-mono text-xs uppercase tracking-wider">
+    <nav aria-label="NFL awards" className="type-eyebrow flex flex-wrap border-b border-rule-strong">
       {(Object.keys(AWARDS) as AwardKey[]).map((key) => <NavigationLink prefetch={true} scroll={false} key={key} href={query(key, season, week)} aria-current={award === key ? "page" : undefined}
         className={`border-b-2 px-2 py-2 transition-colors sm:px-3 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring ${award === key ? "border-primary text-primary" : "border-transparent text-muted-foreground hover:text-foreground"}`}>{key}</NavigationLink>)}
     </nav>
-    <div><h2 className="font-heading text-lg">{AWARDS[award]}</h2>{meta && <p className="mt-1 font-mono text-xs text-muted-foreground">{meta.season} season · Through week {meta.week}</p>}</div>
+    <div><h2 className="type-section">{AWARDS[award]}</h2>{meta && <p className="mt-1 font-mono text-xs text-muted-foreground">{meta.season} season · Through week {meta.week}</p>}</div>
     {unavailable ? <p role="status" className="rounded-lg border p-5 text-sm text-muted-foreground">Awards data is temporarily unavailable. Please try again later.</p>
       : !meta ? <p className="rounded-lg border p-5 text-sm text-muted-foreground">No snapshot has been published for this selection yet. Forecasts appear after completed regular-season games.</p>
       : <>
@@ -54,14 +54,14 @@ export default async function AwardsPage({ searchParams }: {
           : "Waiting for completed regular-season games before building this award board."}</p>
           : <>
             <div className="grid gap-4 border-y border-rule-strong py-5 sm:grid-cols-3">
-              <div><p className="text-xs uppercase tracking-wide text-muted-foreground">Forecast leader</p><p className="mt-2 text-lg font-medium">{board[0]?.candidate_name}</p><p className="mt-1 text-xs text-muted-foreground">{board[0]?.team} · {board[0]?.position}</p></div>
-              <div><p className="text-xs uppercase tracking-wide text-muted-foreground">Historical top-three hit rate</p><p className="mt-2 font-mono text-lg">{percent(meta.validation.top_three_rate)}</p><p className="mt-1 text-xs text-muted-foreground">{meta.validation.seasons} retrospective validation seasons at this horizon</p></div>
-              <div><p className="text-xs uppercase tracking-wide text-muted-foreground">Forecast status</p><p className="mt-2 text-lg font-medium">{meta.validation.probabilities_publishable ? "Validated" : "Experimental"}</p><p className="mt-1 text-xs text-muted-foreground">{meta.validation.probabilities_publishable ? "Win probabilities available" : "Win percentages withheld pending validation"}</p></div>
+              <div><p className="type-eyebrow text-muted-foreground">Forecast leader</p><p className="mt-2 text-lg font-medium">{board[0]?.candidate_name}</p><p className="mt-1 text-xs text-muted-foreground">{board[0]?.team} · {board[0]?.position}</p></div>
+              <div><p className="type-eyebrow text-muted-foreground">Historical top-three hit rate</p><p className="mt-2 font-mono text-lg">{percent(meta.validation.top_three_rate)}</p><p className="mt-1 text-xs text-muted-foreground">{meta.validation.seasons} retrospective validation seasons at this horizon</p></div>
+              <div><p className="type-eyebrow text-muted-foreground">Forecast status</p><p className="mt-2 text-lg font-medium">{meta.validation.probabilities_publishable ? "Validated" : "Experimental"}</p><p className="mt-1 text-xs text-muted-foreground">{meta.validation.probabilities_publishable ? "Win probabilities available" : "Win percentages withheld pending validation"}</p></div>
             </div>
             <NflAwardsTrajectory points={trajectory} leaders={board.slice(0, TRAJECTORY_LINES)} />
             <NflAwardsBoard rows={board} award={award} />
           </>}
-        {history.length > 0 && <PageSection><h2 className="font-heading text-lg">Weekly leaders</h2><div className="flex gap-3 overflow-x-auto pb-2">{history.map((row) => <NavigationLink prefetch={true} scroll={false} key={row.week} href={query(award, row.season, row.week)} className="min-w-44 rounded-lg border p-4 hover:bg-muted"><p className="font-mono text-xs text-muted-foreground">Week {row.week}</p><p className="mt-2 text-sm font-medium">{row.candidate_name}</p><p className="mt-1 text-xs text-muted-foreground">{row.team}</p></NavigationLink>)}</div></PageSection>}
+        {history.length > 0 && <PageSection><h2 className="type-section">Weekly leaders</h2><div className="flex gap-3 overflow-x-auto pb-2">{history.map((row) => <NavigationLink prefetch={true} scroll={false} key={row.week} href={query(award, row.season, row.week)} className="min-w-44 rounded-lg border p-4 hover:bg-muted"><p className="font-mono text-xs text-muted-foreground">Week {row.week}</p><p className="mt-2 text-sm font-medium">{row.candidate_name}</p><p className="mt-1 text-xs text-muted-foreground">{row.team}</p></NavigationLink>)}</div></PageSection>}
         <details className="border-t pt-5 text-sm"><summary className="cursor-pointer font-medium">Methodology and validation</summary><div className="mt-4 max-w-3xl space-y-3 leading-relaxed text-muted-foreground">
           <p>Each award has a separate regularized model trained on earlier seasons only. Candidates come from statistics available at the selected cutoff. Missing winners count as misses. The model predicts award winners; it does not estimate ballot share.</p>
           <p>Remaining-season player totals shrink toward prior-season rates with a four-game prior. Team records use a beta prior. Coach forecasts compare projected wins with a preseason baseline formed from the prior season record. These projections assume continued availability and do not yet model future injury risk. Full-game production informs the award forecast; competitive-drive EPA is a separate performance measure. Awards do not change team ratings.</p>

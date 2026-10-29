@@ -35,7 +35,7 @@ export function SlateSummary({ stats }: { stats: { label: string; value: number 
     <div className="flex items-baseline gap-6 font-mono text-sm">
       {stats.map((stat) => (
         <div key={stat.label} className="flex items-baseline gap-1.5">
-          <span className="text-xs uppercase tracking-wider text-muted-foreground">
+          <span className="type-eyebrow text-muted-foreground">
             {stat.label}
           </span>
           <span className="font-bold tabular-nums">{stat.value}</span>

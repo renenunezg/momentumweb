@@ -173,7 +173,7 @@ export function AccuracyChart({ data }: AccuracyChartProps) {
               onClick={() => setWindow(option)}
               aria-pressed={windowDays === option}
               className={cn(
-                "px-2 py-1 font-mono text-xs uppercase tracking-wider transition-colors",
+                "type-eyebrow px-2 py-1 transition-colors",
                 windowDays === option
                   ? "text-primary underline underline-offset-4"
                   : "text-muted-foreground hover:text-foreground"

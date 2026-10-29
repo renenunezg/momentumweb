@@ -1,6 +1,7 @@
 import { TeamLogo } from "@/components/team-logo";
 import { RatingsHeatmapLegend } from "@/components/ratings-heatmap-legend";
 import { ratingHeatmap } from "@/lib/rating-heatmap";
+import { HeatValue } from "@/components/heat-value";
 import { LimitedDataBadge } from "@/components/power-ratings-table";
 import {
   Table,
@@ -72,11 +73,12 @@ export function NhlRatingsTable({
                 <TableCell
                   key={column.key}
                   className={column.key === "rating" ? `${num} font-semibold` : num}
-                  style={column.heatmap(r[column.key])}
                 >
-                  {column.key === "rating"
-                    ? formatSigned(r[column.key], column.digits)
-                    : formatNumber(r[column.key], column.digits)}
+                  <HeatValue style={column.heatmap(r[column.key])}>
+                    {column.key === "rating"
+                      ? formatSigned(r[column.key], column.digits)
+                      : formatNumber(r[column.key], column.digits)}
+                  </HeatValue>
                 </TableCell>
               ))}
               <TableCell className={`${num} text-muted-foreground`}>

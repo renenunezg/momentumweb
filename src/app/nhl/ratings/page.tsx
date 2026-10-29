@@ -38,7 +38,7 @@ export default async function RatingsPage() {
       <PageHeader>
         <div>
           <PageTitle>NHL Model Ratings</PageTitle>
-          <PageDescription className="font-mono text-xs uppercase tracking-wider">
+          <PageDescription className="type-eyebrow">
             As of {formatDate(asOf)}
           </PageDescription>
         </div>

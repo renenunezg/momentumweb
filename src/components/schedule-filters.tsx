@@ -114,7 +114,7 @@ export function ScheduleFilters<K extends string>({
 
         {narrowed && (
           <span
-            className="font-mono text-xs uppercase tracking-wider text-muted-foreground"
+            className="type-eyebrow text-muted-foreground"
             aria-live="polite"
           >
             {shown} of {total} games

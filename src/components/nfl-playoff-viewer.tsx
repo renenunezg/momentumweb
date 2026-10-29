@@ -178,7 +178,7 @@ export function NflPlayoffViewer({
             })}
           </div>
           <div>
-            <h2 className="font-heading text-2xl">The projected path</h2>
+            <h2 className="type-section">The projected path</h2>
             <p className="mt-1 max-w-3xl text-xs leading-relaxed text-muted-foreground">
               One plausible field, with the favorite advancing in each matchup.
               Higher seeds host; the lowest remaining seed visits No. 1 after
@@ -191,7 +191,7 @@ export function NflPlayoffViewer({
             aria-label="Projected Super Bowl"
             className="rounded-xl border border-primary/30 bg-primary/5 p-5 sm:p-7"
           >
-            <p className="text-[10px] uppercase tracking-[.2em] text-muted-foreground">
+            <p className="type-eyebrow text-muted-foreground">
               Super Bowl · Neutral site
             </p>
             <div className="mt-3 flex flex-wrap items-center justify-between gap-4">
@@ -218,7 +218,7 @@ export function NflPlayoffViewer({
         </TabsContent>
         <TabsContent value="odds" className="min-w-0 space-y-4">
           <div className="flex flex-wrap items-center justify-between gap-3">
-            <h2 className="font-heading text-2xl">Playoff probabilities</h2>
+            <h2 className="type-section">Playoff probabilities</h2>
             <label className="w-full sm:w-56">
               <span className="sr-only">Find a team</span>
               <input
@@ -248,7 +248,7 @@ export function NflPlayoffViewer({
         </TabsContent>
         <TabsContent value="divisions" className="min-w-0 space-y-5">
           <div className="flex flex-wrap items-center justify-between gap-3">
-            <h2 className="font-heading text-2xl">Division races</h2>
+            <h2 className="type-section">Division races</h2>
             <div
               role="group"
               aria-label="Choose conference"
@@ -282,7 +282,7 @@ export function NflPlayoffViewer({
               .sort()
               .map((d) => (
                 <section key={d} className="min-w-0 space-y-3">
-                  <h3 className="font-heading text-xl">{d}</h3>
+                  <h3 className="type-subsection">{d}</h3>
                   {table(
                     teams.filter((t) => t.division === d),
                     true,
@@ -293,7 +293,7 @@ export function NflPlayoffViewer({
         </TabsContent>
       </Tabs>
       <section className="space-y-3 border-t border-border pt-5" aria-label="QB availability">
-        <h2 className="font-heading text-xl">QB availability</h2>
+        <h2 className="type-section">QB availability</h2>
         <p className="max-w-3xl text-xs leading-relaxed text-muted-foreground">
           Reported return windows adjust the quarterback assumption for each game and playoff round.
           The forecast uses the midpoint of each reported range and updates when a newer report is supplied.
@@ -379,7 +379,7 @@ export function NflPlayoffViewer({
       >
         {chosen && (
           <DialogContent className="max-h-[85dvh] overflow-y-auto">
-            <DialogTitle className="flex items-center gap-3 pr-6 font-heading text-2xl">
+            <DialogTitle className="type-section flex items-center gap-3 pr-6">
               <TeamLogo team={identities[chosen.id]} name={chosen.team} />
               {chosen.team}
             </DialogTitle>
@@ -396,7 +396,7 @@ export function NflPlayoffViewer({
                 ] as const
               ).map(([label, value]) => (
                 <div key={label}>
-                  <p className="text-[10px] uppercase text-muted-foreground">
+                  <p className="type-eyebrow text-muted-foreground">
                     {label}
                   </p>
                   <p className="mt-1 text-xl font-semibold tabular-nums text-primary">
@@ -405,7 +405,7 @@ export function NflPlayoffViewer({
                 </div>
               ))}
             </div>
-            <h3 className="font-heading text-lg">Conference seed</h3>
+            <h3 className="type-subsection">Conference seed</h3>
             <div className="grid grid-cols-4 gap-2 sm:grid-cols-7">
               {chosen.seed_probabilities.map((p, i) => (
                 <div
@@ -424,7 +424,7 @@ export function NflPlayoffViewer({
               {playoffPercent(chosen.deep_tiebreak_rate)} of simulated seasons;
               this is not a confidence interval.
             </p>
-            <h3 className="mt-4 font-heading text-lg">
+            <h3 className="type-subsection mt-4">
               Remaining regular season
             </h3>
             <ul className="divide-y divide-border">

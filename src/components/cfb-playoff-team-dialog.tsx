@@ -46,7 +46,7 @@ export function CfbPlayoffTeamDialog({
     >
       {team && (
         <DialogContent>
-          <DialogTitle className="flex items-center gap-3 pr-8 font-heading text-2xl">
+          <DialogTitle className="type-section flex items-center gap-3 pr-8">
             <TeamLogo
               team={identities[team.id]}
               name={team.team}
@@ -66,7 +66,7 @@ export function CfbPlayoffTeamDialog({
               ["National title", team.champion],
             ].map(([label, value]) => (
               <div key={String(label)}>
-                <p className="text-[10px] uppercase text-muted-foreground">
+                <p className="type-eyebrow text-muted-foreground">
                   {label}
                 </p>
                 <p className="mt-1 text-xl font-semibold tabular-nums text-primary">
@@ -81,7 +81,7 @@ export function CfbPlayoffTeamDialog({
             season-dependence assumptions. This is a sensitivity range, not a
             confidence interval.
           </p>
-          <h3 className="mt-6 font-heading text-lg">
+          <h3 className="type-subsection mt-6">
             Remaining regular season
           </h3>
           <p className="mb-3 mt-1 text-xs text-muted-foreground">

@@ -193,7 +193,7 @@ export function PickTable({
                   className={cn(pick.status !== "recommended" && "[&>td]:opacity-50")}
                 >
                   <TableCell className="whitespace-normal">
-                    <div className="text-[10px] uppercase tracking-wider text-muted-foreground">
+                    <div className="type-eyebrow text-muted-foreground">
                       {MARKET_LABELS[pick.market as keyof typeof MARKET_LABELS] ??
                         pick.market}
                     </div>
@@ -302,7 +302,7 @@ export function PickTable({
                   <TableCell>
                     <span
                       className={cn(
-                        "font-mono text-xs uppercase",
+                        "type-eyebrow",
                         pick.outcome === "win" && "text-positive",
                         pick.outcome === "loss" && "text-negative",
                       )}
@@ -341,7 +341,7 @@ export function PickBreakdown({
   if (!rows.length) return null;
   return (
     <PageSection>
-      <h2 className="font-heading text-lg">{title}</h2>
+      <h2 className="type-section">{title}</h2>
       <Table>
         <TableCaption className="sr-only">{title}</TableCaption>
         <TableHeader>

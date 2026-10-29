@@ -52,7 +52,7 @@ export function ScheduleCards({ slates }: { slates: ScheduleCardSlate[] }) {
     <div className="space-y-5 md:hidden">
       {slates.map(({ slate, hidden, games }) => (
         <section key={slate.id} data-slate hidden={hidden} className="space-y-2">
-          <h2 className="border-b border-rule-strong pb-1 pt-2 font-mono text-xs uppercase tracking-wider text-muted-foreground">
+          <h2 className="type-eyebrow border-b border-rule-strong pb-1 pt-2 text-muted-foreground">
             <SlateLabel slate={slate} />
           </h2>
           {games.map(({ card }) => (
@@ -67,7 +67,7 @@ export function ScheduleCards({ slates }: { slates: ScheduleCardSlate[] }) {
 const ROW =
   "grid grid-cols-[minmax(0,1fr)_var(--score-col,0px)_2.5rem_3rem] items-center gap-x-1.5 px-2.5";
 const LABEL =
-  "font-mono text-[10px] uppercase tracking-wider text-muted-foreground";
+  "type-eyebrow text-muted-foreground";
 
 function ScheduleCard({ game }: { game: ScheduleCardGame }) {
   const diff =

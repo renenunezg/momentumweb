@@ -260,7 +260,7 @@ function Stat({ label, value, sub }: { label: string; value: string; sub: string
   return (
     <Card size="sm">
       <CardContent>
-        <p className="font-mono text-xs uppercase tracking-wider text-muted-foreground">{label}</p>
+        <p className="type-eyebrow text-muted-foreground">{label}</p>
         <p className="mt-1 text-base font-medium">{value}</p>
         <p className="mt-0.5 font-mono text-[11px] leading-snug text-muted-foreground">{sub}</p>
       </CardContent>

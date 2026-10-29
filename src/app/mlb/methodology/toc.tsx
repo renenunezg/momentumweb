@@ -46,7 +46,7 @@ export function TableOfContents() {
           aria-label="On this page"
           className="sticky top-6 flex flex-col gap-0.5"
         >
-          <p className="mb-2 font-mono text-xs uppercase tracking-wider text-muted-foreground">
+          <p className="type-eyebrow mb-2 text-muted-foreground">
             Contents
           </p>
           {sections.map(({ id, label }) => (
@@ -54,7 +54,7 @@ export function TableOfContents() {
               key={id}
               href={`#${id}`}
               aria-current={activeId === id ? "true" : undefined}
-              className={`border-l-2 py-1 pl-3 font-mono text-xs uppercase tracking-wider transition-colors ${
+              className={`border-l-2 py-1 pl-3 type-eyebrow transition-colors ${
                 activeId === id
                   ? "border-primary text-primary"
                   : "border-transparent text-muted-foreground hover:text-foreground"
@@ -74,7 +74,7 @@ export function TableOfContents() {
               key={id}
               href={`#${id}`}
               aria-current={activeId === id ? "true" : undefined}
-              className={`border-b-2 px-3 py-1.5 font-mono text-xs uppercase tracking-wider whitespace-nowrap transition-colors ${
+              className={`border-b-2 px-3 py-1.5 type-eyebrow whitespace-nowrap transition-colors ${
                 activeId === id
                   ? "border-primary text-primary"
                   : "border-transparent text-muted-foreground hover:text-foreground"

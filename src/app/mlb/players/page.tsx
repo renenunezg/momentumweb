@@ -40,7 +40,7 @@ export default async function MlbPlayersPage() {
       <PageHeader>
         <div>
           <PageTitle>Player Values</PageTitle>
-          <PageDescription className="font-mono text-xs uppercase tracking-wider">
+          <PageDescription className="type-eyebrow">
             Projecting the {season} season
           </PageDescription>
         </div>

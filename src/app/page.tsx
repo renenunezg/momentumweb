@@ -238,7 +238,7 @@ async function getNhlHeadline(): Promise<FootballHeadline | null> {
 function StatusBadge({ live }: { live: boolean | null }) {
   if (live == null) return null;
   return (
-    <span className="flex items-center gap-1.5 font-mono text-xs uppercase tracking-wider text-muted-foreground">
+    <span className="type-eyebrow flex items-center gap-1.5 text-muted-foreground">
       <span
         className={`h-1.5 w-1.5 rounded-full ${live ? "bg-primary" : "bg-muted-foreground"}`}
       />
@@ -282,7 +282,7 @@ function ModelEntry({
           </span>
           <StatusBadge live={live} />
         </span>
-        <span className="font-mono text-xs uppercase tracking-wider text-muted-foreground transition-colors group-hover/link:text-primary">
+        <span className="type-eyebrow text-muted-foreground transition-colors group-hover/link:text-primary">
           {cta} &rarr;
         </span>
       </Link>
@@ -295,7 +295,7 @@ function ModelEntry({
             <Link
               key={link.href}
               href={link.href}
-              className="relative z-10 font-mono text-xs font-bold uppercase tracking-wider text-foreground underline-offset-4 hover:underline"
+              className="type-eyebrow relative z-10 text-foreground underline-offset-4 hover:underline"
             >
               {link.label}
             </Link>
@@ -304,7 +304,7 @@ function ModelEntry({
       )}
       {children && (
         <div className="mt-4 text-xs text-muted-foreground">
-          <h3 className="font-mono uppercase tracking-wider">Forecast accuracy</h3>
+          <h3 className="type-eyebrow">Forecast accuracy</h3>
           {children}
         </div>
       )}
@@ -468,7 +468,7 @@ export default function Home() {
 
         <div className="flex min-w-0 flex-col gap-section">
           <PageSection>
-            <h2 className="font-mono text-xs uppercase tracking-wider text-muted-foreground">
+            <h2 className="type-eyebrow text-muted-foreground">
               Explore the models
             </h2>
             {/* Entries are separated by rules, not enclosed in boxes. */}
@@ -550,12 +550,12 @@ export default function Home() {
 
           <PageSection>
             <div className="flex items-baseline justify-between gap-4">
-              <h2 className="font-mono text-xs uppercase tracking-wider text-muted-foreground">
+              <h2 className="type-eyebrow text-muted-foreground">
                 Latest writing
               </h2>
               <Link
                 href="/blog"
-                className="font-mono text-xs uppercase tracking-wider text-muted-foreground hover:text-foreground transition-colors"
+                className="type-eyebrow text-muted-foreground hover:text-foreground transition-colors"
               >
                 All posts &rarr;
               </Link>
@@ -575,7 +575,7 @@ export default function Home() {
                     <p className="font-mono text-xs text-muted-foreground">
                       {post.date}
                     </p>
-                    <h3 className="font-heading text-base mt-1 group-hover:underline underline-offset-4">
+                    <h3 className="type-subsection mt-1 group-hover:underline underline-offset-4">
                       {post.title}
                     </h3>
                     <p className="mt-2 text-sm text-muted-foreground leading-relaxed">

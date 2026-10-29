@@ -58,7 +58,7 @@ function SeriesCard({
       aria-label={`${node.id}: ${matchup.teams.join(" versus ")}, ${finished ? "final" : sampled ? "simulated" : "projected"} ${outcome.wins.join(" to ")}. View series ${finished ? "result" : "probabilities"}`}
       className="relative w-full rounded-lg border border-border bg-card p-3 text-left shadow-sm transition-colors hover:border-foreground/40 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring"
     >
-      <div className="mb-3 flex items-center justify-between gap-2 font-mono text-[9px] uppercase tracking-wider text-muted-foreground">
+      <div className="type-eyebrow mb-3 flex items-center justify-between gap-2 text-muted-foreground">
         <span>{node.id}</span>
         <span>
           {finished
@@ -151,7 +151,7 @@ function BracketView({
           {ROUNDS.map((r) => (
             <div key={r.id}>
               <h3 className="text-sm font-semibold">{r.name}</h3>
-              <p className="mt-1 font-mono text-[10px] uppercase text-muted-foreground">
+              <p className="type-eyebrow mt-1 text-muted-foreground">
                 {r.format}
               </p>
             </div>
@@ -172,7 +172,7 @@ function BracketView({
                       li > 0 && "mt-7 border-t border-border pt-5",
                     )}
                   >
-                    <p className="my-3 font-mono text-[10px] uppercase tracking-[.14em] text-muted-foreground">
+                    <p className="type-eyebrow my-3 text-muted-foreground">
                       {league === "AL" ? "American League" : "National League"}
                     </p>
                     <div
@@ -209,7 +209,7 @@ function BracketView({
                 ))
               ) : (
                 <div className="flex h-full flex-col justify-center gap-6 lg:relative lg:before:absolute lg:before:-left-[15px] lg:before:top-1/4 lg:before:h-1/2 lg:before:w-[15px] lg:before:rounded-r-lg lg:before:border-y lg:before:border-r lg:before:border-border">
-                  <p className="text-center font-mono text-[10px] uppercase tracking-[.14em] text-muted-foreground">
+                  <p className="type-eyebrow text-center text-muted-foreground">
                     One champion
                   </p>
                   {bracket
@@ -258,7 +258,7 @@ function BracketView({
           {selected && (
             <>
               <div className="space-y-2 pr-7">
-                <DialogTitle className="font-heading text-xl">
+                <DialogTitle className="type-section">
                   {selected.matchup.teams.join(" vs ")} · {selected.node.id}
                 </DialogTitle>
                 <DialogDescription className="text-sm leading-relaxed text-muted-foreground">
@@ -339,7 +339,7 @@ function RandomScenarioExplorer({
       </DialogTrigger>
       <DialogContent className="space-y-5 sm:max-w-[85rem]">
         <div className="space-y-2 pr-8">
-          <DialogTitle className="font-heading text-2xl">
+          <DialogTitle className="type-section">
             One random postseason scenario
           </DialogTitle>
           <DialogDescription className="max-w-2xl text-sm leading-relaxed text-muted-foreground">
@@ -403,10 +403,10 @@ export function MlbPlayoffBracket({
             />
           </div>
           <div>
-            <p className="font-mono text-[10px] uppercase tracking-wider text-muted-foreground">
+            <p className="type-eyebrow text-muted-foreground">
               Projected champion
             </p>
-            <h2 className="mt-1 font-heading text-2xl sm:text-3xl">
+            <h2 className="type-section mt-1">
               {champion.name}
             </h2>
             <p className="mt-1 text-xs text-muted-foreground">
@@ -420,7 +420,7 @@ export function MlbPlayoffBracket({
         <RandomScenarioExplorer forecast={forecast} teams={teams} />
       </section>
       <div className="mb-4 flex flex-wrap items-baseline justify-between gap-2">
-        <h2 className="font-heading text-xl">
+        <h2 className="type-section">
           The model’s projected path
         </h2>
         <p className="text-[11px] text-muted-foreground">
@@ -431,7 +431,7 @@ export function MlbPlayoffBracket({
       <BracketView bracket={bracket} teams={teams} initialRound={initialRound} />
       <section className="mt-10" aria-labelledby="odds-title">
         <div className="mb-5 flex flex-wrap items-baseline justify-between gap-2">
-          <h2 id="odds-title" className="font-heading text-2xl">
+          <h2 id="odds-title" className="type-section">
             Championship chances
           </h2>
           <p className="text-xs text-muted-foreground">
@@ -440,7 +440,7 @@ export function MlbPlayoffBracket({
         </div>
         <div className="overflow-x-auto rounded-lg border border-border">
           <table className="w-full text-sm">
-            <thead className="border-b border-border bg-muted/40 font-mono text-[10px] uppercase text-muted-foreground">
+            <thead className="type-eyebrow border-b border-border bg-muted/40 text-muted-foreground">
               <tr>
                 <th scope="col" className="px-2 py-3 text-left sm:px-4">
                   Team

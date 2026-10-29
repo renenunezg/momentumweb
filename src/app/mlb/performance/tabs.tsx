@@ -138,12 +138,12 @@ export function PerformanceTabs({
         </div>
 
         <div className="border-t border-border pt-6">
-          <h2 className="font-heading text-lg mb-4">Accuracy Over Time</h2>
+          <h2 className="type-section mb-4">Accuracy Over Time</h2>
           <AccuracyChart data={dailyEvals.filter((d) => d.date >= "2026-04-12")} />
         </div>
 
         <div className="border-t border-border pt-6">
-          <h2 className="font-heading text-lg mb-4">Evaluation History</h2>
+          <h2 className="type-section mb-4">Evaluation History</h2>
           <EvalHistoryTable rows={dailyEvals} />
         </div>
       </TabsContent>
@@ -157,7 +157,7 @@ export function PerformanceTabs({
         </div>
 
         <div className="border-t border-border pt-6">
-          <h2 className="font-heading text-lg mb-4">MAE Over Time</h2>
+          <h2 className="type-section mb-4">MAE Over Time</h2>
           <MetricLineChart
             data={dailyEvals}
             dataKey="mae"
@@ -166,7 +166,7 @@ export function PerformanceTabs({
         </div>
 
         <div className="border-t border-border pt-6">
-          <h2 className="font-heading text-lg mb-4">RMSE Over Time</h2>
+          <h2 className="type-section mb-4">RMSE Over Time</h2>
           <MetricLineChart
             data={dailyEvals}
             dataKey="rmse"
@@ -184,7 +184,7 @@ export function PerformanceTabs({
         </div>
 
         <div className="border-t border-border pt-6">
-          <h2 className="font-heading text-lg mb-4">Calibration Curve</h2>
+          <h2 className="type-section mb-4">Calibration Curve</h2>
           {latestCalibration.length > 0 ? (
             <>
               <p className="text-xs text-muted-foreground mb-2">
@@ -200,7 +200,7 @@ export function PerformanceTabs({
         </div>
 
         <div className="border-t border-border pt-6">
-          <h2 className="font-heading text-lg mb-4">Brier Score Over Time</h2>
+          <h2 className="type-section mb-4">Brier Score Over Time</h2>
           <MetricLineChart
             data={dailyEvals}
             dataKey="brier_score"
@@ -269,7 +269,7 @@ export function PerformanceTabs({
         )}
 
         <div className="border-t border-border pt-6">
-          <h2 className="font-heading text-lg mb-4">Equity Curve</h2>
+          <h2 className="type-section mb-4">Equity Curve</h2>
           {dailyEvals.some((d) => d.equity_end_units != null) ? (
             <EquityCurveChart data={dailyEvals.filter((d) => d.equity_end_units != null)} />
           ) : (
@@ -280,7 +280,7 @@ export function PerformanceTabs({
         </div>
 
         <div className="border-t border-border pt-6">
-          <h2 className="font-heading text-lg mb-4">Daily History</h2>
+          <h2 className="type-section mb-4">Daily History</h2>
           {dailyEvals.length > 0 ? (
             <DailyBettingHistory rows={dailyEvals} />
           ) : (
@@ -291,7 +291,7 @@ export function PerformanceTabs({
         </div>
 
         <div className="border-t border-border pt-6">
-          <h2 className="font-heading text-lg mb-4">Hit Rate by Edge Bucket</h2>
+          <h2 className="type-section mb-4">Hit Rate by Edge Bucket</h2>
           {latestBuckets.length > 0 ? (
             <Table>
               <TableHeader>
@@ -329,7 +329,7 @@ export function PerformanceTabs({
 
       <TabsContent value="diagnostics" className="space-y-8">
         <div>
-          <h2 className="font-heading text-lg mb-4">Variance Decomposition</h2>
+          <h2 className="type-section mb-4">Variance Decomposition</h2>
           {posteriorSigmas.length > 0 ? (
             <VarianceDecompositionChart data={posteriorSigmas} />
           ) : (
@@ -340,7 +340,7 @@ export function PerformanceTabs({
         </div>
 
         <div className="border-t border-border pt-6">
-          <h2 className="font-heading text-lg mb-4">Prediction Interval Coverage</h2>
+          <h2 className="type-section mb-4">Prediction Interval Coverage</h2>
           <div className="grid grid-cols-3 sm:flex sm:flex-wrap items-baseline gap-x-4 gap-y-3 font-mono text-sm">
             <KpiCard
               label="50% Interval"
@@ -361,12 +361,12 @@ export function PerformanceTabs({
         </div>
 
         <div className="border-t border-border pt-6">
-          <h2 className="font-heading text-lg mb-4">MAE Over Time</h2>
+          <h2 className="type-section mb-4">MAE Over Time</h2>
           <MetricLineChart data={dailyEvals} dataKey="mae" name="MAE" />
         </div>
 
         <div className="border-t border-border pt-6">
-          <h2 className="font-heading text-lg mb-4">Residual Distribution</h2>
+          <h2 className="type-section mb-4">Residual Distribution</h2>
           {residuals.length > 0 ? (
             <ResidualsChart residuals={residuals} />
           ) : (
@@ -413,7 +413,7 @@ function EvalHistoryTable({ rows }: { rows: ModelEvaluation[] }) {
                 {row.date.slice(0, 10) === firstV2Date ? <V2Badge /> : null}
                 {row.predictions_rewritten ? (
                   <span
-                    className="ml-2 inline-block rounded-sm border border-amber-500/40 bg-amber-500/10 px-1.5 py-0 text-[10px] font-mono uppercase tracking-wider text-amber-600 dark:text-amber-400"
+                    className="type-eyebrow ml-2 inline-block rounded-sm border border-amber-500/40 bg-amber-500/10 px-1.5 py-0 text-amber-600 dark:text-amber-400"
                     title={REWRITTEN_NOTE}
                   >
                     recomputed<span className="sr-only">: {REWRITTEN_NOTE}</span>

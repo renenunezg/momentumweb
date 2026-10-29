@@ -47,8 +47,8 @@ export function NflPlayoffBracket({ payload, byId, identities, onTeam }: {
         const championship = path.find((game) => game.round === "Conference")!;
         return (
           <section key={conference} aria-label={`${conference} projected bracket`} className="min-w-0 space-y-3">
-            <h3 className="font-heading text-xl text-primary">{conference}</h3>
-            <div className="grid grid-cols-3 gap-x-3 text-[9px] font-semibold uppercase tracking-wider text-muted-foreground sm:gap-x-6 sm:text-[10px]">
+            <h3 className="type-subsection">{conference}</h3>
+            <div className="type-eyebrow grid grid-cols-3 gap-x-3 text-muted-foreground sm:gap-x-6">
               <h4>Wild Card</h4><h4>Divisional</h4><h4>{conference} title</h4>
             </div>
             <div className="grid grid-cols-3 grid-rows-4 gap-x-3 gap-y-3 sm:gap-x-6">

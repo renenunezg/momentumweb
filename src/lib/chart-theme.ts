@@ -25,7 +25,13 @@ const TOKENS = [
   "negative",
   "accent-blue",
   "accent-amber",
-  "brand-highlight",
+  "highlight",
+  "chart-primary",
+  "chart-comparison",
+  "better",
+  "worse",
+  "neutral-fill",
+  "on-fill",
 ] as const;
 
 type Token = (typeof TOKENS)[number];
@@ -34,24 +40,30 @@ export type ChartTheme = Record<Token, string>;
 
 /** Server render and first paint; mirrors the light palette in globals.css. */
 const FALLBACK: ChartTheme = {
-  grid: "#e1e9e6",
-  border: "#d6e1dd",
-  "rule-strong": "#8ca9a1",
-  "muted-foreground": "#5c6e69",
-  foreground: "#253a37",
-  background: "#f8faf9",
-  popover: "#ffffff",
-  primary: "#137b70",
-  "chart-1": "#137b70",
-  "chart-2": "oklch(0.45 0.09 250)",
-  "chart-3": "oklch(0.52 0.12 45)",
-  "chart-4": "oklch(0.45 0.09 320)",
-  "chart-5": "oklch(0.35 0.005 60)",
-  positive: "oklch(0.42 0.10 155)",
-  negative: "oklch(0.48 0.14 25)",
-  "accent-blue": "oklch(0.45 0.09 250)",
-  "accent-amber": "oklch(0.52 0.10 65)",
-  "brand-highlight": "#12e57a",
+  grid: "#dcd8cc",
+  border: "#d6d2c5",
+  "rule-strong": "#9aa199",
+  "muted-foreground": "#5a675f",
+  foreground: "#10342d",
+  background: "#f3f0e7",
+  popover: "#fbfaf6",
+  primary: "#10342d",
+  "chart-1": "#10342d",
+  "chart-2": "#858a8f",
+  "chart-3": "#a8742a",
+  "chart-4": "#4f6b8c",
+  "chart-5": "#8a5878",
+  positive: "#1b7a4f",
+  negative: "#b8362f",
+  "accent-blue": "#4f6b8c",
+  "accent-amber": "#8f6210",
+  highlight: "#2a8c78",
+  "chart-primary": "#10342d",
+  "chart-comparison": "#858a8f",
+  better: "#2aa575",
+  worse: "#e2554e",
+  "neutral-fill": "#c9cac7",
+  "on-fill": "#07150d",
 };
 
 export function useChartTheme(): ChartTheme {
@@ -88,7 +100,7 @@ export function chartAxisProps(theme: ChartTheme) {
   return {
     tick: {
       fill: theme["muted-foreground"],
-      fontSize: 11,
+      fontSize: 12,
       fontFamily: "var(--font-sans)",
     },
     axisLine: false as const,
@@ -103,7 +115,7 @@ export function chartTooltipStyle(theme: ChartTheme) {
     borderRadius: "6px",
     color: theme.foreground,
     fontFamily: "var(--font-sans)",
-    fontSize: "12px",
+    fontSize: "14px",
     boxShadow: "none",
   };
 }

@@ -15,7 +15,7 @@ export default function ErrorPage({ reset }: { reset: () => void }) {
       <button
         type="button"
         onClick={reset}
-        className="self-start rounded-md border border-border px-3 py-1.5 font-mono text-xs uppercase tracking-wider transition-colors hover:border-foreground/30 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+        className="type-eyebrow self-start rounded-md border border-border px-3 py-1.5 transition-colors hover:border-foreground/30 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
       >
         Try again
       </button>

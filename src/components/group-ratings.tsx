@@ -97,7 +97,7 @@ export function GroupRatings<T extends PowerRatingRow>({
               key={tier}
               className="flex flex-col gap-1 sm:flex-row sm:items-start sm:gap-3"
             >
-              <span className="font-mono text-[10px] uppercase tracking-wider text-muted-foreground sm:w-7 sm:shrink-0 sm:pt-1.5">
+              <span className="type-eyebrow text-muted-foreground sm:w-7 sm:shrink-0 sm:pt-1.5">
                 {tier}
               </span>
               <ToggleGroup
@@ -114,8 +114,8 @@ export function GroupRatings<T extends PowerRatingRow>({
 
       <section className="space-y-2">
         <div className="flex items-baseline justify-between gap-4">
-          <h2 className="font-heading text-lg">{selected.name}</h2>
-          <span className="font-mono text-xs uppercase tracking-wider text-muted-foreground">
+          <h2 className="type-section">{selected.name}</h2>
+          <span className="type-eyebrow text-muted-foreground">
             Avg {formatNumber(selected.avg)}
           </span>
         </div>

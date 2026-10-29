@@ -18,7 +18,7 @@ export function ChangelogEntry({ date, title, accent = "default", children }: Pr
 
   return (
     <div className={`border-l-2 ${borderClass} pl-4`}>
-      <p className="font-mono text-xs uppercase tracking-wider text-muted-foreground mb-1">
+      <p className="type-eyebrow text-muted-foreground mb-1">
         {date}
       </p>
       <p className="font-medium mb-1.5">{title}</p>
@@ -35,7 +35,7 @@ export function ChangelogEntry({ date, title, accent = "default", children }: Pr
         aria-expanded={open}
         aria-controls={contentId}
         onClick={() => setOpen((v) => !v)}
-        className="mt-1.5 font-mono text-xs uppercase tracking-wider text-muted-foreground hover:text-foreground transition-colors"
+        className="type-eyebrow mt-1.5 text-muted-foreground hover:text-foreground transition-colors"
       >
         {open ? "− Read less" : "+ Read more"}
       </button>

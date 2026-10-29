@@ -4,9 +4,16 @@ import { Tabs } from "@base-ui/react/tabs";
 import type { ReactNode } from "react";
 import { cn } from "@/lib/utils";
 
-// The site's tab bar: mono, uppercase, underlined. Built on Base UI so the
-// tablist gets roving focus, arrow-key switching and aria-selected without
-// each caller wiring them by hand.
+// One underline-tab look for every tab bar, link row and filter on the site.
+// One row that scrolls sideways on narrow screens rather than wrapping.
+export const TAB_LIST = "flex items-center gap-x-1 overflow-x-auto [scrollbar-width:none]";
+export const TAB_ITEM =
+  "-mb-px shrink-0 whitespace-nowrap rounded-t-md border-b-2 px-3 py-2.5 type-label font-semibold transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring";
+export const TAB_ON = "border-primary text-foreground";
+export const TAB_OFF = "border-transparent text-muted-foreground hover:text-foreground";
+
+// The site's tab bar. Built on Base UI so the tablist gets roving focus,
+// arrow-key switching and aria-selected without each caller wiring them by hand.
 export function ViewTabs<K extends string>({
   label,
   options,
@@ -30,19 +37,13 @@ export function ViewTabs<K extends string>({
     >
       <Tabs.List
         aria-label={label}
-        className="flex flex-wrap items-center font-mono text-xs uppercase tracking-wider"
+        className={TAB_LIST}
       >
         {options.map((option) => (
           <Tabs.Tab
             key={option.key}
             value={option.key}
-            className={cn(
-              // Preflight resets text-transform on <button>, so uppercase is
-              // set here rather than inherited from the list.
-              "border-b-2 border-transparent px-3 py-2 uppercase text-muted-foreground transition-colors",
-              "hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring",
-              "data-active:border-primary data-active:text-primary"
-            )}
+            className={cn(TAB_ITEM, TAB_OFF, "data-active:border-primary data-active:text-foreground")}
           >
             {option.label}
           </Tabs.Tab>

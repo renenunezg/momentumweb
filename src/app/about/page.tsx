@@ -89,7 +89,7 @@ const models = [
 
 function SectionLabel({ children }: { children: React.ReactNode }) {
   return (
-    <h2 className="font-mono text-xs uppercase tracking-wider text-muted-foreground">
+    <h2 className="type-eyebrow text-muted-foreground">
       {children}
     </h2>
   );
@@ -140,7 +140,7 @@ export default function AboutPage() {
           <div className="mt-5 flex flex-col gap-1.5">
             {links.map(({ label, value, href }) => (
               <div key={label} className="flex items-center gap-3 text-sm">
-                <span className="font-mono text-xs uppercase tracking-wider text-muted-foreground w-16 shrink-0">
+                <span className="type-eyebrow text-muted-foreground w-16 shrink-0">
                   {label}
                 </span>
                 <Link

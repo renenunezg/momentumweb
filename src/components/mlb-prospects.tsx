@@ -97,7 +97,7 @@ function mlbTime(row: ProspectRow): string {
 function Headline({ label, tip, value, sub, tone }: { label: string; tip: string; value: string; sub: string; tone?: string }) {
   return (
     <div>
-      <div className="flex min-h-8 items-center justify-center gap-1 text-[10px] uppercase tracking-wider text-muted-foreground">
+      <div className="type-eyebrow flex min-h-8 items-center justify-center gap-1 text-muted-foreground">
         {label} <InfoTip text={tip} label={`What is ${label}?`} />
       </div>
       <div className={cn("font-mono text-lg font-bold tabular-nums sm:text-2xl", tone)}>{value}</div>
@@ -171,7 +171,7 @@ function ProspectCard({ row }: { row: ProspectRow }) {
           )}
           <div className="grid grid-cols-1 gap-x-8 gap-y-4 md:grid-cols-2">
             <div className="space-y-1.5">
-              <div className="inline-flex items-center gap-1 text-[10px] uppercase tracking-wider text-muted-foreground">
+              <div className="type-eyebrow inline-flex items-center gap-1 text-muted-foreground">
                 Traits <InfoTip text={TRAITS_TIP} label="What are the traits?" />
               </div>
               {row.trait_grades.length === 0 ? (
@@ -200,7 +200,7 @@ function ProspectCard({ row }: { row: ProspectRow }) {
             </div>
             {row.tip.length > 0 && (
               <div className="space-y-1.5">
-                <div className="inline-flex items-center gap-1 text-[10px] uppercase tracking-wider text-muted-foreground">
+                <div className="type-eyebrow inline-flex items-center gap-1 text-muted-foreground">
                   What moved the grade <InfoTip text={INPUTS_TIP} label="What moved the grade?" />
                 </div>
                 {row.tip.map(([input, contribution]) => (
@@ -537,7 +537,7 @@ export default function MlbProspects({ initial }: { initial: ProspectPage }) {
           <div className="hidden md:block">
             <Table>
               <TableHeader>
-                <TableRow className="font-mono text-[11px] uppercase tracking-wider [&>th]:text-muted-foreground">
+                <TableRow className="type-eyebrow [&>th]:text-muted-foreground">
                   <TableHead className="w-8">#</TableHead>
                   <TableHead>Player</TableHead>
                   <TableHead>Level</TableHead>

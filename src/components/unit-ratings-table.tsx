@@ -3,6 +3,7 @@
 import { useMemo, useState, type ReactNode } from "react";
 import { ratingHeatmap } from "@/lib/rating-heatmap";
 import { RatingsHeatmapLegend } from "@/components/ratings-heatmap-legend";
+import { HeatValue } from "@/components/heat-value";
 import { cn, formatSigned } from "@/lib/utils";
 import { RatingsSearch, useRatingsSearch } from "@/components/ratings-search";
 import { TeamLogo, type TeamLogoSource } from "@/components/team-logo";
@@ -92,7 +93,7 @@ export function UnitRatingsTable<
                     type="button"
                     onClick={() => setSortKey(column.key)}
                     className={cn(
-                      "font-mono text-xs uppercase tracking-wider transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring",
+                      "type-eyebrow transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring",
                       sortKey === column.key
                         ? "text-foreground underline underline-offset-4"
                         : "text-muted-foreground hover:text-foreground"
@@ -126,7 +127,7 @@ export function UnitRatingsTable<
                     </span>
                     {flag && (
                       <span
-                        className="ml-2 font-mono text-[10px] uppercase tracking-wider text-accent-amber"
+                        className="type-eyebrow ml-2 text-accent-amber"
                         title={flag.note}
                       >
                         {flag.label}
@@ -137,13 +138,11 @@ export function UnitRatingsTable<
                   {columns.map((column) => (
                     <TableCell
                       key={column.key}
-                      style={heatmap.get(column.key)?.(unit[column.key])}
-                      className={cn(
-                        "text-right font-mono tabular-nums",
-                        sortKey === column.key && "font-semibold"
-                      )}
+                      className={cn("text-right", sortKey === column.key && "font-semibold")}
                     >
-                      {formatSigned(unit[column.key])}
+                      <HeatValue style={heatmap.get(column.key)?.(unit[column.key])}>
+                        {formatSigned(unit[column.key])}
+                      </HeatValue>
                     </TableCell>
                   ))}
                 </TableRow>

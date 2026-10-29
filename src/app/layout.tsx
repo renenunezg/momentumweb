@@ -1,6 +1,5 @@
 import type { Metadata, Viewport } from "next";
-import { Source_Sans_3 } from "next/font/google";
-import localFont from "next/font/local";
+import { Barlow } from "next/font/google";
 import Script from "next/script";
 import "./globals.css";
 import { SpeedInsights } from "@vercel/speed-insights/next";
@@ -8,27 +7,20 @@ import { SiteAnalytics } from "@/components/site-analytics";
 import { ThemeProvider } from "@/components/theme-provider";
 import { SITE_DESCRIPTION, SITE_NAME, SITE_URL, TWITTER_HANDLE } from "@/lib/site";
 
-const sourceSans = Source_Sans_3({
-  variable: "--font-source-sans",
+const barlow = Barlow({
+  variable: "--font-barlow",
   subsets: ["latin"],
-  display: "swap",
-});
-
-const metropolis = localFont({
-  src: [
-    { path: "./fonts/Metropolis-Regular.woff2", weight: "400", style: "normal" },
-    { path: "./fonts/Metropolis-Medium.woff2", weight: "500", style: "normal" },
-    { path: "./fonts/Metropolis-SemiBold.woff2", weight: "600", style: "normal" },
-    { path: "./fonts/Metropolis-Bold.woff2", weight: "700", style: "normal" },
-  ],
-  variable: "--font-metropolis",
+  weight: ["400", "600"],
   display: "swap",
 });
 
 export const viewport: Viewport = {
   width: "device-width",
   viewportFit: "cover",
-  themeColor: "#12e57a",
+  themeColor: [
+    { media: "(prefers-color-scheme: light)", color: "#f3f0e7" },
+    { media: "(prefers-color-scheme: dark)", color: "#101114" },
+  ],
   initialScale: 1,
   maximumScale: 5,
   userScalable: true,
@@ -41,16 +33,6 @@ export const metadata: Metadata = {
     template: "%s | René Núñez",
   },
   description: SITE_DESCRIPTION,
-  icons: {
-    icon: [
-      { url: "/favicon.ico?v=poleo-1", sizes: "16x16 32x32 48x48", type: "image/x-icon" },
-      { url: "/favicon-32x32.png?v=poleo-1", sizes: "32x32", type: "image/png" },
-      { url: "/icon.svg?v=poleo-1", sizes: "any", type: "image/svg+xml" },
-    ],
-    apple: [
-      { url: "/apple-touch-icon.png?v=poleo-1", sizes: "180x180", type: "image/png" },
-    ],
-  },
   // "./" resolves to the current route, so every page canonicalizes to its own
   // www URL without repeating the field in each segment.
   alternates: { canonical: "./" },
@@ -78,7 +60,7 @@ export default function RootLayout({
     <html
       lang="en"
       suppressHydrationWarning
-      className={`${sourceSans.variable} ${metropolis.variable} h-full overflow-x-hidden antialiased`}
+      className={`${barlow.variable} h-full overflow-x-hidden antialiased`}
     >
       <body className="min-h-full flex flex-col overflow-x-hidden">
         <a

@@ -27,7 +27,7 @@ export function ComparisonGaps({ title, description, rows, negativeLabel, positi
   return (
     <section aria-labelledby={headingId} className="space-y-3 border-y border-border py-5">
       <div>
-        <h2 id={headingId} className="font-heading text-lg">{title}</h2>
+        <h2 id={headingId} className="type-section">{title}</h2>
         <p className="mt-1 max-w-3xl text-sm leading-relaxed text-muted-foreground">{description}</p>
       </div>
       {visible.length === 0 ? (

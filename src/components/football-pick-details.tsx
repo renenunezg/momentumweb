@@ -85,8 +85,8 @@ function PickDetailsContent({
   return (
     <>
       <div className="space-y-1 pr-9">
-        <p className="font-mono text-[10px] uppercase tracking-wider text-muted-foreground">{league === "cfb" ? "Recorded research pick" : "Recorded prediction"}</p>
-        <DialogTitle className="font-heading text-2xl">{pickLabel(pick)}</DialogTitle>
+        <p className="type-eyebrow text-muted-foreground">{league === "cfb" ? "Recorded research pick" : "Recorded prediction"}</p>
+        <DialogTitle className="type-section">{pickLabel(pick)}</DialogTitle>
         <DialogDescription className="text-sm text-muted-foreground">
           {pick.away_team} at {pick.home_team}
         </DialogDescription>

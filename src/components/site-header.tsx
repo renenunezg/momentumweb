@@ -23,13 +23,13 @@ export function SiteHeader() {
       <div className="mx-auto flex w-full max-w-7xl min-w-0 flex-col gap-3 px-page-gutter pt-4 sm:flex-row sm:items-center sm:justify-between sm:gap-6 sm:py-4">
         <div className="flex shrink-0 items-center justify-between gap-5">
           <Link href="/" aria-label="Momentum home" className="rounded-sm focus-visible:outline-2 focus-visible:outline-offset-4">
-            <MomentumWordmark />
+            <MomentumWordmark className="h-[19px] w-auto sm:h-[22px]" />
           </Link>
           <div className="sm:hidden"><ThemeToggle /></div>
         </div>
         <nav
           aria-label="Primary"
-          className="flex min-w-0 items-center gap-1 overflow-x-auto sm:gap-2"
+          className="flex min-w-0 items-center gap-1 overflow-x-auto [scrollbar-width:none] sm:gap-2"
         >
           {links.map((link) => {
             const active = pathname.startsWith(`/${link.href.split("/")[1]}`);
@@ -38,7 +38,7 @@ export function SiteHeader() {
                 key={link.href}
                 href={link.href}
                 aria-current={active ? "true" : undefined}
-                className={`shrink-0 border-b-2 px-3 py-2.5 text-xs font-semibold uppercase tracking-widest transition-colors ${active ? "border-current" : "border-transparent opacity-75 hover:opacity-100"}`}
+                className={`shrink-0 border-b-2 px-3 py-2.5 type-label font-semibold transition-colors ${active ? "border-primary text-foreground" : "border-transparent text-muted-foreground hover:text-foreground"}`}
               >
                 {link.label}
               </Link>

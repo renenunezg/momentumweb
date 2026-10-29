@@ -42,7 +42,7 @@ export default async function SeasonWinsPage() {
       <PageHeader>
         <div>
           <PageTitle>NFL Season Win Projections</PageTitle>
-          <PageDescription className="font-mono text-xs uppercase tracking-wider">
+          <PageDescription className="type-eyebrow">
             {first.season} · Regular season ·{" "}
             {inSeason ? "Updated outlook" : "Preseason outlook"}
           </PageDescription>
@@ -74,7 +74,7 @@ export default async function SeasonWinsPage() {
       <SeasonWinsTable rows={rows} teams={[...teams.values()]} />
       <div className="grid gap-6 border-t border-rule-strong pt-5 text-xs leading-relaxed text-muted-foreground sm:grid-cols-2">
         <div className="space-y-2">
-          <h2 className="font-mono uppercase tracking-wider text-foreground">
+          <h2 className="type-eyebrow text-foreground">
             Forecast assumptions
           </h2>
           <p>
@@ -90,7 +90,7 @@ export default async function SeasonWinsPage() {
           </p>
         </div>
         <div className="space-y-2">
-          <h2 className="font-mono uppercase tracking-wider text-foreground">
+          <h2 className="type-eyebrow text-foreground">
             Sources and timing
           </h2>
           <p>

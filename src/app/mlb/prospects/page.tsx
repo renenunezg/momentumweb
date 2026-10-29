@@ -39,7 +39,7 @@ export default async function MlbProspectsPage() {
         <div>
           <PageTitle>Prospects</PageTitle>
           {summary.season != null && (
-            <PageDescription className="font-mono text-xs uppercase tracking-wider">
+            <PageDescription className="type-eyebrow">
               Through the {summary.season} season
             </PageDescription>
           )}

@@ -13,7 +13,7 @@ export function PlayoffMetric({
 }) {
   return (
     <div className="flex min-w-0 flex-col items-center gap-1 py-3 text-center">
-      <p className="text-[10px] uppercase tracking-wider text-muted-foreground sm:text-xs">
+      <p className="type-eyebrow text-muted-foreground">
         {label}
       </p>
       <p className="font-mono text-base font-bold tabular-nums text-primary sm:text-xl">

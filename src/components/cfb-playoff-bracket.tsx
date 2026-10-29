@@ -57,7 +57,7 @@ export function CfbPlayoffBracket({
   return (
     <section aria-label="Projected playoff bracket" className="space-y-4">
       <div>
-        <h2 className="font-heading text-xl sm:text-2xl">
+        <h2 className="type-section">
           The projected bracket
         </h2>
         <p className="mt-1 text-xs text-muted-foreground">
@@ -67,10 +67,10 @@ export function CfbPlayoffBracket({
       </div>
       <div className="grid grid-cols-2 gap-3 lg:grid-cols-[1.15fr_1.15fr_.85fr_.8fr] lg:gap-6">
         <div className="col-span-2 grid grid-cols-2 items-center gap-x-6 gap-y-4 sm:gap-x-8">
-          <h3 className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">
+          <h3 className="type-eyebrow text-muted-foreground">
             First round
           </h3>
-          <h3 className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">
+          <h3 className="type-eyebrow text-muted-foreground">
             Quarterfinals
           </h3>
           {PATHS.map(([h, a, b]) => (
@@ -106,7 +106,7 @@ export function CfbPlayoffBracket({
           ))}
         </div>
         <div className="hidden lg:block">
-          <h3 className="mb-4 text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">
+          <h3 className="type-eyebrow mb-4 text-muted-foreground">
             Semifinals
           </h3>
           <div className="flex h-[440px] flex-col justify-around">
@@ -125,7 +125,7 @@ export function CfbPlayoffBracket({
           </div>
         </div>
         <div className="hidden lg:block">
-          <h3 className="mb-4 text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">
+          <h3 className="type-eyebrow mb-4 text-muted-foreground">
             Championship
           </h3>
           <div className="flex h-[440px] items-center">

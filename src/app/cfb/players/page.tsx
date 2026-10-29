@@ -46,7 +46,7 @@ export default async function PlayersPage() {
       <PageHeader>
         <div>
           <PageTitle>Player Grades</PageTitle>
-          <PageDescription className="font-mono text-xs uppercase tracking-wider">
+          <PageDescription className="type-eyebrow">
             {season} · Through week {week}
           </PageDescription>
         </div>

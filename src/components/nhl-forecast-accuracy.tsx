@@ -18,7 +18,7 @@ const num = "text-right font-mono tabular-nums";
 
 function SourceToggle({ source, page }: { source: "live" | "backtest"; page: string }) {
   return (
-    <nav aria-label="Forecast source" className="flex gap-1 font-mono text-xs uppercase tracking-wider">
+    <nav aria-label="Forecast source" className="type-eyebrow flex gap-1">
       {(["live", "backtest"] as const).map((key) => (
         <Link
           key={key}
@@ -65,7 +65,7 @@ function MarketComparison({
   overall: NhlAccuracySlice;
   source: "live" | "backtest";
 }) {
-  const heading = <h2 className="font-heading text-lg">Against the closing line</h2>;
+  const heading = <h2 className="type-section">Against the closing line</h2>;
   if (overall.market_n === 0)
     return (
       <section className="space-y-2">
@@ -303,7 +303,7 @@ export async function NhlForecastAccuracy({
           <MarketComparison accuracy={accuracy} overall={overall} source={source} />
           {accuracy.calibration.length > 0 && (
             <section className="space-y-2">
-              <h2 className="font-heading text-lg">Calibration</h2>
+              <h2 className="type-section">Calibration</h2>
               <p className="text-sm text-muted-foreground">
                 Observed home win rate against the predicted probability in ten
                 bins. Points above the diagonal mean the model was too

@@ -102,7 +102,7 @@ export function CfbPlayoffViewer({
         </span>
         <span>{payload.draws.toLocaleString("en-US")} simulated seasons</span>
         {payload.status === "local_preview" && (
-          <span className="rounded border border-border px-2 py-0.5 text-[10px] uppercase tracking-wider">
+          <span className="type-eyebrow rounded border border-border px-2 py-0.5">
             Local preview
           </span>
         )}
@@ -148,7 +148,7 @@ export function CfbPlayoffViewer({
             aria-label="Team playoff probabilities"
           >
             <div className="flex flex-wrap items-center justify-between gap-3">
-              <h2 className="font-heading text-xl sm:text-2xl">
+              <h2 className="type-section">
                 Playoff probabilities
               </h2>
               <label className="w-full sm:w-56">
@@ -237,7 +237,7 @@ export function CfbPlayoffViewer({
         <TabsContent value="conferences" className="min-w-0 space-y-6">
           <div className="flex flex-wrap items-center justify-between gap-3">
             <div>
-              <h2 className="font-heading text-2xl">{actualConference}</h2>
+              <h2 className="type-section">{actualConference}</h2>
               <p className="mt-1 text-xs text-muted-foreground">
                 Current standings and the paths to a championship.
               </p>

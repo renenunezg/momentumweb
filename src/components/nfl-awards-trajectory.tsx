@@ -17,7 +17,7 @@ export function NflAwardsTrajectory({ points, leaders }: { points: AwardTrajecto
   const floor = Math.min(RANK_FLOOR, Math.max(2, ...data.flatMap((row) => players.map((p) => row[p.id] ?? 1))));
   const ticks = floor <= 10 ? Array.from({ length: floor }, (_, i) => i + 1) : [1, ...[5, 10, 15, 20, 25].filter((t) => t <= floor)];
   return <section className="space-y-3" aria-label="Race trajectory">
-    <h2 className="font-heading text-lg">Race trajectory</h2>
+    <h2 className="type-section">Race trajectory</h2>
     {data.length < 2 ? <p className="text-sm text-muted-foreground">The race chart needs at least two weekly snapshots.</p> : <>
       <p className="max-w-3xl text-sm leading-relaxed text-muted-foreground">Predicted rank by weekly snapshot for the current top {players.length}. Each point is what the board said after that week, not a recomputation; weeks ranked below {RANK_FLOOR} run off the bottom.</p>
       <div role="img" aria-label="Predicted award rank by week for the current leaders">

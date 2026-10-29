@@ -11,7 +11,7 @@ function Section({
 }) {
   return (
     <section id={id} className="scroll-mt-6 space-y-3 pb-10">
-      <h2 className="font-heading text-xl">{title}</h2>
+      <h2 className="type-section">{title}</h2>
       {children}
     </section>
   );

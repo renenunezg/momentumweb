@@ -95,14 +95,14 @@ export function CarryLeaderboard({ hitters, study }: { hitters: CarryHitterRow[]
         <Table>
           <TableHeader>
             <TableRow>
-              <TableHead className="font-mono text-[11px] uppercase tracking-wider text-muted-foreground">Hitter</TableHead>
-              <TableHead className="font-mono text-[11px] uppercase tracking-wider text-muted-foreground">Swing</TableHead>
+              <TableHead className="type-eyebrow text-muted-foreground">Hitter</TableHead>
+              <TableHead className="type-eyebrow text-muted-foreground">Swing</TableHead>
               {COLUMNS.map((c) => (
                 <TableHead key={c.key} className="whitespace-nowrap text-right" aria-sort={c.key === sortKey ? (dir === "desc" ? "descending" : "ascending") : undefined}>
                   <button
                     type="button"
                     onClick={() => onSort(c.key)}
-                    className={cn("inline-flex items-center gap-1 font-mono text-[11px] uppercase tracking-wider", c.key === sortKey ? "text-primary" : "text-muted-foreground hover:text-foreground")}
+                    className={cn("type-eyebrow inline-flex items-center gap-1", c.key === sortKey ? "text-primary" : "text-muted-foreground hover:text-foreground")}
                   >
                     {c.label}
                     {c.key === sortKey && <span aria-hidden="true">{dir === "desc" ? "▼" : "▲"}</span>}
@@ -110,8 +110,8 @@ export function CarryLeaderboard({ hitters, study }: { hitters: CarryHitterRow[]
                   <InfoTip text={c.tip} label={`What is ${c.label}?`} className="ml-1" />
                 </TableHead>
               ))}
-              <TableHead className="text-right font-mono text-[11px] uppercase tracking-wider text-muted-foreground">HR</TableHead>
-              <TableHead className="text-right font-mono text-[11px] uppercase tracking-wider text-muted-foreground">OPS</TableHead>
+              <TableHead className="type-eyebrow text-right text-muted-foreground">HR</TableHead>
+              <TableHead className="type-eyebrow text-right text-muted-foreground">OPS</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>

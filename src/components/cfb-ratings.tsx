@@ -93,6 +93,7 @@ export default function CfbRatings({
         ? undefined
         : {
             label: `Change in model rating since week ${prior.week}`,
+            short: `Since wk ${prior.week}`,
             value: (r) => {
               const before = prior.ratings[r.team_id];
               return before == null ? null : r.power_rating - before;
@@ -171,7 +172,7 @@ export default function CfbRatings({
             market={marketStrength}
             tag={(r) =>
               view === "top25" && r.classification !== "fbs" ? (
-                <span className="ml-2 font-mono text-[10px] uppercase tracking-wider text-muted-foreground">
+                <span className="type-eyebrow ml-2 text-muted-foreground">
                   {r.classification ?? "?"}
                 </span>
               ) : null

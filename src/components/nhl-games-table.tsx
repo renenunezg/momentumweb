@@ -181,7 +181,7 @@ export function NhlGamesTable({ matchups }: { matchups: NhlMatchup[] }) {
               status={live && live.state !== "pre" && (
                 <>
                   <span className={cn(
-                    "text-[10px] uppercase tracking-wider",
+                    "type-eyebrow",
                     live.state === "in" ? "text-primary" : "text-muted-foreground",
                   )}>
                     {live.detail}

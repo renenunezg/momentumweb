@@ -69,7 +69,7 @@ async function HistoricalBacktest() {
   return (
     <section className="space-y-section">
       <div className="flex items-start justify-between gap-4">
-        <h2 className="font-heading text-lg">
+        <h2 className="type-section">
           Historical walk-forward backtest (pure model)
         </h2>
         {seasons.length > 0 && (

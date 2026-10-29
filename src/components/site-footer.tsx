@@ -26,7 +26,7 @@ export function SiteFooter() {
               href={href}
               target="_blank"
               rel="noopener noreferrer"
-              className="font-mono text-xs uppercase tracking-wider text-muted-foreground transition-colors hover:text-foreground"
+              className="type-eyebrow text-muted-foreground transition-colors hover:text-foreground"
             >
               {label}
             </a>

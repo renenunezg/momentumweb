@@ -172,7 +172,7 @@ export function WeeklyFootballPredictions({
             <div>
               <h2
                 id={`${slate.id}-heading`}
-                className="font-heading text-xl"
+                className="type-section"
               >
                 {clock.title(slate)}
               </h2>
@@ -236,7 +236,7 @@ function GamePredictions({
       className="data-[size=sm]:gap-0 data-[size=sm]:py-0"
     >
       <CardHeader className="flex flex-wrap items-center justify-between gap-x-5 gap-y-1 bg-muted/35 py-2">
-        <h3 className="flex min-w-0 flex-col gap-1 font-heading text-base leading-snug sm:flex-row sm:flex-wrap sm:items-center sm:gap-2">
+        <h3 className="type-subsection flex min-w-0 flex-col gap-1 sm:flex-row sm:flex-wrap sm:items-center sm:gap-2">
           {teams.map(({ side, name, team }, index) => (
             <span key={index} className="flex min-w-0 items-center gap-3">
               {index === 1 && (
@@ -288,7 +288,7 @@ function GamePredictions({
             {live.detail && (
               <span
                 className={cn(
-                  "font-mono text-[11px] uppercase tracking-wider",
+                  "type-eyebrow",
                   live.state === "in" && "text-primary",
                 )}
               >
@@ -335,13 +335,13 @@ function GamePredictions({
             gamePickCount={game.gamePickCount}
           >
             <span className="flex items-center justify-between gap-3">
-              <span className="font-mono text-[10px] uppercase tracking-wider text-muted-foreground">
+              <span className="type-eyebrow text-muted-foreground">
                 {MARKET_LABELS[pick.market as keyof typeof MARKET_LABELS]}
               </span>
               {pick.outcome !== "pending" && (
                 <span
                   className={cn(
-                    "font-mono text-xs uppercase",
+                    "type-eyebrow",
                     pick.outcome === "win" && "text-positive",
                     pick.outcome === "loss" && "text-negative",
                   )}

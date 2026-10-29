@@ -198,7 +198,7 @@ export function MethodologyDistributionChart({
 
       <div className="grid grid-cols-1 gap-3 sm:grid-cols-3 text-sm">
         <Card size="sm"><CardContent>
-          <p className="font-mono text-xs uppercase tracking-wider text-muted-foreground">
+          <p className="type-eyebrow text-muted-foreground">
             {home.team} expected runs
           </p>
           <p className="mt-1 text-base font-medium">{fmt(home.mean, 2)}</p>
@@ -207,7 +207,7 @@ export function MethodologyDistributionChart({
           </p>
         </CardContent></Card>
         <Card size="sm"><CardContent>
-          <p className="font-mono text-xs uppercase tracking-wider text-muted-foreground">
+          <p className="type-eyebrow text-muted-foreground">
             {away.team} expected runs
           </p>
           <p className="mt-1 text-base font-medium">{fmt(away.mean, 2)}</p>
@@ -216,7 +216,7 @@ export function MethodologyDistributionChart({
           </p>
         </CardContent></Card>
         <Card size="sm"><CardContent>
-          <p className="font-mono text-xs uppercase tracking-wider text-muted-foreground">
+          <p className="type-eyebrow text-muted-foreground">
             {home.team} win probability
           </p>
           <p className="mt-1 text-base font-medium">{pct(homeWinProb)}</p>
@@ -228,7 +228,7 @@ export function MethodologyDistributionChart({
 
       <Notice className="text-xs leading-relaxed text-muted-foreground">
         <p>
-          <span className="font-mono uppercase tracking-wider">Total runs:</span>{" "}
+          <span className="type-eyebrow">Total runs:</span>{" "}
           μ {fmt(totalMean, 2)}, p10–p90 {fmt(totalP10, 1)}–{fmt(totalP90, 1)}.
           {totalLine != null ? (
             <>

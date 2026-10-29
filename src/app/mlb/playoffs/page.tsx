@@ -17,7 +17,7 @@ export default async function PlayoffsPage() {
     <PageShell width="wide">
       <PageHeader className="border-b border-border pb-section">
         <div>
-          <p className="mb-2 font-mono text-[11px] uppercase tracking-[0.2em] text-muted-foreground">
+          <p className="type-eyebrow mb-2 text-muted-foreground">
             MLB / Postseason
           </p>
           <PageTitle>
@@ -41,7 +41,7 @@ export default async function PlayoffsPage() {
             className="mx-auto mb-4 size-9 text-muted-foreground"
             aria-hidden="true"
           />
-          <h2 className="font-heading text-2xl">
+          <h2 className="type-section">
             The postseason forecast is not available yet
           </h2>
           <p className="mx-auto mt-3 max-w-lg text-sm leading-relaxed text-muted-foreground">

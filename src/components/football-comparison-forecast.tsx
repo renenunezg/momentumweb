@@ -14,7 +14,7 @@ export function FootballComparisonForecast({
     >
       <div className="flex flex-wrap items-start justify-between gap-2 bg-muted/40 px-4 py-3">
         <div>
-          <h2 className="font-heading text-lg">
+          <h2 className="type-section">
             {game.awayTeam} {game.neutralSite ? "vs" : "at"} {game.homeTeam}
           </h2>
           <p className="mt-1 text-xs text-muted-foreground">
@@ -105,7 +105,7 @@ export function FootballComparisonLine({
       className="overflow-hidden rounded-lg border border-border"
     >
       <div className="bg-muted/40 px-4 py-3">
-        <h2 className="font-heading text-lg">
+        <h2 className="type-section">
           {awayTeam} {neutralSite ? "vs" : "at"} {homeTeam}
         </h2>
         <p className="mt-1 text-xs text-muted-foreground">

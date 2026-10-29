@@ -10,9 +10,9 @@
   --spacing-heading: 0.5rem;
   --color-background: var(--background);
   --color-foreground: var(--foreground);
-  --font-sans: var(--font-source-sans);
-  --font-mono: var(--font-source-sans);
-  --font-heading: var(--font-metropolis);
+  --font-sans: var(--font-barlow);
+  --font-mono: var(--font-barlow);
+  --font-heading: var(--font-barlow);
   --color-sidebar-ring: var(--sidebar-ring);
   --color-sidebar-border: var(--sidebar-border);
   --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
@@ -26,6 +26,9 @@
   --color-chart-3: var(--chart-3);
   --color-chart-2: var(--chart-2);
   --color-chart-1: var(--chart-1);
+  --color-chart-primary: var(--chart-primary);
+  --color-chart-comparison: var(--chart-comparison);
+  --color-highlight: var(--highlight);
   --color-ring: var(--ring);
   --color-input: var(--input);
   --color-border: var(--border);
@@ -44,111 +47,211 @@
   --color-card: var(--card);
   --color-positive: var(--positive);
   --color-negative: var(--negative);
+  --color-better: var(--better);
+  --color-worse: var(--worse);
+  --color-neutral-fill: var(--neutral-fill);
+  --color-on-fill: var(--on-fill);
+  --color-cell-neutral: var(--cell-neutral);
   --color-accent-blue: var(--accent-blue);
   --color-accent-amber: var(--accent-amber);
   /* Heavier rule for the top and bottom of a table; --border stays the hairline. */
   --color-rule-strong: var(--rule-strong);
   --color-grid: var(--grid);
-  --radius-sm: calc(var(--radius) * 0.6);
-  --radius-md: calc(var(--radius) * 0.8);
-  --radius-lg: var(--radius);
-  --radius-xl: calc(var(--radius) * 1.4);
-  --radius-2xl: calc(var(--radius) * 1.8);
-  --radius-3xl: calc(var(--radius) * 2.2);
-  --radius-4xl: calc(var(--radius) * 2.6);
+  --radius-sm: 4px;
+  --radius-md: 6px;
+  --radius-lg: 8px;
+  --radius-xl: 12px;
+  --radius-2xl: 12px;
+  --radius-3xl: 16px;
+  --radius-4xl: 16px;
 }
 
-/* Poleo green carries the brand; deeper teal keeps text and charts readable. */
+/* The brand book allows two weights. Mapping medium and bold onto semibold
+   keeps every existing emphasis class inside that pair. */
+@theme {
+  --font-weight-medium: 600;
+  --font-weight-bold: 600;
+  --font-weight-extrabold: 600;
+}
+
+/* Forest on bone; white on carbon. Red and green encode better and worse only,
+   so the interface itself carries no decorative accent color. */
 :root {
-  --brand-highlight: #12e57a;
-  --brand-surface: var(--brand-highlight);
-  --brand-ink: #103c34;
-  --background: #f8faf9;
-  --foreground: #253a37;
-  --card: #f8faf9;
-  --card-foreground: #253a37;
-  --popover: #ffffff;
-  --popover-foreground: #253a37;
-  --primary: #137b70;
-  --primary-foreground: #f8faf9;
-  --secondary: #edf3f1;
-  --secondary-foreground: #253a37;
-  --muted: #edf3f1;
-  --muted-foreground: #5c6e69;
-  --accent: #edf3f1;
-  --accent-foreground: #253a37;
-  --destructive: oklch(0.52 0.17 25);
-  --border: #d6e1dd;
-  --rule-strong: #8ca9a1;
-  --grid: #e1e9e6;
-  --input: #d6e1dd;
-  --ring: var(--primary);
-  --chart-1: var(--primary);
-  --chart-2: oklch(0.45 0.09 250);
-  --chart-3: oklch(0.52 0.12 45);
-  --chart-4: oklch(0.45 0.09 320);
-  --chart-5: oklch(0.35 0.005 60);
-  --positive: oklch(0.42 0.10 155);
-  --negative: oklch(0.48 0.14 25);
-  /* Translucent green and coral keep the heatmap vivid without obscuring values. */
-  --rating-strong: oklch(0.64 0.19 150 / 48%);
-  --rating-weak: oklch(0.65 0.21 25 / 48%);
-  --accent-blue: oklch(0.45 0.09 250);
-  --accent-amber: oklch(0.52 0.10 65);
+  --background: #f3f0e7;
+  --foreground: #10342d;
+  --card: #fbfaf6;
+  --card-foreground: #10342d;
+  --popover: #fbfaf6;
+  --popover-foreground: #10342d;
+  --primary: #10342d;
+  --primary-foreground: #f3f0e7;
+  --secondary: #e8e4d8;
+  --secondary-foreground: #10342d;
+  --muted: #e8e4d8;
+  --muted-foreground: #5a675f;
+  --accent: #e8e4d8;
+  --accent-foreground: #10342d;
+  --destructive: #b8362f;
+  --border: #d6d2c5;
+  --rule-strong: #9aa199;
+  --grid: #dcd8cc;
+  --input: #d6d2c5;
+  --ring: #10342d;
+  --chart-primary: #10342d;
+  /* A mid gray, not the book's near-black, so the pair separates by lightness. */
+  --chart-comparison: #858a8f;
+  --highlight: #2a8c78;
+  --chart-1: var(--chart-primary);
+  --chart-2: var(--chart-comparison);
+  --chart-3: #a8742a;
+  --chart-4: #4f6b8c;
+  --chart-5: #8a5878;
+  /* Text-weight semantic colors; the fills below are too light for type on bone. */
+  --positive: #1b7a4f;
+  --negative: #b8362f;
+  --better: #2aa575;
+  --worse: #e2554e;
+  --neutral-fill: #c9cac7;
+  --on-fill: #07150d;
+  --cell-neutral: #e3e0d6;
+  --rating-strong: var(--better);
+  --rating-weak: var(--worse);
+  --accent-blue: #4f6b8c;
+  --accent-amber: #8f6210;
   --radius: 0.5rem;
-  --sidebar: #f8faf9;
-  --sidebar-foreground: #253a37;
+  --sidebar: #f3f0e7;
+  --sidebar-foreground: #10342d;
   --sidebar-primary: var(--primary);
-  --sidebar-primary-foreground: #f8faf9;
-  --sidebar-accent: #edf3f1;
-  --sidebar-accent-foreground: #253a37;
-  --sidebar-border: #d6e1dd;
+  --sidebar-primary-foreground: #f3f0e7;
+  --sidebar-accent: #e8e4d8;
+  --sidebar-accent-foreground: #10342d;
+  --sidebar-border: #d6d2c5;
   --sidebar-ring: var(--primary);
 }
 
 @custom-variant dark (&:where(.dark, .dark *));
 
-/* Keep the same hierarchy on a deep charcoal ground. */
 html.dark {
-  --background: #101c1a;
-  --foreground: #ecf3f0;
-  --card: #101c1a;
-  --card-foreground: #ecf3f0;
-  --popover: #1a2d28;
-  --popover-foreground: #ecf3f0;
-  --primary: #70d3bd;
-  --primary-foreground: #101c1a;
-  --secondary: #1c302b;
-  --secondary-foreground: #ecf3f0;
-  --muted: #1c302b;
-  --muted-foreground: #a1b7ae;
-  --accent: #1c302b;
-  --accent-foreground: #ecf3f0;
-  --destructive: oklch(0.62 0.19 27);
-  --border: #304b42;
-  --rule-strong: #668b7e;
-  --grid: #253c34;
-  --input: #304b42;
-  --ring: var(--primary);
-  --chart-1: var(--primary);
-  --chart-2: oklch(0.70 0.11 250);
-  --chart-3: oklch(0.72 0.12 45);
-  --chart-4: oklch(0.70 0.11 320);
-  --chart-5: oklch(0.72 0.004 70);
-  --positive: oklch(0.72 0.15 155);
-  --negative: oklch(0.68 0.16 25);
-  --rating-strong: oklch(0.75 0.16 155 / 38%);
-  --rating-weak: oklch(0.71 0.17 25 / 38%);
-  --accent-blue: oklch(0.70 0.11 250);
-  --accent-amber: oklch(0.75 0.11 65);
-  --sidebar: #101c1a;
-  --sidebar-foreground: #ecf3f0;
+  --background: #101114;
+  --foreground: #f0f2ee;
+  --card: #18191d;
+  --card-foreground: #f0f2ee;
+  --popover: #1d1f23;
+  --popover-foreground: #f0f2ee;
+  --primary: #36b098;
+  --primary-foreground: #07150d;
+  --secondary: #24262b;
+  --secondary-foreground: #f0f2ee;
+  --muted: #24262b;
+  --muted-foreground: #b0b5b0;
+  --accent: #24262b;
+  --accent-foreground: #f0f2ee;
+  --destructive: #ff918b;
+  --border: #33363b;
+  --rule-strong: #5c6166;
+  --grid: #2b2e33;
+  --input: #33363b;
+  --ring: #f0f2ee;
+  --chart-primary: #36b098;
+  --chart-comparison: #b8bdc4;
+  --highlight: #36b098;
+  --chart-1: var(--chart-primary);
+  --chart-2: var(--chart-comparison);
+  --chart-3: #d9a55a;
+  --chart-4: #8eaacb;
+  --chart-5: #c995b7;
+  --positive: #69d3a7;
+  --negative: #ff918b;
+  --better: #2aa575;
+  --worse: #e2554e;
+  --neutral-fill: #c9cac7;
+  --on-fill: #07150d;
+  --cell-neutral: #c9cac7;
+  --rating-strong: var(--better);
+  --rating-weak: var(--worse);
+  --accent-blue: #8eaacb;
+  --accent-amber: #e0b25c;
+  --sidebar: #101114;
+  --sidebar-foreground: #f0f2ee;
   --sidebar-primary: var(--primary);
-  --sidebar-primary-foreground: #101c1a;
-  --sidebar-accent: #1c302b;
-  --sidebar-accent-foreground: #ecf3f0;
-  --sidebar-border: #304b42;
+  --sidebar-primary-foreground: #07150d;
+  --sidebar-accent: #24262b;
+  --sidebar-accent-foreground: #f0f2ee;
+  --sidebar-border: #33363b;
   --sidebar-ring: var(--primary);
+}
+
+/* One type scale for every sport. Each role fixes size, line height and
+   weight together, so the same role never renders two ways. */
+@utility type-display {
+  font-size: 2.25rem;
+  line-height: 2.5rem;
+  font-weight: 600;
+  letter-spacing: -0.02em;
+  @media (width >= 40rem) {
+    font-size: 3rem;
+    line-height: 3.25rem;
+  }
+}
+@utility type-title {
+  font-size: 2rem;
+  line-height: 2.375rem;
+  font-weight: 600;
+  letter-spacing: -0.015em;
+  @media (width >= 40rem) {
+    font-size: 2.5rem;
+    line-height: 2.75rem;
+  }
+}
+@utility type-section {
+  font-size: 1.375rem;
+  line-height: 1.75rem;
+  font-weight: 600;
+  @media (width >= 40rem) {
+    font-size: 1.5rem;
+    line-height: 1.875rem;
+  }
+}
+@utility type-subsection {
+  font-size: 1.125rem;
+  line-height: 1.5rem;
+  font-weight: 600;
+}
+@utility type-body {
+  font-size: 1rem;
+  line-height: 1.5rem;
+  font-weight: 400;
+}
+@utility type-prose {
+  font-size: 1.125rem;
+  line-height: 1.75rem;
+  font-weight: 400;
+}
+@utility type-label {
+  font-size: 0.875rem;
+  line-height: 1.25rem;
+}
+@utility type-meta {
+  font-size: 0.75rem;
+  line-height: 1rem;
+  font-weight: 400;
+}
+@utility type-eyebrow {
+  font-size: 0.75rem;
+  line-height: 1rem;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+@utility type-value {
+  font-size: 1.75rem;
+  line-height: 2rem;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+  @media (width >= 40rem) {
+    font-size: 2rem;
+    line-height: 2.25rem;
+  }
 }
 
 @layer base {
@@ -159,15 +262,15 @@ html.dark {
     @apply bg-background text-foreground;
   }
   html {
-    background-color: var(--brand-surface);
+    background-color: var(--background);
     @apply font-sans;
   }
   h1, h2, h3 {
     font-weight: 600;
   }
   ::selection {
-    background: #12e57a;
-    color: #103c34;
+    background: var(--primary);
+    color: var(--primary-foreground);
   }
   html, body {
     width: 100%;
@@ -195,12 +298,8 @@ html.dark {
 @layer components {
   .site-masthead {
     padding-top: env(safe-area-inset-top, 0px);
-    --foreground: var(--brand-ink);
-    --muted-foreground: var(--brand-ink);
-    --border: rgb(16 60 52 / 35%);
-    background: var(--brand-surface);
-    color: var(--brand-ink);
-    border-bottom: 1px solid rgb(16 60 52 / 15%);
+    background: var(--background);
+    border-bottom: 1px solid var(--border);
   }
 
   .font-mono {
@@ -209,7 +308,7 @@ html.dark {
 
   @media (min-width: 640px) {
     :root {
-      --spacing-page-gutter: 1.5rem;
+      --spacing-page-gutter: 2rem;
     }
   }
 }

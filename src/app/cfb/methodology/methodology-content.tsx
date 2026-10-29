@@ -215,7 +215,7 @@ export function MethodologyContent({ example }: { example: PickExample | null })
               { label: "Picks", val: "Moneyline, spread and total at a flat unit (cfb-picks-v7)" },
             ].map(({ label, val }) => (
               <Card key={label} size="sm"><CardContent>
-                <p className="font-mono text-xs uppercase tracking-wider text-muted-foreground">{label}</p>
+                <p className="type-eyebrow text-muted-foreground">{label}</p>
                 <p className="mt-0.5 text-sm font-medium">{val}</p>
               </CardContent></Card>
             ))}
@@ -256,7 +256,7 @@ export function MethodologyContent({ example }: { example: PickExample | null })
             {flowNodes.map((node, i) => (
               <div key={node.group} className="flex min-w-0 md:flex-1 md:flex-col">
                 <div className={`rounded-sm border ${node.color} p-3 flex-1`}>
-                  <p className={`mb-2 font-mono text-[10px] uppercase tracking-widest font-semibold ${node.labelColor}`}>
+                  <p className={`mb-2 type-eyebrow ${node.labelColor}`}>
                     {node.group}
                   </p>
                   <ul className="space-y-1.5">
@@ -323,7 +323,7 @@ export function MethodologyContent({ example }: { example: PickExample | null })
               ))}
             </div>
             <div>
-              <p className="mb-2 font-mono text-xs uppercase tracking-wider text-muted-foreground">Data sources</p>
+              <p className="type-eyebrow mb-2 text-muted-foreground">Data sources</p>
               <div className="flex flex-wrap gap-2">
                 {["CFBD API", "The Odds API", "Supabase"].map((src) => (
                   <Badge key={src} variant="outline">{src}</Badge>
@@ -787,7 +787,7 @@ export function MethodologyContent({ example }: { example: PickExample | null })
           <div className="flex flex-wrap gap-2">
             {anchorPhaseRows.map((row) => (
               <Card key={row.phase} size="sm" className="py-2"><CardContent>
-                <p className="font-mono text-[10px] uppercase tracking-wider text-muted-foreground">{row.phase}</p>
+                <p className="type-eyebrow text-muted-foreground">{row.phase}</p>
                 <p className="font-mono text-sm">{row.delta}</p>
               </CardContent></Card>
             ))}
@@ -902,7 +902,7 @@ export function MethodologyContent({ example }: { example: PickExample | null })
         <div className="space-y-5 text-sm">
           {stack.map(({ category, items }) => (
             <div key={category}>
-              <p className="mb-2 font-mono text-xs uppercase tracking-wider text-muted-foreground">
+              <p className="type-eyebrow mb-2 text-muted-foreground">
                 {category}
               </p>
               <div className="flex flex-wrap gap-2">

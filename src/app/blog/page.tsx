@@ -26,7 +26,7 @@ export default function BlogPage() {
               <p className="font-mono text-xs text-muted-foreground">
                 {post.date}
               </p>
-              <h2 className="font-heading text-base mt-1 group-hover:underline underline-offset-4">
+              <h2 className="type-subsection mt-1 group-hover:underline underline-offset-4">
                 {post.title}
               </h2>
               <p className="mt-2 text-sm text-muted-foreground leading-relaxed">

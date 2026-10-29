@@ -47,7 +47,7 @@ export default function LiveProbabilityContent({ gamePk, away, home }: { gamePk:
           <span className="text-xs text-muted-foreground">{baseOccupancyLabel(state.bases)}</span>
         </div>}
         <div>
-          <div className="mb-2 text-xs uppercase tracking-wide text-muted-foreground">{home} win probability</div>
+          <div className="type-eyebrow mb-2 text-muted-foreground">{home} win probability</div>
           <div className="h-56 w-full min-w-0" role="img" aria-label={`${home} win probability chart, ${formatPct(data.home_win_probability)} at the latest state`}>
             <ResponsiveContainer width="100%" height="100%" initialDimension={{ width: 320, height: 224 }}>
               <LineChart data={points} margin={{ top: 8, right: 10, bottom: 0, left: -10 }} accessibilityLayer>
