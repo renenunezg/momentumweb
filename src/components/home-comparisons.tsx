@@ -9,6 +9,13 @@ const VERDICTS: Record<Verdict, string> = {
   benchmark: "Benchmark better",
 };
 
+// Without an interval only the sign is known, so the verdict says less.
+const SIGN_ONLY: Record<Verdict, string> = {
+  model: "Model ahead",
+  noise: "Even",
+  benchmark: "Benchmark ahead",
+};
+
 // Each published model beside the benchmark it is measured against. Rows mix
 // measures, so every row names its own and the bar's extent is set per row.
 export function HomeComparisons({ rows }: { rows: ComparisonRow[] }) {
@@ -49,8 +56,8 @@ export function HomeComparisons({ rows }: { rows: ComparisonRow[] }) {
                 tone={row.verdict === "noise" ? "neutral" : "semantic"}
               />
               <span className="block type-meta">
-                <span className="font-semibold">{VERDICTS[row.verdict]}</span>
-                {!row.hasInterval && <span className="text-muted-foreground">, no interval</span>}
+                <span className="font-semibold">{row.hasInterval ? VERDICTS[row.verdict] : SIGN_ONLY[row.verdict]}</span>
+                {!row.hasInterval && <span className="text-muted-foreground">, sign only, no interval</span>}
               </span>
             </TableCell>
             <TableCell className="hidden pr-0 whitespace-normal type-meta text-muted-foreground lg:table-cell">{row.sample}</TableCell>

@@ -122,13 +122,16 @@ const pipelineSteps = [
   { num: "06", name: "Verify & Publish", desc: "Pairing, range, anti-correlation, posterior-age checks; write to Supabase" },
 ];
 
+// Rounded to what 542 games support: two decimals of Brier and log loss,
+// whole percentage points of ROI. v2 was scored in sample here (see the
+// backtest section), so no row is a pass gate.
 const backtestRows = [
-  { metric: "Brier score (ML)", v1: "0.2570", v2: "0.2393", delta: "−6.88%", pass: true },
-  { metric: "Log-loss (ML)", v1: "0.7244", v2: "0.6713", delta: "−7.33%", pass: true },
-  { metric: "Max calibration gap", v1: "41.92%", v2: "3.20%", delta: "−38.7pp", pass: true },
-  { metric: "ROI moneyline (flagged)", v1: "+15.82%", v2: "+26.25%", delta: "+10.4pp", pass: null },
-  { metric: "ROI run line (flagged)", v1: "+5.04%", v2: "+14.96%", delta: "+9.9pp", pass: null },
-  { metric: "ROI totals (flagged)", v1: "−12.83%", v2: "−7.58%", delta: "+5.3pp", pass: null },
+  { metric: "Brier score (ML)", v1: "0.257", v2: "0.239", delta: "−7%", pass: null },
+  { metric: "Log-loss (ML)", v1: "0.724", v2: "0.671", delta: "−7%", pass: null },
+  { metric: "Max calibration gap", v1: "42%", v2: "3%", delta: "−39pp", pass: null },
+  { metric: "ROI moneyline (flagged)", v1: "+16%", v2: "+26%", delta: "+10pp", pass: null },
+  { metric: "ROI run line (flagged)", v1: "+5%", v2: "+15%", delta: "+10pp", pass: null },
+  { metric: "ROI totals (flagged)", v1: "−13%", v2: "−8%", delta: "+5pp", pass: null },
 ];
 
 const samplerDiagnostics = [
@@ -165,8 +168,10 @@ export function MethodologyContent({
             <strong>per-PA Monte Carlo simulator</strong> with rest-aware bullpens, an
             empirical baserunner-advancement table, weather effects, and per-game
             posterior draws that carry parameter uncertainty through. It replaced an
-            XGBoost regressor (v1) after a 542-game head-to-head backtest that v2 won on
-            every metric.
+            XGBoost regressor (v1) after a 542-game comparison in which v2 was scored in
+            sample, its skill model having been fit on data that included those games,
+            against v1&apos;s live picks. The live record since May 12 is the
+            out-of-sample evidence.
           </p>
           <div className="mt-4 grid grid-cols-1 gap-3 sm:grid-cols-2">
             {[
@@ -234,9 +239,11 @@ export function MethodologyContent({
             Publishing the raw sim probability flagged big underdogs +EV
             systematically: dogs the market priced under 33% came out at 37% from the
             sim and won 29%. The published win probability is now a logit-scale blend of
-            the sim (weight 0.2, the out-of-sample log-loss optimum on 2026 games) and
-            the de-vigged consensus across the paired moneylines, plus a +0.09 home-field
-            logit the sim lacks. Run-line and totals probabilities stay pure sim.
+            the sim and the de-vigged consensus across the paired moneylines, plus a
+            +0.09 home-field logit the sim lacks. The sim weight was 0.2, chosen on 2026
+            games already played, and moved to 0.5 on September 9, 2026 as a product
+            decision; neither is an out-of-sample optimum. Run-line and totals
+            probabilities stay pure sim.
           </ChangelogEntry>
 
           <ChangelogEntry
@@ -264,9 +271,10 @@ export function MethodologyContent({
             title="v2 cutover: hierarchical Bayesian skill model + per-PA Monte Carlo simulator"
             accent="brand"
           >
-            Replaced the v1 XGBoost regressor. Backtest over 542 games (Mar 26 to May 9,
-            2026): Brier −6.9%, log-loss −7.3%, max calibration gap from 41.9% down to
-            3.2%, ROI improved on every market.
+            Replaced the v1 XGBoost regressor after a 542-game comparison (Mar 26 to May 9,
+            2026), scored in sample for v2 against v1&apos;s live picks: Brier and log
+            loss about 7% lower, max calibration gap from 42% to 3%, ROI higher on each
+            market on paper. Totals then kept losing live.
           </ChangelogEntry>
 
           <details className="group">
@@ -596,9 +604,11 @@ export function MethodologyContent({
             The published moneyline number is not the raw sim. Each book&apos;s two
             moneylines are de-vigged as a pair and averaged into a market consensus. The
             sim&apos;s home logit gets a +0.09 home-field shift it does not produce on
-            its own, then is blended with the consensus at weight 0.2 on the sim, the
-            out-of-sample log-loss optimum on 2026 games. The raw sim flagged big
-            underdogs as +EV all season, and they did not win at the rate it said.
+            its own, then is blended with the consensus at weight 0.5 on the sim since
+            September 9, 2026 (0.2 from August 18). Both weights were set with 2026
+            results in hand, a product decision rather than an out-of-sample optimum.
+            The raw sim flagged big underdogs as +EV all season, and they did not win at
+            the rate it said.
             Run-line and totals probabilities are still pure sim. A game with no paired
             moneyline publishes the shifted sim probability and gets no moneyline flag.
           </p>
@@ -676,8 +686,8 @@ export function MethodologyContent({
             against {MLB_PLAYER_EVALUATION.groups[2].marcel.toFixed(2)}; hyperparameters were chosen on the same pairs, so these are development
             results. The previous version, scored once on the {MLB_PLAYER_EVALUATION.previous.inputSeason} to {MLB_PLAYER_EVALUATION.previous.outcomeSeason} pair it never saw, reached
             {" "}{MLB_PLAYER_EVALUATION.previous.groups[0].grade.toFixed(2)} for hitters against {MLB_PLAYER_EVALUATION.previous.groups[0].priorXwoba.toFixed(2)} for prior-season xwOBA,
-            a gap within sampling noise. A month-by-month comparison with the public projection systems
-            is on the performance page as it is computed. A player is graded once his season-equivalent sample
+            a gap within sampling noise. A comparison with ZiPS, THE BAT X and Steamer, on the
+            grade&apos;s own fielding-inclusive target and on hitting alone, is on the performance page. A player is graded once his season-equivalent sample
             reaches 100 plate appearances or batters faced; below that the page shows no number.
           </p>
         </div>
@@ -686,12 +696,16 @@ export function MethodologyContent({
       <SectionCard
         id="backtest"
         title="Head-to-Head Backtest vs Frozen v1"
-        subtitle="542 games, March 26 to May 9, 2026. v2 wins on every metric."
+        subtitle="542 games, March 26 to May 9, 2026, scored in sample for v2 against v1's live picks."
       >
         <div className="space-y-4 text-sm leading-relaxed">
           <p>
             Before cutover, v2 was benchmarked against a pinned copy of the v1 XGBoost
             baseline on every completed 2026 game where both models had a prediction.
+            v2&apos;s skill model had been fit on 2024 to 2026 data that included these
+            games, so its side is in sample; v1&apos;s side is its live picks. The table
+            shows that v2 fit the season better, not that it forecasts better out of
+            sample. The live record since May 12 is that test.
           </p>
 
           <Table>
@@ -725,12 +739,13 @@ export function MethodologyContent({
 
           <p className="text-muted-foreground">
             Brier and log-loss are proper scoring rules, so the comparison covers
-            calibration and sharpness together, not just hit rate. v1&apos;s 41.9% max
+            calibration and sharpness together, not just hit rate. v1&apos;s 42% max
             calibration gap is partly thin-bin variance, but the direction holds. Totals
             ROI improved on paper here and then kept losing once v2 went live, which is
-            how totals ended up switched off. A six-week backtest is a small sample; the
-            numbers are frozen from that run, and live results, including ongoing Brier
-            and calibration, are on the{" "}
+            how totals ended up switched off. A six-week backtest is a small sample and
+            the ROI rows rest on a few hundred flagged bets or fewer; the numbers are
+            rounded accordingly and frozen from that run. Live results, including
+            ongoing Brier and calibration, are on the{" "}
             <Link href="/mlb/performance" className="underline underline-offset-2 hover:text-foreground">
               Performance page
             </Link>

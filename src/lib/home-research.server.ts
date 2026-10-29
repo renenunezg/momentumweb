@@ -94,14 +94,14 @@ function verdictOf(diff: number, ci: [number, number] | null, lowerIsBetter: boo
 
 // Steamer is the one system with a projection at every checkpoint for every
 // pool; the MLB performance page lists ZiPS and THE BAT X beside it.
-function mlbRow(key: string, model: string, benchmark: string, unit: string, c: ForwardComparison | undefined): ComparisonRow[] {
+function mlbRow(key: string, model: string, benchmark: string, measure: string, unit: string, c: ForwardComparison | undefined): ComparisonRow[] {
   if (!c) return [];
   return [{
     key,
     href: "/mlb/performance",
     model,
     benchmark,
-    measure: "Rank correlation with rest-of-season value",
+    measure,
     ours: c.rho_grade.toFixed(2),
     theirs: c.rho_system.toFixed(2),
     diff: c.diff,
@@ -110,23 +110,29 @@ function mlbRow(key: string, model: string, benchmark: string, unit: string, c: 
     lowerIsBetter: false,
     verdict: verdictOf(c.diff, c.ci95, false),
     hasInterval: true,
-    sample: `${c.checkpoints} preseasons, about ${Math.round(c.mean_n)} ${unit}`,
+    sample: `${c.checkpoints} preseasons, about ${Math.round(c.mean_n)} ${unit}; seasons in view during development`,
   }];
 }
 
 async function mlbRows(): Promise<ComparisonRow[]> {
   const forward = await fetchMlbForward();
   if (!forward) return [];
+  // The hitting-only row is the published grade on the systems' own target,
+  // where it trails; the full-grade row is the target the grade is built for.
   return [
-    ...mlbRow("mlb-hitters", "MLB hitter grade", "Steamer WAR rate", "hitters", forward.pools.hitter.full_grade_vs_war_rate_position_neutral?.preseason.steamer),
-    ...mlbRow("mlb-sp", "MLB starter grade", "Steamer projected FIP", "starters", forward.pools.SP.grade_vs_fip?.preseason.steamer),
-    ...mlbRow("mlb-rp", "MLB reliever grade", "Steamer projected FIP", "relievers", forward.pools.RP.grade_vs_fip?.preseason.steamer),
+    ...mlbRow("mlb-hitters", "MLB hitter grade", "Steamer WAR rate", "Rank correlation with rest-of-season batting, fielding and baserunning runs", "hitters", forward.pools.hitter.full_grade_vs_war_rate_position_neutral?.preseason.steamer),
+    ...mlbRow("mlb-hitters-batting", "MLB hitter grade, hitting only", "Steamer projected wOBA", "Rank correlation with rest-of-season wOBA", "hitters", forward.pools.hitter.full_grade_vs_woba_batting_target?.preseason.steamer),
+    ...mlbRow("mlb-sp", "MLB starter grade", "Steamer projected FIP", "Rank correlation with rest-of-season FIP", "starters", forward.pools.SP.grade_vs_fip?.preseason.steamer),
+    ...mlbRow("mlb-rp", "MLB reliever grade", "Steamer projected FIP", "Rank correlation with rest-of-season FIP", "relievers", forward.pools.RP.grade_vs_fip?.preseason.steamer),
   ];
 }
 
 // The QB rating against the public passer measures, on the cross-validated
-// development seasons rather than the single, thinner validation season.
-const QB_BASELINES = ["qbr", "dakota", "epa_prior"];
+// development seasons rather than the single, thinner validation season. The
+// rating carries last season, so each public measure is shown both as
+// published and given the same prior season; only the equal-information rows
+// are a fair test.
+const QB_BASELINES = ["qbr", "qbr_prior", "dakota", "dakota_prior", "epa_prior"];
 
 async function nflQbRows(): Promise<ComparisonRow[]> {
   const rows = await fetchNflGradeEvaluation();
@@ -150,7 +156,7 @@ async function nflQbRows(): Promise<ComparisonRow[]> {
       lowerIsBetter: false,
       verdict: verdictOf(r.difference, ci, false),
       hasInterval: ci != null,
-      sample: `${r.player_seasons} passer-seasons, ${range(r.seasons)}`,
+      sample: `${r.player_seasons} passer-seasons, ${range(r.seasons)}, development seasons${baseline.endsWith("_prior") ? ", equal information" : ", rating carries last season"}`,
     }];
   });
 }
@@ -163,12 +169,13 @@ function forecastRow(
   digits: number,
   extent: number,
   sample: string,
+  model = `${sport.toUpperCase()} published line, market-informed`,
 ): ComparisonRow {
   const diff = ours - theirs;
   return {
     key: `${sport}-forecast`,
     href: `/${sport}/performance`,
-    model: `${sport.toUpperCase()} game forecast`,
+    model,
     benchmark: "Closing line",
     measure,
     ours: ours.toFixed(digits),
@@ -198,7 +205,7 @@ async function nflForecastRow(): Promise<ComparisonRow[]> {
   const latest = accuracy.bySeason.reduce<(typeof accuracy.bySeason)[number] | null>(
     (best, slice) => (!best || Number(slice.label) > Number(best.label) ? slice : best), null);
   if (!latest?.games) return [];
-  return [forecastRow("nfl", "Margin MAE, points", latest.modelMae, latest.marketMae, 2, 1, `${latest.games} games, ${latest.label}`)];
+  return [forecastRow("nfl", "Margin MAE, points", latest.modelMae, latest.marketMae, 2, 1, `${latest.games} games, ${latest.label}, first live season`)];
 }
 
 // The closing moneyline is scored once 30 live games carry one, the site's

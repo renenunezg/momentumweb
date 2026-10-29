@@ -12,8 +12,10 @@ export const posts: Post[] = [
     slug: "totals-problem",
     date: "2026-05-27",
     title: "The Totals Problem",
-    summary: "v2 beat v1 on moneyline and run line, but totals kept bleeding. Three fixes from inside the same modeling frame, none of them moved the number, and the question I probably should have been asking earlier.",
-    body: `When I built v1, I wrapped the whole thing around one output: expected runs per team. The reasoning was that expected runs gives you all three markets at once, which is clean if it works. If team A projects to 6.5 and team B to 3.5, a distribution over those gives you win probabilities for moneyline, the spread of the distributions gives you the runline (which is really just a moneyline derivative), and the sum gives you totals. 6.5 + 3.5 = 10, total line is 8, that's two runs of edge, flag the over. One number, three markets, done.
+    summary: "In an in-sample backtest v2 scored ahead of v1 on moneyline and run line, but totals kept bleeding. Three fixes from inside the same modeling frame, none of them moved the number, and the question I probably should have been asking earlier.",
+    body: `*Editor's note, October 29, 2026: the v1 vs v2 table below scored v2 in sample (its skill model had been fit on data that included these games) against v1's live picks, so it shows how well v2 fit the season, not how it forecasts out of sample. The live record since May 12 is on the [performance page](/mlb/performance). The numbers are quoted to more decimals than 542 games support.*
+
+When I built v1, I wrapped the whole thing around one output: expected runs per team. The reasoning was that expected runs gives you all three markets at once, which is clean if it works. If team A projects to 6.5 and team B to 3.5, a distribution over those gives you win probabilities for moneyline, the spread of the distributions gives you the runline (which is really just a moneyline derivative), and the sum gives you totals. 6.5 + 3.5 = 10, total line is 8, that's two runs of edge, flag the over. One number, three markets, done.
 
 v1 ran okay on moneyline, but totals were rough. Variance ran too high, runs were overdispersed, and the totals book was eating us alive while ML kind of held its own. So I rebuilt as v2 on a different premise, which was that instead of predicting an aggregate number and assuming a distribution around it, you simulate the actual game pitch by pitch, PA by PA, baserunners and bullpen and the whole flow, and let the run totals fall out of that. Moneyline got noticeably better under v2. Totals got noticeably worse, which was not what I'd hoped for.
 
@@ -56,7 +58,9 @@ I don't have an answer yet. Totals are off for now, \`TOTALS_ENABLED = False\`, 
     date: "2026-05-03",
     title: "V2 Is Coming and It's Bringing Bayes with It. Our Findings on XGBoost.",
     summary: "One month of live predictions with a 14-feature XGBoost regressor. What held up, what didn't, and why I'm going hierarchical Bayesian for v2.",
-    body: `When I started this project, I was operating on a personal hypothesis I'd had for a couple of years while modeling sports: since baseball has the highest variance of any major sport, introducing overly complex modeling techniques would likely lead to overfitting and, ultimately, worse performance.
+    body: `*Editor's note, October 29, 2026: v2 went live on May 12, 2026. The comparison that justified the switch was scored in sample for v2; its out-of-sample record, including calibration, is on the [performance page](/mlb/performance).*
+
+When I started this project, I was operating on a personal hypothesis I'd had for a couple of years while modeling sports: since baseball has the highest variance of any major sport, introducing overly complex modeling techniques would likely lead to overfitting and, ultimately, worse performance.
 
 I chose expected runs as the main output metric for two reasons: A) expected runs translate naturally via distributions like Poisson or negative binomial into win probabilities, making the model easier to evaluate, and B) they can also directly inform totals (over/under) predictions.
 

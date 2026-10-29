@@ -197,6 +197,7 @@ async function MlbForward({ modelVersion }: { modelVersion: string }) {
   const hitters = forward.pools.hitter;
   const full = hitters.full_grade_vs_war_rate_position_neutral;
   const batting = hitters.batting_grade_vs_woba;
+  const publishedBatting = hitters.full_grade_vs_woba_batting_target;
   const columns = [
     { label: "Grade" },
     { label: "System" },
@@ -227,19 +228,24 @@ async function MlbForward({ modelVersion }: { modelVersion: string }) {
       <div className="space-y-2">
         <h3 className="text-lg">Against the public projection systems</h3>
         <p className="text-sm text-muted-foreground">
-          The grade is rebuilt at each checkpoint of {forward.seasons.join(", ")}{" "}from only what was knowable that
-          morning and scored, on the players common to every system, against rest-of-season production per 600 PA or
-          per 180 and 65 IP. Rho is Spearman rank correlation; the gap is grade minus system with a 95 percent paired
-          bootstrap interval over players. The bat, glove and legs rows remove the positional adjustment from the
-          systems&apos; WAR rate, since the target is runs above the average player at the same position.
+          The grade is rebuilt at each checkpoint of {forward.seasons.join(", ")}{" "}from inputs dated before that
+          morning (the Statcast fielding and baserunning boards are the season&apos;s, prorated, so that cutoff is
+          approximate) and scored against rest-of-season production per 600 PA or per 180 and 65 IP: hitters on the
+          same players for every system, pitchers on each system&apos;s own overlap. Rho is Spearman rank correlation;
+          the gap is grade minus system with a 95 percent paired bootstrap interval over players. The full-grade
+          target is batting runs plus Statcast fielding and baserunning, the construct the grade is built around, so
+          the bat, glove and legs rows remove the positional adjustment from the systems&apos; WAR rate; batting runs
+          are league-relative and only the fielding part is position-relative. All three seasons were in view while
+          the grade was designed, so this is a development result, not an untouched test.
         </p>
       </div>
       <EvalTable
-        caption="Hitters: the full grade on bat, glove and legs against the systems' WAR rate; hitting alone against their projected wOBA (that row uses a batting-only refit of the grade, not the published number)."
+        caption="Hitters: the full grade on bat, glove and legs against the systems' WAR rate, where it is ahead; the published grade on hitting alone against their projected wOBA, where it trails all three; and a batting-only refit of the grade on the same hitting target, which ties them."
         columns={columns}
         rows={[
           ...forwardRows(full, "preseason", "Full grade, bat, glove and legs"),
           ...forwardRows(full, "in_season", "Full grade, bat, glove and legs"),
+          ...forwardRows(publishedBatting, "preseason", "Published grade, hitting only"),
           ...forwardRows(batting, "preseason", "Batting-only refit, hitting"),
           ...forwardRows(batting, "in_season", "Batting-only refit, hitting"),
           ...snapshotRows,

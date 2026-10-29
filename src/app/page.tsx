@@ -74,9 +74,11 @@ async function LeadStudy() {
           How the MLB grade compares with {listJoin(lead.rows.map((r) => r.system))}
         </h2>
         <p className="mt-4 type-body text-muted-foreground">
-          Each preseason from {first} to {last}, the grade was rebuilt from only what was knowable that morning
-          and scored against what hitters went on to produce: runs above average per 600 PA with fielding and
-          baserunning, positional adjustment removed.
+          Each preseason from {first} to {last}, the grade was rebuilt from inputs dated before opening day and
+          scored against what hitters went on to produce: batting runs plus Statcast fielding and baserunning per
+          600 PA, the target the grade is built around, with the systems&apos; positional adjustment removed. On
+          hitting alone the published grade trails all three systems. These seasons were in view while the grade
+          was designed.
         </p>
         <MoreLink href="/mlb/performance">The full evaluation</MoreLink>
       </div>
@@ -231,8 +233,9 @@ export default function Home() {
           </div>
           <p className="mt-1 mb-4 max-w-3xl type-label text-muted-foreground">
             Each model next to the benchmark it is measured against. Where an evaluation publishes a 95% interval, a
-            difference counts only when the interval clears zero; game forecasts are scored on every graded game and
-            carry no interval.
+            difference counts only when the interval clears zero. Game forecasts are scored on every graded game and
+            carry no interval yet, so their rows report the sign only; the football lines shown are the published
+            market-informed lines, which blend the market they are compared with.
           </p>
           <Suspense fallback={<Loading />}>
             <Comparisons />
