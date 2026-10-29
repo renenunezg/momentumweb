@@ -11,7 +11,7 @@ export async function fetchFullBetLedger(): Promise<BetLedgerRow[]> {
   for (let from = 0; ; from += LEDGER_PAGE_SIZE) {
     const { data, error } = await supabase
       .from("bet_ledger_v")
-      .select("date, team, game_pk, bet_type, stake, decimal_odds, american_odds, totals_side, won, edge, payout, push")
+      .select("date, team, game_pk, bet_type, stake, decimal_odds, american_odds, totals_side, won, edge, payout, push, model_version, forecast_at, start_time, written_after_start, rewritten")
       .order("date", { ascending: true })
       .order("game_pk", { ascending: true })
       .order("bet_type", { ascending: true })

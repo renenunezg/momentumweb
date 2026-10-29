@@ -8,7 +8,6 @@ import type {
   PosteriorSigma,
 } from "@/lib/types";
 import { aggregateLedger } from "@/lib/betting-aggs";
-import { isV2Era } from "@/lib/constants";
 import { fetchFullBetLedger } from "@/lib/bet-ledger";
 import { PerformanceTabs } from "./tabs";
 import { LastUpdated } from "@/components/last-updated";
@@ -68,12 +67,12 @@ export default async function PerformancePage() {
   const edgeBuckets = (edgeRes.data ?? []) as EdgeBucket[];
   const posteriorSigmas = (sigmasRes.data ?? []) as PosteriorSigma[];
   const liveKpis = ledger === null ? null : aggregateLedger(ledger);
-  // The ledger pools the retired v1 model with v2; the split is by date.
+  // The ledger pools the retired v1 model with v2; each row names its model.
   const eraKpis = ledger === null
     ? null
     : {
-        v1: aggregateLedger(ledger.filter((row) => !isV2Era(row.date))),
-        v2: aggregateLedger(ledger.filter((row) => isV2Era(row.date))),
+        v1: aggregateLedger(ledger.filter((row) => row.model_version === "v1")),
+        v2: aggregateLedger(ledger.filter((row) => row.model_version === "v2")),
       };
 
   // Residuals join predictions to graded games here rather than in PostgREST:

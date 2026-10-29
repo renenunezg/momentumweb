@@ -93,6 +93,9 @@ export type BetLedgerRow = Narrow<
     edge: number;
     payout: number;
     push: boolean;
+    model_version: string;
+    written_after_start: boolean;
+    rewritten: boolean;
   }
 >;
 
@@ -103,6 +106,10 @@ export interface LiveKpis {
   n_pushes: number;
   first_date: string | null;
   last_date: string | null;
+  // Bets whose forecast row was written after first pitch, and bets from a
+  // day whose predictions were later rewritten; both stay in the record.
+  n_written_after_start: number;
+  n_rewritten: number;
   roi: number | null;
   sharpe: number | null;
   sortino: number | null;

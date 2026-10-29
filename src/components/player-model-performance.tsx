@@ -185,9 +185,10 @@ function forwardRows(
   });
 }
 
-async function MlbForward({ modelVersion }: { modelVersion: string }) {
-  const forward = await fetchMlbForwardEvaluation(modelVersion);
-  if (!forward) {
+async function MlbForward({ modelVersion, gradesFittedAt }: { modelVersion: string; gradesFittedAt: string | null }) {
+  const evaluation = await fetchMlbForwardEvaluation(modelVersion);
+  const forward = evaluation?.forward;
+  if (!evaluation || !forward) {
     return (
       <p className="text-sm text-muted-foreground">
         The comparison with the public projection systems has not been published for this model version yet.
@@ -264,6 +265,13 @@ async function MlbForward({ modelVersion }: { modelVersion: string }) {
           ))}
         </ul>
       </details>
+      {gradesFittedAt && evaluation.fittedAt && (
+        <p className="text-xs text-muted-foreground">
+          {gradesFittedAt === evaluation.fittedAt
+            ? `The served grades were scored with this model fit (${evaluation.fittedAt.slice(0, 10)}).`
+            : `The served grades were scored with a fit from ${gradesFittedAt.slice(0, 10)}; this evaluation describes the refit of ${evaluation.fittedAt.slice(0, 10)}, so grades and table can differ until the next scoring run.`}
+        </p>
+      )}
       <LastUpdated timestamp={forward.computed_at} schedule="Rebuilt each offseason and after model changes" />
     </div>
   );
@@ -272,7 +280,7 @@ async function MlbForward({ modelVersion }: { modelVersion: string }) {
 async function MlbResults() {
   const current = await supabase
     .from("player_values")
-    .select("model_version")
+    .select("model_version, model_fitted_at")
     .limit(1)
     .maybeSingle();
   if (current.error || !current.data)
@@ -330,7 +338,7 @@ async function MlbResults() {
           schedule={`Evaluation snapshot · ${report.modelVersion}`}
         />
       </div>
-      <MlbForward modelVersion={report.modelVersion} />
+      <MlbForward modelVersion={report.modelVersion} gradesFittedAt={current.data.model_fitted_at} />
     </div>
   );
 }

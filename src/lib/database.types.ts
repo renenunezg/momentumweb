@@ -19,12 +19,14 @@ export type Database = {
           actual_margin: number | null
           away_points: number | null
           away_team: string
+          classification: string
           closing_spread: number | null
           game_id: number
           home_points: number | null
           home_team: string
           margin: number | null
           model_margin: number | null
+          model_version: string
           neutral_site: boolean | null
           season: number
           season_type: string | null
@@ -35,12 +37,14 @@ export type Database = {
           actual_margin?: number | null
           away_points?: number | null
           away_team: string
+          classification: string
           closing_spread?: number | null
           game_id: number
           home_points?: number | null
           home_team: string
           margin?: number | null
           model_margin?: number | null
+          model_version: string
           neutral_site?: boolean | null
           season: number
           season_type?: string | null
@@ -51,12 +55,14 @@ export type Database = {
           actual_margin?: number | null
           away_points?: number | null
           away_team?: string
+          classification?: string
           closing_spread?: number | null
           game_id?: number
           home_points?: number | null
           home_team?: string
           margin?: number | null
           model_margin?: number | null
+          model_version?: string
           neutral_site?: boolean | null
           season?: number
           season_type?: string | null
@@ -140,6 +146,7 @@ export type Database = {
           model_total: number | null
           model_version: string
           neutral_site: boolean | null
+          published_at: string | null
           pure_home_margin: number | null
           pure_home_spread: number | null
           qb_availability_points: number | null
@@ -186,6 +193,7 @@ export type Database = {
           model_total?: number | null
           model_version: string
           neutral_site?: boolean | null
+          published_at?: string | null
           pure_home_margin?: number | null
           pure_home_spread?: number | null
           qb_availability_points?: number | null
@@ -232,6 +240,7 @@ export type Database = {
           model_total?: number | null
           model_version?: string
           neutral_site?: boolean | null
+          published_at?: string | null
           pure_home_margin?: number | null
           pure_home_spread?: number | null
           qb_availability_points?: number | null
@@ -257,8 +266,9 @@ export type Database = {
           conference_game: boolean | null
           degrees_of_freedom: number | null
           distribution: string | null
-          forecast_as_of: string | null
+          forecast_as_of: string
           forecast_market_home_spread: number | null
+          forecast_published_at: string | null
           forecast_week: number | null
           game_id: number
           graded_at: string | null
@@ -273,7 +283,7 @@ export type Database = {
           market_informed_total: number | null
           market_weight: number | null
           model_total: number | null
-          model_version: string | null
+          model_version: string
           n_spread_offers: number | null
           n_total_offers: number | null
           neutral_site: boolean | null
@@ -301,8 +311,9 @@ export type Database = {
           conference_game?: boolean | null
           degrees_of_freedom?: number | null
           distribution?: string | null
-          forecast_as_of?: string | null
+          forecast_as_of: string
           forecast_market_home_spread?: number | null
+          forecast_published_at?: string | null
           forecast_week?: number | null
           game_id: number
           graded_at?: string | null
@@ -317,7 +328,7 @@ export type Database = {
           market_informed_total?: number | null
           market_weight?: number | null
           model_total?: number | null
-          model_version?: string | null
+          model_version: string
           n_spread_offers?: number | null
           n_total_offers?: number | null
           neutral_site?: boolean | null
@@ -345,8 +356,9 @@ export type Database = {
           conference_game?: boolean | null
           degrees_of_freedom?: number | null
           distribution?: string | null
-          forecast_as_of?: string | null
+          forecast_as_of?: string
           forecast_market_home_spread?: number | null
+          forecast_published_at?: string | null
           forecast_week?: number | null
           game_id?: number
           graded_at?: string | null
@@ -361,7 +373,7 @@ export type Database = {
           market_informed_total?: number | null
           market_weight?: number | null
           model_total?: number | null
-          model_version?: string | null
+          model_version?: string
           n_spread_offers?: number | null
           n_total_offers?: number | null
           neutral_site?: boolean | null
@@ -639,6 +651,8 @@ export type Database = {
           margin_rmse: number | null
           market_mae: number | null
           model_minus_market_mae: number | null
+          model_minus_market_mae_hi_95: number | null
+          model_minus_market_mae_lo_95: number | null
           prediction_source: string
           probability_games: number | null
           season: number
@@ -666,6 +680,8 @@ export type Database = {
           margin_rmse?: number | null
           market_mae?: number | null
           model_minus_market_mae?: number | null
+          model_minus_market_mae_hi_95?: number | null
+          model_minus_market_mae_lo_95?: number | null
           prediction_source: string
           probability_games?: number | null
           season: number
@@ -693,6 +709,8 @@ export type Database = {
           margin_rmse?: number | null
           market_mae?: number | null
           model_minus_market_mae?: number | null
+          model_minus_market_mae_hi_95?: number | null
+          model_minus_market_mae_lo_95?: number | null
           prediction_source?: string
           probability_games?: number | null
           season?: number
@@ -721,6 +739,7 @@ export type Database = {
           players: number
           position_group: string
           seasons: string
+          served_model_versions: string
           spearman_epa_credit: number
           spearman_games: number | null
           spearman_grade: number
@@ -740,6 +759,7 @@ export type Database = {
           players: number
           position_group: string
           seasons: string
+          served_model_versions: string
           spearman_epa_credit: number
           spearman_games?: number | null
           spearman_grade: number
@@ -759,6 +779,7 @@ export type Database = {
           players?: number
           position_group?: string
           seasons?: string
+          served_model_versions?: string
           spearman_epa_credit?: number
           spearman_games?: number | null
           spearman_grade?: number
@@ -1047,10 +1068,15 @@ export type Database = {
           away_team: string
           closing_point: number | null
           closing_price: number | null
+          closing_probability: number | null
           closing_source: string | null
+          clv_market_points: number | null
+          clv_market_probability: number | null
           clv_points: number | null
           decision_at: string
           decision_forecast: Json | null
+          decision_market_point: number | null
+          decision_market_probability: number | null
           degrees_of_freedom: number | null
           edge_points: number | null
           expected_value_per_unit: number | null
@@ -1100,10 +1126,15 @@ export type Database = {
           away_team: string
           closing_point?: number | null
           closing_price?: number | null
+          closing_probability?: number | null
           closing_source?: string | null
+          clv_market_points?: number | null
+          clv_market_probability?: number | null
           clv_points?: number | null
           decision_at: string
           decision_forecast?: Json | null
+          decision_market_point?: number | null
+          decision_market_probability?: number | null
           degrees_of_freedom?: number | null
           edge_points?: number | null
           expected_value_per_unit?: number | null
@@ -1153,10 +1184,15 @@ export type Database = {
           away_team?: string
           closing_point?: number | null
           closing_price?: number | null
+          closing_probability?: number | null
           closing_source?: string | null
+          clv_market_points?: number | null
+          clv_market_probability?: number | null
           clv_points?: number | null
           decision_at?: string
           decision_forecast?: Json | null
+          decision_market_point?: number | null
+          decision_market_probability?: number | null
           degrees_of_freedom?: number | null
           edge_points?: number | null
           expected_value_per_unit?: number | null
@@ -1209,10 +1245,15 @@ export type Database = {
           away_team: string
           closing_point: number | null
           closing_price: number | null
+          closing_probability: number | null
           closing_source: string | null
+          clv_market_points: number | null
+          clv_market_probability: number | null
           clv_points: number | null
           decision_at: string
           decision_forecast: Json | null
+          decision_market_point: number | null
+          decision_market_probability: number | null
           degrees_of_freedom: number | null
           edge_points: number | null
           expected_value_per_unit: number | null
@@ -1262,10 +1303,15 @@ export type Database = {
           away_team: string
           closing_point?: number | null
           closing_price?: number | null
+          closing_probability?: number | null
           closing_source?: string | null
+          clv_market_points?: number | null
+          clv_market_probability?: number | null
           clv_points?: number | null
           decision_at: string
           decision_forecast?: Json | null
+          decision_market_point?: number | null
+          decision_market_probability?: number | null
           degrees_of_freedom?: number | null
           edge_points?: number | null
           expected_value_per_unit?: number | null
@@ -1315,10 +1361,15 @@ export type Database = {
           away_team?: string
           closing_point?: number | null
           closing_price?: number | null
+          closing_probability?: number | null
           closing_source?: string | null
+          clv_market_points?: number | null
+          clv_market_probability?: number | null
           clv_points?: number | null
           decision_at?: string
           decision_forecast?: Json | null
+          decision_market_point?: number | null
+          decision_market_probability?: number | null
           degrees_of_freedom?: number | null
           edge_points?: number | null
           expected_value_per_unit?: number | null
@@ -1790,8 +1841,14 @@ export type Database = {
       }
       recommendation_performance: {
         Row: {
+          average_clv_market_points: number | null
+          average_clv_market_probability: number | null
           average_clv_points: number | null
           average_ev: number | null
+          clv_market_points_positive_share: number | null
+          clv_market_points_sample: number | null
+          clv_market_probability_positive_share: number | null
+          clv_market_probability_sample: number | null
           clv_positive_share: number | null
           clv_sample: number | null
           first_decision_at: string | null
@@ -1820,8 +1877,14 @@ export type Database = {
       recommendation_summary: {
         Args: { p_from?: string; p_market?: string; p_season?: number }
         Returns: {
+          average_clv_market_points: number | null
+          average_clv_market_probability: number | null
           average_clv_points: number | null
           average_ev: number | null
+          clv_market_points_positive_share: number | null
+          clv_market_points_sample: number | null
+          clv_market_probability_positive_share: number | null
+          clv_market_probability_sample: number | null
           clv_positive_share: number | null
           clv_sample: number | null
           first_decision_at: string | null
@@ -2124,6 +2187,90 @@ export type Database = {
         }
         Relationships: []
       }
+      forecast_history: {
+        Row: {
+          date: string
+          ev_flag: string | null
+          expected_runs: number | null
+          game_pk: number
+          kelly_quarter_ml: number | null
+          kelly_quarter_rl: number | null
+          kelly_quarter_total: number | null
+          lineup_hash: string | null
+          moneyline: number | null
+          p_cover: number | null
+          p_over: number | null
+          p_under: number | null
+          published_at: string
+          recorded_at: string
+          row_md5: string
+          run_line_ev_flag: string | null
+          spread: number | null
+          spread_odds: number | null
+          start_time: string | null
+          team: string
+          total: number | null
+          total_over_odds: number | null
+          total_play: string | null
+          total_under_odds: number | null
+          win_prob: number | null
+        }
+        Insert: {
+          date: string
+          ev_flag?: string | null
+          expected_runs?: number | null
+          game_pk: number
+          kelly_quarter_ml?: number | null
+          kelly_quarter_rl?: number | null
+          kelly_quarter_total?: number | null
+          lineup_hash?: string | null
+          moneyline?: number | null
+          p_cover?: number | null
+          p_over?: number | null
+          p_under?: number | null
+          published_at: string
+          recorded_at?: string
+          row_md5: string
+          run_line_ev_flag?: string | null
+          spread?: number | null
+          spread_odds?: number | null
+          start_time?: string | null
+          team: string
+          total?: number | null
+          total_over_odds?: number | null
+          total_play?: string | null
+          total_under_odds?: number | null
+          win_prob?: number | null
+        }
+        Update: {
+          date?: string
+          ev_flag?: string | null
+          expected_runs?: number | null
+          game_pk?: number
+          kelly_quarter_ml?: number | null
+          kelly_quarter_rl?: number | null
+          kelly_quarter_total?: number | null
+          lineup_hash?: string | null
+          moneyline?: number | null
+          p_cover?: number | null
+          p_over?: number | null
+          p_under?: number | null
+          published_at?: string
+          recorded_at?: string
+          row_md5?: string
+          run_line_ev_flag?: string | null
+          spread?: number | null
+          spread_odds?: number | null
+          start_time?: string | null
+          team?: string
+          total?: number | null
+          total_over_odds?: number | null
+          total_play?: string | null
+          total_under_odds?: number | null
+          win_prob?: number | null
+        }
+        Relationships: []
+      }
       games: {
         Row: {
           away_score: number | null
@@ -2166,6 +2313,30 @@ export type Database = {
           status?: string
           updated_at?: string | null
           venue?: string | null
+        }
+        Relationships: []
+      }
+      grading_rules: {
+        Row: {
+          bet_type: string
+          min_edge: number
+          push_rule: string
+          stake_column: string
+          stake_rule: string
+        }
+        Insert: {
+          bet_type: string
+          min_edge: number
+          push_rule: string
+          stake_column: string
+          stake_rule: string
+        }
+        Update: {
+          bet_type?: string
+          min_edge?: number
+          push_rule?: string
+          stake_column?: string
+          stake_rule?: string
         }
         Relationships: []
       }
@@ -2287,26 +2458,37 @@ export type Database = {
           average_total_diff: number | null
           average_win_prob: number | null
           avg_ml_line: number | null
+          brier_ci95_high: number | null
+          brier_ci95_low: number | null
           brier_score: number | null
+          brier_vs_market_ci95_high: number | null
+          brier_vs_market_ci95_low: number | null
+          calibration_bins: Json | null
           created_at: string | null
           date: string
           equity_end_units: number | null
           eval_window: string | null
           evaluation_started_at: string | null
           evaluation_state: string
+          excluded_games: Json | null
           favorites_correct: number | null
           id: number
           interval_coverage_50: number | null
           interval_coverage_80: number | null
           interval_coverage_90: number | null
           interval_coverage_predictions: number | null
+          late_forecast_bets: number | null
+          late_forecast_games: number | null
           log_loss: number | null
           mae: number | null
           mape: number | null
+          market_brier: number | null
+          market_log_loss: number | null
           max_drawdown: number | null
           ml_accuracy: number | null
           ml_correct: number | null
           ml_predictions: number | null
+          n_bets: number | null
           n_favorites: number | null
           n_run_line: number | null
           n_underdogs: number | null
@@ -2314,21 +2496,38 @@ export type Database = {
           overs_correct: number | null
           overs_predictions: number | null
           overs_roi: number | null
+          overs_roi_ci95_high: number | null
+          overs_roi_ci95_low: number | null
+          paired_brier: number | null
+          paired_games: number | null
+          paired_log_loss: number | null
           predictions_rewritten: boolean
           r2: number | null
+          rewritten_bets: number | null
           rmse: number | null
           roi: number | null
+          roi_ci95_high: number | null
+          roi_ci95_low: number | null
           roi_favorites: number | null
+          roi_favorites_ci95_high: number | null
+          roi_favorites_ci95_low: number | null
           roi_run_line: number | null
+          roi_run_line_ci95_high: number | null
+          roi_run_line_ci95_low: number | null
           roi_underdogs: number | null
+          roi_underdogs_ci95_high: number | null
+          roi_underdogs_ci95_low: number | null
           run_line_accuracy: number | null
           run_line_bets_correct: number | null
           run_line_correct: number | null
           run_line_predictions: number | null
+          scored_games: number | null
           sharpe: number | null
           sharpness: number | null
           sortino: number | null
           total_accuracy: number | null
+          total_accuracy_ci95_high: number | null
+          total_accuracy_ci95_low: number | null
           total_correct: number | null
           total_predictions: number | null
           total_staked_units: number | null
@@ -2339,31 +2538,44 @@ export type Database = {
           unders_correct: number | null
           unders_predictions: number | null
           unders_roi: number | null
+          unders_roi_ci95_high: number | null
+          unders_roi_ci95_low: number | null
         }
         Insert: {
           average_total_diff?: number | null
           average_win_prob?: number | null
           avg_ml_line?: number | null
+          brier_ci95_high?: number | null
+          brier_ci95_low?: number | null
           brier_score?: number | null
+          brier_vs_market_ci95_high?: number | null
+          brier_vs_market_ci95_low?: number | null
+          calibration_bins?: Json | null
           created_at?: string | null
           date: string
           equity_end_units?: number | null
           eval_window?: string | null
           evaluation_started_at?: string | null
           evaluation_state?: string
+          excluded_games?: Json | null
           favorites_correct?: number | null
           id?: number
           interval_coverage_50?: number | null
           interval_coverage_80?: number | null
           interval_coverage_90?: number | null
           interval_coverage_predictions?: number | null
+          late_forecast_bets?: number | null
+          late_forecast_games?: number | null
           log_loss?: number | null
           mae?: number | null
           mape?: number | null
+          market_brier?: number | null
+          market_log_loss?: number | null
           max_drawdown?: number | null
           ml_accuracy?: number | null
           ml_correct?: number | null
           ml_predictions?: number | null
+          n_bets?: number | null
           n_favorites?: number | null
           n_run_line?: number | null
           n_underdogs?: number | null
@@ -2371,21 +2583,38 @@ export type Database = {
           overs_correct?: number | null
           overs_predictions?: number | null
           overs_roi?: number | null
+          overs_roi_ci95_high?: number | null
+          overs_roi_ci95_low?: number | null
+          paired_brier?: number | null
+          paired_games?: number | null
+          paired_log_loss?: number | null
           predictions_rewritten?: boolean
           r2?: number | null
+          rewritten_bets?: number | null
           rmse?: number | null
           roi?: number | null
+          roi_ci95_high?: number | null
+          roi_ci95_low?: number | null
           roi_favorites?: number | null
+          roi_favorites_ci95_high?: number | null
+          roi_favorites_ci95_low?: number | null
           roi_run_line?: number | null
+          roi_run_line_ci95_high?: number | null
+          roi_run_line_ci95_low?: number | null
           roi_underdogs?: number | null
+          roi_underdogs_ci95_high?: number | null
+          roi_underdogs_ci95_low?: number | null
           run_line_accuracy?: number | null
           run_line_bets_correct?: number | null
           run_line_correct?: number | null
           run_line_predictions?: number | null
+          scored_games?: number | null
           sharpe?: number | null
           sharpness?: number | null
           sortino?: number | null
           total_accuracy?: number | null
+          total_accuracy_ci95_high?: number | null
+          total_accuracy_ci95_low?: number | null
           total_correct?: number | null
           total_predictions?: number | null
           total_staked_units?: number | null
@@ -2396,31 +2625,44 @@ export type Database = {
           unders_correct?: number | null
           unders_predictions?: number | null
           unders_roi?: number | null
+          unders_roi_ci95_high?: number | null
+          unders_roi_ci95_low?: number | null
         }
         Update: {
           average_total_diff?: number | null
           average_win_prob?: number | null
           avg_ml_line?: number | null
+          brier_ci95_high?: number | null
+          brier_ci95_low?: number | null
           brier_score?: number | null
+          brier_vs_market_ci95_high?: number | null
+          brier_vs_market_ci95_low?: number | null
+          calibration_bins?: Json | null
           created_at?: string | null
           date?: string
           equity_end_units?: number | null
           eval_window?: string | null
           evaluation_started_at?: string | null
           evaluation_state?: string
+          excluded_games?: Json | null
           favorites_correct?: number | null
           id?: number
           interval_coverage_50?: number | null
           interval_coverage_80?: number | null
           interval_coverage_90?: number | null
           interval_coverage_predictions?: number | null
+          late_forecast_bets?: number | null
+          late_forecast_games?: number | null
           log_loss?: number | null
           mae?: number | null
           mape?: number | null
+          market_brier?: number | null
+          market_log_loss?: number | null
           max_drawdown?: number | null
           ml_accuracy?: number | null
           ml_correct?: number | null
           ml_predictions?: number | null
+          n_bets?: number | null
           n_favorites?: number | null
           n_run_line?: number | null
           n_underdogs?: number | null
@@ -2428,21 +2670,38 @@ export type Database = {
           overs_correct?: number | null
           overs_predictions?: number | null
           overs_roi?: number | null
+          overs_roi_ci95_high?: number | null
+          overs_roi_ci95_low?: number | null
+          paired_brier?: number | null
+          paired_games?: number | null
+          paired_log_loss?: number | null
           predictions_rewritten?: boolean
           r2?: number | null
+          rewritten_bets?: number | null
           rmse?: number | null
           roi?: number | null
+          roi_ci95_high?: number | null
+          roi_ci95_low?: number | null
           roi_favorites?: number | null
+          roi_favorites_ci95_high?: number | null
+          roi_favorites_ci95_low?: number | null
           roi_run_line?: number | null
+          roi_run_line_ci95_high?: number | null
+          roi_run_line_ci95_low?: number | null
           roi_underdogs?: number | null
+          roi_underdogs_ci95_high?: number | null
+          roi_underdogs_ci95_low?: number | null
           run_line_accuracy?: number | null
           run_line_bets_correct?: number | null
           run_line_correct?: number | null
           run_line_predictions?: number | null
+          scored_games?: number | null
           sharpe?: number | null
           sharpness?: number | null
           sortino?: number | null
           total_accuracy?: number | null
+          total_accuracy_ci95_high?: number | null
+          total_accuracy_ci95_low?: number | null
           total_correct?: number | null
           total_predictions?: number | null
           total_staked_units?: number | null
@@ -2453,6 +2712,8 @@ export type Database = {
           unders_correct?: number | null
           unders_predictions?: number | null
           unders_roi?: number | null
+          unders_roi_ci95_high?: number | null
+          unders_roi_ci95_low?: number | null
         }
         Relationships: []
       }
@@ -3043,6 +3304,45 @@ export type Database = {
           },
         ]
       }
+      odds_quotes: {
+        Row: {
+          book: string
+          game_pk: number
+          moneyline: number | null
+          scraped_at: string
+          spread: number | null
+          spread_odds: number | null
+          team: string
+          total: number | null
+          total_over_odds: number | null
+          total_under_odds: number | null
+        }
+        Insert: {
+          book: string
+          game_pk: number
+          moneyline?: number | null
+          scraped_at: string
+          spread?: number | null
+          spread_odds?: number | null
+          team: string
+          total?: number | null
+          total_over_odds?: number | null
+          total_under_odds?: number | null
+        }
+        Update: {
+          book?: string
+          game_pk?: number
+          moneyline?: number | null
+          scraped_at?: string
+          spread?: number | null
+          spread_odds?: number | null
+          team?: string
+          total?: number | null
+          total_over_odds?: number | null
+          total_under_odds?: number | null
+        }
+        Relationships: []
+      }
       park_factors: {
         Row: {
           park_factor: number
@@ -3355,6 +3655,7 @@ export type Database = {
           impact_war: number | null
           level: string
           market_value_musd: number | null
+          model_fitted_at: string | null
           model_version: string
           owed_through_control_musd: number | null
           player_id: number
@@ -3392,6 +3693,7 @@ export type Database = {
           impact_war?: number | null
           level?: string
           market_value_musd?: number | null
+          model_fitted_at?: string | null
           model_version: string
           owed_through_control_musd?: number | null
           player_id: number
@@ -3429,6 +3731,7 @@ export type Database = {
           impact_war?: number | null
           level?: string
           market_value_musd?: number | null
+          model_fitted_at?: string | null
           model_version?: string
           owed_through_control_musd?: number | null
           player_id?: number
@@ -3563,6 +3866,7 @@ export type Database = {
           acquired: string | null
           age: number | null
           as_of: string
+          base_model_validated: boolean | null
           bats: string | null
           command_grade: number | null
           draft_pick: number | null
@@ -3570,6 +3874,7 @@ export type Database = {
           draft_year: number | null
           eta_season: number | null
           expected_control_war: number | null
+          grade_gate: string | null
           grade_reason: string | null
           headshot_url: string | null
           level: string | null
@@ -3614,6 +3919,7 @@ export type Database = {
           acquired?: string | null
           age?: number | null
           as_of: string
+          base_model_validated?: boolean | null
           bats?: string | null
           command_grade?: number | null
           draft_pick?: number | null
@@ -3621,6 +3927,7 @@ export type Database = {
           draft_year?: number | null
           eta_season?: number | null
           expected_control_war?: number | null
+          grade_gate?: string | null
           grade_reason?: string | null
           headshot_url?: string | null
           level?: string | null
@@ -3665,6 +3972,7 @@ export type Database = {
           acquired?: string | null
           age?: number | null
           as_of?: string
+          base_model_validated?: boolean | null
           bats?: string | null
           command_grade?: number | null
           draft_pick?: number | null
@@ -3672,6 +3980,7 @@ export type Database = {
           draft_year?: number | null
           eta_season?: number | null
           expected_control_war?: number | null
+          grade_gate?: string | null
           grade_reason?: string | null
           headshot_url?: string | null
           level?: string | null
@@ -3711,6 +4020,24 @@ export type Database = {
           trait_grades?: number[]
           trait_pcts?: number[]
           updated_at?: string
+        }
+        Relationships: []
+      }
+      rewritten_forecast_days: {
+        Row: {
+          date: string
+          note: string
+          recorded_at: string
+        }
+        Insert: {
+          date: string
+          note: string
+          recorded_at?: string
+        }
+        Update: {
+          date?: string
+          note?: string
+          recorded_at?: string
         }
         Relationships: []
       }
@@ -3828,13 +4155,18 @@ export type Database = {
           date: string | null
           decimal_odds: number | null
           edge: number | null
+          forecast_at: string | null
           game_pk: number | null
+          model_version: string | null
           payout: number | null
           push: boolean | null
+          rewritten: boolean | null
           stake: number | null
+          start_time: string | null
           team: string | null
           totals_side: string | null
           won: boolean | null
+          written_after_start: boolean | null
         }
         Relationships: []
       }
@@ -3899,16 +4231,19 @@ export type Database = {
         Row: {
           fitted_at: string | null
           forward: Json | null
+          model_fingerprint: string | null
           model_version: string | null
         }
         Insert: {
           fitted_at?: string | null
           forward?: never
+          model_fingerprint?: never
           model_version?: string | null
         }
         Update: {
           fitted_at?: string | null
           forward?: never
+          model_fingerprint?: never
           model_version?: string | null
         }
         Relationships: []
@@ -4091,9 +4426,11 @@ export type Database = {
           away_team: string
           closing_spread: number | null
           game_id: string
+          generated_at: string | null
           home_points: number | null
           home_team: string
           model_margin: number | null
+          model_version: string | null
           neutral_site: boolean | null
           pure_model_margin: number | null
           season: number
@@ -4107,9 +4444,11 @@ export type Database = {
           away_team: string
           closing_spread?: number | null
           game_id: string
+          generated_at?: string | null
           home_points?: number | null
           home_team: string
           model_margin?: number | null
+          model_version?: string | null
           neutral_site?: boolean | null
           pure_model_margin?: number | null
           season: number
@@ -4123,9 +4462,11 @@ export type Database = {
           away_team?: string
           closing_spread?: number | null
           game_id?: string
+          generated_at?: string | null
           home_points?: number | null
           home_team?: string
           model_margin?: number | null
+          model_version?: string | null
           neutral_site?: boolean | null
           pure_model_margin?: number | null
           season?: number
@@ -4754,6 +5095,8 @@ export type Database = {
           margin_rmse: number | null
           market_mae: number | null
           model_minus_market_mae: number | null
+          model_minus_market_mae_ci_high: number | null
+          model_minus_market_mae_ci_low: number | null
           prediction_source: string
           probability_games: number | null
           season: number
@@ -4781,6 +5124,8 @@ export type Database = {
           margin_rmse?: number | null
           market_mae?: number | null
           model_minus_market_mae?: number | null
+          model_minus_market_mae_ci_high?: number | null
+          model_minus_market_mae_ci_low?: number | null
           prediction_source: string
           probability_games?: number | null
           season: number
@@ -4808,6 +5153,8 @@ export type Database = {
           margin_rmse?: number | null
           market_mae?: number | null
           model_minus_market_mae?: number | null
+          model_minus_market_mae_ci_high?: number | null
+          model_minus_market_mae_ci_low?: number | null
           prediction_source?: string
           probability_games?: number | null
           season?: number
@@ -4819,6 +5166,24 @@ export type Database = {
           total_games?: number | null
           total_mae?: number | null
           total_rmse?: number | null
+        }
+        Relationships: []
+      }
+      playoff_forecast_history: {
+        Row: {
+          payload: Json
+          published_at: string
+          season: number
+        }
+        Insert: {
+          payload: Json
+          published_at?: string
+          season: number
+        }
+        Update: {
+          payload?: Json
+          published_at?: string
+          season?: number
         }
         Relationships: []
       }
@@ -4907,6 +5272,69 @@ export type Database = {
         Relationships: []
       }
       position_traits: {
+        Row: {
+          as_of: string
+          athlete_id: string
+          athlete_name: string | null
+          games: number | null
+          headshot_url: string | null
+          in_grade: boolean
+          kind: string | null
+          model_version: string
+          percentile: number | null
+          points_above_replacement: number | null
+          position_group: string
+          reliability: number | null
+          season: number
+          team: string | null
+          trait: string
+          uncertainty: number | null
+          value: number | null
+          week: number
+        }
+        Insert: {
+          as_of: string
+          athlete_id: string
+          athlete_name?: string | null
+          games?: number | null
+          headshot_url?: string | null
+          in_grade: boolean
+          kind?: string | null
+          model_version: string
+          percentile?: number | null
+          points_above_replacement?: number | null
+          position_group: string
+          reliability?: number | null
+          season: number
+          team?: string | null
+          trait: string
+          uncertainty?: number | null
+          value?: number | null
+          week: number
+        }
+        Update: {
+          as_of?: string
+          athlete_id?: string
+          athlete_name?: string | null
+          games?: number | null
+          headshot_url?: string | null
+          in_grade?: boolean
+          kind?: string | null
+          model_version?: string
+          percentile?: number | null
+          points_above_replacement?: number | null
+          position_group?: string
+          reliability?: number | null
+          season?: number
+          team?: string | null
+          trait?: string
+          uncertainty?: number | null
+          value?: number | null
+          week?: number
+        }
+        Relationships: []
+      }
+      position_traits_history: {
         Row: {
           as_of: string
           athlete_id: string
@@ -5061,6 +5489,7 @@ export type Database = {
           model_total: number
           model_version: string
           odds_api_event_id: string | null
+          odds_source: string | null
           outcome: string
           point: number | null
           policy_version: string
@@ -5113,6 +5542,7 @@ export type Database = {
           model_total: number
           model_version: string
           odds_api_event_id?: string | null
+          odds_source?: string | null
           outcome?: string
           point?: number | null
           policy_version: string
@@ -5165,6 +5595,7 @@ export type Database = {
           model_total?: number
           model_version?: string
           odds_api_event_id?: string | null
+          odds_source?: string | null
           outcome?: string
           point?: number | null
           policy_version?: string
@@ -5191,6 +5622,96 @@ export type Database = {
           total_sd?: number
           week?: number
           win_probability?: number | null
+        }
+        Relationships: []
+      }
+      season_win_total_history: {
+        Row: {
+          as_of: string
+          conference: string | null
+          depth_chart_as_of: string | null
+          division: string | null
+          games_played: number
+          games_remaining: number
+          losses: number
+          model_version: string
+          projected_wins: number
+          ratings_through_date: string | null
+          ratings_through_week: number
+          remaining_expected_wins: number
+          schedule_fetched_at: string
+          season: number
+          simulation_count: number
+          simulation_seed: number
+          sportsbook_source_date: string | null
+          sportsbook_source_name: string | null
+          sportsbook_source_url: string | null
+          sportsbook_win_total: number | null
+          team: string
+          team_abbr: string
+          ties: number
+          wins: number
+          wins_p10: number
+          wins_p50: number
+          wins_p90: number
+        }
+        Insert: {
+          as_of: string
+          conference?: string | null
+          depth_chart_as_of?: string | null
+          division?: string | null
+          games_played: number
+          games_remaining: number
+          losses: number
+          model_version: string
+          projected_wins: number
+          ratings_through_date?: string | null
+          ratings_through_week: number
+          remaining_expected_wins: number
+          schedule_fetched_at: string
+          season: number
+          simulation_count: number
+          simulation_seed: number
+          sportsbook_source_date?: string | null
+          sportsbook_source_name?: string | null
+          sportsbook_source_url?: string | null
+          sportsbook_win_total?: number | null
+          team: string
+          team_abbr: string
+          ties: number
+          wins: number
+          wins_p10: number
+          wins_p50: number
+          wins_p90: number
+        }
+        Update: {
+          as_of?: string
+          conference?: string | null
+          depth_chart_as_of?: string | null
+          division?: string | null
+          games_played?: number
+          games_remaining?: number
+          losses?: number
+          model_version?: string
+          projected_wins?: number
+          ratings_through_date?: string | null
+          ratings_through_week?: number
+          remaining_expected_wins?: number
+          schedule_fetched_at?: string
+          season?: number
+          simulation_count?: number
+          simulation_seed?: number
+          sportsbook_source_date?: string | null
+          sportsbook_source_name?: string | null
+          sportsbook_source_url?: string | null
+          sportsbook_win_total?: number | null
+          team?: string
+          team_abbr?: string
+          ties?: number
+          wins?: number
+          wins_p10?: number
+          wins_p50?: number
+          wins_p90?: number
         }
         Relationships: []
       }
@@ -5418,6 +5939,39 @@ export type Database = {
       }
     }
     Views: {
+      graded_game_ledger: {
+        Row: {
+          away_points: number | null
+          closing_source: string | null
+          closing_spread: number | null
+          closing_total: number | null
+          degrees_of_freedom: number | null
+          forecast_as_of: string | null
+          forecast_market_home_spread: number | null
+          forecast_market_total: number | null
+          forecast_recorded_at: string | null
+          game_id: string | null
+          graded_at: string | null
+          grading_rule: string | null
+          home_points: number | null
+          home_win_probability: number | null
+          input_run_id: string | null
+          input_run_recorded_at: string | null
+          kickoff: string | null
+          margin_sd: number | null
+          model_total: number | null
+          model_version: string | null
+          published_home_margin: number | null
+          published_total: number | null
+          pure_home_margin: number | null
+          score_source: string | null
+          season: number | null
+          snapshot_id: number | null
+          source_fetched_at: string | null
+          week: number | null
+        }
+        Relationships: []
+      }
       live_predictions: {
         Row: {
           actual_margin: number | null

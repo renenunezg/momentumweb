@@ -68,6 +68,23 @@ export function formatSigned(
   return text;
 }
 
+/** "+0.05 (+0.01 to +0.10)", with the interval's verdict for the caption. */
+export function describeGap(diff: number, lo: number | null, hi: number | null, decimals = 2) {
+  const text = lo == null || hi == null ? formatSigned(diff, decimals) : `${formatSigned(diff, decimals)} (${formatSigned(lo, decimals)} to ${formatSigned(hi, decimals)})`;
+  const verdict = lo == null || hi == null ? null : lo > 0 ? "clear of zero" : hi < 0 ? "behind, clear of zero" : "within noise";
+  return { text, verdict };
+}
+
+// "0.243 to 0.251" for a published 95 percent interval, or null when the
+// evaluation has not published one.
+export function formatInterval(
+  lo: number | null | undefined,
+  hi: number | null | undefined,
+  format: (value: number) => string,
+): string | null {
+  return lo == null || hi == null ? null : `${format(lo)} to ${format(hi)}`;
+}
+
 export function formatPct(
   value: number | null | undefined,
   decimals = 1

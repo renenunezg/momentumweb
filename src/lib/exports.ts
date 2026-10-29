@@ -8,6 +8,7 @@ import { toPage, type CsvExport } from "@/lib/csv-export";
 export const MLB_LEDGER_COLUMNS = [
   "date", "game_pk", "team", "bet_type", "totals_side", "stake", "decimal_odds",
   "american_odds", "edge", "won", "push", "payout",
+  "model_version", "forecast_at", "start_time", "written_after_start", "rewritten",
 ] as const;
 
 export const MLB_PREDICTION_COLUMNS = [
@@ -36,7 +37,7 @@ export const CFB_RECOMMENDATION_COLUMNS = [
 
 export const NFL_RECOMMENDATION_COLUMNS = [
   ...FOOTBALL_RECOMMENDATION_COLUMNS,
-  "execution_eligibility_verified", "result_source_at",
+  "execution_eligibility_verified", "result_source_at", "odds_source",
 ] as const;
 
 export const mlbLedgerExport: CsvExport = {

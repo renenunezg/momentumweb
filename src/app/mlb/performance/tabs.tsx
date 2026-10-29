@@ -8,7 +8,7 @@ import type {
   PosteriorSigma,
   LiveKpis,
 } from "@/lib/types";
-import { EMPTY, formatDate, formatNumber, formatOdds, formatPct, formatSigned } from "@/lib/utils";
+import { EMPTY, describeGap, formatDate, formatInterval, formatNumber, formatOdds, formatPct, formatSigned } from "@/lib/utils";
 import { replaceLocation, useLocationSearch } from "@/lib/use-location-search";
 import { ViewTabPanel, ViewTabs } from "@/components/view-tabs";
 import { WindowPager, usePagedWindow } from "@/components/window-pager";
@@ -74,6 +74,14 @@ function Section({ title, note, children }: { title: string; note?: ReactNode; c
 
 const KPI_ROW = "grid grid-cols-2 gap-x-6 gap-y-4 sm:flex sm:flex-wrap sm:gap-x-10";
 
+// Lower Brier is better, so a gap interval above zero means the market won.
+function brierGapVerdict(lo: number | null | undefined, hi: number | null | undefined): string {
+  if (lo == null || hi == null) return "no interval";
+  if (lo > 0) return "market better, clear of zero";
+  if (hi < 0) return "model better, clear of zero";
+  return "within noise";
+}
+
 // Observed coverage of each nominal interval as a dot against its target tick.
 // Closer to the tick is better; neither side earns a color.
 function CoverageTargets({ latest }: { latest: ModelEvaluation | undefined }) {
@@ -138,6 +146,9 @@ export function PerformanceTabs({
     (e) => !e.eval_window || e.eval_window === "day"
   );
   const seasonEvals = evaluations.filter((e) => e.eval_window === "season");
+  // The nightly job publishes a v2-only season row beside the pooled one; the
+  // headline is the model in use and the pooled row stays available.
+  const seasonV2Evals = evaluations.filter((e) => e.eval_window === "season_v2");
 
   // Latest season row for headline KPIs. Skip rows where the headline metrics
   // are all null (happens when today's eval runs before any games have graded).
@@ -149,10 +160,15 @@ export function PerformanceTabs({
     }
     return rows[rows.length - 1];
   };
-  const latest =
+  const combined =
     seasonEvals.length > 0
       ? findLastPopulated(seasonEvals)
       : findLastPopulated(dailyEvals);
+  const current = seasonV2Evals.length > 0 ? findLastPopulated(seasonV2Evals) : null;
+  const latest = current ?? combined;
+  const headlineLabel = current ? "v2 only, the model in use" : "v1 and v2 pooled";
+  const pct1 = (v: number) => formatPct(v);
+  const num3 = (v: number) => formatNumber(v, 3);
 
   const latestCalDate =
     calibration.length > 0 ? calibration[0].date : null;
@@ -162,7 +178,8 @@ export function PerformanceTabs({
         .sort((a, b) => a.bin_mid - b.bin_mid)
     : [];
 
-  const seasonBuckets = edgeBuckets.filter((b) => b.eval_window === "season");
+  const bucketWindow = edgeBuckets.some((b) => b.eval_window === "season_v2") ? "season_v2" : "season";
+  const seasonBuckets = edgeBuckets.filter((b) => b.eval_window === bucketWindow);
   const latestBucketDate =
     seasonBuckets.length > 0 ? seasonBuckets[0].date : null;
   const latestBuckets = latestBucketDate
@@ -182,15 +199,35 @@ export function PerformanceTabs({
               <KpiCard
                 label="Brier"
                 value={formatNumber(latest?.brier_score, 3)}
-                sub="Coin flip 0.250; lower is better"
-                tooltip="Average squared error of win probabilities over both teams of every graded game. Lower is better; a coin flip scores 0.25. No market baseline is published here yet."
+                sub={formatInterval(latest?.brier_ci95_low, latest?.brier_ci95_high, num3) ?? "Coin flip 0.250; lower is better"}
+                tooltip="Average squared error of win probabilities over both teams of every graded game. Lower is better; a coin flip scores 0.25. The range is a 95 percent bootstrap interval when one is published."
               />
-              <KpiCard label="Log loss" value={formatNumber(latest?.log_loss, 3)} sub="Coin flip 0.693" />
+              {latest?.market_brier != null && (
+                <KpiCard
+                  label="Market Brier"
+                  value={formatNumber(latest.market_brier, 3)}
+                  sub={`${latest.paired_games ?? 0} paired games`}
+                  tooltip="Brier of the de-vigged pregame moneyline on the same games, scored the same way. The model's Brier on those paired games is shown beside it."
+                />
+              )}
+              {latest?.market_brier != null && latest.paired_brier != null && (
+                <KpiCard
+                  label="Model vs market"
+                  value={describeGap(latest.paired_brier - latest.market_brier, latest.brier_vs_market_ci95_low, latest.brier_vs_market_ci95_high, 4).text}
+                  sub={brierGapVerdict(latest.brier_vs_market_ci95_low, latest.brier_vs_market_ci95_high)}
+                  tooltip="Model Brier minus market Brier on the paired games; negative means the model scored better. The range is a 95 percent bootstrap interval."
+                />
+              )}
+              <KpiCard
+                label="Log loss"
+                value={formatNumber(latest?.log_loss, 3)}
+                sub={latest?.market_log_loss != null ? `Market ${formatNumber(latest.market_log_loss, 3)} on paired games` : "Coin flip 0.693"}
+              />
               <KpiCard
                 label="Winner"
                 value={formatPct(latest?.total_accuracy)}
-                sub={`${latest?.total_correct ?? 0} of ${latest?.total_predictions ?? 0} correct`}
-                tooltip="Share of predictions where the model's favored side won."
+                sub={formatInterval(latest?.total_accuracy_ci95_low, latest?.total_accuracy_ci95_high, pct1) ?? `${latest?.total_correct ?? 0} of ${latest?.total_predictions ?? 0} correct`}
+                tooltip="Share of predictions where the model's favored side won. The range is a 95 percent bootstrap interval when one is published."
               />
               <KpiCard
                 label="Runs MAE"
@@ -200,13 +237,28 @@ export function PerformanceTabs({
               />
             </div>
             <p className="max-w-3xl type-meta text-muted-foreground">
-              {latest?.total_predictions ?? 0} graded games with a favored side
-              {dailyEvals.length > 0 && <>, {formatDate(dailyEvals[0].date)} to {formatDate(dailyEvals[dailyEvals.length - 1].date)}</>},
-              v1 and v2 pooled, regular season and postseason. Completed games with no stored
-              forecast or an even 50/50 probability are not counted. The coin flip is the only
-              reference shown; a market baseline on the same games is not published yet.{" "}
+              {latest?.scored_games ?? latest?.total_predictions ?? 0} graded games
+              {latest?.scored_games == null && " with a favored side"}
+              {dailyEvals.length > 0 && <>, {current ? formatDate(V2_CUTOVER_DATE) : formatDate(dailyEvals[0].date)} to {formatDate(dailyEvals[dailyEvals.length - 1].date)}</>},
+              {" "}{headlineLabel}, regular season and postseason.
+              {latest?.excluded_games != null
+                ? ` ${latest.excluded_games} completed games have no gradable forecast and are excluded.`
+                : " Completed games with no stored forecast or an even 50/50 probability are not counted."}
+              {latest?.late_forecast_games != null && latest.late_forecast_games > 0 && ` ${latest.late_forecast_games} games whose forecast was written after first pitch stay in the record and are flagged in the export.`}
+              {latest?.market_brier == null && " The coin flip is the only reference shown; a market baseline on the same games is not published yet."}
+              {" "}
               <a href="/mlb/api/export/predictions.csv" className="underline underline-offset-4">Download the graded predictions (CSV)</a>.
             </p>
+            {current && combined && (
+              <Section title="All versions pooled" note="v1 (XGBoost, through May 11) and v2 together, the population the daily tables below cover.">
+                <div className={KPI_ROW}>
+                  <KpiCard label="Brier" value={formatNumber(combined.brier_score, 3)} sub={formatInterval(combined.brier_ci95_low, combined.brier_ci95_high, num3) ?? "Coin flip 0.250"} />
+                  <KpiCard label="Log loss" value={formatNumber(combined.log_loss, 3)} sub="Coin flip 0.693" />
+                  <KpiCard label="Winner" value={formatPct(combined.total_accuracy)} sub={`${combined.total_correct} of ${combined.total_predictions} correct`} />
+                  <KpiCard label="Runs MAE" value={formatNumber(combined.mae, 2)} sub="Runs per team" />
+                </div>
+              </Section>
+            )}
 
             <Section title="Accuracy by market">
               <AccuracyChart data={dailyEvals.filter((d) => d.date >= "2026-04-12")} />
@@ -287,14 +339,17 @@ export function PerformanceTabs({
                   v1 through May 11 and v2 from May 12, regular season and postseason, at quarter-Kelly
                   stakes. The record applies today&apos;s edge gate (4.5 percent on moneyline and run line,
                   6.5 percent on totals) to every past prediction, so some plays shown on the day are not
-                  counted. Prices are the best pregame line published, not a closing line.{" "}
+                  counted. Prices are the best pregame line published, not a closing line.
+                  {(liveKpis.n_written_after_start > 0 || liveKpis.n_rewritten > 0) && (
+                    <> {liveKpis.n_written_after_start} predictions were written after first pitch and {liveKpis.n_rewritten} belong to a day whose predictions were later rewritten; both stay in the record and are flagged in the export.</>
+                  )}{" "}
                   <a href="/mlb/api/export/ledger.csv" className="underline underline-offset-4">Download the ledger (CSV)</a>.
                 </p>
                 <div className={KPI_ROW}>
                   <KpiCard
                     label="ROI"
                     value={formatPct(liveKpis.roi)}
-                    sub={`${liveKpis.n_bets} predictions`}
+                    sub={formatInterval(combined?.roi_ci95_low, combined?.roi_ci95_high, pct1) ?? `${liveKpis.n_bets} predictions`}
                     tooltip="Net profit divided by total stakes at the best pregame price published among DraftKings, FanDuel and BetMGM, not a closing line. A 13% ROI means 13¢ profit per $1 risked."
                   />
                   <KpiCard
@@ -326,14 +381,15 @@ export function PerformanceTabs({
                           <TableHead className="text-right">Staked</TableHead>
                           <TableHead className="text-right">P&amp;L</TableHead>
                           <TableHead className="text-right">ROI</TableHead>
+                          <TableHead className="text-right">95% interval</TableHead>
                         </TableRow>
                       </TableHeader>
                       <TableBody>
                         {[
-                          { label: "v2, current", kpis: eraKpis.v2 },
-                          { label: "v1, retired", kpis: eraKpis.v1 },
-                          { label: "Both", kpis: liveKpis },
-                        ].map(({ label, kpis }) => (
+                          { label: "v2, current", kpis: eraKpis.v2, row: current },
+                          { label: "v1, retired", kpis: eraKpis.v1, row: null },
+                          { label: "Both", kpis: liveKpis, row: combined },
+                        ].map(({ label, kpis, row }) => (
                           <TableRow key={label}>
                             <TableCell className="font-medium">{label}</TableCell>
                             <TableCell className="text-right tabular-nums">{kpis.n_bets}</TableCell>
@@ -341,6 +397,7 @@ export function PerformanceTabs({
                             <TableCell className="text-right tabular-nums">{formatNumber(kpis.total_staked_units, 2)}u</TableCell>
                             <TableCell className="text-right tabular-nums">{formatSigned(kpis.net_profit_units, 2)}u</TableCell>
                             <TableCell className="text-right tabular-nums">{formatPct(kpis.roi)}</TableCell>
+                            <TableCell className="text-right tabular-nums text-muted-foreground">{formatInterval(row?.roi_ci95_low, row?.roi_ci95_high, pct1) ?? EMPTY}</TableCell>
                           </TableRow>
                         ))}
                       </TableBody>
@@ -350,18 +407,18 @@ export function PerformanceTabs({
                 <Section title="By market" note="ROI with the win-loss record behind it, for the current model and for both versions pooled. Run line uses quarter-Kelly sizing.">
                   <div className="grid gap-6 md:grid-cols-2">
                     {[
-                      { title: `v2, current model, since ${formatDate(V2_CUTOVER_DATE)}`, kpis: eraKpis?.v2 ?? liveKpis },
-                      { title: "Both versions pooled", kpis: liveKpis },
-                    ].map(({ title, kpis }) => (
+                      { title: `v2, current model, since ${formatDate(V2_CUTOVER_DATE)}`, kpis: eraKpis?.v2 ?? liveKpis, row: current },
+                      { title: "Both versions pooled", kpis: liveKpis, row: combined },
+                    ].map(({ title, kpis, row }) => (
                       <div key={title} className="space-y-2">
                         <h3 className="type-label font-semibold">{title}</h3>
                         <MarketRoi
                           rows={[
-                            { label: "Favorites", roi: kpis.roi_favorites, record: formatRecord(kpis.favorites_correct, kpis.n_favorites, 0) },
-                            { label: "Underdogs", roi: kpis.roi_underdogs, record: formatRecord(kpis.underdogs_correct, kpis.n_underdogs, 0) },
-                            { label: "Run line", roi: kpis.roi_run_line, record: formatRecord(kpis.run_line_bets_correct, kpis.n_run_line, 0) },
-                            { label: "Overs", roi: kpis.overs_roi, record: formatRecord(kpis.overs_correct, kpis.overs_predictions, kpis.overs_pushes) },
-                            { label: "Unders", roi: kpis.unders_roi, record: formatRecord(kpis.unders_correct, kpis.unders_predictions, kpis.unders_pushes) },
+                            { label: "Favorites", roi: kpis.roi_favorites, record: formatRecord(kpis.favorites_correct, kpis.n_favorites, 0), ci: formatInterval(row?.roi_favorites_ci95_low, row?.roi_favorites_ci95_high, pct1) },
+                            { label: "Underdogs", roi: kpis.roi_underdogs, record: formatRecord(kpis.underdogs_correct, kpis.n_underdogs, 0), ci: formatInterval(row?.roi_underdogs_ci95_low, row?.roi_underdogs_ci95_high, pct1) },
+                            { label: "Run line", roi: kpis.roi_run_line, record: formatRecord(kpis.run_line_bets_correct, kpis.n_run_line, 0), ci: formatInterval(row?.roi_run_line_ci95_low, row?.roi_run_line_ci95_high, pct1) },
+                            { label: "Overs", roi: kpis.overs_roi, record: formatRecord(kpis.overs_correct, kpis.overs_predictions, kpis.overs_pushes), ci: formatInterval(row?.overs_roi_ci95_low, row?.overs_roi_ci95_high, pct1) },
+                            { label: "Unders", roi: kpis.unders_roi, record: formatRecord(kpis.unders_correct, kpis.unders_predictions, kpis.unders_pushes), ci: formatInterval(row?.unders_roi_ci95_low, row?.unders_roi_ci95_high, pct1) },
                           ]}
                         />
                         <p className="type-meta text-muted-foreground">Average moneyline price {formatOdds(kpis.avg_ml_line)}.</p>
@@ -372,7 +429,7 @@ export function PerformanceTabs({
               </>
             )}
 
-            <Section title="Units by day" note="Each point is one unit plus that day's profit or loss, not a running total; the season totals are in the table above.">
+            <Section title="Cumulative units" note="Running total of units since the first prediction, starting from 1u, both model versions.">
               {dailyEvals.some((d) => d.equity_end_units != null) ? (
                 <EquityCurveChart data={dailyEvals.filter((d) => d.equity_end_units != null)} />
               ) : (
@@ -380,7 +437,7 @@ export function PerformanceTabs({
               )}
             </Section>
 
-            <Section title="Results by edge" note="Season to date, both model versions, grouped by the model's edge over the price when the prediction was made.">
+            <Section title="Results by edge" note={`Season to date, ${bucketWindow === "season_v2" ? "v2 only" : "both model versions"}, grouped by the model's edge over the price when the prediction was made.`}>
               {latestBuckets.length > 0 ? (
                 <Table>
                   <TableHeader>
@@ -424,7 +481,7 @@ export function PerformanceTabs({
 }
 
 // ROI per market as a zero-centered bar on one shared scale, record alongside.
-function MarketRoi({ rows }: { rows: { label: string; roi: number | null | undefined; record: string }[] }) {
+function MarketRoi({ rows }: { rows: { label: string; roi: number | null | undefined; record: string; ci?: string | null }[] }) {
   const extent = Math.max(0.05, ...rows.map((r) => Math.abs(r.roi ?? 0)));
   return (
     <ul className="max-w-2xl divide-y divide-border">
@@ -443,7 +500,7 @@ function MarketRoi({ rows }: { rows: { label: string; roi: number | null | undef
               )}
             </span>
             <span className="text-right type-label tabular-nums">{formatPct(row.roi)}</span>
-            <span className="hidden text-right type-meta tabular-nums text-muted-foreground sm:block">{row.record}</span>
+            <span className="hidden text-right type-meta tabular-nums text-muted-foreground sm:block">{row.record}{row.ci ? <span className="block">{row.ci}</span> : null}</span>
           </li>
         );
       })}

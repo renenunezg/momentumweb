@@ -5,6 +5,7 @@ import {
   computeSegmentRow,
   type EvalRow,
   type EvalWindow,
+  type GradingRules,
 } from "./eval.ts";
 
 // Best-effort live eval, run server-side from the live-scores route when the
@@ -150,12 +151,24 @@ export async function runEvalForGame(
   const snapshot = await sb.rpc("live_evaluation_started_at");
   if (snapshot.error || !snapshot.data) return { ok: false, error: "evaluation snapshot unavailable" };
 
+  // The edge gates come from the published grading rules, never from a
+  // threshold kept here.
+  const rulesRes = await sb.from("grading_rules").select("bet_type, min_edge");
+  if (rulesRes.error) return { ok: false, error: `grading rules query failed: ${rulesRes.error.message}` };
+  const rules = {} as GradingRules;
+  for (const rule of rulesRes.data ?? []) {
+    if (rule.bet_type === "ml" || rule.bet_type === "rl" || rule.bet_type === "total") {
+      rules[rule.bet_type] = { min_edge: rule.min_edge };
+    }
+  }
+  if (!rules.ml || !rules.rl || !rules.total) return { ok: false, error: "grading rules incomplete" };
+
   const preds: Pred[] = [];
   const finals: GameRow[] = [];
   for (let offset = 0; ; offset += pageSize) {
     const { data, error } = await sb
       .from("model_outputs_season_unified")
-      .select("game_pk, date, team, expected_runs, win_prob, ev_flag, run_line_ev_flag, spread, total, total_play, moneyline, kelly_quarter_ml, kelly_quarter_total, total_over_odds, total_under_odds")
+      .select("game_pk, date, team, expected_runs, win_prob, ev_flag, run_line_ev_flag, spread, total, total_play, moneyline, kelly_quarter_ml, kelly_quarter_total, total_over_odds, total_under_odds, p_over, p_under")
       .order("game_pk").order("team").order("date")
       .range(offset, offset + pageSize - 1);
     if (error) return { ok: false, error: `predictions query failed: ${error.message}` };
@@ -202,6 +215,8 @@ export async function runEvalForGame(
     kelly_quarter_total: number | null;
     total_over_odds: number | null;
     total_under_odds: number | null;
+    p_over: number | null;
+    p_under: number | null;
   };
 
   const evalRows: (EvalRow & { game_date: string })[] = [];
@@ -231,6 +246,8 @@ export async function runEvalForGame(
       kelly_quarter_total: p.kelly_quarter_total,
       total_over_odds: p.total_over_odds,
       total_under_odds: p.total_under_odds,
+      p_over: p.p_over,
+      p_under: p.p_under,
       game_date: g.game_date,
     });
   }
@@ -256,7 +273,7 @@ export async function runEvalForGame(
   for (const w of windows) {
     if (w.rows.length === 0) continue;
     const base = computeBaseRow(w.rows);
-    const seg = computeSegmentRow(w.rows);
+    const seg = computeSegmentRow(w.rows, rules);
     const merged = { ...base, ...seg };
     const partial: Database["mlb"]["Tables"]["model_evaluation"]["Insert"] = {
       date: evalDate,

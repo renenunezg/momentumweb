@@ -25,13 +25,25 @@ export type FootballPick = Omit<
   | "closing_price"
   | "clv_points"
   | "decision_forecast"
+  | "decision_market_point"
+  | "decision_market_probability"
+  | "closing_probability"
+  | "clv_market_points"
+  | "clv_market_probability"
 > & {
-  // Closing-line columns exist on the CFB ledger only.
+  // Closing-line and decision-time market columns exist on the CFB ledger only.
   closing_source?: string | null;
   closing_point?: number | null;
   closing_price?: number | null;
   clv_points?: number | null;
   decision_forecast?: Json;
+  decision_market_point?: number | null;
+  decision_market_probability?: number | null;
+  closing_probability?: number | null;
+  clv_market_points?: number | null;
+  clv_market_probability?: number | null;
+  // NFL records where each price came from (odds_api or espn).
+  odds_source?: string | null;
   game_id: string | number;
   week?: number;
   margin_sd?: number | null;
@@ -60,7 +72,9 @@ type CfbPickMetricRow =
 // Closing line value is recorded by the CFB ledger only; the NFL view has
 // no closing line columns yet.
 type ClosingLineValue =
-  "average_clv_points" | "clv_sample" | "clv_positive_share";
+  | "average_clv_points" | "clv_sample" | "clv_positive_share"
+  | "average_clv_market_points" | "clv_market_points_sample" | "clv_market_points_positive_share"
+  | "average_clv_market_probability" | "clv_market_probability_sample" | "clv_market_probability_positive_share";
 export type FootballPickMetric = Omit<CfbPickMetricRow, ClosingLineValue> &
   Partial<Pick<CfbPickMetricRow, ClosingLineValue>> & {
     unique_games?: number | null;

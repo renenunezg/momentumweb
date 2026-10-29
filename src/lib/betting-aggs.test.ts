@@ -23,7 +23,12 @@ function bet(overrides: Partial<BetLedgerRow>): BetLedgerRow {
     payout: 2,
     push: false,
     ...overrides,
-  };
+    model_version: "v2",
+    forecast_at: null,
+    start_time: null,
+    written_after_start: false,
+    rewritten: false,
+};
 }
 
 test("an empty ledger yields null ratios and zero counts", () => {

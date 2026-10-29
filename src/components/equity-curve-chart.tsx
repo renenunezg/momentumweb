@@ -38,7 +38,7 @@ export function EquityCurveChart({ data }: EquityCurveChartProps) {
   return (
     <div
       role="img"
-      aria-label={`Units by day, one unit plus that day's profit or loss, against a 1 unit break-even line${range}`}
+      aria-label={`Cumulative units by day against a 1 unit break-even line${range}`}
     >
     <ResponsiveContainer width="100%" height={350}>
       <AreaChart data={data} margin={{ top: 8, right: 16, left: 8, bottom: 8 }}>
@@ -68,7 +68,7 @@ export function EquityCurveChart({ data }: EquityCurveChartProps) {
         <Area
           type="monotone"
           dataKey="equity_end_units"
-          name="Daily units"
+          name="Cumulative units"
           stroke={theme["chart-1"]}
           fill={theme["chart-1"]}
           fillOpacity={0.08}

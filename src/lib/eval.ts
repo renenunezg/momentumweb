@@ -23,7 +23,15 @@ export type EvalRow = {
   kelly_quarter_total?: number | null;
   total_over_odds?: number | null;
   total_under_odds?: number | null;
+  p_over?: number | null;
+  p_under?: number | null;
 };
+
+// The minimum edge over the vig-inclusive implied probability a flagged play
+// needs to be graded, per market, as published in mlb.grading_rules. The
+// nightly ledger applies the same gates, so the provisional live numbers and
+// the canonical ones describe the same bets.
+export type GradingRules = Record<"ml" | "rl" | "total", { min_edge: number }>;
 
 export type SegmentRow = {
   roi_favorites: number | null;
@@ -188,7 +196,7 @@ function americanToDecimal(american: number): number {
   return american > 0 ? 1 + american / 100 : 1 + 100 / Math.abs(american);
 }
 
-export function computeSegmentRow(rows: EvalRow[]): SegmentRow {
+export function computeSegmentRow(rows: EvalRow[], rules?: GradingRules): SegmentRow {
   const out: SegmentRow = {
     roi_favorites: null,
     n_favorites: 0,
@@ -206,7 +214,8 @@ export function computeSegmentRow(rows: EvalRow[]): SegmentRow {
   };
 
   const mlBets = dedupeByGamePk(
-    rows.filter((r) => r.ev_flag === r.team && r.moneyline != null),
+    rows.filter((r) => r.ev_flag === r.team && r.moneyline != null
+      && (!rules || r.win_prob - impliedProbability(r.moneyline) >= rules.ml.min_edge)),
   );
   if (mlBets.length > 0) {
     let favStake = 0,
@@ -275,6 +284,10 @@ export function computeSegmentRow(rows: EvalRow[]): SegmentRow {
     if (v == null && !push) continue;
     const am = dir === "over" ? r.total_over_odds : r.total_under_odds;
     if (am == null) continue;
+    if (rules) {
+      const p = dir === "over" ? r.p_over : r.p_under;
+      if (p == null || p - impliedProbability(am) < rules.total.min_edge) continue;
+    }
     const dec = americanToDecimal(am);
     const stake = r.kelly_quarter_total;
     if (stake == null || stake <= 0) continue;

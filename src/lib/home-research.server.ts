@@ -27,7 +27,7 @@ const range = (seasons: string) => seasons.replace("-", "–");
 const fetchMlbForward = cache(async () => {
   const current = await supabase.from("player_values").select("model_version").limit(1).maybeSingle();
   if (current.error || !current.data?.model_version) return null;
-  return fetchMlbForwardEvaluation(current.data.model_version);
+  return (await fetchMlbForwardEvaluation(current.data.model_version))?.forward ?? null;
 });
 
 export interface SystemComparison {

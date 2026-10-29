@@ -1,6 +1,6 @@
 import { cache } from "react";
 import { supabase, supabaseCfb, supabaseNfl } from "@/lib/supabase";
-import { formatSigned } from "@/lib/utils";
+export { describeGap } from "@/lib/utils";
 import type { Tables } from "@/lib/database-schema";
 
 // Player-grade evaluations the model repos publish for the performance pages:
@@ -105,24 +105,19 @@ export const FORWARD_SYSTEM_LABELS: Record<ForwardSystem | ForwardSnapshotSystem
 // A missing view or block degrades to "not published" rather than failing the
 // performance page.
 export const fetchMlbForwardEvaluation = cache(
-  async (modelVersion: string): Promise<ForwardEvaluation | null> => {
+  async (modelVersion: string): Promise<{ forward: ForwardEvaluation; fittedAt: string | null } | null> => {
     const { data, error } = await supabase
       .from("player_value_evaluation")
-      .select("model_version, forward")
+      .select("model_version, fitted_at, forward")
       .eq("model_version", modelVersion)
       .maybeSingle();
     if (error) {
       console.error("player_value_evaluation unavailable:", error.message);
       return null;
     }
-    const forward = (data as unknown as { forward?: unknown } | null)?.forward;
-    return forward && typeof forward === "object" ? (forward as ForwardEvaluation) : null;
+    const forward = data?.forward;
+    return forward && typeof forward === "object"
+      ? { forward: forward as unknown as ForwardEvaluation, fittedAt: data?.fitted_at ?? null }
+      : null;
   },
 );
-
-/** "+0.05 (+0.01 to +0.10)", with the interval's verdict for the caption. */
-export function describeGap(diff: number, lo: number | null, hi: number | null, decimals = 2) {
-  const text = lo == null || hi == null ? formatSigned(diff, decimals) : `${formatSigned(diff, decimals)} (${formatSigned(lo, decimals)} to ${formatSigned(hi, decimals)})`;
-  const verdict = lo == null || hi == null ? null : lo > 0 ? "clear of zero" : hi < 0 ? "behind, clear of zero" : "within noise";
-  return { text, verdict };
-}

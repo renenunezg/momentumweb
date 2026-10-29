@@ -91,6 +91,18 @@ test("segment ROI splits favorites from underdogs by the American line", () => {
   assert.equal(seg.avg_ml_line, -100);
 });
 
+test("published grading rules drop flagged moneyline plays below the edge gate", () => {
+  const rows: EvalRow[] = [
+    // +150 implies 40 percent; a 46 percent model is 6 points of edge.
+    row({ team: "DOG", game_pk: 1, ev_flag: "DOG", moneyline: 150, kelly_quarter_ml: 0.02, win_prob: 0.46, actual_win: 1 }),
+    // +100 implies 50 percent; 52 percent is 2 points, under a 4.5 point gate.
+    row({ team: "DOG", game_pk: 2, ev_flag: "DOG", moneyline: 100, kelly_quarter_ml: 0.02, win_prob: 0.52, actual_win: 1 }),
+  ];
+  const rules = { ml: { min_edge: 0.045 }, rl: { min_edge: 0.045 }, total: { min_edge: 0.065 } };
+  assert.equal(computeSegmentRow(rows).n_underdogs, 2);
+  assert.equal(computeSegmentRow(rows, rules).n_underdogs, 1);
+});
+
 test("live grading retries failures, rejects rescheduled rows, and commits complete calendar windows", async () => {
   const { runEvalForGame } = await import("./eval-game.ts");
   type Client = Parameters<typeof runEvalForGame>[0];
@@ -146,6 +158,11 @@ test("live grading retries failures, rejects rescheduled rows, and commits compl
         if (upsert) {
           if (failWrite) { failWrite = false; return resolve({ data: null, error: { message: "write failure" } }); }
           writes = [...writes, upsert];
+        }
+        if (table === "grading_rules") {
+          return resolve({ data: [
+            { bet_type: "ml", min_edge: 0.045 }, { bet_type: "rl", min_edge: 0.045 }, { bet_type: "total", min_edge: 0.065 },
+          ], error: null });
         }
         const rows = table === "games" ? games : predictions;
         return resolve({ data: update || upsert ? null : rows.slice(bounds[0], bounds[1] + 1), error: null });
