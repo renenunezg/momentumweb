@@ -95,6 +95,8 @@ function Gap({ diff, lo, hi }: { diff: number; lo: number | null; hi: number | n
   );
 }
 
+// Phones get one card per row with each value labeled; the comparison columns
+// are too many to read side by side at that width.
 function EvalTable({
   caption,
   columns,
@@ -105,29 +107,51 @@ function EvalTable({
   rows: ReactNode[][];
 }) {
   return (
-    <Table>
-      <TableCaption className="text-left">{caption}</TableCaption>
-      <TableHeader>
-        <TableRow>
-          {columns.map((c) => (
-            <TableHead key={c.label} className={c.numeric ? "text-right" : undefined}>
-              {c.label}
-            </TableHead>
+    <>
+      <figure className="space-y-2 sm:hidden">
+        <figcaption className="type-meta text-muted-foreground">{caption}</figcaption>
+        <ul className="divide-y divide-border rounded-xl border border-border bg-card">
+          {rows.map((cells, i) => (
+            <li key={i} className="space-y-2 px-3 py-3">
+              <div className="type-label font-semibold">{cells[0]}</div>
+              <dl className="grid grid-cols-2 gap-x-4 gap-y-1.5 type-label">
+                {cells.slice(1).map((cell, j) => (
+                  <div key={j} className="min-w-0">
+                    <dt className="type-meta text-muted-foreground">{columns[j + 1]?.label}</dt>
+                    <dd className={columns[j + 1]?.numeric ? "tabular-nums" : undefined}>{cell}</dd>
+                  </div>
+                ))}
+              </dl>
+            </li>
           ))}
-        </TableRow>
-      </TableHeader>
-      <TableBody>
-        {rows.map((cells, i) => (
-          <TableRow key={i}>
-            {cells.map((cell, j) => (
-              <TableCell key={j} className={columns[j]?.numeric ? numCell : "align-top"}>
-                {cell}
-              </TableCell>
+        </ul>
+      </figure>
+      <div className="hidden sm:block">
+        <Table>
+          <TableCaption className="text-left">{caption}</TableCaption>
+          <TableHeader>
+            <TableRow>
+              {columns.map((c) => (
+                <TableHead key={c.label} className={c.numeric ? "text-right" : undefined}>
+                  {c.label}
+                </TableHead>
+              ))}
+            </TableRow>
+          </TableHeader>
+          <TableBody>
+            {rows.map((cells, i) => (
+              <TableRow key={i}>
+                {cells.map((cell, j) => (
+                  <TableCell key={j} className={columns[j]?.numeric ? numCell : "align-top"}>
+                    {cell}
+                  </TableCell>
+                ))}
+              </TableRow>
             ))}
-          </TableRow>
-        ))}
-      </TableBody>
-    </Table>
+          </TableBody>
+        </Table>
+      </div>
+    </>
   );
 }
 

@@ -378,7 +378,7 @@ export default function DraftWorkspace({
             </p>
           )}
           <div className={styles.tableWrap}>
-            <table>
+            <table className={styles.mockTable}>
               <caption className="sr-only">
                 {board.season} mock draft, round {round}
               </caption>
@@ -387,9 +387,12 @@ export default function DraftWorkspace({
                   <th>Pick</th>
                   <th>Team</th>
                   <th>Player</th>
-                  <th>Position</th>
-                  <th>Scouting rank</th>
-                  <th>Selection basis</th>
+                  <th className={styles.wideOnly}>Position</th>
+                  <th>
+                    <span className={styles.wideLabel}>Scouting rank</span>
+                    <abbr title="Scouting rank" className={styles.narrowLabel}>Rank</abbr>
+                  </th>
+                  <th className={styles.wideOnly}>Selection basis</th>
                 </tr>
               </thead>
               <tbody>
@@ -418,14 +421,14 @@ export default function DraftWorkspace({
                             team={nflLogos[p.owner]}
                             name={board.teams[p.owner].name}
                           />
-                          {p.owner}
+                          <span className={styles.teamCode}>{p.owner}</span>
                         </span>
                       </button>
                       {p.original !== p.owner && (
                         <small>Via {p.original}</small>
                       )}
                     </td>
-                    <td>
+                    <td className={styles.playerColumn}>
                       <div className={styles.playerCell}>
                         <PlayerHeadshot
                           name={p.player.name}
@@ -443,17 +446,20 @@ export default function DraftWorkspace({
                           >
                             {p.player.name}
                           </button>
-                          <small>{p.player.school}</small>
+                          <small>
+                            <span className={styles.inlinePosition}>{p.player.position} · </span>
+                            {p.player.school}
+                          </small>
                         </div>
                       </div>
                     </td>
-                    <td>
+                    <td className={styles.wideOnly}>
                       <abbr title={positionNames[p.player.position]}>
                         {p.player.position}
                       </abbr>
                     </td>
                     <td>{p.player.rank ?? "Not ranked"}</td>
-                    <td>{pickReason(p, mode)}</td>
+                    <td className={styles.wideOnly}>{pickReason(p, mode)}</td>
                   </tr>
                 ))}
               </tbody>

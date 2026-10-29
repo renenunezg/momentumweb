@@ -272,21 +272,21 @@ export default async function HistoryPage({
         </p>
       ) : (
         <>
-          <Table>
+          <Table density="compact">
             <TableHeader>
               <TableRow>
                 <TableHead>Date</TableHead>
                 <TableHead>Team</TableHead>
-                <TableHead>Starter</TableHead>
-                <TableHead className="text-right">xR</TableHead>
-                <TableHead className="text-right">Win Prob</TableHead>
-                <TableHead className="text-right">Model Odds</TableHead>
-                <TableHead className="text-right">Book ML</TableHead>
+                <TableHead className="hidden sm:table-cell">Starter</TableHead>
+                <TableHead className="hidden sm:table-cell text-right">xR</TableHead>
+                <TableHead className="text-right">Win prob</TableHead>
+                <TableHead className="hidden text-right md:table-cell">Model odds</TableHead>
+                <TableHead className="hidden sm:table-cell text-right">Book ML</TableHead>
                 <TableHead className="text-right">Score</TableHead>
                 <TableHead className="text-center">Result</TableHead>
                 <TableHead className="text-center">+EV</TableHead>
-                <TableHead className="text-center">RL +EV</TableHead>
-                <TableHead className="text-center">Total Play</TableHead>
+                <TableHead className="hidden sm:table-cell text-center">RL +EV</TableHead>
+                <TableHead className="hidden sm:table-cell text-center">Total play</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
@@ -396,11 +396,11 @@ export default async function HistoryPage({
                     {showV2Badge ? <V2Badge /> : null}
                   </TableCell>
                   <TeamCell team={row.team} />
-                  <TableCell>{row.starter ?? EMPTY}</TableCell>
-                  <TableCell className="text-right">{formatNumber(row.expected_runs)}</TableCell>
+                  <TableCell className="hidden sm:table-cell">{row.starter ?? EMPTY}</TableCell>
+                  <TableCell className="hidden sm:table-cell text-right">{formatNumber(row.expected_runs)}</TableCell>
                   <TableCell className="text-right">{formatPct(row.win_prob)}</TableCell>
-                  <TableCell className="text-right">{formatOdds(row.our_odds)}</TableCell>
-                  <TableCell className="text-right">{formatOdds(row.moneyline)}</TableCell>
+                  <TableCell className="hidden text-right md:table-cell">{formatOdds(row.our_odds)}</TableCell>
+                  <TableCell className="hidden sm:table-cell text-right">{formatOdds(row.moneyline)}</TableCell>
                   <TableCell className="text-right tabular-nums">
                     {isFinal && teamScore != null ? `${teamScore}` : EMPTY}
                   </TableCell>
@@ -423,12 +423,12 @@ export default async function HistoryPage({
                       {mlIsPlay ? row.ev_flag : EMPTY}
                     </span>
                   </TableCell>
-                  <TableCell className="text-center">
+                  <TableCell className="hidden sm:table-cell text-center">
                     <span className={cellClass(rlWon, rlIsPlay)}>
                       {rlIsPlay ? row.run_line_ev_flag : EMPTY}
                     </span>
                   </TableCell>
-                  <TableCell className="text-center">
+                  <TableCell className="hidden sm:table-cell text-center">
                     <span className={cellClass(totalsWon, totalsIsPlay)}>
                       {totalsIsPlay ? row.total_play : EMPTY}
                     </span>

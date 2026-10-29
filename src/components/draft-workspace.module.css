@@ -114,12 +114,12 @@
   font-size: 0.875rem;
 }
 .workspace th {
-  font-family: var(--font-mono), sans-serif;
   text-align: center;
   font-size: 0.75rem;
+  line-height: 1rem;
   text-transform: uppercase;
-  letter-spacing: 0.04em;
-  font-weight: 500;
+  letter-spacing: 0.06em;
+  font-weight: 600;
   white-space: nowrap;
   color: var(--muted-foreground);
   border-bottom: 1px solid var(--border);
@@ -127,6 +127,15 @@
 .workspace td,
 .workspace th {
   padding: 0.75rem 0.65rem;
+}
+.inlinePosition,
+.narrowLabel {
+  display: none;
+}
+@media (max-width: 520px) {
+  .inlinePosition {
+    display: inline;
+  }
 }
 .workspace td {
   text-align: center;
@@ -141,6 +150,7 @@
   background: var(--muted);
 }
 .pickNumber {
+  white-space: nowrap;
   font-family: var(--font-sans), sans-serif;
   font-size: 1.25rem;
 }
@@ -365,6 +375,29 @@
   .workspace table {
     min-width: 670px;
   }
+  .workspace table.mockTable {
+    min-width: 0;
+  }
+  .workspace table.mockTable .teamCode {
+    display: none;
+  }
+  .workspace table.mockTable .playerColumn {
+    text-align: left;
+  }
+  .workspace table.mockTable td,
+  .workspace table.mockTable th {
+    padding-left: 0.25rem;
+    padding-right: 0.25rem;
+  }
+  .workspace table.mockTable .wideLabel {
+    display: none;
+  }
+  .workspace table.mockTable .narrowLabel {
+    display: inline;
+  }
+  .wideOnly {
+    display: none;
+  }
   .positionGrid {
     grid-template-columns: repeat(2, 1fr);
   }
@@ -529,5 +562,6 @@
   text-align: left;
 }
 .workspace table .teamIdentity {
+  white-space: nowrap;
   justify-content: center;
 }

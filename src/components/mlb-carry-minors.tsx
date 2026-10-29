@@ -3,6 +3,7 @@
 import { useDeferredValue, useMemo, useState } from "react";
 import { ParkCarry } from "@/components/mlb-carry-charts";
 import { Pager } from "@/components/pager";
+import { ToggleGroup } from "@/components/toggle-group";
 import { PlayerCell } from "@/components/player-cell";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import type { CarryMinorRow, MinorLevel, MinorSummary } from "@/lib/mlb-carry";
@@ -42,26 +43,22 @@ export function CarryMinors({ rows, summaries, season }: { rows: CarryMinorRow[]
     [rows, level, season, summary.qualified_air, search, sortKey, dir],
   );
   const totalPages = Math.max(1, Math.ceil(shown.length / PAGE_SIZE));
+  // Phones keep carry and whatever the board is sorted by.
+  const onPhone = (key: SortKey) => key === "carry" || key === sortKey;
   const current = Math.min(page, totalPages - 1);
 
   return (
     <div className="space-y-4">
-      <div className="flex flex-wrap gap-1.5" role="group" aria-label="Level">
-        {LEVELS.map((l) => (
-          <button
-            key={l.key}
-            type="button"
-            aria-pressed={level === l.key}
-            onClick={() => {
-              setLevel(l.key);
-              setPage(0);
-            }}
-            className="rounded border border-border px-2 py-0.5 text-sm text-muted-foreground hover:text-foreground aria-pressed:border-foreground/50 aria-pressed:text-foreground"
-          >
-            {l.label}
-          </button>
-        ))}
-      </div>
+      <ToggleGroup
+        label="Level"
+        options={LEVELS}
+        value={level}
+        onChange={(next) => {
+          setLevel(next);
+          setPage(0);
+        }}
+        variant="chip"
+      />
       <p className="max-w-3xl text-sm leading-relaxed">
         In {label}, carry is measured against {label} hitters for the same exit velocity, launch angle, direction, ballpark and
         month. Among {summary.qualified} hitters with {summary.qualified_air}+ balls in the air in {season}, one half of a season
@@ -83,6 +80,20 @@ export function CarryMinors({ rows, summaries, season }: { rows: CarryMinorRow[]
             className="w-56 rounded-md border border-border bg-background px-2 py-1.5 text-sm"
           />
         </label>
+        <label className="space-y-1 sm:hidden">
+          <span className="block text-xs text-muted-foreground">Sort by</span>
+          <select
+            value={sortKey}
+            onChange={(e) => {
+              setSortKey(e.target.value as SortKey);
+              setDir("desc");
+              setPage(0);
+            }}
+            className="rounded-md border border-border bg-background px-2 py-1.5 text-sm"
+          >
+            {COLUMNS.map((c) => <option key={c.key} value={c.key}>{c.label}</option>)}
+          </select>
+        </label>
         <span className="text-xs text-muted-foreground">{shown.length} hitters, {label} {season}</span>
         <Pager page={current} totalPages={totalPages} onPage={setPage} />
       </div>
@@ -92,7 +103,7 @@ export function CarryMinors({ rows, summaries, season }: { rows: CarryMinorRow[]
             <TableRow>
               <TableHead className="type-eyebrow text-muted-foreground">Hitter</TableHead>
               {COLUMNS.map((c) => (
-                <TableHead key={c.key} className="whitespace-nowrap text-right" aria-sort={c.key === sortKey ? (dir === "desc" ? "descending" : "ascending") : undefined}>
+                <TableHead key={c.key} className={cn("whitespace-nowrap text-right", !onPhone(c.key) && "hidden sm:table-cell")} aria-sort={c.key === sortKey ? (dir === "desc" ? "descending" : "ascending") : undefined}>
                   <button
                     type="button"
                     onClick={() => {
@@ -120,7 +131,7 @@ export function CarryMinors({ rows, summaries, season }: { rows: CarryMinorRow[]
                     team={r.team ?? "–"} position={null} logo={undefined} />
                 </TableCell>
                 {COLUMNS.map((c) => (
-                  <TableCell key={c.key} className="text-right font-mono tabular-nums">{c.format(r[c.key])}</TableCell>
+                  <TableCell key={c.key} className={cn("text-right font-mono tabular-nums", !onPhone(c.key) && "hidden sm:table-cell")}>{c.format(r[c.key])}</TableCell>
                 ))}
               </TableRow>
             ))}

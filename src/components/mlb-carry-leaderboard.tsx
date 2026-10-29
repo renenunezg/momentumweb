@@ -51,6 +51,10 @@ export function CarryLeaderboard({ hitters, study }: { hitters: CarryHitterRow[]
   const totalPages = Math.max(1, Math.ceil(rows.length / PAGE_SIZE));
   const current = Math.min(page, totalPages - 1);
 
+  // Phones keep carry and whatever the board is sorted by; the rest is a tap
+  // on the sort control away.
+  const onPhone = (key: SortKey) => key === "carry" || key === sortKey;
+
   const onSort = (key: SortKey) => {
     if (key === sortKey) setDir(dir === "desc" ? "asc" : "desc");
     else {
@@ -88,6 +92,20 @@ export function CarryLeaderboard({ hitters, study }: { hitters: CarryHitterRow[]
             {[50, 80, 120].map((n) => <option key={n} value={n}>{n}</option>)}
           </select>
         </label>
+        <label className="space-y-1 sm:hidden">
+          <span className="block text-xs text-muted-foreground">Sort by</span>
+          <select
+            value={sortKey}
+            onChange={(e) => {
+              setSortKey(e.target.value as SortKey);
+              setDir("desc");
+              setPage(0);
+            }}
+            className="rounded-md border border-border bg-background px-2 py-1.5 text-sm"
+          >
+            {COLUMNS.map((c) => <option key={c.key} value={c.key}>{c.label}</option>)}
+          </select>
+        </label>
         <span className="text-xs text-muted-foreground">{rows.length} hitters, {study.season}</span>
         <Pager page={current} totalPages={totalPages} onPage={setPage} />
       </div>
@@ -96,9 +114,9 @@ export function CarryLeaderboard({ hitters, study }: { hitters: CarryHitterRow[]
           <TableHeader>
             <TableRow>
               <TableHead className="type-eyebrow text-muted-foreground">Hitter</TableHead>
-              <TableHead className="type-eyebrow text-muted-foreground">Swing</TableHead>
+              <TableHead className="hidden type-eyebrow text-muted-foreground md:table-cell">Swing</TableHead>
               {COLUMNS.map((c) => (
-                <TableHead key={c.key} className="whitespace-nowrap text-right" aria-sort={c.key === sortKey ? (dir === "desc" ? "descending" : "ascending") : undefined}>
+                <TableHead key={c.key} className={cn("whitespace-nowrap text-right", !onPhone(c.key) && "hidden sm:table-cell")} aria-sort={c.key === sortKey ? (dir === "desc" ? "descending" : "ascending") : undefined}>
                   <button
                     type="button"
                     onClick={() => onSort(c.key)}
@@ -110,8 +128,8 @@ export function CarryLeaderboard({ hitters, study }: { hitters: CarryHitterRow[]
                   <InfoTip text={c.tip} label={`What is ${c.label}?`} className="ml-1" />
                 </TableHead>
               ))}
-              <TableHead className="type-eyebrow text-right text-muted-foreground">HR</TableHead>
-              <TableHead className="type-eyebrow text-right text-muted-foreground">OPS</TableHead>
+              <TableHead className="hidden type-eyebrow text-right text-muted-foreground sm:table-cell">HR</TableHead>
+              <TableHead className="hidden type-eyebrow text-right text-muted-foreground sm:table-cell">OPS</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
@@ -123,19 +141,19 @@ export function CarryLeaderboard({ hitters, study }: { hitters: CarryHitterRow[]
                     <PlayerCell athleteId={String(h.player_id)} headshotUrl={mlbPlayerHeadshotUrl(h.player_id)} name={h.player_name}
                       team={h.team ?? "–"} position={null} logo={mlbTeamIdentity(h.team)} />
                   </TableCell>
-                  <TableCell className="whitespace-nowrap text-xs text-muted-foreground">
+                  <TableCell className="hidden whitespace-nowrap text-xs text-muted-foreground md:table-cell">
                     {[swingType(study.swing_types.tilt, h.tilt), swingType(study.swing_types.attack, h.attack)].filter(Boolean).join(", ") || "–"}
                   </TableCell>
                   {COLUMNS.map((c) => {
                     const v = value(h, c.key);
                     return (
-                      <TableCell key={c.key} className="text-right font-mono tabular-nums">
+                      <TableCell key={c.key} className={cn("text-right font-mono tabular-nums", !onPhone(c.key) && "hidden sm:table-cell")}>
                         {v == null ? "–" : c.format(v)}
                       </TableCell>
                     );
                   })}
-                  <TableCell className="text-right font-mono tabular-nums">{h.hr}</TableCell>
-                  <TableCell className="text-right font-mono tabular-nums">{line.ops.toFixed(3).replace(/^0/, "")}</TableCell>
+                  <TableCell className="hidden text-right font-mono tabular-nums sm:table-cell">{h.hr}</TableCell>
+                  <TableCell className="hidden text-right font-mono tabular-nums sm:table-cell">{line.ops.toFixed(3).replace(/^0/, "")}</TableCell>
                 </TableRow>
               );
             })}

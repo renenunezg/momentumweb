@@ -21,6 +21,7 @@ import type {
 } from "@/lib/types";
 import { chartAxisProps, chartTooltipStyle, useChartTheme } from "@/lib/chart-theme";
 import { EMPTY, formatNumber, formatPct, formatSigned } from "@/lib/utils";
+import { ProbabilityBar } from "@/components/probability-bar";
 import { PlayerCell } from "@/components/player-cell";
 import { ToggleGroup } from "@/components/toggle-group";
 import { ViewTabPanel, ViewTabs } from "@/components/view-tabs";
@@ -146,6 +147,8 @@ function HeismanBoard({
       </p>
     );
   }
+  // One track length for every row, rounded up from the leader's share.
+  const shareDomain = Math.ceil(Math.max(...rows.map((r) => r.predicted_share ?? 0)) * 10) / 10 || 1;
   return (
     <div className="space-y-3">
       <p className="max-w-4xl text-sm text-muted-foreground leading-relaxed">
@@ -155,25 +158,25 @@ function HeismanBoard({
         narrative is carrying him.
       </p>
       <div className="overflow-x-auto">
-        <Table>
+        <Table density="compact">
           <TableCaption className="sr-only">Predicted Heisman vote shares</TableCaption>
           <TableHeader>
             <TableRow>
-              <TableHead className="w-10 text-right">#</TableHead>
+              <TableHead className="w-6 text-right sm:w-10">#</TableHead>
               <TableHead>Player</TableHead>
               <TableHead className="text-right">Share</TableHead>
-              <TableHead className="text-right">Value rank</TableHead>
+              <TableHead className="hidden text-right sm:table-cell">Value rank</TableHead>
               <TableHead className="text-right">Gap</TableHead>
-              <TableHead className="text-right">Record</TableHead>
-              <TableHead className="text-right">AP</TableHead>
-              <TableHead>Season line</TableHead>
+              <TableHead className="hidden text-right sm:table-cell">Record</TableHead>
+              <TableHead className="hidden text-right sm:table-cell">AP</TableHead>
+              <TableHead className="hidden md:table-cell">Season line</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
             {rows.map((row) => (
               <TableRow key={row.athlete_id}>
                 <TableCell className={mutedNumCell}>{row.predicted_rank}</TableCell>
-                <TableCell>
+                <TableCell className="whitespace-normal">
                   <PlayerCell
                     athleteId={row.athlete_id}
                     name={row.athlete_name}
@@ -181,19 +184,22 @@ function HeismanBoard({
                     position={row.position}
                     logo={logoFor(row.team)}
                   />
+                  <p className="mt-1 type-meta text-muted-foreground md:hidden">{statLine(row)}</p>
                 </TableCell>
-                <TableCell className={numCell}>{formatPct(row.predicted_share, 1)}</TableCell>
-                <TableCell className={numCell}>
+                <TableCell className="text-right">
+                  <ProbabilityBar value={row.predicted_share} domain={shareDomain} digits={1} />
+                </TableCell>
+                <TableCell className={`hidden sm:table-cell ${numCell}`}>
                   {row.value_rank != null ? `#${row.value_rank}` : EMPTY}
                 </TableCell>
                 <TableCell className={numCell}>
                   {row.rank_gap != null ? formatSigned(row.rank_gap, 0) : EMPTY}
                 </TableCell>
-                <TableCell className={numCell}>{formatPct(row.win_pct, 0)}</TableCell>
-                <TableCell className={mutedNumCell}>
+                <TableCell className={`hidden sm:table-cell ${numCell}`}>{formatPct(row.win_pct, 0)}</TableCell>
+                <TableCell className={`hidden sm:table-cell ${mutedNumCell}`}>
                   {row.ap_rank != null ? row.ap_rank : EMPTY}
                 </TableCell>
-                <TableCell className="text-xs text-muted-foreground">{statLine(row)}</TableCell>
+                <TableCell className="hidden type-meta text-muted-foreground md:table-cell">{statLine(row)}</TableCell>
               </TableRow>
             ))}
           </TableBody>
@@ -266,13 +272,13 @@ function ValueBoard({
           <TableCaption className="sr-only">Player value leaderboard</TableCaption>
           <TableHeader>
             <TableRow>
-              <TableHead className="w-10 text-right">#</TableHead>
+              <TableHead className="w-6 text-right sm:w-10">#</TableHead>
               <TableHead>Player</TableHead>
-              <TableHead className="text-right">G</TableHead>
-              <TableHead className="text-right">Plays</TableHead>
-              <TableHead className="text-right">Adj EPA</TableHead>
-              <TableHead className="text-right">Per play</TableHead>
-              <TableHead className="text-right">Per game</TableHead>
+              <TableHead className="hidden text-right sm:table-cell">G</TableHead>
+              <TableHead className="hidden text-right sm:table-cell">Plays</TableHead>
+              <TableHead className="hidden text-right md:table-cell">Adj EPA</TableHead>
+              <TableHead className="hidden text-right md:table-cell">Per play</TableHead>
+              <TableHead className="hidden text-right sm:table-cell">Per game</TableHead>
               <TableHead className="text-right">Above repl.</TableHead>
               <TableHead className="text-right">WPA</TableHead>
             </TableRow>
@@ -300,11 +306,11 @@ function ValueBoard({
                     </span>
                   )}
                 </TableCell>
-                <TableCell className={mutedNumCell}>{row.games}</TableCell>
-                <TableCell className={mutedNumCell}>{formatNumber(row.plays, 0)}</TableCell>
-                <TableCell className={numCell}>{formatSigned(row.adjusted_epa, 1)}</TableCell>
-                <TableCell className={numCell}>{formatSigned(row.adjusted_rate, 3)}</TableCell>
-                <TableCell className={numCell}>{formatSigned(row.shrunk_per_game, 2)}</TableCell>
+                <TableCell className={`hidden sm:table-cell ${mutedNumCell}`}>{row.games}</TableCell>
+                <TableCell className={`hidden sm:table-cell ${mutedNumCell}`}>{formatNumber(row.plays, 0)}</TableCell>
+                <TableCell className={`hidden md:table-cell ${numCell}`}>{formatSigned(row.adjusted_epa, 1)}</TableCell>
+                <TableCell className={`hidden md:table-cell ${numCell}`}>{formatSigned(row.adjusted_rate, 3)}</TableCell>
+                <TableCell className={`hidden sm:table-cell ${numCell}`}>{formatSigned(row.shrunk_per_game, 2)}</TableCell>
                 <TableCell className={numCell}>
                   {formatSigned(row.value_above_replacement, 1)}
                 </TableCell>
@@ -418,10 +424,10 @@ function History({ rows, meta, week }: { rows: CfbHeismanHistory[]; meta: CfbPla
             <TableRow>
               <TableHead>Season</TableHead>
               <TableHead>Winner</TableHead>
-              <TableHead className="text-right">Vote share</TableHead>
+              <TableHead className="hidden text-right sm:table-cell">Vote share</TableHead>
               <TableHead>Model pick</TableHead>
               <TableHead className="text-right">Winner&apos;s predicted rank</TableHead>
-              <TableHead className="text-right">Winner&apos;s value rank</TableHead>
+              <TableHead className="hidden text-right sm:table-cell">Winner&apos;s value rank</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
@@ -432,7 +438,7 @@ function History({ rows, meta, week }: { rows: CfbHeismanHistory[]; meta: CfbPla
                   <span className="font-medium">{row.actual_winner}</span>
                   <span className="text-muted-foreground"> · {row.actual_winner_team}</span>
                 </TableCell>
-                <TableCell className={numCell}>{formatPct(row.actual_share, 0)}</TableCell>
+                <TableCell className={`hidden sm:table-cell ${numCell}`}>{formatPct(row.actual_share, 0)}</TableCell>
                 <TableCell>
                   <span className={row.winner_hit ? "font-medium" : "text-muted-foreground"}>
                     {row.predicted_winner}
@@ -446,7 +452,7 @@ function History({ rows, meta, week }: { rows: CfbHeismanHistory[]; meta: CfbPla
                   {row.actual_winner_predicted_rank != null
                     ? `#${row.actual_winner_predicted_rank}` : "Outside pool"}
                 </TableCell>
-                <TableCell className={numCell}>
+                <TableCell className={`hidden sm:table-cell ${numCell}`}>
                   {row.winner_value_rank != null ? `#${row.winner_value_rank}` : EMPTY}
                 </TableCell>
               </TableRow>

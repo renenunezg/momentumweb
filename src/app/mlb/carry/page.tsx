@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { cn } from "@/lib/utils";
 import type { ReactNode } from "react";
 import { PageDescription, PageHeader, PageSection, PageShell, PageTitle } from "@/components/page-layout";
 import { KpiCard } from "@/components/kpi-card";
@@ -66,16 +67,19 @@ function Prose({ children }: { children: ReactNode }) {
   return <div className="max-w-3xl space-y-3 text-sm leading-relaxed">{children}</div>;
 }
 
+// The carry trade-off in three numbers: distance, ground balls, home runs.
+const PHONE_TYPE_COLUMNS = new Set(["Carry", "Grounders", "HR per 600"]);
+
 function TypeTable({ rows, caption }: { rows: SwingTypeRow[]; caption: string }) {
   return (
     <div className="overflow-x-auto">
-      <table className="w-full min-w-[34rem] text-sm">
+      <table className="w-full text-sm sm:min-w-[34rem]">
         <caption className="pb-2 text-left text-xs text-muted-foreground">{caption}</caption>
         <thead>
           <tr className="type-eyebrow text-left text-muted-foreground">
             <th className="py-1 font-normal">Type</th>
             {["Hitters", "Carry", "Grounders", "BA / OBP / SLG", "OPS", "HR per 600", "K per 600"].map((h) => (
-              <th key={h} className="py-1 text-right font-normal">{h}</th>
+              <th key={h} className={cn("py-1 text-right font-normal", !PHONE_TYPE_COLUMNS.has(h) && "hidden sm:table-cell")}>{h}</th>
             ))}
           </tr>
         </thead>
@@ -88,13 +92,13 @@ function TypeTable({ rows, caption }: { rows: SwingTypeRow[]; caption: string })
                   {r.lo == null ? `under ${r.hi}°` : r.hi == null ? `${r.lo}°+` : `${r.lo}–${r.hi}°`}
                 </span>
               </td>
-              <td className="py-1.5 text-right">{r.n}</td>
+              <td className="hidden py-1.5 text-right sm:table-cell">{r.n}</td>
               <td className="py-1.5 text-right">{signed(r.carry)} ft</td>
               <td className="py-1.5 text-right">{pct(r.gb)}</td>
-              <td className="py-1.5 text-right">{rate(r.ba)} / {rate(r.obp)} / {rate(r.slg)}</td>
-              <td className="py-1.5 text-right">{rate(r.ops)}</td>
+              <td className="hidden py-1.5 text-right sm:table-cell">{rate(r.ba)} / {rate(r.obp)} / {rate(r.slg)}</td>
+              <td className="hidden py-1.5 text-right sm:table-cell">{rate(r.ops)}</td>
               <td className="py-1.5 text-right">{r.hr600.toFixed(0)}</td>
-              <td className="py-1.5 text-right">{r.so600.toFixed(0)}</td>
+              <td className="hidden py-1.5 text-right sm:table-cell">{r.so600.toFixed(0)}</td>
             </tr>
           ))}
         </tbody>

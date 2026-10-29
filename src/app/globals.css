@@ -277,9 +277,11 @@ html.dark {
     max-width: 100%;
     overflow-x: hidden;
   }
-  /* Force long words to wrap rather than overflow their container on mobile */
+  /* Break a long word only when it cannot fit on a line by itself. "anywhere"
+     also shrinks the min-content width, which let table columns collapse to a
+     single letter per line ("L / A / C"). */
   p, li, td, th, h1, h2, h3, h4, span {
-    overflow-wrap: anywhere;
+    overflow-wrap: break-word;
     word-break: normal;
   }
 }
