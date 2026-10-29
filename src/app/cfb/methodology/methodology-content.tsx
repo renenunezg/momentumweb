@@ -236,13 +236,13 @@ export function MethodologyContent({ example, backtestVersion }: { example: Pick
       <SectionCard
         id="example"
         title="Example: How a Prediction Is Priced"
-        subtitle="The next recommended prediction on the slate, rebuilt from its frozen row"
+        subtitle="The next prediction on the slate, rebuilt from its frozen row"
       >
         {example ? (
           <FootballPickExample example={example} />
         ) : (
           <p className="text-sm text-muted-foreground">
-            No recommended prediction is stored yet. This fills in once the weekly
+            No prediction is stored yet. This fills in once the weekly
             update publishes a slate with a qualifying edge.
           </p>
         )}

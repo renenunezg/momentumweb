@@ -171,8 +171,8 @@ export function MethodologyContent() {
         </p>
         <p className={p}>
           One decision per game and market, recorded each morning for that
-          day&apos;s slate and frozen at first publication. A moneyline is
-          recommended at an edge of at least 4.5 percentage points with
+          day&apos;s slate and frozen at first publication. A moneyline
+          qualifies at an edge of at least 4.5 percentage points with
           positive expected value; a total when the published total differs
           from the posted line by at least half a goal, which is the
           spreadsheet&apos;s one-goal rule applied to the model&apos;s own

@@ -46,7 +46,7 @@ export function PickCountNote({
   const games =
     metric?.unique_games == null
       ? null
-      : ` ${metric.picks ?? 0} recommendations across ${metric.unique_games} unique games.`;
+      : ` ${metric.picks ?? 0} predictions across ${metric.unique_games} unique games.`;
   return (
     <p className="text-xs text-muted-foreground">
       {market === "all" ? (
@@ -56,7 +56,7 @@ export function PickCountNote({
         </>
       ) : (
         <>
-          {count} recommended {MARKET_LABELS[market].toLowerCase()} predictions.
+          {count} {MARKET_LABELS[market].toLowerCase()} predictions.
           {games} No Play decisions are listed under All markets.
         </>
       )}
@@ -93,7 +93,7 @@ export function PickKpis({
       <KpiCard
         label="Net profit"
         value={settled ? `${formatSigned(metric?.profit_units, 2)}u` : missing}
-        sub="Flat 1u per recommended prediction"
+        sub="Flat 1u per prediction"
       />
       <KpiCard
         label="ROI"
@@ -112,7 +112,7 @@ export function PickKpis({
       <KpiCard
         label="Average EV"
         value={unavailable ? missing : formatPct(metric?.average_ev)}
-        tooltip="Average expected profit per unit when recommended, including pending predictions. A forecast, not realized profit."
+        tooltip="Average expected profit per unit when published, including pending predictions. A forecast, not realized profit."
       />
     </div>
   );
@@ -420,7 +420,7 @@ export function PickPolicy({
   return (
     <div className="space-y-2 text-xs leading-relaxed text-muted-foreground">
       <p>
-        One recommended side per game and market. A decision can be replaced
+        One predicted side per game and market. A decision can be replaced
         until the game starts by a newer model or policy, and the original stays
         archived; line movement alone never changes one. Once a game starts, the
         recorded side, line and price cannot change, and that record is what is
@@ -429,7 +429,7 @@ export function PickPolicy({
       {sport === "nhl" ? (
         <p>
           NHL prediction policy v2 prices the published forecast, which blends the model
-          halfway with the market. A moneyline is recommended when the
+          halfway with the market. A moneyline qualifies when the
           published win probability beats the posted price&apos;s break-even
           probability by at least 4.5 percentage points with positive
           estimated EV; a total when the published total differs from the
@@ -468,8 +468,8 @@ export function PickPolicy({
           total probabilities use integer scores. Historical calibration is
           diagnostic, not a publication gate. Estimated EV does not establish a
           real advantage over the market. There are no additional exposure caps.
-          Through week 8 of 2026, 33 of the 59 recommendations were volume-floor
-          predictions; each row in the history and the export records its reason.
+          Through week 8 of 2026, 33 of the 59 predictions were volume-floor
+          promotions; each row in the history and the export records its reason.
           Each prediction also records its price source: The Odds API (a
           timestamped quote, best of DraftKings, FanDuel and BetMGM) through
           October 6, 2026, and ESPN&apos;s scoreboard (DraftKings&apos; line, no
@@ -495,11 +495,11 @@ export function PickPolicy({
           kickoff, and verified game identity. Incomplete inputs remain No Play.
           Each prediction uses one research unit. Multiple predictions on the same game
           have correlated outcomes and their shared exposure is flagged.
-          Pushes return the stake and moneyline ties are void. Recommendations
+          Pushes return the stake and moneyline ties are void. Predictions
           remain active for research; estimated edges are not validated profits.
           Prices are the best available among nine bookmakers in The Odds API
           feed, several of them offshore, so the record assumes access to all of
-          them. A recommended prediction stays in the graded record unless a
+          them. A prediction stays in the graded record unless a
           newer model version replaces it before kickoff; a later price move that
           turns the open decision into a No Play does not remove it. On October
           12, 2026 the week 7 slate published under v8 was replaced by v11
@@ -512,7 +512,7 @@ export function PickPolicy({
       <p>
         {firstDecision
           ? `Recording began ${new Date(firstDecision).toISOString().slice(0, 10)} for this selection.`
-          : "Recommendation recording starts with the first publish after activation."}{" "}
+          : "Prediction recording starts with the first publish after activation."}{" "}
         Earlier forecasts remain in accuracy history and are not counted as past
         predictions.{" "}
         <Link

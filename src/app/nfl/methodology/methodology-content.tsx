@@ -42,7 +42,7 @@ export function MethodologyContent({ example }: { example: PickExample | null })
 
       <Section id="example" title="Example: How a Prediction Is Priced">
         <p className={p}>
-          The next recommended prediction on the slate, rebuilt from its frozen row.
+          The next prediction on the slate, rebuilt from its frozen row.
           Once every game has kicked off it shows the most recently settled
           prediction instead.
         </p>
@@ -50,7 +50,7 @@ export function MethodologyContent({ example }: { example: PickExample | null })
           <FootballPickExample example={example} />
         ) : (
           <p className={p}>
-            No recommended prediction is stored yet. This fills in once the Tuesday
+            No prediction is stored yet. This fills in once the Tuesday
             run publishes a slate with a qualifying edge.
           </p>
         )}

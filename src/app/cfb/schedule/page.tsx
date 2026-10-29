@@ -298,7 +298,7 @@ export default async function SchedulePage() {
       </p>
 
       <p className="text-xs text-muted-foreground">
-        Predictions show the line and odds frozen when recommended, not a live quote.
+        Predictions show the line and odds frozen when predicted, not a live quote.
         No Play means the market did not qualify.{" "}
         <Link href="/cfb/history?view=picks" className="underline underline-offset-4">
           View recorded decisions and results

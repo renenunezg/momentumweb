@@ -33,12 +33,12 @@ import {
 const REWRITTEN_NOTE =
   "Predictions for this day were overwritten by a later hand-run with a different model. Eval is computed against the rewritten predictions, not what was live on the day.";
 
-// The same three views, and the same ?view= values, as the football and
-// hockey performance pages.
+// The same three views, and the same ?view= values, as the football
+// performance pages; hockey has no player model.
 const VIEWS = [
-  { key: "accuracy", label: "Forecast accuracy" },
-  { key: "picks", label: "Prediction results" },
   { key: "players", label: "Player models" },
+  { key: "accuracy", label: "Forecast accuracy" },
+  { key: "picks", label: "Predictions" },
 ] as const;
 type View = (typeof VIEWS)[number]["key"];
 
@@ -334,7 +334,7 @@ export function PerformanceTabs({
             ) : (
               <>
                 <p className="max-w-3xl type-meta text-muted-foreground">
-                  {liveKpis.n_bets} recommended predictions
+                  {liveKpis.n_bets} staked predictions
                   {liveKpis.first_date && liveKpis.last_date && <>, {formatDate(liveKpis.first_date)} to {formatDate(liveKpis.last_date)}</>},
                   v1 through May 11 and v2 from May 12, regular season and postseason, at quarter-Kelly
                   stakes. The record applies today&apos;s edge gate (4.5 percent on moneyline and run line,
@@ -356,7 +356,7 @@ export function PerformanceTabs({
                     label="P&L"
                     value={`${formatSigned(liveKpis.net_profit_units, 2)}u`}
                     sub={`${formatNumber(liveKpis.total_staked_units, 2)}u staked`}
-                    tooltip="Net profit in units of the fixed starting bankroll. Stakes sum every recommended prediction in the period; returns do not compound."
+                    tooltip="Net profit in units of the fixed starting bankroll. Stakes sum every prediction staked in the period; returns do not compound."
                   />
                   <KpiCard
                     label="Max drawdown"
@@ -599,7 +599,7 @@ function DailyResults({ rows }: { rows: ModelEvaluation[] }) {
         onPage={paged.setPage}
       />
       <p className="mb-2 type-meta text-muted-foreground">
-        Stakes are the units risked across every recommended prediction that day. 1u is the bankroll; ROI is P&amp;L divided by stakes.
+        Stakes are the units risked across every prediction staked that day. 1u is the bankroll; ROI is P&amp;L divided by stakes.
       </p>
       <Table>
         <TableHeader>

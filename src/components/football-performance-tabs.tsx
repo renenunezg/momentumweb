@@ -22,21 +22,11 @@ export function FootballPerformanceTabs({
         className={TAB_LIST}
       >
         {[
-          {
-            key: "accuracy",
-            label: "Forecast accuracy",
-            href: `/${sport}/performance?${query}`,
-          },
-          {
-            key: "picks",
-            label: "Prediction results",
-            href: `/${sport}/performance?${query}&view=picks`,
-          },
-          {
-            key: "players",
-            label: "Player models",
-            href: `/${sport}/performance?${query}&view=players`,
-          },
+          ...(sport === "nhl"
+            ? []
+            : [{ key: "players", label: "Player models", href: `/${sport}/performance?${query}&view=players` }]),
+          { key: "accuracy", label: "Forecast accuracy", href: `/${sport}/performance?${query}` },
+          { key: "picks", label: "Predictions", href: `/${sport}/performance?${query}&view=picks` },
         ].map((view) => (
           <Link
             key={view.key}

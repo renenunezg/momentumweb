@@ -25,7 +25,7 @@ export const revalidate = 3600;
 export const metadata: Metadata = {
   title: "NFL Model Performance",
   description:
-    "Forecast accuracy of the NFL model against the market, plus the record, ROI, and frozen-price results of its recommended moneyline, spread and total predictions.",
+    "Forecast accuracy of the NFL model against the market, plus the record, ROI, and frozen-price results of its moneyline, spread and total predictions.",
 };
 
 export default async function PerformancePage({
@@ -80,7 +80,7 @@ export default async function PerformancePage({
           </PageTitle>
           <PageDescription className="max-w-2xl">
             How the NFL model&apos;s moneyline, spread and total predictions have
-            done: recommended predictions, the prices recorded at the time, and graded
+            done: each prediction, the prices recorded at the time, and graded
             results.
           </PageDescription>
         </div>
@@ -109,7 +109,7 @@ export default async function PerformancePage({
             </Notice>
           ) : !metric?.picks ? (
             <Notice>
-              No recommendations recorded for this selection yet.
+              No predictions recorded for this selection yet.
               {metric?.no_plays
                 ? ` ${metric.no_plays} market decisions were No Play.`
                 : ""}{" "}
@@ -117,7 +117,7 @@ export default async function PerformancePage({
             </Notice>
           ) : (
             <p className="text-sm text-muted-foreground">
-              {metric.picks} recommendations across {metric.unique_games ?? 0}{" "}
+              {metric.picks} predictions across {metric.unique_games ?? 0}{" "}
               unique games · {metric.no_plays} No Play decisions · {settled}{" "}
               settled.{" "}
               {settled < 30
@@ -157,7 +157,7 @@ export default async function PerformancePage({
             Spread favorites give points (for example -3); underdogs receive
             points (+3). Totals split by Over and Under. Moneyline favorites
             have odds below -100; odds of +100 or -100 are shown as even money.
-            A zero spread is pick’em. Each segment uses the frozen recommended
+            A zero spread is pick’em. Each segment uses the frozen predicted
             side and price.
           </p>
           <>

@@ -117,7 +117,7 @@ export default async function HistoryPage({
         <Notice>
           {market === "all"
             ? "No recorded decisions match this selection. Decisions appear each game-day morning once the season starts."
-            : "No recommended predictions match this selection. No Play decisions are listed under All markets."}
+            : "No predictions match this selection. No Play decisions are listed under All markets."}
         </Notice>
       )}
       <PickPolicy sport="nhl" firstDecision={metric?.first_decision_at} />

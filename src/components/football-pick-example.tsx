@@ -241,7 +241,7 @@ export function FootballPickExample({ example }: { example: PickExample }) {
 
       <Notice className="text-xs leading-relaxed text-muted-foreground">
         <p>
-          Every number above is read from the frozen recommendation row and the projection it was
+          Every number above is read from the frozen prediction row and the projection it was
           priced from; the bars are recomputed from the stored mean, standard deviation
           {example.weights ? ", degrees of freedom and key-number multipliers" : " and degrees of freedom"}{" "}
           with the same arithmetic the policy uses. The prediction clears when the priced line sits at

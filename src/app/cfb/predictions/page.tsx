@@ -43,7 +43,7 @@ export default async function PredictionsPage() {
           {updated && (
             <LastUpdated
               timestamp={updated}
-              schedule="Latest recommendation refresh"
+              schedule="Latest prediction refresh"
             />
           )}
         </div>
@@ -71,7 +71,7 @@ export default async function PredictionsPage() {
       )}
       <div className="flex flex-wrap justify-between gap-3 border-t border-border pt-4 text-xs leading-relaxed text-muted-foreground">
         <p className="max-w-2xl">
-          Pregame recommendations reflect the latest model and odds refresh.
+          Pregame predictions reflect the latest model and odds refresh.
           Predictions that no longer qualify disappear from this list. Original predictions
           and their recorded prices remain in history, tracked at 1 unit.
         </p>

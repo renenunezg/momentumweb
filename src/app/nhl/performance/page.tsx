@@ -63,7 +63,7 @@ export default async function PerformancePage({
           <PageTitle>NHL Model Performance</PageTitle>
           <PageDescription className="max-w-2xl">
             How the NHL model&apos;s moneyline and total predictions have done:
-            recommended predictions, the partner-book prices recorded at the time,
+            each prediction, the partner-book prices recorded at the time,
             and graded results.
           </PageDescription>
         </div>
@@ -89,13 +89,13 @@ export default async function PerformancePage({
             </Notice>
           ) : !metric?.picks ? (
             <Notice>
-              No recommendations recorded for this selection yet.
+              No predictions recorded for this selection yet.
               {metric?.no_plays ? ` ${metric.no_plays} market decisions were No Play.` : ""}{" "}
               The backtest is available in the Forecast accuracy tab.
             </Notice>
           ) : (
             <p className="text-sm text-muted-foreground">
-              {metric.picks} recommendations across {metric.unique_games ?? 0} unique
+              {metric.picks} predictions across {metric.unique_games ?? 0} unique
               games · {metric.no_plays} No Play decisions · {settled} settled.{" "}
               {settled < 30
                 ? "The sample is too small to establish a reliable edge."
@@ -128,7 +128,7 @@ export default async function PerformancePage({
           <p className="text-xs text-muted-foreground">
             Moneyline favorites have odds below -100; odds of +100 or -100 are
             shown as even money. Totals split by Over and Under. Each segment
-            uses the frozen recommended side and price.
+            uses the frozen predicted side and price.
           </p>
           <PickBreakdown
             title="By month"

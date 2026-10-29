@@ -102,8 +102,8 @@ export default async function HistoryPage({
       ) : (
         <Notice>
           {market === "all"
-            ? "No recorded decisions match this selection. Recommendations will appear here when the model next publishes qualifying predictions or No Play decisions."
-            : "No recommended predictions match this selection. No Play decisions are listed under All markets."}
+            ? "No recorded decisions match this selection. Decisions will appear here when the model next publishes qualifying predictions or No Play decisions."
+            : "No predictions match this selection. No Play decisions are listed under All markets."}
         </Notice>
       )}
       <PickPolicy firstDecision={metric?.first_decision_at} />

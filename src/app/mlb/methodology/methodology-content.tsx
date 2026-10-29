@@ -258,7 +258,7 @@ export function MethodologyContent({
 
           <ChangelogEntry
             date="May 27, 2026"
-            title="Totals recommendations switched off; form noise raised to 0.18 in June"
+            title="Totals predictions switched off; form noise raised to 0.18 in June"
           >
             Every totals edge bucket lost money on the 2026 backtest and model edge had
             no relationship to outcome, so totals flags are disabled. The per-game

@@ -22,7 +22,7 @@ export const revalidate = 3600;
 export const metadata: Metadata = {
   title: "College Football Model Performance",
   description:
-    "Forecast accuracy of the college football model against the closing line, plus the record, ROI, and recorded prices of its recommended moneyline, spread and total predictions.",
+    "Forecast accuracy of the college football model against the closing line, plus the record, ROI, and recorded prices of its moneyline, spread and total predictions.",
 };
 
 export default async function PerformancePage({
@@ -77,7 +77,7 @@ export default async function PerformancePage({
           </PageTitle>
           <PageDescription className="max-w-2xl">
             How the college football model&apos;s moneyline, spread and total
-            predictions have done: recommended predictions, the prices recorded at the time,
+            predictions have done: each prediction, the prices recorded at the time,
             and graded results.
           </PageDescription>
         </div>
@@ -105,7 +105,7 @@ export default async function PerformancePage({
             </Notice>
           ) : !metric?.picks ? (
             <Notice>
-              No recommendations recorded for this selection yet.
+              No predictions recorded for this selection yet.
               {metric?.no_plays
                 ? ` ${metric.no_plays} market decisions were No Play.`
                 : ""}{" "}
@@ -113,7 +113,7 @@ export default async function PerformancePage({
             </Notice>
           ) : (
             <p className="text-sm text-muted-foreground">
-              {metric.picks} recommendations · {metric.no_plays} No Play
+              {metric.picks} predictions · {metric.no_plays} No Play
               decisions · {settled} settled.{" "}
               {settled < 30
                 ? "The sample is too small to establish a reliable edge."
@@ -131,7 +131,7 @@ export default async function PerformancePage({
             rows={summary.metrics.filter((m) => m.segment_kind === "qualification")}
           />
           <p className="text-xs text-muted-foreground">
-            Overall results include every recorded recommendation at one unit per prediction.
+            Overall results include every recorded prediction at one unit each.
             Exploratory predictions fall below the standard edge threshold and contribute toward the weekly research target.
           </p>
           {(["h2h", "spreads", "totals"] as const)
@@ -160,7 +160,7 @@ export default async function PerformancePage({
             Spread favorites give points (for example -3); underdogs receive
             points (+3). Totals split by Over and Under. Moneyline favorites
             have negative odds; odds of +100 or -100 are shown as even money.
-            Each segment uses the frozen recommended side and price.
+            Each segment uses the frozen predicted side and price.
           </p>
           <>
             <PickBreakdown

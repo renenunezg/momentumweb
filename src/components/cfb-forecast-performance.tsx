@@ -23,7 +23,7 @@ const COPY = {
   ],
   diagnostics: {
     note:
-      "These explain forecast error, not prediction results. Missing-input counts include unavailable injury data and other gaps in preseason sources. Projected winning margin is the absolute model margin: under 7 means the model expects either team to win by fewer than 7 points, regardless of the sportsbook line. Favorite, underdog, over and under prediction records are in Prediction results.",
+      "These explain forecast error, not prediction results. Missing-input counts include unavailable injury data and other gaps in preseason sources. Projected winning margin is the absolute model margin: under 7 means the model expects either team to win by fewer than 7 points, regardless of the sportsbook line. Favorite, underdog, over and under prediction records are in the Predictions tab.",
     segments: [
       { kind: "missing_inputs", title: "By input completeness" },
       {
