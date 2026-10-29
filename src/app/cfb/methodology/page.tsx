@@ -3,6 +3,7 @@ import type { Metadata } from "next";
 import { TableOfContents } from "./toc";
 import { MethodologyContent } from "./methodology-content";
 import { fetchCfbPickExample } from "@/lib/football-pick-example";
+import { supabaseCfb } from "@/lib/supabase";
 
 export const revalidate = 1800;
 export const metadata: Metadata = {
@@ -12,7 +13,12 @@ export const metadata: Metadata = {
 };
 
 export default async function Page() {
-  const example = await fetchCfbPickExample();
+  const [example, backtestVersion] = await Promise.all([
+    fetchCfbPickExample(),
+    // The backtest table carries its model version on every row; one row names it.
+    supabaseCfb.from("backtest_predictions").select("model_version").limit(1).maybeSingle(),
+  ]);
+  if (backtestVersion.error) throw backtestVersion.error;
   return (
     <PageShell>
       <PageHeader>
@@ -28,7 +34,7 @@ export default async function Page() {
 
       <div className="lg:grid lg:grid-cols-[180px_1fr] lg:gap-8">
         <TableOfContents />
-        <MethodologyContent example={example} />
+        <MethodologyContent example={example} backtestVersion={backtestVersion.data?.model_version ?? null} />
       </div>
     </PageShell>
   );

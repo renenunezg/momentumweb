@@ -20,12 +20,48 @@ export const metadata: Metadata = {
     "Calibration, Brier score, and prediction ROI of the MLB model's win probabilities and run totals, graded at the best pregame price published, plus how the player grades rank later production. Updated nightly.",
 };
 
+// The tabs read the daily rows and the two season rows; the 7d and 30d
+// windows and the jsonb calibration_bins (model_calibration carries the same
+// bins) stay out of the hourly payload. Paged past the 1000-row response cap:
+// the three windows add three rows a night.
+const EVALUATION_COLUMNS = [
+  "date", "eval_window", "evaluation_state", "predictions_rewritten",
+  "brier_score", "brier_ci95_low", "brier_ci95_high", "log_loss",
+  "total_accuracy", "total_accuracy_ci95_low", "total_accuracy_ci95_high", "total_correct", "total_predictions",
+  "ml_accuracy", "ml_correct", "ml_predictions", "run_line_accuracy", "run_line_correct", "run_line_predictions",
+  "totals_accuracy", "totals_correct", "totals_predictions", "average_total_diff",
+  "mae", "rmse", "r2", "mape", "sharpness",
+  "interval_coverage_50", "interval_coverage_80", "interval_coverage_90", "interval_coverage_predictions",
+  "roi", "roi_ci95_low", "roi_ci95_high", "total_staked_units", "net_profit_units", "equity_end_units",
+  "roi_favorites_ci95_low", "roi_favorites_ci95_high", "roi_underdogs_ci95_low", "roi_underdogs_ci95_high",
+  "roi_run_line_ci95_low", "roi_run_line_ci95_high", "overs_roi_ci95_low", "overs_roi_ci95_high",
+  "unders_roi_ci95_low", "unders_roi_ci95_high",
+  "scored_games", "excluded_games", "late_forecast_games",
+  "paired_games", "paired_brier", "market_brier", "market_log_loss",
+  "brier_vs_market_ci95_low", "brier_vs_market_ci95_high",
+].join(", ");
+const EVALUATION_PAGE = 1000;
+
+async function fetchEvaluations(): Promise<{ data: ModelEvaluation[] | null; error: { message: string } | null }> {
+  const rows: ModelEvaluation[] = [];
+  for (let from = 0; ; from += EVALUATION_PAGE) {
+    const { data, error } = await supabase
+      .from("model_evaluation")
+      .select(EVALUATION_COLUMNS)
+      .in("eval_window", ["day", "season", "season_v2"])
+      .order("date", { ascending: true })
+      .order("eval_window", { ascending: true })
+      .range(from, from + EVALUATION_PAGE - 1);
+    if (error) return { data: null, error };
+    const page = (data ?? []) as unknown as ModelEvaluation[];
+    rows.push(...page);
+    if (page.length < EVALUATION_PAGE) return { data: rows, error: null };
+  }
+}
+
 export default async function PerformancePage() {
   const [evalRes, calRes, edgeRes, residRes, latestRes, sigmasRes, ledger] = await Promise.all([
-    supabase
-      .from("model_evaluation")
-      .select("*")
-      .order("date", { ascending: true }),
+    fetchEvaluations(),
     supabase
       .from("model_calibration")
       .select("*")
@@ -61,7 +97,7 @@ export default async function PerformancePage() {
   const readError =
     evalRes.error ?? calRes.error ?? edgeRes.error ?? residRes.error ?? latestRes.error ?? sigmasRes.error;
   if (readError) console.error("MLB performance read failed:", readError.message);
-  const evaluations = (evalRes.data ?? []) as ModelEvaluation[];
+  const evaluations = evalRes.data ?? [];
   const lastUpdated: string | null = latestRes.data?.[0]?.created_at ?? null;
   const calibration = (calRes.data ?? []) as CalibrationBin[];
   const edgeBuckets = (edgeRes.data ?? []) as EdgeBucket[];

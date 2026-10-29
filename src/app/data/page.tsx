@@ -45,7 +45,7 @@ const EXPORTS: { sport: string; items: { href: string; table: string; schema: st
         href: "/cfb/api/export/backtest.csv",
         table: "backtest_predictions",
         schema: "cfb",
-        recomputes: "The historical walk-forward table (June 2026 base model).",
+        recomputes: "The historical walk-forward table of the model core, with its model_version and classification on every row.",
       },
       {
         href: "/cfb/api/export/recommendations.csv",

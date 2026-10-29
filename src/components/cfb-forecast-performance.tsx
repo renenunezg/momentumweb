@@ -74,7 +74,7 @@ async function HistoricalBacktest() {
     <section className="space-y-section">
       <div className="flex items-start justify-between gap-4">
         <h2 className="type-section">
-          Historical walk-forward backtest (pure model{versions.length > 0 ? `, ${versions.join(", ")}` : ""})
+          Historical walk-forward backtest (model core{versions.length > 0 ? `, ${versions.join(", ")}` : ""})
         </h2>
         {seasons.length > 0 && (
           <div className="text-xs text-muted-foreground">
@@ -87,9 +87,12 @@ async function HistoricalBacktest() {
       <p className="max-w-4xl text-sm text-muted-foreground leading-relaxed">
         Every prediction below was made walking forward through each season with
         only the data available at the time, then frozen with the model version
-        named above. They come from the pure model with no market blend, so they
-        are historical stand-ins for the model&apos;s own skill, not for the
+        named above. They come from the pure model core with no market blend, so
+        they are historical stand-ins for the core&apos;s own skill, not for the
         published line; regular season and postseason games are included. The
+        live 2026 record above is a different population: its forecasts come
+        from the versions named in its own section, which add a process margin
+        adjustment and a total offset on top of this core. The
         market benchmark is the closing spread: the strongest public forecast of
         a game&apos;s margin. Beating it consistently is rare, and the model is
         measured against it, not against a naive baseline.

@@ -108,9 +108,10 @@ const pipelineSteps = [
   { num: "06", name: "Publish", desc: "Serving tables written to the Supabase cfb schema" },
 ];
 
-// joint_scoring_v13 walk-forward, FBS vs FBS including postseason, as
-// published to cfb.backtest_predictions on 2026-10-29; the performance page
-// recomputes the same table from the rows.
+// The model core's walk-forward, FBS vs FBS including postseason, as
+// published to cfb.backtest_predictions on 2026-10-29 (joint_scoring_v13; the
+// version is read from the table at render). The performance page recomputes
+// the same table from the rows.
 const backtestRows = [
   { season: "2020", model: "13.05", market: "12.75" },
   { season: "2021", model: "13.10", market: "12.51" },
@@ -168,7 +169,8 @@ const stack = [
   },
 ];
 
-export function MethodologyContent({ example }: { example: PickExample | null }) {
+export function MethodologyContent({ example, backtestVersion }: { example: PickExample | null; backtestVersion: string | null }) {
+  const coreVersion = backtestVersion ?? "the published model core";
   return (
     <div className="flex flex-col gap-6">
       {/* Overview */}
@@ -191,9 +193,11 @@ export function MethodologyContent({ example }: { example: PickExample | null })
           <p>
             <strong>The pregame model does not beat the closing spread.</strong>{" "}
             Across 4,227 FBS-vs-FBS games walked forward from 2020 through 2025
-            (joint_scoring_v13, the served pure model) its average margin error is
+            ({coreVersion}, the current model core) its average margin error is
             12.71 points against the closing line&apos;s 12.19, and the market wins
-            every season. So the published line, total and scores
+            every season. The live 2026 forecasts come from joint_scoring_v14,
+            which adds a process margin adjustment and a total offset on top of
+            that core, and are graded separately. So the published line, total and scores
             are blended halfway to the market, predictions are priced from those
             market-informed numbers, and the in-game model anchors on the
             published line instead of the pure model&apos;s number.
@@ -626,7 +630,7 @@ export function MethodologyContent({ example }: { example: PickExample | null })
       <SectionCard
         id="backtest"
         title="Backtest vs the Closing Line"
-        subtitle="joint_scoring_v13 walk-forward, FBS vs FBS, 2020 to 2025. The market is better every season."
+        subtitle={`Walk-forward of the current model core (${coreVersion}), FBS vs FBS, 2020 to 2025. The market is better every season.`}
       >
         <div className="space-y-4 text-sm leading-relaxed">
           <p>
@@ -661,10 +665,12 @@ export function MethodologyContent({ example }: { example: PickExample | null })
           <p>
             The market wins every season, as expected: the closing line
             aggregates injury news, weather and sharper private models. The table
-            is the served pure model&apos;s walk-forward, published to the public
-            backtest table with its version; the June 2026 base engine&apos;s
-            earlier table (13.40 against 12.14 on 3,853 games, 2021 to 2025) is
-            superseded. What the model can claim is
+            is the walk-forward of the current model core, published to the
+            public backtest table with its version; the live 2026 record is
+            graded on joint_scoring_v14, which adds a process margin adjustment
+            and a total offset on top of it, so the two are separate populations.
+            The June 2026 base engine&apos;s earlier table (13.40 against 12.14 on
+            3,853 games, 2021 to 2025) is superseded. What the model can claim is
             calibration: on the 2023&ndash;2025 validation seasons (2,258 games),
             which were used to compare model revisions and so are not an
             untouched test, the 50/80/95% margin intervals covered 52%, 80% and
