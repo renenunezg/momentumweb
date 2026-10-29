@@ -6,6 +6,7 @@ import { GameCardUnavailable } from "@/components/game-card-unavailable";
 import type { GameInfo, GameMatchup } from "@/lib/types";
 import type { LiveScore } from "@/lib/mlb-live-scores";
 import { GamesTable } from "@/components/games-table";
+import { gameStatus } from "@/lib/game-status";
 
 // The route caches upstream for 30s, so polling faster than that only
 // re-reads the cache; polling at exactly that cadence keeps a score within
@@ -39,16 +40,30 @@ function allFinal(matchups: { status: string | null }[]): boolean {
   return matchups.every((m) => m.status === "Final");
 }
 
+const NO_GAMES: GameInfo[] = [];
+
+// A started game keeps the prediction this tab saw at first pitch: a later
+// write to its row is not the forecast that counts, however it got there.
+function keepStartedPicks(prev: GameMatchup[], fresh: GameMatchup[]): GameMatchup[] {
+  const byPk = new Map(prev.map((m) => [m.game_pk, m]));
+  return fresh.map((m) => {
+    const p = byPk.get(m.game_pk);
+    if (!p) return m;
+    const status = gameStatus(p);
+    return status.isLive || status.isFinal ? { ...m, away: p.away, home: p.home } : m;
+  });
+}
+
 export function GamesLive({
   initial,
-  unavailableGames = [],
+  unavailableGames = NO_GAMES,
   picksVersion,
 }: {
   initial: GameMatchup[];
   unavailableGames?: GameInfo[];
   // Newest pick or game write the server rendered from. When the poll
-  // reports a newer one the page re-renders, and the parent keys this
-  // component on the version so the fresh picks replace the merged state.
+  // reports a newer one the page re-renders; pregame picks take the fresh
+  // row and started games keep theirs.
   picksVersion: string | null;
 }) {
   const router = useRouter();
@@ -57,6 +72,11 @@ export function GamesLive({
   const finished = allFinal([...matchups, ...unavailable]);
   const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const versionRef = useRef(picksVersion);
+
+  useEffect(() => {
+    setMatchups((prev) => keepStartedPicks(prev, initial));
+    setUnavailable(unavailableGames);
+  }, [initial, unavailableGames]);
 
   useEffect(() => {
     let cancelled = false;

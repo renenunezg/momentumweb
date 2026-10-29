@@ -501,7 +501,7 @@ export default function MlbProspects({ initial }: { initial: ProspectPage }) {
         <Notice>
           <p className="text-sm text-muted-foreground">
             {pitcherFilter
-              ? "Pitchers are not graded yet: the pitcher model has not passed its validation check. They are listed with their level, age, and playing time."
+              ? "None of these pitchers has a grade yet. They are listed with their level, age, and playing time."
               : "None of these prospects has a grade yet. They are listed with their level, age, and playing time."}
           </p>
         </Notice>

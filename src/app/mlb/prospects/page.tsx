@@ -71,7 +71,7 @@ export default async function MlbProspectsPage() {
           label="Graded"
           value={formatNumber(summary.graded, 0)}
           sub={`of ${formatNumber(total, 0)} prospects`}
-          tooltip="Hitters with enough playing time in the last three seasons. Pitchers are not graded until their model passes its validation check."
+          tooltip="Prospects with enough playing time in the last three seasons. Pitcher grades come from a model that has not yet beaten its baseline on the validation check; read them as provisional."
         />
       </div>
 

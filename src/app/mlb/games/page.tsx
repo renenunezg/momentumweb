@@ -18,7 +18,7 @@ export const dynamic = "force-dynamic";
 export const metadata: Metadata = {
   title: "MLB Predictions Today",
   description:
-    "Today's MLB win probabilities, projected run totals, and model predictions from a hierarchical Bayesian simulation of every plate appearance, refreshed each morning and graded against the closing line.",
+    "Today's MLB win probabilities, projected run totals, and model predictions from a hierarchical Bayesian simulation of every plate appearance, updated until first pitch and graded at the best pregame price published.",
 };
 
 async function fetchLiveScores(): Promise<Map<number, LiveScore>> {
@@ -184,7 +184,9 @@ export default async function Page() {
       <p className="max-w-4xl text-sm text-muted-foreground leading-relaxed">
         Win probabilities, projected run totals, and predictions for every MLB game
         today, from a Bayesian model that simulates each plate appearance.
-        Predictions freeze at first pitch and are graded against the closing line.
+        A prediction can change until first pitch as lineups and prices move; the
+        last one before first pitch is the one graded, at the best pregame price
+        published. Each game shows when its prediction was last written.
       </p>
 
       {outputsError || gamesError ? (
@@ -192,7 +194,6 @@ export default async function Page() {
       ) : <SummaryStats matchups={matchups} gameCount={matchups.length + unavailableGames.length} />}
 
       <GamesLive
-        key={picksVersion ?? "unpublished"}
         initial={matchups}
         unavailableGames={unavailableGames.map((game) => {
           const live = liveScores.get(game.game_pk);

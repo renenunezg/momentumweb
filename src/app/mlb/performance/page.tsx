@@ -8,6 +8,7 @@ import type {
   PosteriorSigma,
 } from "@/lib/types";
 import { aggregateLedger } from "@/lib/betting-aggs";
+import { isV2Era } from "@/lib/constants";
 import { fetchFullBetLedger } from "@/lib/bet-ledger";
 import { PerformanceTabs } from "./tabs";
 import { LastUpdated } from "@/components/last-updated";
@@ -17,7 +18,7 @@ export const revalidate = 3600;
 export const metadata: Metadata = {
   title: "MLB Model Performance",
   description:
-    "Calibration, Brier score, and prediction ROI of the MLB model's win probabilities and run totals against the closing line, plus how the player grades rank later production. Updated nightly.",
+    "Calibration, Brier score, and prediction ROI of the MLB model's win probabilities and run totals, graded at the best pregame price published, plus how the player grades rank later production. Updated nightly.",
 };
 
 export default async function PerformancePage() {
@@ -67,6 +68,13 @@ export default async function PerformancePage() {
   const edgeBuckets = (edgeRes.data ?? []) as EdgeBucket[];
   const posteriorSigmas = (sigmasRes.data ?? []) as PosteriorSigma[];
   const liveKpis = ledger === null ? null : aggregateLedger(ledger);
+  // The ledger pools the retired v1 model with v2; the split is by date.
+  const eraKpis = ledger === null
+    ? null
+    : {
+        v1: aggregateLedger(ledger.filter((row) => !isV2Era(row.date))),
+        v2: aggregateLedger(ledger.filter((row) => isV2Era(row.date))),
+      };
 
   // Residuals join predictions to graded games here rather than in PostgREST:
   // an embedded !inner needs an FK constraint, which these tables lack.
@@ -124,7 +132,9 @@ export default async function PerformancePage() {
       </PageHeader>
       <p className="max-w-3xl type-body text-muted-foreground">
         How the MLB model&apos;s win probabilities and run totals have held up,
-        scored overnight after every game.
+        scored overnight after every game. Two model versions are pooled here:
+        v1, an XGBoost model, through May 11, 2026, and v2, the Bayesian
+        simulation, from May 12.
       </p>
       <PerformanceTabs
         evaluations={evaluations}
@@ -133,6 +143,7 @@ export default async function PerformancePage() {
         residuals={residuals}
         posteriorSigmas={posteriorSigmas}
         liveKpis={liveKpis}
+        eraKpis={eraKpis}
         players={<PlayerModelPerformance sport="mlb" />}
       />
     </PageShell>

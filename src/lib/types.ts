@@ -97,6 +97,12 @@ export type BetLedgerRow = Narrow<
 >;
 
 export interface LiveKpis {
+  // The population behind every ratio below, so a page can name it.
+  n_bets: number;
+  n_wins: number;
+  n_pushes: number;
+  first_date: string | null;
+  last_date: string | null;
   roi: number | null;
   sharpe: number | null;
   sortino: number | null;

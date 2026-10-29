@@ -8,7 +8,7 @@ import type {
   PosteriorSigma,
   LiveKpis,
 } from "@/lib/types";
-import { EMPTY, formatNumber, formatOdds, formatPct, formatSigned } from "@/lib/utils";
+import { EMPTY, formatDate, formatNumber, formatOdds, formatPct, formatSigned } from "@/lib/utils";
 import { replaceLocation, useLocationSearch } from "@/lib/use-location-search";
 import { ViewTabPanel, ViewTabs } from "@/components/view-tabs";
 import { WindowPager, usePagedWindow } from "@/components/window-pager";
@@ -20,7 +20,7 @@ import { EquityCurveChart } from "@/components/equity-curve-chart";
 import { ResidualsChart } from "@/components/residuals-chart";
 import { VarianceDecompositionChart } from "@/components/variance-decomposition-chart";
 import { V2Badge } from "@/components/v2-badge";
-import { getV2BoundaryDate } from "@/lib/constants";
+import { V2_CUTOVER_DATE, getV2BoundaryDate } from "@/lib/constants";
 import {
   Table,
   TableBody,
@@ -49,6 +49,7 @@ interface PerformanceTabsProps {
   residuals: number[];
   posteriorSigmas: PosteriorSigma[];
   liveKpis: LiveKpis | null;
+  eraKpis: { v1: LiveKpis; v2: LiveKpis } | null;
   players: ReactNode;
 }
 
@@ -105,8 +106,9 @@ function CoverageTargets({ latest }: { latest: ModelEvaluation | undefined }) {
         </div>
       ))}
       <p className="type-meta text-muted-foreground">
-        Dot: share of games whose actual total landed inside the interval. Dashed tick: the interval&apos;s nominal level.
-        {" "}{n} frozen distributions.
+        Dot: share of team run totals that landed inside the interval. Dashed tick: the interval&apos;s nominal level.
+        {" "}{n} team rows, v2 games only (v1 published no intervals). The intervals use inclusive integer
+        endpoints, so they cover somewhat more than their nominal level by construction.
       </p>
     </div>
   );
@@ -119,6 +121,7 @@ export function PerformanceTabs({
   residuals,
   posteriorSigmas,
   liveKpis,
+  eraKpis,
   players,
 }: PerformanceTabsProps) {
   const search = useLocationSearch();
@@ -180,7 +183,7 @@ export function PerformanceTabs({
                 label="Brier"
                 value={formatNumber(latest?.brier_score, 3)}
                 sub="Coin flip 0.250; lower is better"
-                tooltip="Average squared error of win probabilities. Lower is better; a coin flip scores 0.25."
+                tooltip="Average squared error of win probabilities over both teams of every graded game. Lower is better; a coin flip scores 0.25. No market baseline is published here yet."
               />
               <KpiCard label="Log loss" value={formatNumber(latest?.log_loss, 3)} sub="Coin flip 0.693" />
               <KpiCard
@@ -196,6 +199,13 @@ export function PerformanceTabs({
                 tooltip="Average distance between predicted and actual runs."
               />
             </div>
+            <p className="max-w-3xl type-meta text-muted-foreground">
+              {latest?.total_predictions ?? 0} graded games with a favored side
+              {dailyEvals.length > 0 && <>, {formatDate(dailyEvals[0].date)} to {formatDate(dailyEvals[dailyEvals.length - 1].date)}</>},
+              v1 and v2 pooled, regular season and postseason. Completed games with no stored
+              forecast or an even 50/50 probability are not counted. The coin flip is the only
+              reference shown; a market baseline on the same games is not published yet.
+            </p>
 
             <Section title="Accuracy by market">
               <AccuracyChart data={dailyEvals.filter((d) => d.date >= "2026-04-12")} />
@@ -203,7 +213,7 @@ export function PerformanceTabs({
 
             <Section
               title="Calibration"
-              note={latestCalDate ? `Season to date as of ${latestCalDate}. Points on the dashed diagonal are perfectly calibrated.` : undefined}
+              note={latestCalDate ? `Season to date as of ${latestCalDate}, both model versions, one point per team row. Points on the dashed diagonal are perfectly calibrated; hover for the rows in each bin, which thin out at the extremes.` : undefined}
             >
               {latestCalibration.length > 0 ? (
                 <div className="max-w-xl">
@@ -270,11 +280,20 @@ export function PerformanceTabs({
               <p role="status" className="type-label text-muted-foreground">Prediction results are temporarily unavailable.</p>
             ) : (
               <>
+                <p className="max-w-3xl type-meta text-muted-foreground">
+                  {liveKpis.n_bets} recommended predictions
+                  {liveKpis.first_date && liveKpis.last_date && <>, {formatDate(liveKpis.first_date)} to {formatDate(liveKpis.last_date)}</>},
+                  v1 through May 11 and v2 from May 12, regular season and postseason, at quarter-Kelly
+                  stakes. The record applies today&apos;s edge gate (4.5 percent on moneyline and run line,
+                  6.5 percent on totals) to every past prediction, so some plays shown on the day are not
+                  counted. Prices are the best pregame line published, not a closing line.
+                </p>
                 <div className={KPI_ROW}>
                   <KpiCard
                     label="ROI"
                     value={formatPct(liveKpis.roi)}
-                    tooltip="Net profit divided by total stakes. A 13% ROI means 13¢ profit per $1 risked."
+                    sub={`${liveKpis.n_bets} predictions`}
+                    tooltip="Net profit divided by total stakes at the best pregame price published among DraftKings, FanDuel and BetMGM, not a closing line. A 13% ROI means 13¢ profit per $1 risked."
                   />
                   <KpiCard
                     label="P&L"
@@ -291,25 +310,67 @@ export function PerformanceTabs({
                     label="Sharpe"
                     value={formatNumber(liveKpis.sharpe, 2)}
                     sub={`Sortino ${formatNumber(liveKpis.sortino, 2)}`}
-                    tooltip="Average daily profit divided by its day-to-day variability. Sortino counts only downside variability."
+                    tooltip="Average daily return divided by its day-to-day variability, annualized by the square root of 252. Sortino counts only downside variability."
                   />
                 </div>
-                <Section title="By market" note="ROI with the win-loss record behind it. Run line uses quarter-Kelly sizing.">
-                  <MarketRoi
-                    rows={[
-                      { label: "Favorites", roi: liveKpis.roi_favorites, record: formatRecord(liveKpis.favorites_correct, liveKpis.n_favorites, 0) },
-                      { label: "Underdogs", roi: liveKpis.roi_underdogs, record: formatRecord(liveKpis.underdogs_correct, liveKpis.n_underdogs, 0) },
-                      { label: "Run line", roi: liveKpis.roi_run_line, record: formatRecord(liveKpis.run_line_bets_correct, liveKpis.n_run_line, 0) },
-                      { label: "Overs", roi: liveKpis.overs_roi, record: formatRecord(liveKpis.overs_correct, liveKpis.overs_predictions, liveKpis.overs_pushes) },
-                      { label: "Unders", roi: liveKpis.unders_roi, record: formatRecord(liveKpis.unders_correct, liveKpis.unders_predictions, liveKpis.unders_pushes) },
-                    ]}
-                  />
-                  <p className="type-meta text-muted-foreground">Average moneyline price {formatOdds(liveKpis.avg_ml_line)}.</p>
+                {eraKpis && (
+                  <Section title="By model version" note={`v2 is the model in use; v1 was retired on ${formatDate(V2_CUTOVER_DATE)}. Each row is that model's own predictions at the prices it was published against.`}>
+                    <Table>
+                      <TableHeader>
+                        <TableRow>
+                          <TableHead>Model</TableHead>
+                          <TableHead className="text-right">Predictions</TableHead>
+                          <TableHead className="text-right">Record</TableHead>
+                          <TableHead className="text-right">Staked</TableHead>
+                          <TableHead className="text-right">P&amp;L</TableHead>
+                          <TableHead className="text-right">ROI</TableHead>
+                        </TableRow>
+                      </TableHeader>
+                      <TableBody>
+                        {[
+                          { label: "v2, current", kpis: eraKpis.v2 },
+                          { label: "v1, retired", kpis: eraKpis.v1 },
+                          { label: "Both", kpis: liveKpis },
+                        ].map(({ label, kpis }) => (
+                          <TableRow key={label}>
+                            <TableCell className="font-medium">{label}</TableCell>
+                            <TableCell className="text-right tabular-nums">{kpis.n_bets}</TableCell>
+                            <TableCell className="text-right tabular-nums">{formatRecord(kpis.n_wins, kpis.n_bets, kpis.n_pushes)}</TableCell>
+                            <TableCell className="text-right tabular-nums">{formatNumber(kpis.total_staked_units, 2)}u</TableCell>
+                            <TableCell className="text-right tabular-nums">{formatSigned(kpis.net_profit_units, 2)}u</TableCell>
+                            <TableCell className="text-right tabular-nums">{formatPct(kpis.roi)}</TableCell>
+                          </TableRow>
+                        ))}
+                      </TableBody>
+                    </Table>
+                  </Section>
+                )}
+                <Section title="By market" note="ROI with the win-loss record behind it, for the current model and for both versions pooled. Run line uses quarter-Kelly sizing.">
+                  <div className="grid gap-6 md:grid-cols-2">
+                    {[
+                      { title: `v2, current model, since ${formatDate(V2_CUTOVER_DATE)}`, kpis: eraKpis?.v2 ?? liveKpis },
+                      { title: "Both versions pooled", kpis: liveKpis },
+                    ].map(({ title, kpis }) => (
+                      <div key={title} className="space-y-2">
+                        <h3 className="type-label font-semibold">{title}</h3>
+                        <MarketRoi
+                          rows={[
+                            { label: "Favorites", roi: kpis.roi_favorites, record: formatRecord(kpis.favorites_correct, kpis.n_favorites, 0) },
+                            { label: "Underdogs", roi: kpis.roi_underdogs, record: formatRecord(kpis.underdogs_correct, kpis.n_underdogs, 0) },
+                            { label: "Run line", roi: kpis.roi_run_line, record: formatRecord(kpis.run_line_bets_correct, kpis.n_run_line, 0) },
+                            { label: "Overs", roi: kpis.overs_roi, record: formatRecord(kpis.overs_correct, kpis.overs_predictions, kpis.overs_pushes) },
+                            { label: "Unders", roi: kpis.unders_roi, record: formatRecord(kpis.unders_correct, kpis.unders_predictions, kpis.unders_pushes) },
+                          ]}
+                        />
+                        <p className="type-meta text-muted-foreground">Average moneyline price {formatOdds(kpis.avg_ml_line)}.</p>
+                      </div>
+                    ))}
+                  </div>
                 </Section>
               </>
             )}
 
-            <Section title="Cumulative units">
+            <Section title="Units by day" note="Each point is one unit plus that day's profit or loss, not a running total; the season totals are in the table above.">
               {dailyEvals.some((d) => d.equity_end_units != null) ? (
                 <EquityCurveChart data={dailyEvals.filter((d) => d.equity_end_units != null)} />
               ) : (
@@ -317,7 +378,7 @@ export function PerformanceTabs({
               )}
             </Section>
 
-            <Section title="Results by edge" note="Season to date, grouped by the model's edge over the price when the prediction was made.">
+            <Section title="Results by edge" note="Season to date, both model versions, grouped by the model's edge over the price when the prediction was made.">
               {latestBuckets.length > 0 ? (
                 <Table>
                   <TableHeader>

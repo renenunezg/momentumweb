@@ -80,6 +80,30 @@ function TeamRow({
   );
 }
 
+const stampTime = (iso: string) =>
+  new Date(iso).toLocaleTimeString("en-US", { hour: "numeric", minute: "2-digit", timeZone: "America/Los_Angeles" });
+
+// When the displayed prediction was last written, against first pitch. A
+// stamp after the start is shown as such rather than hidden.
+function PredictionStamp({ matchup, started }: { matchup: GameMatchup; started: boolean }) {
+  const stamps = [matchup.away.prediction_updated_at, matchup.home.prediction_updated_at]
+    .filter((s): s is string => s != null)
+    .map((s) => Date.parse(s))
+    .filter((t) => !Number.isNaN(t));
+  if (stamps.length === 0) return null;
+  const written = new Date(Math.max(...stamps)).toISOString();
+  const start = matchup.start_time ? Date.parse(matchup.start_time) : NaN;
+  const late = started && !Number.isNaN(start) && Date.parse(written) > start;
+  return (
+    <>
+      {" "}&middot;{" "}
+      {late
+        ? <span className="text-amber-600 dark:text-amber-400">Prediction rewritten {stampTime(written)} PT, after first pitch</span>
+        : <>Prediction {started ? "frozen" : "updated"} {stampTime(written)} PT</>}
+    </>
+  );
+}
+
 export function GamesTable({ matchups }: { matchups: GameMatchup[] }) {
   return (
     <GamesTableLayout
@@ -113,7 +137,7 @@ export function GamesTable({ matchups }: { matchups: GameMatchup[] }) {
                   )}
                 </>
               }
-              detail={<>{matchup.venue && <>{matchup.venue} &middot; </>}{status.startTime}</>}
+              detail={<>{matchup.venue && <>{matchup.venue} &middot; </>}{status.startTime}<PredictionStamp matchup={matchup} started={status.isLive || status.isFinal} /></>}
             />
             <TeamRow
               prediction={matchup.away}

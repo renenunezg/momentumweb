@@ -184,7 +184,7 @@ export default async function MlbCarryPage() {
         <KpiCard compact label="Repeatable" value={`r = ${study.repeatability.full_season.toFixed(2)}`} sub="estimated full-season reliability"
           tooltip={`One half of a hitter's season predicts the other half at ${study.repeatability.split_half.toFixed(2)}; scaled to a full season (Spearman-Brown) that is ${study.repeatability.full_season.toFixed(2)}.`} />
         <KpiCard compact label="Swing physics explains" value={pct(ex.share)} sub={`${pct(ex.ceiling)} ceiling`}
-          tooltip={`Share of the differences between hitters' season carry that the swing's collision and flight physics predicts in a season it was not fit on. Sampling noise caps any model near ${pct(ex.ceiling)} of the same variance, so the swing covers ${pct(ex.share / ex.ceiling)} of what is explainable.`} />
+          tooltip={`Share of the differences between hitters' season carry that the swing's collision and flight physics predicts in 2025, a season not used for the slope; the physics constants were fitted on 2026 and checked on 2025. Sampling noise caps any model near ${pct(ex.ceiling)} of the same variance, so the swing covers ${pct(ex.share / ex.ceiling)} of what is explainable.`} />
       </div>
 
       <Section id="puzzle" question="The puzzle" title="Same exit velocity, same launch angle, different distance">

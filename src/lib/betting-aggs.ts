@@ -59,6 +59,11 @@ function maxDrawdown(rows: BetLedgerRow[]): number | null {
 
 export function aggregateLedger(rows: BetLedgerRow[]): LiveKpis {
   const empty: LiveKpis = {
+    n_bets: 0,
+    n_wins: 0,
+    n_pushes: 0,
+    first_date: null,
+    last_date: null,
     roi: null,
     sharpe: null,
     sortino: null,
@@ -133,7 +138,13 @@ export function aggregateLedger(rows: BetLedgerRow[]): LiveKpis {
   const overRows = rows.filter((r) => r.totals_side === "over");
   const underRows = rows.filter((r) => r.totals_side === "under");
 
+  const dates = rows.map((r) => r.date.slice(0, 10)).sort();
   return {
+    n_bets: rows.length,
+    n_wins: rows.filter((r) => r.won).length,
+    n_pushes: rows.filter((r) => r.push).length,
+    first_date: dates[0] ?? null,
+    last_date: dates[dates.length - 1] ?? null,
     roi,
     sharpe,
     sortino,

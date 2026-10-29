@@ -74,6 +74,10 @@ export function CalibrationChart({ data }: CalibrationChartProps) {
         />
         <Tooltip
           formatter={(value) => `${(Number(value) * 100).toFixed(1)}%`}
+          labelFormatter={(label, payload) => {
+            const count = (payload?.[0]?.payload as { count?: number } | undefined)?.count;
+            return `Predicted ${(Number(label) * 100).toFixed(0)}%${count != null ? `, ${count} team rows` : ""}`;
+          }}
           cursor={{ stroke: theme.border, strokeWidth: 1 }}
           contentStyle={chartTooltipStyle(theme)}
         />
