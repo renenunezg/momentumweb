@@ -1,10 +1,10 @@
 import { supabaseCfb } from "@/lib/supabase";
-import type { CfbPicksDatabase } from "@/lib/cfb-picks.database.types";
+import type { Tables } from "@/lib/database-schema";
 
 export type CfbPick =
-  CfbPicksDatabase["cfb"]["Tables"]["recommendations"]["Row"];
+  Tables<"cfb", "recommendations">;
 export type CfbPickMetric =
-  CfbPicksDatabase["cfb"]["Views"]["recommendation_performance"]["Row"];
+  Tables<"cfb", "recommendation_performance">;
 import { fetchTeams } from "@/lib/cfb";
 import {
   fetchHistorySummary,
@@ -56,31 +56,21 @@ export async function fetchCfbWeeklyPredictions(): Promise<CfbWeeklyPredictions>
 
   const decisions: CfbWeeklyPredictions["decisions"] = [];
   const pages = (async () => {
-    let includeContext = true;
     for (let offset = 0; ; offset += PAGE) {
-      const request = () => {
-        const table = supabaseCfb.from("current_recommendations");
-        const query = includeContext
-          ? table.select(`${WEEKLY_PICK_COLUMNS},pricing_context`)
-          : table.select(WEEKLY_PICK_COLUMNS);
-        return query.eq("season", latest.season)
+      const { data, error } = await supabaseCfb
+        .from("current_recommendations")
+        .select(`${WEEKLY_PICK_COLUMNS},pricing_context`)
+        .eq("season", latest.season)
         .eq("week", latest.week)
         .order("start_date", { ascending: true })
         .order("game_id", { ascending: true })
         .order("market", { ascending: true })
         .range(offset, offset + PAGE - 1);
-      };
-      let result = await request();
-      // The site can deploy before the model's additive context migration.
-      if (includeContext && result.error &&
-          ["42703", "PGRST204"].includes(result.error.code) &&
-          result.error.message.includes("pricing_context")) {
-        includeContext = false;
-        result = await request();
-      }
-      const { data, error } = result;
       if (error) throw error;
-      decisions.push(...(data ?? []));
+      // The view unions the decisions and the frozen ledger column for
+      // column, but PostgREST reports every view column as nullable; the
+      // ledger's constraints are the ones that hold.
+      decisions.push(...((data ?? []) as WeeklyPick[]));
       if ((data?.length ?? 0) < PAGE) break;
     }
   })();

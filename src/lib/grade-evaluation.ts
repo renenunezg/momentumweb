@@ -1,6 +1,6 @@
 import { cache } from "react";
 import { supabase, supabaseCfb, supabaseNfl } from "@/lib/supabase";
-import type { GradeEvaluationDatabase } from "@/lib/grade-evaluation.database.types";
+import type { Tables } from "@/lib/database-schema";
 
 // Player-grade evaluations the model repos publish for the performance pages:
 // NFL rows in nfl.position_grade_evaluation, CFB rows in
@@ -8,8 +8,8 @@ import type { GradeEvaluationDatabase } from "@/lib/grade-evaluation.database.ty
 // live model row at payload.evaluation.forward. Every number is served as
 // published; nothing is recomputed here.
 
-export type NflGradeEvaluationRow = GradeEvaluationDatabase["nfl"]["Tables"]["position_grade_evaluation"]["Row"];
-export type CfbGradeValidationRow = GradeEvaluationDatabase["cfb"]["Tables"]["player_grade_validation"]["Row"];
+export type NflGradeEvaluationRow = Tables<"nfl", "position_grade_evaluation">;
+export type CfbGradeValidationRow = Tables<"cfb", "player_grade_validation">;
 
 export const NFL_BASELINE_LABELS: Record<string, string> = {
   epa_credit: "Last season's EPA credit",
@@ -106,7 +106,7 @@ export const FORWARD_SYSTEM_LABELS: Record<ForwardSystem | ForwardSnapshotSystem
 export const fetchMlbForwardEvaluation = cache(
   async (modelVersion: string): Promise<ForwardEvaluation | null> => {
     const { data, error } = await supabase
-      .from("player_value_evaluation" as "player_value_models")
+      .from("player_value_evaluation")
       .select("model_version, forward")
       .eq("model_version", modelVersion)
       .maybeSingle();

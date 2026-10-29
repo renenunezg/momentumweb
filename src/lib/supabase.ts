@@ -1,36 +1,6 @@
 import { createClient } from "@supabase/supabase-js";
-import type { NflPicksDatabase } from "@/lib/nfl-picks.database.types";
 import type { Database } from "@/lib/database.types";
-import type { CfbPicksDatabase } from "@/lib/cfb-picks.database.types";
-import type { CfbRatingsDatabase } from "@/lib/cfb-ratings.database.types";
-import type { GradeEvaluationDatabase } from "@/lib/grade-evaluation.database.types";
 import { restCacheTags } from "./cache-tags.ts";
-
-type CfbDatabase = Omit<Database, "cfb"> & {
-  cfb: Omit<Database["cfb"], "Tables" | "Views" | "Functions"> & {
-    Tables: Omit<Database["cfb"]["Tables"], "team_ratings"> &
-      CfbRatingsDatabase["cfb"]["Tables"] & CfbPicksDatabase["cfb"]["Tables"] &
-      GradeEvaluationDatabase["cfb"]["Tables"];
-    Views: Database["cfb"]["Views"] & CfbPicksDatabase["cfb"]["Views"] & {
-      current_recommendations: {
-        Row: CfbPicksDatabase["cfb"]["Tables"]["recommendations"]["Row"];
-        Relationships: [];
-      };
-    };
-    Functions: Database["cfb"]["Functions"] &
-      CfbPicksDatabase["cfb"]["Functions"];
-  };
-};
-
-type NflDatabase = Omit<Database, "nfl"> & {
-  nfl: Omit<Database["nfl"], "Tables" | "Views" | "Functions"> & {
-    Tables: Database["nfl"]["Tables"] & NflPicksDatabase["nfl"]["Tables"] &
-      GradeEvaluationDatabase["nfl"]["Tables"];
-    Views: Database["nfl"]["Views"] & NflPicksDatabase["nfl"]["Views"];
-    Functions: Database["nfl"]["Functions"] &
-      NflPicksDatabase["nfl"]["Functions"];
-  };
-};
 
 // These clients are anon and read-only: nothing here ever signs a user in, so
 // there is no session to persist or refresh, and no auth timers are wanted.
@@ -83,13 +53,13 @@ function cachedPublicFetch(sport: string): typeof fetch {
   };
 }
 
-export const supabaseCfb = createClient<CfbDatabase, "cfb">(url, anonKey, {
+export const supabaseCfb = createClient<Database, "cfb">(url, anonKey, {
   db: { schema: "cfb" },
   auth: anonAuth("cfb"),
   global: { fetch: cachedPublicFetch("cfb") },
 });
 
-export const supabaseNfl = createClient<NflDatabase, "nfl">(url, anonKey, {
+export const supabaseNfl = createClient<Database, "nfl">(url, anonKey, {
   db: { schema: "nfl" },
   auth: anonAuth("nfl"),
   global: { fetch: cachedPublicFetch("nfl") },

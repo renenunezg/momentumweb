@@ -1,11 +1,11 @@
-import type { CfbPicksDatabase } from "@/lib/cfb-picks.database.types";
 import type { Json } from "@/lib/database.types";
+import type { Tables } from "@/lib/database-schema";
 // The shape the shared pick components read. CFB and NFL rows carry a week
 // and per-side missing-input counts; the NHL ledger is daily with one count
 // and settles in goals, so those fields are optional here and the table
 // renders whichever a row has.
 export type FootballPick = Omit<
-  CfbPicksDatabase["cfb"]["Tables"]["recommendations"]["Row"],
+  Tables<"cfb", "recommendations">,
   | "game_id"
   | "week"
   | "home_missing_input_count"
@@ -20,7 +20,18 @@ export type FootballPick = Omit<
   | "pricing_weights"
   | "pricing_context"
   | "model_home_margin"
+  | "closing_source"
+  | "closing_point"
+  | "closing_price"
+  | "clv_points"
+  | "decision_forecast"
 > & {
+  // Closing-line columns exist on the CFB ledger only.
+  closing_source?: string | null;
+  closing_point?: number | null;
+  closing_price?: number | null;
+  clv_points?: number | null;
+  decision_forecast?: Json;
   game_id: string | number;
   week?: number;
   margin_sd?: number | null;
@@ -45,7 +56,7 @@ export type FootballPick = Omit<
   result_source_at?: string | null;
 };
 type CfbPickMetricRow =
-  CfbPicksDatabase["cfb"]["Views"]["recommendation_performance"]["Row"];
+  Tables<"cfb", "recommendation_performance">;
 // Closing line value is recorded by the CFB ledger only; the NFL view has
 // no closing line columns yet.
 type ClosingLineValue =

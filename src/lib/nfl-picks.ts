@@ -1,5 +1,5 @@
 import { supabaseNfl } from "@/lib/supabase";
-import type { NflPicksDatabase } from "@/lib/nfl-picks.database.types";
+import type { Tables } from "@/lib/database-schema";
 import {
   fetchHistorySummary,
   HISTORY_SUMMARY_COLUMNS,
@@ -12,9 +12,9 @@ import {
 } from "@/lib/football-picks";
 export * from "@/lib/football-picks";
 export type NflPick =
-  NflPicksDatabase["nfl"]["Tables"]["recommendations"]["Row"];
+  Tables<"nfl", "recommendations">;
 export type NflPickMetric =
-  NflPicksDatabase["nfl"]["Views"]["recommendation_performance"]["Row"];
+  Tables<"nfl", "recommendation_performance">;
 type Summary = { metrics: NflPickMetric[]; seasons: number[] };
 type NflPickHistoryRow = Omit<NflPick, "pricing_weights">;
 const NFL_HISTORY_COLUMNS =

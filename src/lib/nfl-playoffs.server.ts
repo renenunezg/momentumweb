@@ -1,5 +1,5 @@
 import "server-only";
-import type { Database } from "./nfl-playoffs.database.types";
+import type { Tables } from "@/lib/database-schema";
 import { tableCacheTag } from "./cache-tags";
 import { parseNflPlayoffPayload } from "./nfl-playoffs";
 export async function fetchNflPlayoffForecast() {
@@ -33,7 +33,7 @@ export async function fetchNflPlayoffForecast() {
     const rows: unknown = await response.json();
     if (!Array.isArray(rows) || rows.length !== 1) return null;
     const row = rows[0] as Pick<
-      Database["nfl"]["Tables"]["playoff_forecasts"]["Row"],
+      Tables<"nfl", "playoff_forecasts">,
       "payload"
     >;
     const payload = parseNflPlayoffPayload(row?.payload);

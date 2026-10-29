@@ -1,5 +1,4 @@
 import type { Tables } from "@/lib/database-schema";
-import type { CfbRatingsDatabase } from "@/lib/cfb-ratings.database.types";
 
 // Row types come from the generated schema so a column change in a model repo
 // fails the build here. Where the site relies on a column the pipeline always
@@ -149,18 +148,14 @@ export interface GameMatchup {
 // cfb.teams carries identity only; conference and classification come from
 // team_ratings, which every consumer already loads.
 export type CfbTeamIdentity = Tables<"cfb", "teams">;
-export type CfbTeamRating = CfbRatingsDatabase["cfb"]["Tables"]["team_ratings"]["Row"];
+export type CfbTeamRating = Tables<"cfb", "team_ratings">;
 export type CfbTeamUnitRating = Tables<"cfb", "team_unit_ratings">;
 export type CfbGameProjection = Tables<"cfb", "game_projections">;
 export type CfbMarketComparison = Tables<"cfb", "market_comparisons">;
 export type CfbBacktestPrediction = Tables<"cfb", "backtest_predictions">;
 export type CfbPlayerValue = Tables<"cfb", "player_values">;
 export type CfbHeismanBoardRow = Tables<"cfb", "heisman_board">;
-// Weekly evaluation leaves rank absent when the winner was outside the pool.
-// The backend migration makes this column nullable before publishing v2.
-export type CfbHeismanHistory = Omit<Tables<"cfb", "heisman_history">, "actual_winner_predicted_rank"> & {
-  actual_winner_predicted_rank: number | null;
-};
+export type CfbHeismanHistory = Tables<"cfb", "heisman_history">;
 export type CfbPlayerModelMeta = Tables<"cfb", "player_model_meta">;
 // Latest-week trait, grade and WAR rows per qualified FBS player.
 export type CfbPositionTrait = Tables<"cfb", "position_traits">;

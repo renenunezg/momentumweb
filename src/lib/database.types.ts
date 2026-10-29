@@ -72,7 +72,6 @@ export type Database = {
           draft_year: number
           history: Json
           meta: Json
-          payload: Json | null
           players: Json
           roster: Json
           schema_version: number
@@ -84,7 +83,6 @@ export type Database = {
           draft_year: number
           history: Json
           meta: Json
-          payload?: Json | null
           players: Json
           roster: Json
           schema_version: number
@@ -96,7 +94,6 @@ export type Database = {
           draft_year?: number
           history?: Json
           meta?: Json
-          payload?: Json | null
           players?: Json
           roster?: Json
           schema_version?: number
@@ -129,6 +126,8 @@ export type Database = {
           margin_sd: number | null
           margin_total_correlation: number | null
           market_history_home_margin: number | null
+          market_history_total: number | null
+          market_history_total_weight: number | null
           market_history_weight: number | null
           market_home_spread: number | null
           market_informed_away_points: number | null
@@ -173,6 +172,8 @@ export type Database = {
           margin_sd?: number | null
           margin_total_correlation?: number | null
           market_history_home_margin?: number | null
+          market_history_total?: number | null
+          market_history_total_weight?: number | null
           market_history_weight?: number | null
           market_home_spread?: number | null
           market_informed_away_points?: number | null
@@ -217,6 +218,8 @@ export type Database = {
           margin_sd?: number | null
           margin_total_correlation?: number | null
           market_history_home_margin?: number | null
+          market_history_total?: number | null
+          market_history_total_weight?: number | null
           market_history_weight?: number | null
           market_home_spread?: number | null
           market_informed_away_points?: number | null
@@ -701,6 +704,66 @@ export type Database = {
           total_games?: number | null
           total_mae?: number | null
           total_rmse?: number | null
+        }
+        Relationships: []
+      }
+      player_grade_validation: {
+        Row: {
+          computed_at: string
+          diff_grade_minus_epa: number
+          diff_hi_95: number | null
+          diff_lo_95: number | null
+          eval_kind: string
+          grade_model_version: string
+          holdout_status: string
+          input_value_model_version: string
+          model_sha: string
+          players: number
+          position_group: string
+          seasons: string
+          spearman_epa_credit: number
+          spearman_games: number | null
+          spearman_grade: number
+          spearman_qbr: number | null
+          spearman_value_above_replacement: number | null
+        }
+        Insert: {
+          computed_at: string
+          diff_grade_minus_epa: number
+          diff_hi_95?: number | null
+          diff_lo_95?: number | null
+          eval_kind: string
+          grade_model_version: string
+          holdout_status: string
+          input_value_model_version: string
+          model_sha: string
+          players: number
+          position_group: string
+          seasons: string
+          spearman_epa_credit: number
+          spearman_games?: number | null
+          spearman_grade: number
+          spearman_qbr?: number | null
+          spearman_value_above_replacement?: number | null
+        }
+        Update: {
+          computed_at?: string
+          diff_grade_minus_epa?: number
+          diff_hi_95?: number | null
+          diff_lo_95?: number | null
+          eval_kind?: string
+          grade_model_version?: string
+          holdout_status?: string
+          input_value_model_version?: string
+          model_sha?: string
+          players?: number
+          position_group?: string
+          seasons?: string
+          spearman_epa_credit?: number
+          spearman_games?: number | null
+          spearman_grade?: number
+          spearman_qbr?: number | null
+          spearman_value_above_replacement?: number | null
         }
         Relationships: []
       }
@@ -3175,7 +3238,7 @@ export type Database = {
           player_id: number
           pool: string
           season: number
-          stats: (number | null)[]
+          stats: number[]
           updated_at: string
         }
         Insert: {
@@ -3183,7 +3246,7 @@ export type Database = {
           player_id: number
           pool: string
           season: number
-          stats: (number | null)[]
+          stats: number[]
           updated_at?: string
         }
         Update: {
@@ -3191,7 +3254,7 @@ export type Database = {
           player_id?: number
           pool?: string
           season?: number
-          stats?: (number | null)[]
+          stats?: number[]
           updated_at?: string
         }
         Relationships: []
@@ -3293,7 +3356,6 @@ export type Database = {
           level: string
           market_value_musd: number | null
           model_version: string
-          outlook: Json
           owed_through_control_musd: number | null
           player_id: number
           player_name: string | null
@@ -3308,7 +3370,6 @@ export type Database = {
           team: string | null
           team_id: number | null
           throws: string | null
-          tip: Json
           trade_value_high: number | null
           trade_value_low: number | null
           trade_value_musd: number | null
@@ -3332,7 +3393,6 @@ export type Database = {
           level?: string
           market_value_musd?: number | null
           model_version: string
-          outlook?: Json
           owed_through_control_musd?: number | null
           player_id: number
           player_name?: string | null
@@ -3347,7 +3407,6 @@ export type Database = {
           team?: string | null
           team_id?: number | null
           throws?: string | null
-          tip?: Json
           trade_value_high?: number | null
           trade_value_low?: number | null
           trade_value_musd?: number | null
@@ -3371,7 +3430,6 @@ export type Database = {
           level?: string
           market_value_musd?: number | null
           model_version?: string
-          outlook?: Json
           owed_through_control_musd?: number | null
           player_id?: number
           player_name?: string | null
@@ -3386,7 +3444,6 @@ export type Database = {
           team?: string | null
           team_id?: number | null
           throws?: string | null
-          tip?: Json
           trade_value_high?: number | null
           trade_value_low?: number | null
           trade_value_musd?: number | null
@@ -3477,12 +3534,37 @@ export type Database = {
           },
         ]
       }
+      prospect_models: {
+        Row: {
+          fitted_at: string
+          last_dev_season: number
+          model_version: string
+          payload: Json
+          updated_at: string
+        }
+        Insert: {
+          fitted_at: string
+          last_dev_season: number
+          model_version: string
+          payload: Json
+          updated_at?: string
+        }
+        Update: {
+          fitted_at?: string
+          last_dev_season?: number
+          model_version?: string
+          payload?: Json
+          updated_at?: string
+        }
+        Relationships: []
+      }
       prospect_values: {
         Row: {
           acquired: string | null
           age: number | null
           as_of: string
           bats: string | null
+          command_grade: number | null
           draft_pick: number | null
           draft_round: string | null
           draft_year: number | null
@@ -3504,6 +3586,7 @@ export type Database = {
           peak_grade_low: number | null
           peak_grade_percentile: number | null
           peak_war: number | null
+          pitch_mix: number[] | null
           player_id: number
           player_name: string | null
           position_group: string
@@ -3513,6 +3596,8 @@ export type Database = {
           season_sample: number | null
           service_days: number | null
           signing_bonus_musd: number | null
+          stuff_level: number | null
+          stuff_pitches: number | null
           team: string | null
           team_id: number | null
           throws: string | null
@@ -3530,6 +3615,7 @@ export type Database = {
           age?: number | null
           as_of: string
           bats?: string | null
+          command_grade?: number | null
           draft_pick?: number | null
           draft_round?: string | null
           draft_year?: number | null
@@ -3541,7 +3627,7 @@ export type Database = {
           market_value_musd?: number | null
           mlb_ab_or_ip?: number | null
           model_version: string
-          on_40_man: boolean
+          on_40_man?: boolean
           org?: string | null
           org_id?: number | null
           p_mlb?: number | null
@@ -3551,6 +3637,7 @@ export type Database = {
           peak_grade_low?: number | null
           peak_grade_percentile?: number | null
           peak_war?: number | null
+          pitch_mix?: number[] | null
           player_id: number
           player_name?: string | null
           position_group: string
@@ -3560,16 +3647,18 @@ export type Database = {
           season_sample?: number | null
           service_days?: number | null
           signing_bonus_musd?: number | null
+          stuff_level?: number | null
+          stuff_pitches?: number | null
           team?: string | null
           team_id?: number | null
           throws?: string | null
-          tip: Json
+          tip?: Json
           tracked_share?: number | null
           trade_value_high?: number | null
           trade_value_low?: number | null
           trade_value_musd?: number | null
-          trait_grades: number[]
-          trait_pcts: number[]
+          trait_grades?: number[]
+          trait_pcts?: number[]
           updated_at?: string
         }
         Update: {
@@ -3577,6 +3666,7 @@ export type Database = {
           age?: number | null
           as_of?: string
           bats?: string | null
+          command_grade?: number | null
           draft_pick?: number | null
           draft_round?: string | null
           draft_year?: number | null
@@ -3598,6 +3688,7 @@ export type Database = {
           peak_grade_low?: number | null
           peak_grade_percentile?: number | null
           peak_war?: number | null
+          pitch_mix?: number[] | null
           player_id?: number
           player_name?: string | null
           position_group?: string
@@ -3607,6 +3698,8 @@ export type Database = {
           season_sample?: number | null
           service_days?: number | null
           signing_bonus_musd?: number | null
+          stuff_level?: number | null
+          stuff_pitches?: number | null
           team?: string | null
           team_id?: number | null
           throws?: string | null
@@ -3799,6 +3892,24 @@ export type Database = {
           win_prob: number | null
           win_prob_p10: number | null
           win_prob_p90: number | null
+        }
+        Relationships: []
+      }
+      player_value_evaluation: {
+        Row: {
+          fitted_at: string | null
+          forward: Json | null
+          model_version: string | null
+        }
+        Insert: {
+          fitted_at?: string | null
+          forward?: never
+          model_version?: string | null
+        }
+        Update: {
+          fitted_at?: string | null
+          forward?: never
+          model_version?: string | null
         }
         Relationships: []
       }
@@ -4729,6 +4840,72 @@ export type Database = {
         }
         Relationships: []
       }
+      position_grade_evaluation: {
+        Row: {
+          baseline: string
+          baseline_spearman: number
+          checkpoint_week: number | null
+          computed_at: string
+          difference: number
+          difference_ci_high: number | null
+          difference_ci_low: number | null
+          evaluation: string
+          grade_spearman: number
+          holdout_status: string
+          model_version: string
+          player_seasons: number
+          players: number | null
+          position_group: string
+          sample_set: string
+          seasons: string
+          target: string
+          thin_sample: boolean
+          validation_season: number
+        }
+        Insert: {
+          baseline: string
+          baseline_spearman: number
+          checkpoint_week?: number | null
+          computed_at: string
+          difference: number
+          difference_ci_high?: number | null
+          difference_ci_low?: number | null
+          evaluation: string
+          grade_spearman: number
+          holdout_status: string
+          model_version: string
+          player_seasons: number
+          players?: number | null
+          position_group: string
+          sample_set: string
+          seasons: string
+          target: string
+          thin_sample: boolean
+          validation_season: number
+        }
+        Update: {
+          baseline?: string
+          baseline_spearman?: number
+          checkpoint_week?: number | null
+          computed_at?: string
+          difference?: number
+          difference_ci_high?: number | null
+          difference_ci_low?: number | null
+          evaluation?: string
+          grade_spearman?: number
+          holdout_status?: string
+          model_version?: string
+          player_seasons?: number
+          players?: number | null
+          position_group?: string
+          sample_set?: string
+          seasons?: string
+          target?: string
+          thin_sample?: boolean
+          validation_season?: number
+        }
+        Relationships: []
+      }
       position_traits: {
         Row: {
           as_of: string
@@ -5304,6 +5481,10 @@ export type Database = {
         Returns: boolean
       }
       forecast_accuracy: { Args: { p_source?: string }; Returns: Json }
+      publish_position_grade_evaluation: {
+        Args: { payload: Json }
+        Returns: number
+      }
       recommendation_dashboard: {
         Args: { p_from?: string; p_market?: string; p_season?: number }
         Returns: Json
@@ -6132,6 +6313,23 @@ export type Database = {
       [_ in never]: never
     }
   }
+  public: {
+    Tables: {
+      [_ in never]: never
+    }
+    Views: {
+      [_ in never]: never
+    }
+    Functions: {
+      [_ in never]: never
+    }
+    Enums: {
+      [_ in never]: never
+    }
+    CompositeTypes: {
+      [_ in never]: never
+    }
+  }
 }
 
 type DatabaseWithoutInternals = Omit<Database, "__InternalSupabase">
@@ -6262,6 +6460,9 @@ export const Constants = {
     Enums: {},
   },
   nhl: {
+    Enums: {},
+  },
+  public: {
     Enums: {},
   },
 } as const

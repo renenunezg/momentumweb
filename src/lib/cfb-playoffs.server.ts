@@ -1,9 +1,9 @@
 import "server-only";
 import { tableCacheTag } from "./cache-tags";
 import { parseCfbPlayoffPayload, type CfbPlayoffPayload } from "./cfb-playoffs";
-import type { Database } from "./cfb-playoffs.database.types";
+import type { Tables } from "@/lib/database-schema";
 
-type ForecastRow = Database["cfb"]["Tables"]["playoff_forecasts"]["Row"];
+type ForecastRow = Tables<"cfb", "playoff_forecasts">;
 
 export async function fetchCfbPlayoffForecast(): Promise<CfbPlayoffPayload | null> {
   try {
