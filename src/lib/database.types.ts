@@ -71,6 +71,66 @@ export type Database = {
         }
         Relationships: []
       }
+      closing_lines: {
+        Row: {
+          away_moneyline: number | null
+          fetched_at: string
+          game_id: number
+          home_moneyline: number | null
+          home_spread: number | null
+          n_spread_offers: number | null
+          n_total_offers: number | null
+          observed_at: string | null
+          over_price: number | null
+          price_book: string | null
+          season: number
+          source: string
+          spread_away_price: number | null
+          spread_home_price: number | null
+          start_date: string
+          total: number | null
+          under_price: number | null
+        }
+        Insert: {
+          away_moneyline?: number | null
+          fetched_at: string
+          game_id: number
+          home_moneyline?: number | null
+          home_spread?: number | null
+          n_spread_offers?: number | null
+          n_total_offers?: number | null
+          observed_at?: string | null
+          over_price?: number | null
+          price_book?: string | null
+          season: number
+          source: string
+          spread_away_price?: number | null
+          spread_home_price?: number | null
+          start_date: string
+          total?: number | null
+          under_price?: number | null
+        }
+        Update: {
+          away_moneyline?: number | null
+          fetched_at?: string
+          game_id?: number
+          home_moneyline?: number | null
+          home_spread?: number | null
+          n_spread_offers?: number | null
+          n_total_offers?: number | null
+          observed_at?: string | null
+          over_price?: number | null
+          price_book?: string | null
+          season?: number
+          source?: string
+          spread_away_price?: number | null
+          spread_home_price?: number | null
+          start_date?: string
+          total?: number | null
+          under_price?: number | null
+        }
+        Relationships: []
+      }
       draft_publications: {
         Row: {
           board: Json
@@ -639,6 +699,7 @@ export type Database = {
         Row: {
           brier_score: number | null
           closer_than_market_share: number | null
+          closing_source_games: Json | null
           computed_at: string | null
           coverage_50: number | null
           coverage_80: number | null
@@ -668,6 +729,7 @@ export type Database = {
         Insert: {
           brier_score?: number | null
           closer_than_market_share?: number | null
+          closing_source_games?: Json | null
           computed_at?: string | null
           coverage_50?: number | null
           coverage_80?: number | null
@@ -697,6 +759,7 @@ export type Database = {
         Update: {
           brier_score?: number | null
           closer_than_market_share?: number | null
+          closing_source_games?: Json | null
           computed_at?: string | null
           coverage_50?: number | null
           coverage_80?: number | null
@@ -2154,6 +2217,63 @@ export type Database = {
         }
         Relationships: []
       }
+      closing_lines: {
+        Row: {
+          away_moneyline: number | null
+          fetched_at: string
+          game_pk: number
+          home_moneyline: number | null
+          home_spread: number | null
+          n_offers: number | null
+          observed_at: string
+          over_price: number | null
+          price_book: string | null
+          season: number
+          source: string
+          spread_away_price: number | null
+          spread_home_price: number | null
+          start_time: string
+          total: number | null
+          under_price: number | null
+        }
+        Insert: {
+          away_moneyline?: number | null
+          fetched_at: string
+          game_pk: number
+          home_moneyline?: number | null
+          home_spread?: number | null
+          n_offers?: number | null
+          observed_at: string
+          over_price?: number | null
+          price_book?: string | null
+          season: number
+          source: string
+          spread_away_price?: number | null
+          spread_home_price?: number | null
+          start_time: string
+          total?: number | null
+          under_price?: number | null
+        }
+        Update: {
+          away_moneyline?: number | null
+          fetched_at?: string
+          game_pk?: number
+          home_moneyline?: number | null
+          home_spread?: number | null
+          n_offers?: number | null
+          observed_at?: string
+          over_price?: number | null
+          price_book?: string | null
+          season?: number
+          source?: string
+          spread_away_price?: number | null
+          spread_home_price?: number | null
+          start_time?: string
+          total?: number | null
+          under_price?: number | null
+        }
+        Relationships: []
+      }
       experiment_runs: {
         Row: {
           best_cv_mae: number | null
@@ -2461,9 +2581,16 @@ export type Database = {
           brier_ci95_high: number | null
           brier_ci95_low: number | null
           brier_score: number | null
+          brier_vs_closing_ci95_high: number | null
+          brier_vs_closing_ci95_low: number | null
           brier_vs_market_ci95_high: number | null
           brier_vs_market_ci95_low: number | null
-          calibration_bins: Json | null
+          closing_games_by_source: Json | null
+          closing_market_brier: number | null
+          closing_market_log_loss: number | null
+          closing_paired_brier: number | null
+          closing_paired_games: number | null
+          closing_paired_log_loss: number | null
           created_at: string | null
           date: string
           equity_end_units: number | null
@@ -2548,9 +2675,16 @@ export type Database = {
           brier_ci95_high?: number | null
           brier_ci95_low?: number | null
           brier_score?: number | null
+          brier_vs_closing_ci95_high?: number | null
+          brier_vs_closing_ci95_low?: number | null
           brier_vs_market_ci95_high?: number | null
           brier_vs_market_ci95_low?: number | null
-          calibration_bins?: Json | null
+          closing_games_by_source?: Json | null
+          closing_market_brier?: number | null
+          closing_market_log_loss?: number | null
+          closing_paired_brier?: number | null
+          closing_paired_games?: number | null
+          closing_paired_log_loss?: number | null
           created_at?: string | null
           date: string
           equity_end_units?: number | null
@@ -2635,9 +2769,16 @@ export type Database = {
           brier_ci95_high?: number | null
           brier_ci95_low?: number | null
           brier_score?: number | null
+          brier_vs_closing_ci95_high?: number | null
+          brier_vs_closing_ci95_low?: number | null
           brier_vs_market_ci95_high?: number | null
           brier_vs_market_ci95_low?: number | null
-          calibration_bins?: Json | null
+          closing_games_by_source?: Json | null
+          closing_market_brier?: number | null
+          closing_market_log_loss?: number | null
+          closing_paired_brier?: number | null
+          closing_paired_games?: number | null
+          closing_paired_log_loss?: number | null
           created_at?: string | null
           date?: string
           equity_end_units?: number | null
@@ -4476,6 +4617,63 @@ export type Database = {
         }
         Relationships: []
       }
+      closing_lines: {
+        Row: {
+          away_moneyline: number | null
+          fetched_at: string
+          game_id: string
+          home_moneyline: number | null
+          home_spread: number | null
+          n_offers: number | null
+          observed_at: string
+          over_price: number | null
+          price_book: string | null
+          season: number
+          source: string
+          spread_away_price: number | null
+          spread_home_price: number | null
+          start_date: string
+          total: number | null
+          under_price: number | null
+        }
+        Insert: {
+          away_moneyline?: number | null
+          fetched_at: string
+          game_id: string
+          home_moneyline?: number | null
+          home_spread?: number | null
+          n_offers?: number | null
+          observed_at: string
+          over_price?: number | null
+          price_book?: string | null
+          season: number
+          source: string
+          spread_away_price?: number | null
+          spread_home_price?: number | null
+          start_date: string
+          total?: number | null
+          under_price?: number | null
+        }
+        Update: {
+          away_moneyline?: number | null
+          fetched_at?: string
+          game_id?: string
+          home_moneyline?: number | null
+          home_spread?: number | null
+          n_offers?: number | null
+          observed_at?: string
+          over_price?: number | null
+          price_book?: string | null
+          season?: number
+          source?: string
+          spread_away_price?: number | null
+          spread_home_price?: number | null
+          start_date?: string
+          total?: number | null
+          under_price?: number | null
+        }
+        Relationships: []
+      }
       forecast_input_objects: {
         Row: {
           compressed_content: string
@@ -5338,9 +5536,7 @@ export type Database = {
         Row: {
           as_of: string
           athlete_id: string
-          athlete_name: string | null
           games: number | null
-          headshot_url: string | null
           in_grade: boolean
           kind: string | null
           model_version: string
@@ -5358,9 +5554,7 @@ export type Database = {
         Insert: {
           as_of: string
           athlete_id: string
-          athlete_name?: string | null
           games?: number | null
-          headshot_url?: string | null
           in_grade: boolean
           kind?: string | null
           model_version: string
@@ -5378,9 +5572,7 @@ export type Database = {
         Update: {
           as_of?: string
           athlete_id?: string
-          athlete_name?: string | null
           games?: number | null
-          headshot_url?: string | null
           in_grade?: boolean
           kind?: string | null
           model_version?: string
@@ -5967,6 +6159,7 @@ export type Database = {
           margin_sd: number | null
           model_total: number | null
           model_version: string | null
+          probability_method: string | null
           published_home_margin: number | null
           published_total: number | null
           pure_home_margin: number | null
@@ -6153,6 +6346,57 @@ export type Database = {
           last_period_type?: string | null
           model_total?: number
           season?: number
+        }
+        Relationships: []
+      }
+      closing_lines: {
+        Row: {
+          away_moneyline: number | null
+          fetched_at: string
+          game_id: string
+          home_moneyline: number | null
+          home_spread: number | null
+          observed_at: string
+          over_price: number | null
+          season: number
+          source: string
+          spread_away_price: number | null
+          spread_home_price: number | null
+          start_date: string
+          total: number | null
+          under_price: number | null
+        }
+        Insert: {
+          away_moneyline?: number | null
+          fetched_at: string
+          game_id: string
+          home_moneyline?: number | null
+          home_spread?: number | null
+          observed_at: string
+          over_price?: number | null
+          season: number
+          source: string
+          spread_away_price?: number | null
+          spread_home_price?: number | null
+          start_date: string
+          total?: number | null
+          under_price?: number | null
+        }
+        Update: {
+          away_moneyline?: number | null
+          fetched_at?: string
+          game_id?: string
+          home_moneyline?: number | null
+          home_spread?: number | null
+          observed_at?: string
+          over_price?: number | null
+          season?: number
+          source?: string
+          spread_away_price?: number | null
+          spread_home_price?: number | null
+          start_date?: string
+          total?: number | null
+          under_price?: number | null
         }
         Relationships: []
       }
