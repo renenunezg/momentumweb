@@ -2,18 +2,29 @@
 
 import { NavigationLink as Link } from "@/components/navigation-link";
 import { usePathname } from "next/navigation";
+import type { MouseEvent } from "react";
 import { SiteHeader } from "@/components/site-header";
 
 const mlbLinks = [
   { href: "/mlb/players", label: "Players" },
   { href: "/mlb/prospects", label: "Prospects" },
-  { href: "/mlb/carry", label: "Carry" },
+  { href: "/mlb/carry#lab", label: "Swing Lab", match: ["/mlb/carry"] },
   { href: "/mlb/games", label: "Games" },
   { href: "/mlb/playoffs", label: "Playoffs" },
   { href: "/mlb/history", label: "History" },
   { href: "/mlb/performance", label: "Performance" },
   { href: "/mlb/methodology", label: "Methodology" },
 ];
+
+// Next scrolls to a hash only when the hash changes, so a repeat click on a tab
+// whose section is already in the URL would otherwise do nothing.
+function rejumpToCurrentHash(event: MouseEvent<HTMLAnchorElement>) {
+  if (event.metaKey || event.ctrlKey || event.shiftKey || event.altKey) return;
+  const { hash, pathname } = new URL(event.currentTarget.href);
+  if (!hash || hash !== window.location.hash || pathname !== window.location.pathname) return;
+  event.preventDefault();
+  document.getElementById(hash.slice(1))?.scrollIntoView();
+}
 
 export function Nav({
   links = mlbLinks,
@@ -41,6 +52,7 @@ export function Nav({
                 <Link
                   key={link.href}
                   href={link.href}
+                  onClick={rejumpToCurrentHash}
                   aria-current={isActive ? "page" : undefined}
                   className={`shrink-0 whitespace-nowrap border-b-2 px-3 py-3 type-label font-semibold transition-colors ${
                     isActive
