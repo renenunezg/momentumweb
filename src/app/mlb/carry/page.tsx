@@ -20,6 +20,8 @@ import { CarryMinors } from "@/components/mlb-carry-minors";
 import { PlayerHeadshot } from "@/components/player-headshot";
 import { SwingHoopPair } from "@/components/mlb-swing-hoop-pair";
 import { SwingLab } from "@/components/mlb-swing-lab";
+import { Notice } from "@/components/notice";
+import { buildSafe } from "@/lib/build-safe";
 import { fetchCarry, type CarryHitterRow, type SwingTypeRow } from "@/lib/mlb-carry";
 import { mlbPlayerHeadshotUrl } from "@/lib/player-headshots";
 
@@ -41,7 +43,7 @@ const SECTIONS = [
 ];
 
 export async function generateMetadata(): Promise<Metadata> {
-  const { study } = await fetchCarry();
+  const study = (await buildSafe("MLB carry", fetchCarry))?.study;
   return {
     title: `MLB Batted-Ball Carry ${study?.season ?? ""}`.trim(),
     description:
@@ -117,7 +119,18 @@ function yearPairs(hitters: CarryHitterRow[]) {
 }
 
 export default async function MlbCarryPage() {
-  const { study, hitters, minors, updatedAt } = await fetchCarry();
+  // A failed read throws so ISR keeps the last good page, except during the
+  // build (see buildSafe).
+  const carry = await buildSafe("MLB carry", fetchCarry);
+  if (!carry) {
+    return (
+      <PageShell>
+        <PageTitle>Carry</PageTitle>
+        <Notice role="status">The carry study is temporarily unavailable.</Notice>
+      </PageShell>
+    );
+  }
+  const { study, hitters, minors, updatedAt } = carry;
   if (!study) {
     return (
       <PageShell>

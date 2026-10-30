@@ -1,5 +1,7 @@
 import { PageDescription, PageHeader, PageShell, PageTitle } from "@/components/page-layout";
 import type { Metadata } from "next";
+import { Notice } from "@/components/notice";
+import { buildSafe } from "@/lib/build-safe";
 import { supabaseCfb } from "@/lib/supabase";
 import { fetchLatestRatings, fetchTeams } from "@/lib/cfb";
 import { formatHomeLine, marketHomeLine } from "@/lib/football";
@@ -70,7 +72,9 @@ const NEUTRAL: ScheduleMarker = {
   note: "Neutral site: neither team is at home.",
 };
 
-export default async function SchedulePage() {
+// Every read the page needs; a failed read throws so ISR keeps the last good
+// page, except during the build (see buildSafe).
+async function loadSchedule() {
   const latestRes = await supabaseCfb
     .from("game_projections")
     .select("season, week")
@@ -79,19 +83,7 @@ export default async function SchedulePage() {
     .limit(1);
   if (latestRes.error) throw latestRes.error;
   const latest = latestRes.data?.[0];
-
-  if (!latest) {
-    return (
-      <PageShell>
-        <PageTitle>
-          College Football Schedule and Projections
-        </PageTitle>
-        <p className="text-muted-foreground">
-          No projections published yet. Run the publish pipeline to load them.
-        </p>
-      </PageShell>
-    );
-  }
+  if (!latest) return { latest: null };
 
   const [projRes, teams, { ratings }] = await Promise.all([
     supabaseCfb
@@ -104,12 +96,7 @@ export default async function SchedulePage() {
     fetchTeams(),
     fetchLatestRatings(),
   ]);
-
   if (projRes.error) throw projRes.error;
-
-  // Ratings arrive sorted by power_rating desc, so position is the D1 rank,
-  // the same number the ratings page shows.
-  const rankByTeam = new Map(ratings.map((r, i) => [r.team_id, i + 1]));
 
   const games = (projRes.data ?? []) as CfbGameProjection[];
   const gameIds = games.map((game) => game.game_id);
@@ -132,27 +119,56 @@ export default async function SchedulePage() {
       ];
   if (marketRes.error) throw marketRes.error;
   if (pickRes.error) throw pickRes.error;
+  return {
+    latest,
+    games,
+    teams,
+    ratings,
+    markets: (marketRes.data ?? []) as CfbMarketComparison[],
+    pickRows: (pickRes.data ?? []) as CfbPick[],
+  };
+}
+
+export default async function SchedulePage() {
+  const read = await buildSafe("CFB schedule", loadSchedule);
+  if (!read) {
+    return (
+      <PageShell>
+        <PageTitle>
+          College Football Schedule and Projections
+        </PageTitle>
+        <Notice role="status">Projections are temporarily unavailable.</Notice>
+      </PageShell>
+    );
+  }
+  if (read.latest === null) {
+    return (
+      <PageShell>
+        <PageTitle>
+          College Football Schedule and Projections
+        </PageTitle>
+        <p className="text-muted-foreground">
+          No projections published yet. Run the publish pipeline to load them.
+        </p>
+      </PageShell>
+    );
+  }
+  const { latest, games, teams, ratings, markets, pickRows } = read;
+
+  // Ratings arrive sorted by power_rating desc, so position is the D1 rank,
+  // the same number the ratings page shows.
+  const rankByTeam = new Map(ratings.map((r, i) => [r.team_id, i + 1]));
   const fbsGameCount = games.filter(isFbs).length;
-  const marketByGame = new Map(
-    ((marketRes.data ?? []) as CfbMarketComparison[]).map((m) => [
-      m.game_id,
-      m,
-    ]),
-  );
+  const marketByGame = new Map(markets.map((m) => [m.game_id, m]));
   const lastUpdated = games[0]?.as_of ?? null;
   const picks = new Map(
-    (pickRes.data ?? []).map((pick: CfbPick) => [
-      `${pick.game_id}-${pick.market}`,
-      pick,
-    ]),
+    pickRows.map((pick) => [`${pick.game_id}-${pick.market}`, pick]),
   );
   function pickCell(gameId: number, market: string) {
     const pick = picks.get(`${gameId}-${market}`);
     if (!pick)
       return (
-        <span className="text-xs text-muted-foreground">
-          {pickRes.error ? "Unavailable" : "Not recorded"}
-        </span>
+        <span className="text-xs text-muted-foreground">Not recorded</span>
       );
     return (
       <div

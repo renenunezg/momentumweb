@@ -1,5 +1,7 @@
 import { PageDescription, PageHeader, PageShell, PageTitle } from "@/components/page-layout";
 import type { Metadata } from "next";
+import { Notice } from "@/components/notice";
+import { buildSafe } from "@/lib/build-safe";
 import { supabaseNfl } from "@/lib/supabase";
 import { fetchLatestRatings, fetchTeams } from "@/lib/nfl";
 import { formatHomeLine, marketHomeLine } from "@/lib/football";
@@ -57,7 +59,9 @@ function qbMarker(adjustment: number | null): ScheduleMarker | null {
   };
 }
 
-export default async function SchedulePage() {
+// Every read the page needs; a failed read throws so ISR keeps the last good
+// page, except during the build (see buildSafe).
+async function loadSchedule() {
   const latestRes = await supabaseNfl
     .from("game_projections")
     .select("season, week")
@@ -66,17 +70,7 @@ export default async function SchedulePage() {
     .limit(1);
   if (latestRes.error) throw latestRes.error;
   const latest = latestRes.data?.[0];
-
-  if (!latest) {
-    return (
-      <PageShell>
-        <PageTitle>NFL Schedule and Projections</PageTitle>
-        <p className="text-muted-foreground">
-          No projections published yet. Run the publish pipeline to load them.
-        </p>
-      </PageShell>
-    );
-  }
+  if (!latest) return { latest: null };
 
   const [projRes, marketRes, totalRes, teams, { ratings }] = await Promise.all([
     supabaseNfl
@@ -98,23 +92,46 @@ export default async function SchedulePage() {
     fetchTeams(),
     fetchLatestRatings(),
   ]);
-
   const readError = projRes.error ?? marketRes.error ?? totalRes.error;
   if (readError) throw readError;
+  return {
+    latest,
+    games: (projRes.data ?? []) as NflGameProjection[],
+    markets: (marketRes.data ?? []) as NflMarketComparison[],
+    totals: totalRes.data ?? [],
+    teams,
+    ratings,
+  };
+}
+
+export default async function SchedulePage() {
+  const read = await buildSafe("NFL schedule", loadSchedule);
+  if (!read) {
+    return (
+      <PageShell>
+        <PageTitle>NFL Schedule and Projections</PageTitle>
+        <Notice role="status">Projections are temporarily unavailable.</Notice>
+      </PageShell>
+    );
+  }
+  if (read.latest === null) {
+    return (
+      <PageShell>
+        <PageTitle>NFL Schedule and Projections</PageTitle>
+        <p className="text-muted-foreground">
+          No projections published yet. Run the publish pipeline to load them.
+        </p>
+      </PageShell>
+    );
+  }
+  const { latest, games, markets, totals, teams, ratings } = read;
 
   // Ratings arrive sorted by power_rating desc, so position is the league
   // rank, the same number the ratings page shows.
   const rankByTeam = new Map(ratings.map((r, i) => [r.team_abbr, i + 1]));
-
-  const games = (projRes.data ?? []) as NflGameProjection[];
-  const marketByGame = new Map(
-    ((marketRes.data ?? []) as NflMarketComparison[]).map((m) => [
-      m.game_id,
-      m,
-    ])
-  );
+  const marketByGame = new Map(markets.map((m) => [m.game_id, m]));
   const marketTotalByGame = new Map(
-    (totalRes.data ?? []).map((row) => [row.game_id, row.market_total])
+    totals.map((row) => [row.game_id, row.market_total])
   );
   const lastUpdated = games[0]?.as_of ?? null;
 

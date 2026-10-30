@@ -2,6 +2,7 @@ import { PageDescription, PageHeader, PageShell, PageTitle } from "@/components/
 import type { Metadata } from "next";
 import { TableOfContents } from "./toc";
 import { MethodologyContent } from "./methodology-content";
+import { buildSafe } from "@/lib/build-safe";
 import { fetchCfbPickExample } from "@/lib/football-pick-example";
 import { supabaseCfb } from "@/lib/supabase";
 
@@ -13,12 +14,19 @@ export const metadata: Metadata = {
 };
 
 export default async function Page() {
-  const [example, backtestVersion] = await Promise.all([
-    fetchCfbPickExample(),
-    // The backtest table carries its model version on every row; one row names it.
-    supabaseCfb.from("backtest_predictions").select("model_version").limit(1).maybeSingle(),
-  ]);
-  if (backtestVersion.error) throw backtestVersion.error;
+  // A failed read throws so ISR keeps the last good page, except during the
+  // build (see buildSafe), where the text renders without its example.
+  const read = await buildSafe("CFB methodology", async () => {
+    const [example, backtestVersion] = await Promise.all([
+      fetchCfbPickExample(),
+      // The backtest table carries its model version on every row; one row names it.
+      supabaseCfb.from("backtest_predictions").select("model_version").limit(1).maybeSingle(),
+    ]);
+    if (backtestVersion.error) throw backtestVersion.error;
+    return { example, backtestVersion: backtestVersion.data?.model_version ?? null };
+  });
+  const example = read?.example ?? null;
+  const backtestVersion = read?.backtestVersion ?? null;
   return (
     <PageShell>
       <PageHeader>
@@ -34,7 +42,7 @@ export default async function Page() {
 
       <div className="lg:grid lg:grid-cols-[180px_1fr] lg:gap-8">
         <TableOfContents />
-        <MethodologyContent example={example} backtestVersion={backtestVersion.data?.model_version ?? null} />
+        <MethodologyContent example={example} backtestVersion={backtestVersion} />
       </div>
     </PageShell>
   );
