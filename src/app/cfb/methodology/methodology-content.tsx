@@ -609,8 +609,10 @@ export function MethodologyContent({ example, backtestVersion }: { example: Pick
           </p>
           <p>
             Every prediction records the exact line, price, book and decision time, then
-            settles at that contract at a flat one unit, along with the CFBD median
-            closing line. A decision can be replaced until kickoff by a newer model
+            settles at that contract at a flat one unit, along with the closing line:
+            the provider median captured before kickoff where the kickoff capture
+            ran, otherwise the CFBD median recorded after the game, each labeled
+            by its source. A decision can be replaced until kickoff by a newer model
             or policy, with the original archived; line movement alone never
             changes one, and after kickoff the database refuses edits. The price
             is the best of nine bookmakers in The Odds API feed, several offshore.

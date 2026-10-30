@@ -38,6 +38,28 @@ export interface FootballLivePerformance {
   latestKickoff: string | null;
   // A failed read is reported as such; an empty season is a different state.
   unavailable: boolean;
+  // Graded games per closing_source behind the market columns, so a close
+  // captured before kickoff is never pooled silently with a provider's
+  // post-game value. Null until the model repo publishes the split.
+  closingSources?: Record<string, number> | null;
+}
+
+// Each sport's closing_lines row names its feed in closing_source; the two
+// football repos spell the Odds API median differently.
+const CLOSING_SOURCE_LABELS: Record<string, string> = {
+  "odds_api:median": "Odds API median captured before kickoff",
+  odds_api_median: "Odds API median captured before kickoff",
+  "espn:draftkings": "ESPN DraftKings quote captured before kickoff",
+  nflverse: "nflverse schedule value recorded after the game",
+  cfbd_lines_median: "CFBD provider median recorded after the game",
+};
+
+export function describeClosingSources(sources: Record<string, number>): string {
+  return Object.entries(sources)
+    .filter(([, games]) => games > 0)
+    .sort((a, b) => b[1] - a[1])
+    .map(([source, games]) => `${games} from the ${CLOSING_SOURCE_LABELS[source] ?? source}`)
+    .join(", ");
 }
 
 export interface FootballPerformanceCopy {

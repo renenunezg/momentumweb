@@ -153,6 +153,7 @@ export interface CfbLivePerformance {
   lastGradedAt: string | null;
   latestKickoff: string | null;
   unavailable: boolean;
+  closingSources: Record<string, number> | null;
 }
 
 // Live-season grading for the most recent graded season. Every number here
@@ -165,6 +166,7 @@ export async function fetchLivePerformance(): Promise<CfbLivePerformance> {
     lastGradedAt: null,
     latestKickoff: null,
     unavailable: false,
+    closingSources: null,
   };
   const latestRes = await supabaseCfb
     .from("graded_games")
@@ -197,12 +199,21 @@ export async function fetchLivePerformance(): Promise<CfbLivePerformance> {
     console.error("cfb performance metrics fetch failed:", readError.message);
     return { ...empty, unavailable: true };
   }
+  const metrics = (metricsRes.data ?? []) as CfbPerformanceMetric[];
+  // The grading run writes the split on the overall published row.
+  const split = metrics.find(
+    (m) => m.segment_kind === "overall" && m.prediction_source === "market_informed",
+  )?.closing_source_games;
   return {
     season: latest.season,
-    metrics: (metricsRes.data ?? []) as CfbPerformanceMetric[],
+    metrics,
     lastGradedAt: latest.graded_at,
     latestKickoff: kickoffRes.data?.[0]?.start_date ?? null,
     unavailable: false,
+    closingSources:
+      split != null && typeof split === "object" && !Array.isArray(split)
+        ? (split as Record<string, number>)
+        : null,
   };
 }
 

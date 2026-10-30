@@ -2,6 +2,7 @@ import { formatSiteTimestamp } from "@/lib/site-time";
 import type { ReactNode } from "react";
 import { Notice } from "@/components/notice";
 import {
+  describeClosingSources,
   gapInterval,
   type FootballLivePerformance,
   type FootballPerformanceCopy,
@@ -233,6 +234,22 @@ export function FootballForecastPerformance({
                 tooltip="Share of results inside the published 80% range. Target: 80%. Much higher suggests overly wide ranges; much lower suggests overly narrow ranges."
               />
             </div>
+
+            <p className="max-w-4xl text-xs text-muted-foreground">
+              {live.closingSources && Object.values(live.closingSources).some((games) => games > 0) ? (
+                <>
+                  Closing-line feeds across the{" "}
+                  {Object.values(live.closingSources).reduce((sum, games) => sum + games, 0)} graded
+                  forecast and result pairs: {describeClosingSources(live.closingSources)}. A close captured
+                  before kickoff is one quote held in memory by the live worker
+                  and frozen when the game starts; a value recorded after the game
+                  is the provider&apos;s final number with no timestamp. Where both
+                  exist the captured close is used.
+                </>
+              ) : (
+                "Which closing-line feed stands behind each graded game is published with the next grading run."
+              )}
+            </p>
 
             {composition.length > 0 && (
               <p className="max-w-4xl text-xs text-muted-foreground">

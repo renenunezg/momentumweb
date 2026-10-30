@@ -39,7 +39,7 @@ const EXPORTS: { sport: string; items: { href: string; table: string; schema: st
         href: "/cfb/api/export/graded-games.csv",
         table: "graded_games",
         schema: "cfb",
-        recomputes: "Live forecast accuracy: the published and pure margins, the CFBD closing line and the final score of every graded game.",
+        recomputes: "Live forecast accuracy: the published and pure margins, the closing line with its source (captured before kickoff, or the CFBD median recorded after the game) and the final score of every graded game.",
       },
       {
         href: "/cfb/api/export/backtest.csv",
@@ -62,7 +62,7 @@ const EXPORTS: { sport: string; items: { href: string; table: string; schema: st
         href: "/nfl/api/export/graded-games.csv",
         table: "graded_games",
         schema: "nfl",
-        recomputes: "Live forecast accuracy: the published and pure margins, the nflverse closing line and the final score of every graded game.",
+        recomputes: "Live forecast accuracy: the published and pure margins, the closing line with its source (captured before kickoff, or the nflverse value recorded after the game) and the final score of every graded game.",
       },
       {
         href: "/nfl/api/export/backtest.csv",
@@ -83,6 +83,10 @@ const EXPORTS: { sport: string; items: { href: string; table: string; schema: st
 // Precomputed tables and functions the pages also read; they are public but
 // cannot be rebuilt from the exports above, so they are listed for reference.
 const ALSO_PUBLIC = [
+  { schema: "mlb", name: "closing_lines", kind: "table", note: "one closing quote per game, captured before first pitch, written once and frozen; same shape in cfb, nfl and nhl" },
+  { schema: "cfb", name: "closing_lines", kind: "table", note: "the kickoff capture's provider median per game, frozen once written" },
+  { schema: "nfl", name: "closing_lines", kind: "table", note: "the live worker's pre-kickoff close per game, frozen once written" },
+  { schema: "nhl", name: "closing_lines", kind: "table", note: "the last partner-book quote before puck drop per game, frozen once written" },
   { schema: "cfb", name: "performance_metrics", kind: "table", note: "live accuracy by prediction source and segment, computed by the model repo" },
   { schema: "nfl", name: "performance_metrics", kind: "table", note: "same contract as cfb.performance_metrics" },
   { schema: "nfl", name: "live_predictions", kind: "view", note: "the frozen forecast snapshot paired with each result" },

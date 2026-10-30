@@ -11,7 +11,7 @@ import { FootballForecastPerformance } from "@/components/football-forecast-perf
 
 const COPY = {
   closingLine:
-    "the closing spread from the CFBD lines feed (median across providers, the same definition as the backtest)",
+    "the closing spread (the Odds API provider median captured before kickoff where the kickoff capture ran, otherwise the CFBD provider median recorded after the game, which is also the backtest's definition)",
   cadence: "Live grading runs after each Monday refresh",
   seasonLabel: "live season",
   versions:

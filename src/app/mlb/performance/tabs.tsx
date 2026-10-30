@@ -74,6 +74,23 @@ function Section({ title, note, children }: { title: string; note?: ReactNode; c
 
 const KPI_ROW = "grid grid-cols-2 gap-x-6 gap-y-4 sm:flex sm:flex-wrap sm:gap-x-10";
 
+// The closing benchmark names the feed behind each game (the Odds API median
+// captured before first pitch, or ESPN's DraftKings quote when the budget
+// skipped the request), so the two feeds are never pooled silently.
+const CLOSING_FEED_LABELS: Record<string, string> = {
+  "odds_api:median": "Odds API median",
+  "espn:draftkings": "ESPN DraftKings quote",
+};
+
+function closingSourceNote(bySource: unknown): string {
+  if (bySource == null || typeof bySource !== "object" || Array.isArray(bySource)) return "";
+  const parts = Object.entries(bySource as Record<string, unknown>)
+    .filter((entry): entry is [string, number] => typeof entry[1] === "number" && entry[1] > 0)
+    .sort((a, b) => b[1] - a[1])
+    .map(([source, games]) => `${games} from the ${CLOSING_FEED_LABELS[source] ?? source}`);
+  return parts.length > 0 ? ` Captured closes: ${parts.join(", ")}, each one quote frozen at first pitch.` : "";
+}
+
 // Lower Brier is better, so a gap interval above zero means the market won.
 function brierGapVerdict(lo: number | null | undefined, hi: number | null | undefined): string {
   if (lo == null || hi == null) return "no interval";
@@ -206,8 +223,8 @@ export function PerformanceTabs({
                 <KpiCard
                   label="Market Brier"
                   value={formatNumber(latest.market_brier, 3)}
-                  sub={`${latest.paired_games ?? 0} paired games`}
-                  tooltip="Brier of the de-vigged pregame moneyline on the same games, scored the same way. The model's Brier on those paired games is shown beside it."
+                  sub={`${latest.paired_games ?? 0} paired games, pregame price`}
+                  tooltip="Brier of the de-vigged moneyline the forecast was priced at, usually the morning line, on the same games and scored the same way. The model's Brier on those paired games is shown beside it."
                 />
               )}
               {latest?.market_brier != null && latest.paired_brier != null && (
@@ -215,7 +232,23 @@ export function PerformanceTabs({
                   label="Model vs market"
                   value={describeGap(latest.paired_brier - latest.market_brier, latest.brier_vs_market_ci95_low, latest.brier_vs_market_ci95_high, 4).text}
                   sub={brierGapVerdict(latest.brier_vs_market_ci95_low, latest.brier_vs_market_ci95_high)}
-                  tooltip="Model Brier minus market Brier on the paired games; negative means the model scored better. The range is a 95 percent bootstrap interval."
+                  tooltip="Model Brier minus pregame-market Brier on the paired games; negative means the model scored better. The range is a 95 percent bootstrap interval."
+                />
+              )}
+              {latest?.closing_market_brier != null && (
+                <KpiCard
+                  label="Closing Brier"
+                  value={formatNumber(latest.closing_market_brier, 3)}
+                  sub={`${latest.closing_paired_games ?? 0} games with a captured close`}
+                  tooltip="Brier of the de-vigged moneyline captured at first pitch, on the games that have one. A different, smaller population than the pregame-price benchmark."
+                />
+              )}
+              {latest?.closing_market_brier != null && latest.closing_paired_brier != null && (
+                <KpiCard
+                  label="Model vs close"
+                  value={describeGap(latest.closing_paired_brier - latest.closing_market_brier, latest.brier_vs_closing_ci95_low, latest.brier_vs_closing_ci95_high, 4).text}
+                  sub={brierGapVerdict(latest.brier_vs_closing_ci95_low, latest.brier_vs_closing_ci95_high)}
+                  tooltip="Model Brier minus closing-market Brier on the games with a captured close; negative means the model scored better. The range is a 95 percent bootstrap interval."
                 />
               )}
               <KpiCard
@@ -246,6 +279,8 @@ export function PerformanceTabs({
                 : " Completed games with no stored forecast or an even 50/50 probability are not counted."}
               {latest?.late_forecast_games != null && latest.late_forecast_games > 0 && ` ${latest.late_forecast_games} games whose forecast was written after first pitch stay in the record and are flagged in the export.`}
               {latest?.market_brier == null && " The coin flip is the only reference shown; a market baseline on the same games is not published yet."}
+              {latest?.market_brier != null && latest.closing_market_brier == null && " The market baseline is the pregame price the forecast was priced at, usually the morning line, not a closing line; a closing benchmark from one quote captured at first pitch starts with the 2027 season."}
+              {latest?.closing_market_brier != null && closingSourceNote(latest.closing_games_by_source)}
               {" "}
               <a href="/mlb/api/export/predictions.csv" className="underline underline-offset-4">Download the graded predictions (CSV)</a>.
             </p>

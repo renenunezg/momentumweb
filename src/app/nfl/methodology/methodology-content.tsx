@@ -35,8 +35,10 @@ export function MethodologyContent({ example }: { example: PickExample | null })
           adjustment, an offseason prior, and a capped blend toward the
           sportsbook market that sets the published line, total, projected scores
           and team ratings. The pure and blended lines are both graded against
-          the closing spread, and predictions go into a frozen ledger at a flat one
-          unit.
+          the closing spread: one quote captured before kickoff by the live worker
+          where it held one, otherwise the nflverse schedule value recorded after
+          the game, each labeled by its source. Predictions go into a frozen
+          ledger at a flat one unit.
         </p>
       </Section>
 

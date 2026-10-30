@@ -17,7 +17,7 @@ import { formatNumber, formatSigned } from "@/lib/utils";
 
 const COPY = {
   closingLine:
-    "the closing spread from the nflverse schedule (the same definition as the backtest)",
+    "the closing spread (the Odds API median or ESPN's DraftKings quote captured before kickoff where the live worker held one, otherwise the nflverse schedule value recorded after the game, which is also the backtest's definition)",
   cadence: "Live grading runs after each refresh",
   seasonLabel: "first live season",
   versions:

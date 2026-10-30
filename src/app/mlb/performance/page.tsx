@@ -39,6 +39,8 @@ const EVALUATION_COLUMNS = [
   "scored_games", "excluded_games", "late_forecast_games",
   "paired_games", "paired_brier", "market_brier", "market_log_loss",
   "brier_vs_market_ci95_low", "brier_vs_market_ci95_high",
+  "closing_paired_games", "closing_paired_brier", "closing_market_brier", "closing_market_log_loss",
+  "brier_vs_closing_ci95_low", "brier_vs_closing_ci95_high", "closing_games_by_source",
 ].join(", ");
 const EVALUATION_PAGE = 1000;
 

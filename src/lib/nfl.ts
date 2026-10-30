@@ -141,6 +141,9 @@ export async function fetchForecastAccuracy(source: "live" | "backtest") {
     completed: number;
     missingForecast: number;
     missingClose: number;
+    // Benchmarked games per closing_source: a close captured before kickoff
+    // or the nflverse value recorded after the game.
+    closingSources: Record<string, number>;
     primarySource: "pure_model" | "published";
     modelVersion: string | null;
     generatedAt: string | null;
@@ -204,7 +207,7 @@ export async function fetchNflLivePerformance(): Promise<FootballLivePerformance
   const latest = latestRes.data?.[0];
   if (!latest) return empty;
 
-  const [metricsRes, kickoffRes] = await Promise.all([
+  const [metricsRes, kickoffRes, closingSources] = await Promise.all([
     supabaseNfl
       .from("performance_metrics")
       .select("*")
@@ -216,6 +219,14 @@ export async function fetchNflLivePerformance(): Promise<FootballLivePerformance
       .eq("season", latest.season)
       .order("start_date", { ascending: false })
       .limit(1),
+    // The split lives on the accuracy function, not the metrics table; a
+    // failed read leaves it unpublished rather than taking the page down.
+    fetchForecastAccuracy("live")
+      .then((accuracy) => accuracy.closingSources ?? null)
+      .catch((error: unknown) => {
+        console.error("nfl forecast accuracy fetch failed:", error instanceof Error ? error.message : "read failed");
+        return null;
+      }),
   ]);
   const readError = metricsRes.error ?? kickoffRes.error;
   if (readError) {
@@ -228,6 +239,7 @@ export async function fetchNflLivePerformance(): Promise<FootballLivePerformance
     lastGradedAt: latest.graded_at,
     latestKickoff: kickoffRes.data?.[0]?.start_date ?? null,
     unavailable: false,
+    closingSources,
   };
 }
 
