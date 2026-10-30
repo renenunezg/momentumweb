@@ -37,6 +37,13 @@ export interface RatingChange<T> {
   value: (row: T) => number | null | undefined;
 }
 
+// A signed points gap against the market, in the table's last column.
+export interface RatingGap<T> {
+  label: string;
+  title: string;
+  value: (row: T) => number | null | undefined;
+}
+
 export interface MarketStrength {
   rating: number | null | undefined;
   sd: number | null | undefined;
@@ -74,8 +81,8 @@ export function PowerRatingsTable<T extends PowerRatingRow>({
   caption,
   group,
   overallRank,
-  showSd = false,
   market,
+  gap,
   tag,
   limited,
   searchRows,
@@ -89,8 +96,8 @@ export function PowerRatingsTable<T extends PowerRatingRow>({
   caption: string;
   group?: { label: string; value: (row: T) => string | null };
   overallRank?: { label: string; value: (row: T) => number | undefined };
-  showSd?: boolean;
   market?: (row: T) => MarketStrength;
+  gap?: RatingGap<T>;
   tag?: (row: T) => ReactNode;
   limited: LimitedDataRule;
   searchRows?: T[];
@@ -99,10 +106,17 @@ export function PowerRatingsTable<T extends PowerRatingRow>({
 }) {
   const [detail, setDetail] = useState<T | null>(null);
   const { query, setQuery, matches, total } = useRatingsSearch(rows, searchRows);
-  const gapOf = (row: T) => {
-    const strength = market?.(row).rating;
-    return strength == null ? null : row.power_rating - strength;
-  };
+  const gapColumn = useMemo<RatingGap<T> | undefined>(
+    () => gap ?? (market && {
+      label: "Model − market",
+      title: "Model rating minus market-implied strength, in points. A disagreement, not a game edge.",
+      value: (row) => {
+        const strength = market(row).rating;
+        return strength == null ? null : row.power_rating - strength;
+      },
+    }),
+    [gap, market],
+  );
   const scales = useMemo(() => {
     const model = heatmapRows.map((r) => r.power_rating);
     const marketValues = heatmapRows.map((r) => market?.(r).rating);
@@ -116,14 +130,9 @@ export function PowerRatingsTable<T extends PowerRatingRow>({
       offense: heat(heatmapRows.map((r) => r.offense_points)),
       defense: heat(heatmapRows.map((r) => r.defense_points)),
       change: change ? sharedExtent([heatmapRows.map(change.value)], 0.95) : 0,
-      gap: market
-        ? sharedExtent([heatmapRows.map((r) => {
-            const strength = market(r).rating;
-            return strength == null ? null : r.power_rating - strength;
-          })], 0.95)
-        : 0,
+      gap: gapColumn ? sharedExtent([heatmapRows.map(gapColumn.value)], 0.95) : 0,
     };
-  }, [heatmapRows, market, change]);
+  }, [heatmapRows, market, gapColumn, change]);
   // A badge on every row singles out nobody: whole tiers (all of FCS today)
   // run on reduced inputs, so say it once above the table instead.
   const allLimited = rows.length > 0 && rows.every(limited.isLimited);
@@ -163,18 +172,15 @@ export function PowerRatingsTable<T extends PowerRatingRow>({
               {market && <TableHead className={value}>Market</TableHead>}
               <TableHead className={value}>Offense</TableHead>
               <TableHead className={value}>Defense</TableHead>
-              {showSd && !market && (
-                <TableHead className="hidden text-right sm:table-cell">SD</TableHead>
-              )}
               {change && (
                 <TableHead className="text-right">
                   <abbr title={change.label} className="no-underline">{change.short}</abbr>
                 </TableHead>
               )}
-              {market && (
+              {gapColumn && (
                 <TableHead className="pr-3 text-right">
-                  <abbr title="Model rating minus market-implied strength, in points. A disagreement, not a game edge." className="no-underline">
-                    Model − market
+                  <abbr title={gapColumn.title} className="no-underline">
+                    {gapColumn.label}
                   </abbr>
                 </TableHead>
               )}
@@ -226,19 +232,14 @@ export function PowerRatingsTable<T extends PowerRatingRow>({
                 <TableCell className={value}>
                   <HeatValue style={scales.defense(row.defense_points)}>{formatNumber(row.defense_points)}</HeatValue>
                 </TableCell>
-                {showSd && !market && (
-                  <TableCell className="hidden text-right tabular-nums text-muted-foreground sm:table-cell">
-                    {formatNumber(row.power_rating_sd)}
-                  </TableCell>
-                )}
                 {change && (
                   <TableCell className="text-right">
                     <SignedBar value={change.value(row)} extent={scales.change} tone="semantic" />
                   </TableCell>
                 )}
-                {market && (
+                {gapColumn && (
                   <TableCell className="pr-3 text-right">
-                    <SignedBar value={gapOf(row)} extent={scales.gap} tone="neutral" />
+                    <SignedBar value={gapColumn.value(row)} extent={scales.gap} tone="neutral" />
                   </TableCell>
                 )}
               </TableRow>

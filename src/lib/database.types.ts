@@ -5813,6 +5813,8 @@ export type Database = {
           division: string | null
           expected_drives: number | null
           forecast_alignment_points: number | null
+          market_rating: number | null
+          market_rating_games: number | null
           missing_input_count: number | null
           model_version: string
           offense_points: number | null
@@ -5831,6 +5833,8 @@ export type Database = {
           division?: string | null
           expected_drives?: number | null
           forecast_alignment_points?: number | null
+          market_rating?: number | null
+          market_rating_games?: number | null
           missing_input_count?: number | null
           model_version: string
           offense_points?: number | null
@@ -5849,6 +5853,8 @@ export type Database = {
           division?: string | null
           expected_drives?: number | null
           forecast_alignment_points?: number | null
+          market_rating?: number | null
+          market_rating_games?: number | null
           missing_input_count?: number | null
           model_version?: string
           offense_points?: number | null

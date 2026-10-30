@@ -1,3 +1,4 @@
+import { formatNumber } from "@/lib/utils";
 import { PageDescription, PageHeader, PageShell, PageTitle } from "@/components/page-layout";
 import type { Metadata } from "next";
 import {
@@ -47,6 +48,10 @@ export default async function RatingsPage() {
   }
 
   const lastUpdated = ratings[0]?.as_of ?? null;
+  const sds = ratings.flatMap((r) => r.power_rating_sd ?? []);
+  const typicalSd = sds.length
+    ? sds.reduce((sum, sd) => sum + sd, 0) / sds.length
+    : null;
   const weekLabel =
     season != null && week != null ? `${season} · Week ${week}` : "";
 
@@ -88,7 +93,14 @@ export default async function RatingsPage() {
 
       <p className="text-xs text-muted-foreground">
         Off and Def are points per game above an average opponent; Rating is
-        their sum. SD is the model&apos;s uncertainty about the rating.
+        their sum. Pure − market is the fitted model rating, before the market
+        blend, minus market-implied strength from earlier closing spreads.
+        {typicalSd != null && (
+          <>
+            {" "}A team&apos;s rating carries about {formatNumber(typicalSd)}{" "}
+            points of uncertainty (one standard deviation).
+          </>
+        )}
         {prior.week != null && (
           <>
             {" "}Chg is the change in rating since the week {prior.week}{" "}

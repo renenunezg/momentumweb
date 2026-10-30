@@ -13,6 +13,7 @@ import {
   PowerRatingsTable,
   type LimitedDataRule,
   type RatingChange,
+  type RatingGap,
 } from "@/components/power-ratings-table";
 import {
   FootballTeamComparison,
@@ -41,6 +42,16 @@ const LIMITED: LimitedDataRule = {
 };
 
 const rowKey = (r: { team_abbr: string }) => r.team_abbr;
+
+const PURE_MINUS_MARKET: RatingGap<NflTeamRating> = {
+  label: "Pure − market",
+  title:
+    "Fitted model rating, before the market blend, minus market-implied strength from earlier closing spreads, in points. A disagreement, not a game edge.",
+  value: (r) =>
+    r.market_rating == null
+      ? null
+      : r.power_rating - (r.forecast_alignment_points ?? 0) - r.market_rating,
+};
 
 export default function NflRatings({
   ratings,
@@ -85,6 +96,11 @@ export default function NflRatings({
           },
     [prior]
   );
+
+  // Weeks published before the market rating existed have nothing to show.
+  const gap = ratings.some((r) => r.market_rating != null)
+    ? PURE_MINUS_MARKET
+    : undefined;
 
   const visible = useMemo(() => {
     if (view === "afc" || view === "nfc")
@@ -139,6 +155,7 @@ export default function NflRatings({
             initialGroup={initialDivision}
             onSelect={selectDivision}
             limited={LIMITED}
+            gap={gap}
             change={change}
           />
         ) : view === "units" ? (
@@ -167,8 +184,8 @@ export default function NflRatings({
             logo={logo}
             caption={`${VIEWS.find((v) => v.key === view)?.label} power ratings`}
             group={{ label: "Division", value: (r) => r.division }}
-            showSd
             limited={LIMITED}
+            gap={gap}
             change={change}
           />
         )}

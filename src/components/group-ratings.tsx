@@ -10,6 +10,7 @@ import {
   type MarketStrength,
   type PowerRatingRow,
   type RatingChange,
+  type RatingGap,
 } from "@/components/power-ratings-table";
 
 interface Group<T> {
@@ -35,6 +36,7 @@ export function GroupRatings<T extends PowerRatingRow>({
   onSelect,
   limited,
   market,
+  gap,
   change,
 }: {
   ratings: T[];
@@ -49,6 +51,7 @@ export function GroupRatings<T extends PowerRatingRow>({
   onSelect: (name: string) => void;
   limited: LimitedDataRule;
   market?: (row: T) => MarketStrength;
+  gap?: RatingGap<T>;
   change?: RatingChange<T>;
 }) {
   const { groups, overallRank } = useMemo(() => {
@@ -131,6 +134,7 @@ export function GroupRatings<T extends PowerRatingRow>({
           }}
           limited={limited}
           market={market}
+          gap={gap}
           change={change}
         />
       </section>
