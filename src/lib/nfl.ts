@@ -1,4 +1,5 @@
 import { cache } from "react";
+import { buildSafe } from "@/lib/build-safe";
 import { supabaseNfl } from "@/lib/supabase";
 import type { FootballLivePerformance } from "@/lib/football-performance";
 import {
@@ -37,37 +38,42 @@ export async function fetchTeams(): Promise<Map<string, NflTeamIdentity>> {
 }
 
 // The published ratings artifact for the latest (season, week).
-// Cached per request: generateMetadata and the page both read it.
+// Cached per request: generateMetadata and the page both read it. A failed
+// read throws so ISR keeps the last good page, except during the build (see
+// buildSafe), where the pages render their unpublished state.
 export const fetchLatestRatings = cache(
-  async (): Promise<{
-    ratings: NflTeamRating[];
-    season: number | null;
-    week: number | null;
-  }> => {
-    const latestRes = await supabaseNfl
-      .from("team_ratings")
-      .select("season, week")
-      .order("season", { ascending: false })
-      .order("week", { ascending: false })
-      .limit(1);
-    if (latestRes.error) throw latestRes.error;
-    const latest = latestRes.data?.[0];
-    if (!latest) return { ratings: [], season: null, week: null };
-
-    const ratingsRes = await supabaseNfl
-      .from("team_ratings")
-      .select("*")
-      .eq("season", latest.season)
-      .eq("week", latest.week)
-      .order("power_rating", { ascending: false });
-    if (ratingsRes.error) throw ratingsRes.error;
-    return {
-      ratings: (ratingsRes.data ?? []) as NflTeamRating[],
-      season: latest.season,
-      week: latest.week,
-    };
-  },
+  async () =>
+    (await buildSafe("NFL ratings", readLatestRatings)) ?? { ratings: [], season: null, week: null },
 );
+
+async function readLatestRatings(): Promise<{
+  ratings: NflTeamRating[];
+  season: number | null;
+  week: number | null;
+}> {
+  const latestRes = await supabaseNfl
+    .from("team_ratings")
+    .select("season, week")
+    .order("season", { ascending: false })
+    .order("week", { ascending: false })
+    .limit(1);
+  if (latestRes.error) throw latestRes.error;
+  const latest = latestRes.data?.[0];
+  if (!latest) return { ratings: [], season: null, week: null };
+
+  const ratingsRes = await supabaseNfl
+    .from("team_ratings")
+    .select("*")
+    .eq("season", latest.season)
+    .eq("week", latest.week)
+    .order("power_rating", { ascending: false });
+  if (ratingsRes.error) throw ratingsRes.error;
+  return {
+    ratings: (ratingsRes.data ?? []) as NflTeamRating[],
+    season: latest.season,
+    week: latest.week,
+  };
+}
 
 // Model ratings from the most recent earlier week of the same season, keyed by
 // team_abbr, for the weekly change column. Week 1 has nothing to compare
@@ -280,7 +286,13 @@ export async function fetchNflPlayerTraitRows(season: number, ids: string[]): Pr
   });
 }
 
-export const fetchNflPositionGrades = cache(async (): Promise<PositionGrades> => {
+// The grade index and trait rows throw on a failed read so ISR keeps the last
+// good page, except during the build (see buildSafe).
+export const fetchNflPositionGrades = cache(
+  async () => (await buildSafe("NFL position grades", readNflPositionGrades)) ?? EMPTY_GRADES,
+);
+
+async function readNflPositionGrades(): Promise<PositionGrades> {
   const latestRes = await supabaseNfl
     .from("position_traits")
     .select("season, week, as_of, model_version")
@@ -306,4 +318,4 @@ export const fetchNflPositionGrades = cache(async (): Promise<PositionGrades> =>
     details,
     gradedCounts,
   };
-});
+}

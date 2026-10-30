@@ -1,4 +1,5 @@
 import { cache } from "react";
+import { buildSafe } from "@/lib/build-safe";
 import {
   EMPTY_GRADES,
   ID_CHUNK,
@@ -42,12 +43,19 @@ export async function fetchTeams(): Promise<Map<number, CfbTeamIdentity>> {
 }
 
 // The published ratings artifact for the latest (season, week).
-// Cached per request: generateMetadata and the page both read it.
-export const fetchLatestRatings = cache(async (): Promise<{
+// Cached per request: generateMetadata and the page both read it. A failed
+// read throws so ISR keeps the last good page, except during the build (see
+// buildSafe), where the pages render their unpublished state.
+export const fetchLatestRatings = cache(
+  async () =>
+    (await buildSafe("CFB ratings", readLatestRatings)) ?? { ratings: [], season: null, week: null },
+);
+
+async function readLatestRatings(): Promise<{
   ratings: CfbTeamRating[];
   season: number | null;
   week: number | null;
-}> => {
+}> {
   const latestRes = await supabaseCfb
     .from("team_ratings")
     .select("season, week")
@@ -70,7 +78,7 @@ export const fetchLatestRatings = cache(async (): Promise<{
     season: latest.season,
     week: latest.week,
   };
-});
+}
 
 // Model ratings from the most recent earlier week of the same season, keyed by
 // team_id, for the weekly change column. Week 1 has nothing to compare against
@@ -387,7 +395,13 @@ export async function fetchPlayerTraitRows(season: number, ids: string[]): Promi
   });
 }
 
-export const fetchPositionGrades = cache(async (): Promise<CfbPositionGrades> => {
+// The grade index and trait rows throw on a failed read so ISR keeps the last
+// good page, except during the build (see buildSafe).
+export const fetchPositionGrades = cache(
+  async () => (await buildSafe("CFB position grades", readPositionGrades)) ?? EMPTY_GRADES,
+);
+
+async function readPositionGrades(): Promise<CfbPositionGrades> {
   const latestRes = await supabaseCfb
     .from("position_traits")
     .select("season, week, as_of, model_version")
@@ -413,4 +427,4 @@ export const fetchPositionGrades = cache(async (): Promise<CfbPositionGrades> =>
     details,
     gradedCounts,
   };
-});
+}
