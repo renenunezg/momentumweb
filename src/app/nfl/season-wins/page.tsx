@@ -1,5 +1,6 @@
 import { PageDescription, PageHeader, PageShell, PageTitle } from "@/components/page-layout";
 import type { Metadata } from "next";
+import { keepLastGood } from "@/lib/build-safe";
 import { fetchSeasonWinTotals, fetchTeams } from "@/lib/nfl";
 import { LastUpdated } from "@/components/last-updated";
 import { SeasonWinsTable } from "@/components/season-wins-table";
@@ -24,6 +25,7 @@ export default async function SeasonWinsPage() {
     fetchSeasonWinTotals(),
     fetchTeams(),
   ]);
+  keepLastGood("NFL season wins", unavailable);
   const first = rows[0];
   if (!first)
     return (

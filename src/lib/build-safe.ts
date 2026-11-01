@@ -1,7 +1,7 @@
 // ISR keeps the last good page when a regeneration read throws, so pages that
 // need a complete snapshot let the throw through at runtime. During
 // `next build` there is no last good page and the throw fails the whole
-// deploy: the anon role's 3-second statement timeout trips when the build's
+// deploy: the anon role's 8-second statement timeout trips when the build's
 // prerenders land on the database together. The build therefore renders the
 // page's unavailable state instead, and the first revalidation fills it in.
 const BUILDING = process.env.NEXT_PHASE === "phase-production-build";
@@ -14,4 +14,11 @@ export async function buildSafe<T>(label: string, read: () => Promise<T>): Promi
     console.error(`${label} build read failed:`, error instanceof Error ? error.message : "read failed");
     return null;
   }
+}
+
+// For readers that report a failure instead of throwing. An ISR page that
+// rendered the failure would cache its unavailable state for the hour and serve
+// it once more while the next visit regenerates, so the render throws instead.
+export function keepLastGood(label: string, failed: unknown): void {
+  if (failed && !BUILDING) throw new Error(`${label} read failed`);
 }

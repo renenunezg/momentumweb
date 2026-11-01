@@ -268,17 +268,23 @@ const TRAJECTORY_PLAYERS = 8;
 const BOARD_ROWS = 25;
 
 // The latest weekly snapshot of player value with the Heisman board built on
-// it. Every number is a frozen backend artifact; the page only formats them,
-// and any failure degrades to the empty state rather than failing the build.
-export const fetchHeismanTracker = cache(async (): Promise<CfbHeismanTracker> => {
+// it. Every number is a frozen backend artifact; the page only formats them. A
+// failed read throws so ISR keeps the last good page, except during the build
+// (see buildSafe), where the page renders its empty state.
+export const fetchHeismanTracker = cache(
+  async () => (await buildSafe("CFB Heisman tracker", readHeismanTracker)) ?? EMPTY_TRACKER,
+);
+
+async function readHeismanTracker(): Promise<CfbHeismanTracker> {
   const latestRes = await supabaseCfb
     .from("player_values")
     .select("season, week, as_of")
     .order("season", { ascending: false })
     .order("week", { ascending: false })
     .limit(1);
+  if (latestRes.error) throw latestRes.error;
   const latest = latestRes.data?.[0];
-  if (latestRes.error || !latest) return EMPTY_TRACKER;
+  if (!latest) return EMPTY_TRACKER;
 
   const [valuesRes, boardWeekRes, historyRes, metaRes] = await Promise.all([
     supabaseCfb
@@ -305,10 +311,7 @@ export const fetchHeismanTracker = cache(async (): Promise<CfbHeismanTracker> =>
       .limit(1),
   ]);
   const firstError = valuesRes.error ?? boardWeekRes.error ?? historyRes.error ?? metaRes.error;
-  if (firstError) {
-    console.error("cfb heisman tracker fetch failed:", firstError.message);
-    return EMPTY_TRACKER;
-  }
+  if (firstError) throw firstError;
   const values = (valuesRes.data ?? []) as CfbPlayerValue[];
   const boardWeek = boardWeekRes.data?.[0]?.week ?? null;
 
@@ -332,10 +335,7 @@ export const fetchHeismanTracker = cache(async (): Promise<CfbHeismanTracker> =>
   ]);
 
   const secondError = trajectoryRes.error ?? boardRes.error;
-  if (secondError) {
-    console.error("cfb heisman tracker fetch failed:", secondError.message);
-    return EMPTY_TRACKER;
-  }
+  if (secondError) throw secondError;
   return {
     season: latest.season,
     week: latest.week,
@@ -347,7 +347,7 @@ export const fetchHeismanTracker = cache(async (): Promise<CfbHeismanTracker> =>
     history: (historyRes.data ?? []) as CfbHeismanHistory[],
     meta: ((metaRes.data ?? [])[0] as CfbPlayerModelMeta | undefined) ?? null,
   };
-});
+}
 
 // Player grades: the latest published week of cfb.position_traits. The page
 // reads a compact index of every graded player (for search and filters), the

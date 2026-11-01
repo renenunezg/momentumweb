@@ -4,6 +4,7 @@ import { Notice } from "@/components/notice";
 import Link from "next/link";
 import { LastUpdated } from "@/components/last-updated";
 import { WeeklyFootballPredictions } from "@/components/weekly-football-predictions";
+import { keepLastGood } from "@/lib/build-safe";
 import { fetchCfbWeeklyPredictions, weeklyGames } from "@/lib/cfb-picks";
 
 export const revalidate = 3600;
@@ -16,6 +17,7 @@ export const metadata: Metadata = {
 export default async function PredictionsPage() {
   const { season, week, schedule, decisions, unavailable } =
     await fetchCfbWeeklyPredictions();
+  keepLastGood("CFB predictions", unavailable);
   const updated = decisions.reduce<string | null>(
     (latest, row) =>
       !latest || row.decision_at > latest ? row.decision_at : latest,

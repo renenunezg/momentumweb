@@ -9,6 +9,7 @@ import type {
 } from "@/lib/types";
 import { aggregateLedger } from "@/lib/betting-aggs";
 import { fetchFullBetLedger } from "@/lib/bet-ledger";
+import { keepLastGood } from "@/lib/build-safe";
 import { PerformanceTabs } from "./tabs";
 import { LastUpdated } from "@/components/last-updated";
 import { PlayerModelPerformance } from "@/components/player-model-performance";
@@ -99,6 +100,7 @@ export default async function PerformancePage() {
   const readError =
     evalRes.error ?? calRes.error ?? edgeRes.error ?? residRes.error ?? latestRes.error ?? sigmasRes.error;
   if (readError) console.error("MLB performance read failed:", readError.message);
+  keepLastGood("MLB performance", readError || ledger === null);
   const evaluations = evalRes.data ?? [];
   const lastUpdated: string | null = latestRes.data?.[0]?.created_at ?? null;
   const calibration = (calRes.data ?? []) as CalibrationBin[];

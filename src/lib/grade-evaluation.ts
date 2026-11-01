@@ -1,4 +1,5 @@
 import { cache } from "react";
+import { buildSafe } from "@/lib/build-safe";
 import { supabase, supabaseCfb, supabaseNfl } from "@/lib/supabase";
 export { describeGap } from "@/lib/utils";
 import type { Tables } from "@/lib/database-schema";
@@ -102,22 +103,20 @@ export const FORWARD_SYSTEM_LABELS: Record<ForwardSystem | ForwardSnapshotSystem
 
 // mlb.player_value_evaluation is a view over the model row that exposes only
 // the published evaluation block; the fitted weights on the row stay private.
-// A missing view or block degrades to "not published" rather than failing the
-// performance page.
+// A missing block reads as "not published"; a failed read throws so ISR keeps
+// the last good page, except during the build (see buildSafe).
 export const fetchMlbForwardEvaluation = cache(
-  async (modelVersion: string): Promise<{ forward: ForwardEvaluation; fittedAt: string | null } | null> => {
-    const { data, error } = await supabase
-      .from("player_value_evaluation")
-      .select("model_version, fitted_at, forward")
-      .eq("model_version", modelVersion)
-      .maybeSingle();
-    if (error) {
-      console.error("player_value_evaluation unavailable:", error.message);
-      return null;
-    }
-    const forward = data?.forward;
-    return forward && typeof forward === "object"
-      ? { forward: forward as unknown as ForwardEvaluation, fittedAt: data?.fitted_at ?? null }
-      : null;
-  },
+  (modelVersion: string): Promise<{ forward: ForwardEvaluation; fittedAt: string | null } | null> =>
+    buildSafe("MLB forward evaluation", async () => {
+      const { data, error } = await supabase
+        .from("player_value_evaluation")
+        .select("model_version, fitted_at, forward")
+        .eq("model_version", modelVersion)
+        .maybeSingle();
+      if (error) throw error;
+      const forward = data?.forward;
+      return forward && typeof forward === "object"
+        ? { forward: forward as unknown as ForwardEvaluation, fittedAt: data?.fitted_at ?? null }
+        : null;
+    }),
 );

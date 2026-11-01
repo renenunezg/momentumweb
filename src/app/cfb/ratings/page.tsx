@@ -6,6 +6,7 @@ import {
   fetchTeams,
   fetchUnitRatings,
 } from "@/lib/cfb";
+import { keepLastGood } from "@/lib/build-safe";
 import { fetchComparisonProjections } from "@/lib/football-comparison.server";
 import { LastUpdated } from "@/components/last-updated";
 import CfbRatings from "@/components/cfb-ratings";
@@ -34,6 +35,7 @@ export default async function RatingsPage() {
           fetchPriorWeekRatings(season, week),
         ])
       : [[], { games: [], unavailable: false }, { week: null, ratings: {} }];
+  keepLastGood("CFB ratings projections", projections.unavailable);
 
   if (ratings.length === 0) {
     return (

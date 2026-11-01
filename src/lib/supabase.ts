@@ -36,20 +36,23 @@ export const supabase = createClient<Database, "mlb">(url, anonKey, {
 // every pipeline write) expires dependent reads, so the hour is a safety net.
 // Mutations bypass the cache.
 export const CACHE_SECONDS = 3600;
+const RETRY_TIMEOUT_MS = 10_000;
 
 function cachedPublicFetch(sport: string): typeof fetch {
-  return (input, init) => {
+  return async (input, init) => {
     const method = (init?.method ?? "GET").toUpperCase();
     const restRead =
       typeof window === "undefined" &&
       method === "GET" &&
       String(input).startsWith(`${url}/rest/v1/`);
-    return fetch(
-      input,
-      restRead
-        ? { ...init, next: { revalidate: CACHE_SECONDS, tags: restCacheTags(sport, new URL(String(input))) } }
-        : init,
-    );
+    if (!restRead) return fetch(input, init);
+    const options = { ...init, next: { revalidate: CACHE_SECONDS, tags: restCacheTags(sport, new URL(String(input))) } };
+    const response = await fetch(input, options);
+    if (response.status < 500) return response;
+    // A statement timeout on the Nano instance usually passes, so a read gets
+    // one more try. The signal keeps React from answering the retry with the
+    // failed response it memoized for this render.
+    return fetch(input, { ...options, signal: AbortSignal.timeout(RETRY_TIMEOUT_MS) });
   };
 }
 

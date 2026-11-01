@@ -27,7 +27,8 @@ const range = (seasons: string) => seasons.replace("-", "–");
 // evaluation block on the live model row.
 const fetchMlbForward = cache(async () => {
   const current = await supabase.from("player_values").select("model_version").limit(1).maybeSingle();
-  if (current.error || !current.data?.model_version) return null;
+  if (current.error) throw current.error;
+  if (!current.data?.model_version) return null;
   return (await fetchMlbForwardEvaluation(current.data.model_version))?.forward ?? null;
 });
 
@@ -226,15 +227,9 @@ async function nhlForecastRow(): Promise<ComparisonRow[]> {
   return [forecastRow("nhl", "Log loss", model, market, 3, 0.02, `${latest.market_n} games with a close${season}`)];
 }
 
-// A failed source drops its rows rather than failing the page.
 export async function fetchComparisons(): Promise<ComparisonRow[]> {
   const parts = await Promise.all(
-    [mlbRows, nflQbRows, cfbForecastRow, nflForecastRow, nhlForecastRow].map((load) =>
-      load().catch((error: unknown) => {
-        console.error("home comparison unavailable:", error instanceof Error ? error.message : error);
-        return [];
-      }),
-    ),
+    [mlbRows, nflQbRows, cfbForecastRow, nflForecastRow, nhlForecastRow].map((load) => load()),
   );
   return parts.flat();
 }
@@ -257,10 +252,7 @@ const byPosition = (a: PositionGap, b: PositionGap) =>
 // Both sports answer the same question: does this season's grade rank next
 // season's EPA credit better than this season's EPA credit does?
 export async function fetchPositionGaps(): Promise<{ nfl: PositionGaps | null; cfb: PositionGaps | null }> {
-  const [nflRows, cfbRows] = await Promise.all([
-    fetchNflGradeEvaluation().catch(() => []),
-    fetchCfbGradeValidation().catch(() => []),
-  ]);
+  const [nflRows, cfbRows] = await Promise.all([fetchNflGradeEvaluation(), fetchCfbGradeValidation()]);
   const nfl = nflRows.filter((r) => r.evaluation === "next_season" && r.sample_set === "development_cv"
     && r.baseline === "epa_credit" && r.difference != null);
   const cfb = cfbRows.filter((r) => r.eval_kind === "next_season" && r.diff_grade_minus_epa != null);
@@ -322,7 +314,8 @@ export async function fetchCarryPuzzle(): Promise<CarryPuzzle | null> {
     .order("season", { ascending: false })
     .limit(1)
     .maybeSingle();
-  if (study.error || !study.data) return null;
+  if (study.error) throw study.error;
+  if (!study.data) return null;
   const balls = study.data.balls as unknown as PuzzleBall[] | null;
   const share = Number(study.data.share);
   // The pipeline lists the two best-carrying hitters' balls, then the two worst (worst first).
@@ -334,7 +327,7 @@ export async function fetchCarryPuzzle(): Promise<CarryPuzzle | null> {
     .select("player_id, player_name, team")
     .eq("season", study.data.season)
     .in("player_id", [long.player_id, short.player_id]);
-  if (names.error) return null;
+  if (names.error) throw names.error;
   const who = new Map(names.data.map((h) => [h.player_id, h]));
   const ball = (b: PuzzleBall): CarryBall | null => {
     const hitter = who.get(b.player_id);
@@ -372,23 +365,23 @@ function rank<T>(rows: T[], rating: (row: T) => number, build: (row: T) => Omit<
 }
 
 async function logos<K extends string | number>(
-  query: PromiseLike<{ data: ({ logo_light: string | null; logo_dark: string | null } & Record<string, unknown>)[] | null }>,
+  query: PromiseLike<{
+    data: ({ logo_light: string | null; logo_dark: string | null } & Record<string, unknown>)[] | null;
+    error: { message: string } | null;
+  }>,
   key: string,
 ): Promise<Map<K, TeamLogoSource>> {
-  const { data } = await query;
+  const { data, error } = await query;
+  if (error) throw new Error(error.message);
   return new Map((data ?? []).map((t) => [t[key] as K, t]));
 }
 
 export async function fetchHomeRatings(): Promise<{ cfb: LeagueRatings | null; nfl: LeagueRatings | null; nhl: LeagueRatings | null }> {
-  const [cfb, nfl, nhl] = await Promise.all([
-    fetchCfbRatings().catch(() => null),
-    fetchNflRatings().catch(() => null),
-    fetchNhlRatings().catch(() => null),
-  ]);
-  const fbs = cfb?.ratings.filter((r) => r.classification === "fbs") ?? [];
+  const [cfb, nfl, nhl] = await Promise.all([fetchCfbRatings(), fetchNflRatings(), fetchNhlRatings()]);
+  const fbs = cfb.ratings.filter((r) => r.classification === "fbs");
   const cfbTop = fbs.slice(0, SHOWN);
-  const nflTop = nfl?.ratings.slice(0, SHOWN) ?? [];
-  const nhlTop = nhl?.ratings.slice(0, SHOWN) ?? [];
+  const nflTop = nfl.ratings.slice(0, SHOWN);
+  const nhlTop = nhl.ratings.slice(0, SHOWN);
   const [cfbLogos, nflLogos, nhlLogos] = await Promise.all([
     logos<number>(supabaseCfb.from("teams").select("team_id, logo_light, logo_dark").in("team_id", cfbTop.map((r) => r.team_id)), "team_id"),
     logos<string>(supabaseNfl.from("teams").select("team_abbr, logo_light, logo_dark").in("team_abbr", nflTop.map((r) => r.team_abbr)), "team_abbr"),
@@ -396,19 +389,19 @@ export async function fetchHomeRatings(): Promise<{ cfb: LeagueRatings | null; n
   ]);
   const asOf = (date: string) => new Date(`${date}T12:00:00Z`).toLocaleDateString("en-US", { month: "short", day: "numeric", timeZone: "UTC" });
   return {
-    cfb: fbs.length && cfb ? {
+    cfb: fbs.length ? {
       period: `Points better than average on a neutral field | ${cfb.season} week ${cfb.week} | ${fbs.length} FBS teams`,
       digits: 1,
       teams: rank(fbs, (r) => r.power_rating, (r) => ({ key: String(r.team_id), team: r.team, rating: r.power_rating, offense: r.offense_points, defense: r.defense_points }))
         .map((t, i) => ({ ...t, logo: cfbLogos.get(cfbTop[i].team_id) })),
     } : null,
-    nfl: nflTop.length && nfl ? {
+    nfl: nflTop.length ? {
       period: `Points better than average on a neutral field | ${nfl.season} week ${nfl.week}`,
       digits: 1,
       teams: rank(nfl.ratings, (r) => r.power_rating, (r) => ({ key: r.team_abbr, team: r.team, rating: r.power_rating, offense: r.offense_points, defense: r.defense_points }))
         .map((t, i) => ({ ...t, logo: nflLogos.get(nflTop[i].team_abbr) })),
     } : null,
-    nhl: nhlTop.length && nhl?.asOf ? {
+    nhl: nhlTop.length && nhl.asOf ? {
       period: `Attack minus defense strength, home and away, 0 is average | ${asOf(nhl.asOf)}`,
       digits: 2,
       teams: rank(nhl.ratings, (r) => r.rating, (r) => ({ key: r.team_abbr, team: r.team, rating: r.rating, offense: null, defense: null }))

@@ -1,4 +1,5 @@
 import { cache } from "react";
+import { buildSafe } from "@/lib/build-safe";
 import { quotesAtForecast } from "@/lib/nhl-quote-history";
 import { supabaseNhl } from "@/lib/supabase";
 import type {
@@ -20,32 +21,29 @@ export async function fetchTeams(): Promise<Map<string, NhlTeamIdentity>> {
   return new Map((data ?? []).map((t) => [t.team_abbr, t]));
 }
 
-// The latest published ratings day, sorted by rating.
+// The latest published ratings day, sorted by rating. A failed read throws so
+// ISR keeps the last good page, except during the build (see buildSafe).
 export const fetchLatestRatings = cache(
-  async (): Promise<{ ratings: NhlTeamRating[]; asOf: string | null }> => {
-    const latestRes = await supabaseNhl
-      .from("team_ratings")
-      .select("as_of")
-      .order("as_of", { ascending: false })
-      .limit(1);
-    if (latestRes.error) {
-      console.error("nhl ratings fetch failed:", latestRes.error.message);
-      return { ratings: [], asOf: null };
-    }
-    const asOf = latestRes.data?.[0]?.as_of;
-    if (!asOf) return { ratings: [], asOf: null };
-    const { data, error } = await supabaseNhl
-      .from("team_ratings")
-      .select("*")
-      .eq("as_of", asOf)
-      .order("rating", { ascending: false });
-    if (error) {
-      console.error("nhl ratings fetch failed:", error.message);
-      return { ratings: [], asOf };
-    }
-    return { ratings: data ?? [], asOf };
-  },
+  async () => (await buildSafe("NHL ratings", readLatestRatings)) ?? { ratings: [], asOf: null },
 );
+
+async function readLatestRatings(): Promise<{ ratings: NhlTeamRating[]; asOf: string | null }> {
+  const latestRes = await supabaseNhl
+    .from("team_ratings")
+    .select("as_of")
+    .order("as_of", { ascending: false })
+    .limit(1);
+  if (latestRes.error) throw latestRes.error;
+  const asOf = latestRes.data?.[0]?.as_of;
+  if (!asOf) return { ratings: [], asOf: null };
+  const { data, error } = await supabaseNhl
+    .from("team_ratings")
+    .select("*")
+    .eq("as_of", asOf)
+    .order("rating", { ascending: false });
+  if (error) throw error;
+  return { ratings: data ?? [], asOf };
+}
 
 export async function fetchProjections(
   from: string,

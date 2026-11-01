@@ -4,6 +4,7 @@ import { Notice } from "@/components/notice";
 import Link from "next/link";
 import { LastUpdated } from "@/components/last-updated";
 import { WeeklyFootballPredictions } from "@/components/weekly-football-predictions";
+import { keepLastGood } from "@/lib/build-safe";
 import { teamBadge, weeklyGames, WEEKLY_PICK_COLUMNS, type WeeklyGame } from "@/lib/football-picks";
 import { fetchTeams } from "@/lib/nfl";
 import { supabaseNfl } from "@/lib/supabase";
@@ -37,6 +38,7 @@ export default async function PredictionsPage() {
         .order("market", { ascending: true })
     : null;
   const unavailable = Boolean(latestResult.error || result?.error);
+  keepLastGood("NFL predictions", unavailable);
   const decisions = result?.data ?? [];
   const updated = decisions.reduce<string | null>(
     (latest, row) =>

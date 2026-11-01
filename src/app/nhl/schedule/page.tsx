@@ -15,6 +15,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
+import { keepLastGood } from "@/lib/build-safe";
 import { SITE_TIME_ZONE, siteDate, zonedDayRange } from "@/lib/daily-picks";
 import {
   bestMoneyline,
@@ -51,6 +52,7 @@ export default async function SchedulePage() {
     fetchTeams(),
     fetchNhlDecisions(from, to),
   ]);
+  keepLastGood("NHL schedule", unavailable || decisionsRes.unavailable);
   const snapshots = await fetchLatestSnapshots(games.map((g) => g.game_id));
   const picks = new Map<string, string[]>();
   for (const d of decisionsRes.decisions)

@@ -9,6 +9,7 @@ import { CarryFigure, PositionGapFigure, SystemComparisonFigure } from "@/compon
 import { HomePowerRatings } from "@/components/home-power-ratings";
 import { HomeTabs } from "@/components/home-tabs";
 import { DailyPicks } from "@/components/daily-picks";
+import { buildSafe, keepLastGood } from "@/lib/build-safe";
 import { SITE_TIME_ZONE, siteDate } from "@/lib/daily-picks";
 import { fetchDailyPicks } from "@/lib/daily-picks-fetch";
 import {
@@ -23,8 +24,9 @@ import { SITE_DESCRIPTION, SITE_NAME, SITE_URL, SOCIAL_LINKS } from "@/lib/site"
 
 export const revalidate = 3600;
 
-// Each section reads only what it shows and degrades on its own: home should
-// never 500 because one published table is unreachable.
+// Each section reads only what it shows. A failed read keeps the last good page
+// (see buildSafe); only a build with no last good page shows a section as
+// unavailable.
 
 function Unavailable({ what }: { what: string }) {
   return <p className="type-meta text-muted-foreground">{what} is temporarily unavailable.</p>;
@@ -52,6 +54,7 @@ const listJoin = (items: string[]) =>
 async function TodayPredictions() {
   const today = siteDate();
   const sports = await fetchDailyPicks(today);
+  keepLastGood("Home predictions", sports.some((sport) => sport.unavailable));
   const dateLabel = new Date(`${today}T12:00:00Z`).toLocaleDateString("en-US", {
     timeZone: SITE_TIME_ZONE,
     weekday: "long",
@@ -62,7 +65,7 @@ async function TodayPredictions() {
 }
 
 async function LeadStudy() {
-  const lead = await fetchMlbLead().catch(() => null);
+  const lead = await buildSafe("Home MLB comparison", fetchMlbLead);
   if (!lead) return <Unavailable what="The MLB grade comparison" />;
   const first = Math.min(...lead.seasons);
   const last = Math.max(...lead.seasons);
@@ -92,8 +95,8 @@ async function LeadStudy() {
 }
 
 async function Comparisons() {
-  const rows = await fetchComparisons();
-  if (rows.length === 0) return <Unavailable what="The model comparison table" />;
+  const rows = await buildSafe("Home comparisons", fetchComparisons);
+  if (!rows?.length) return <Unavailable what="The model comparison table" />;
   return <HomeComparisons rows={rows} />;
 }
 
@@ -101,7 +104,7 @@ const shortDate = (date: string) =>
   new Date(`${date}T12:00:00Z`).toLocaleDateString("en-US", { month: "short", day: "numeric", timeZone: "UTC" });
 
 async function CarryEntry() {
-  const puzzle = await fetchCarryPuzzle().catch(() => null);
+  const puzzle = await buildSafe("Home carry study", fetchCarryPuzzle);
   if (!puzzle) return <Unavailable what="The carry study" />;
   const { long, short } = puzzle;
   const ball = (b: typeof long) =>
@@ -125,10 +128,10 @@ async function CarryEntry() {
 }
 
 async function PositionGrades() {
-  const { nfl, cfb } = await fetchPositionGaps();
+  const gaps = await buildSafe("Home position grades", fetchPositionGaps);
   const panels = [
-    nfl && { key: "nfl", label: "NFL", gaps: nfl, href: "/nfl/players" },
-    cfb && { key: "cfb", label: "CFB", gaps: cfb, href: "/cfb/players" },
+    gaps?.nfl && { key: "nfl", label: "NFL", gaps: gaps.nfl, href: "/nfl/players" },
+    gaps?.cfb && { key: "cfb", label: "CFB", gaps: gaps.cfb, href: "/cfb/players" },
   ].filter((p) => p != null);
   if (panels.length === 0) return <Unavailable what="The position grade evaluation" />;
   return (
@@ -157,9 +160,9 @@ async function PositionGrades() {
 }
 
 async function PowerRatings() {
-  const ratings = await fetchHomeRatings();
+  const ratings = await buildSafe("Home ratings", fetchHomeRatings);
   const panels = (["cfb", "nfl", "nhl"] as const).flatMap((sport) => {
-    const league = ratings[sport];
+    const league = ratings?.[sport];
     return league
       ? [{
           key: sport,

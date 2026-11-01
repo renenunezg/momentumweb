@@ -6,7 +6,7 @@ import { seasonStatsLine, type SeasonStatsLine } from "@/lib/season-stats";
 // The player valuation tables, written nightly by mlbmodel. The page reads the
 // index once per hour and the detail (outlook, tip, traits) for the players a
 // visitor actually opens. The two jsonb blobs live in player_details so the
-// ordered index read stays within the anon role's three-second timeout.
+// ordered index read stays within the anon role's statement timeout.
 
 export type PlayerValueRow = Tables<"mlb", "player_values">;
 export type PlayerTraitRow = Tables<"mlb", "player_traits">;

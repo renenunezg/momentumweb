@@ -7,6 +7,7 @@ import {
   fetchTeams,
   fetchUnitRatings,
 } from "@/lib/nfl";
+import { keepLastGood } from "@/lib/build-safe";
 import { fetchComparisonProjections } from "@/lib/football-comparison.server";
 import { LastUpdated } from "@/components/last-updated";
 import NflRatings from "@/components/nfl-ratings";
@@ -35,6 +36,7 @@ export default async function RatingsPage() {
           fetchPriorWeekRatings(season, week),
         ])
       : [[], { games: [], unavailable: false }, { week: null, ratings: {} }];
+  keepLastGood("NFL ratings projections", projections.unavailable);
 
   if (ratings.length === 0) {
     return (
