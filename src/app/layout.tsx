@@ -3,6 +3,7 @@ import { Barlow } from "next/font/google";
 import Script from "next/script";
 import "./globals.css";
 import { SpeedInsights } from "@vercel/speed-insights/next";
+import { ResumeRefresh } from "@/components/resume-refresh";
 import { SiteAnalytics } from "@/components/site-analytics";
 import { ThemeProvider } from "@/components/theme-provider";
 import { SITE_DESCRIPTION, SITE_NAME, SITE_URL, TWITTER_HANDLE } from "@/lib/site";
@@ -76,6 +77,7 @@ export default function RootLayout({
           disableTransitionOnChange
         >
           <div className="flex min-w-0 flex-1 flex-col">{children}</div>
+          <ResumeRefresh />
           <SiteAnalytics />
           <SpeedInsights />
         </ThemeProvider>
