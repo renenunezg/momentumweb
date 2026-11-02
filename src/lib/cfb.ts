@@ -4,6 +4,7 @@ import {
   EMPTY_GRADES,
   ID_CHUNK,
   PAGE,
+  STATS_COLUMNS,
   buildGradedPlayers,
   chunk,
   rankIndex,
@@ -11,6 +12,7 @@ import {
   type GradedPlayer,
   type IndexRow,
   type PlayerIndexRow,
+  type PlayerSeasonStatsRow,
   type PositionGrades,
 } from "@/lib/position-grades";
 import { supabaseCfb } from "@/lib/supabase";
@@ -378,21 +380,29 @@ async function fetchGradeIndex(season: number): Promise<IndexRow[]> {
   }
 }
 
-export async function fetchPlayerTraitRows(season: number, ids: string[]): Promise<CfbPositionTrait[]> {
+// Each chunk reads its trait rows and its stat lines together; a player
+// without a stats row simply has no stat block.
+export async function fetchPlayerTraitRows(
+  season: number,
+  ids: string[]
+): Promise<{ traits: CfbPositionTrait[]; stats: PlayerSeasonStatsRow[] }> {
   const parts = await Promise.all(
     chunk(ids, ID_CHUNK).map((part) =>
-      supabaseCfb
-        .from("position_traits")
-        .select("*")
-        .eq("season", season)
-        .in("athlete_id", part)
-        .limit(PAGE)
+      Promise.all([
+        supabaseCfb.from("position_traits").select("*").eq("season", season).in("athlete_id", part).limit(PAGE),
+        supabaseCfb.from("player_season_stats").select(STATS_COLUMNS).eq("season", season).in("athlete_id", part).limit(ID_CHUNK),
+      ])
     )
   );
-  return parts.flatMap((res) => {
-    if (res.error) throw res.error;
-    return (res.data ?? []) as CfbPositionTrait[];
-  });
+  const traits: CfbPositionTrait[] = [];
+  const stats: PlayerSeasonStatsRow[] = [];
+  for (const [traitRes, statsRes] of parts) {
+    if (traitRes.error) throw traitRes.error;
+    if (statsRes.error) throw statsRes.error;
+    traits.push(...((traitRes.data ?? []) as CfbPositionTrait[]));
+    stats.push(...(statsRes.data ?? []));
+  }
+  return { traits, stats };
 }
 
 // The grade index and trait rows throw on a failed read so ISR keeps the last
@@ -417,7 +427,8 @@ async function readPositionGrades(): Promise<CfbPositionGrades> {
   const { index, topIds, gradedCounts } = rankIndex(
     gradeRows.map((row) => toIndexRow(row, conferenceOf.get(row.team ?? "") ?? null))
   );
-  const details = buildGradedPlayers(await fetchPlayerTraitRows(latest.season, topIds), []);
+  const { traits, stats } = await fetchPlayerTraitRows(latest.season, topIds);
+  const details = buildGradedPlayers(traits, stats);
   return {
     season: latest.season,
     week: latest.week,

@@ -926,6 +926,33 @@ export type Database = {
         }
         Relationships: []
       }
+      player_season_stats: {
+        Row: {
+          athlete_id: string
+          position_group: string
+          season: number
+          stats: number[]
+          updated_at: string
+          week: number
+        }
+        Insert: {
+          athlete_id: string
+          position_group: string
+          season: number
+          stats: number[]
+          updated_at?: string
+          week: number
+        }
+        Update: {
+          athlete_id?: string
+          position_group?: string
+          season?: number
+          stats?: number[]
+          updated_at?: string
+          week?: number
+        }
+        Relationships: []
+      }
       player_values: {
         Row: {
           adjusted_epa: number
