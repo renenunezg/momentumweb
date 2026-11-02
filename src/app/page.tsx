@@ -9,7 +9,7 @@ import { CarryFigure, PositionGapFigure, SystemComparisonFigure } from "@/compon
 import { HomePowerRatings } from "@/components/home-power-ratings";
 import { HomeTabs } from "@/components/home-tabs";
 import { DailyPicks } from "@/components/daily-picks";
-import { buildSafe, keepLastGood } from "@/lib/build-safe";
+import { keepLastGood } from "@/lib/keep-last-good";
 import { SITE_TIME_ZONE, siteDate } from "@/lib/daily-picks";
 import { fetchDailyPicks } from "@/lib/daily-picks-fetch";
 import {
@@ -24,9 +24,8 @@ import { SITE_DESCRIPTION, SITE_NAME, SITE_URL, SOCIAL_LINKS } from "@/lib/site"
 
 export const revalidate = 3600;
 
-// Each section reads only what it shows. A failed read keeps the last good page
-// (see buildSafe); only a build with no last good page shows a section as
-// unavailable.
+// Each section reads only what it shows. A failed read throws so ISR keeps the
+// last good page; a section with nothing published says it is unavailable.
 
 function Unavailable({ what }: { what: string }) {
   return <p className="type-meta text-muted-foreground">{what} is temporarily unavailable.</p>;
@@ -65,7 +64,7 @@ async function TodayPredictions() {
 }
 
 async function LeadStudy() {
-  const lead = await buildSafe("Home MLB comparison", fetchMlbLead);
+  const lead = await fetchMlbLead();
   if (!lead) return <Unavailable what="The MLB grade comparison" />;
   const first = Math.min(...lead.seasons);
   const last = Math.max(...lead.seasons);
@@ -95,7 +94,7 @@ async function LeadStudy() {
 }
 
 async function Comparisons() {
-  const rows = await buildSafe("Home comparisons", fetchComparisons);
+  const rows = await fetchComparisons();
   if (!rows?.length) return <Unavailable what="The model comparison table" />;
   return <HomeComparisons rows={rows} />;
 }
@@ -104,7 +103,7 @@ const shortDate = (date: string) =>
   new Date(`${date}T12:00:00Z`).toLocaleDateString("en-US", { month: "short", day: "numeric", timeZone: "UTC" });
 
 async function CarryEntry() {
-  const puzzle = await buildSafe("Home carry study", fetchCarryPuzzle);
+  const puzzle = await fetchCarryPuzzle();
   if (!puzzle) return <Unavailable what="The carry study" />;
   const { long, short } = puzzle;
   const ball = (b: typeof long) =>
@@ -128,7 +127,7 @@ async function CarryEntry() {
 }
 
 async function PositionGrades() {
-  const gaps = await buildSafe("Home position grades", fetchPositionGaps);
+  const gaps = await fetchPositionGaps();
   const panels = [
     gaps?.nfl && { key: "nfl", label: "NFL", gaps: gaps.nfl, href: "/nfl/players" },
     gaps?.cfb && { key: "cfb", label: "CFB", gaps: gaps.cfb, href: "/cfb/players" },
@@ -160,7 +159,7 @@ async function PositionGrades() {
 }
 
 async function PowerRatings() {
-  const ratings = await buildSafe("Home ratings", fetchHomeRatings);
+  const ratings = await fetchHomeRatings();
   const panels = (["cfb", "nfl", "nhl"] as const).flatMap((sport) => {
     const league = ratings?.[sport];
     return league

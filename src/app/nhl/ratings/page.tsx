@@ -5,7 +5,10 @@ import { NhlRatingsTable } from "@/components/nhl-ratings";
 import { fetchLatestRatings, fetchTeams } from "@/lib/nhl";
 import { formatDate } from "@/lib/utils";
 
-export const revalidate = 3600;
+// Every read here is expired by the revalidation webhook when its table is
+// published, and nothing on the page depends on the clock, so the week is only
+// a backstop.
+export const revalidate = 604800;
 
 export async function generateMetadata(): Promise<Metadata> {
   const { asOf } = await fetchLatestRatings();

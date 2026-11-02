@@ -283,8 +283,9 @@ async function MlbResults() {
     .select("model_version, model_fitted_at")
     .limit(1)
     .maybeSingle();
-  if (current.error || !current.data)
-    return <Unavailable failed={!!current.error} />;
+  // A failed read throws so the cached MLB performance page keeps its last good copy.
+  if (current.error) throw current.error;
+  if (!current.data) return <Unavailable failed={false} />;
   const report = MLB_PLAYER_EVALUATION;
   if (current.data.model_version !== report.modelVersion)
     return <Unavailable failed={false} />;

@@ -4,7 +4,10 @@ import { Trophy } from "lucide-react";
 import { MlbPlayoffEditions } from "@/components/mlb-playoff-editions";
 import { fetchPlayoffEditions } from "@/lib/mlb-playoffs.server";
 
-export const revalidate = 3600;
+// Every read here is expired by the revalidation webhook when its table is
+// published, and nothing on the page depends on the clock, so the week is only
+// a backstop.
+export const revalidate = 604800;
 export const metadata: Metadata = {
   title: "MLB Playoff Simulator",
   description:

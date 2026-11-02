@@ -1,6 +1,5 @@
 import { cache } from "react";
-import { buildSafe } from "@/lib/build-safe";
-import { supabaseNfl, supabaseNflGrades } from "@/lib/supabase";
+import { supabaseNfl } from "@/lib/supabase";
 import type { FootballLivePerformance } from "@/lib/football-performance";
 import {
   EMPTY_GRADES,
@@ -27,14 +26,11 @@ import type {
 } from "@/lib/types";
 
 // Team identity is keyed by team_abbr alone, so one fetch serves every table
-// on a page. A failure here must not take the page down: the tables degrade
-// to plain text without logos or team colors.
+// on a page. A failed read throws so ISR keeps the last good page rather than
+// caching tables without logos or team colors.
 export async function fetchTeams(): Promise<Map<string, NflTeamIdentity>> {
   const { data, error } = await supabaseNfl.from("teams").select("*");
-  if (error) {
-    console.error("nfl teams fetch failed:", error.message);
-    return new Map();
-  }
+  if (error) throw error;
   return new Map(
     ((data ?? []) as NflTeamIdentity[]).map((t) => [t.team_abbr, t]),
   );
@@ -42,12 +38,8 @@ export async function fetchTeams(): Promise<Map<string, NflTeamIdentity>> {
 
 // The published ratings artifact for the latest (season, week).
 // Cached per request: generateMetadata and the page both read it. A failed
-// read throws so ISR keeps the last good page, except during the build (see
-// buildSafe), where the pages render their unpublished state.
-export const fetchLatestRatings = cache(
-  async () =>
-    (await buildSafe("NFL ratings", readLatestRatings)) ?? { ratings: [], season: null, week: null },
-);
+// read throws so ISR keeps the last good page.
+export const fetchLatestRatings = cache(readLatestRatings);
 
 async function readLatestRatings(): Promise<{
   ratings: NflTeamRating[];
@@ -80,7 +72,7 @@ async function readLatestRatings(): Promise<{
 
 // Model ratings from the most recent earlier week of the same season, keyed by
 // team_abbr, for the weekly change column. Week 1 has nothing to compare
-// against and a failed read only hides the column.
+// against.
 export async function fetchPriorWeekRatings(
   season: number,
   week: number,
@@ -92,21 +84,16 @@ export async function fetchPriorWeekRatings(
     .lt("week", week)
     .order("week", { ascending: false })
     .limit(1);
+  if (priorRes.error) throw priorRes.error;
   const prior = priorRes.data?.[0];
-  if (priorRes.error || !prior) {
-    if (priorRes.error) console.error("nfl prior ratings fetch failed:", priorRes.error.message);
-    return { week: null, ratings: {} };
-  }
+  if (!prior) return { week: null, ratings: {} };
 
   const { data, error } = await supabaseNfl
     .from("team_ratings")
     .select("team_abbr, power_rating")
     .eq("season", season)
     .eq("week", prior.week);
-  if (error) {
-    console.error("nfl prior ratings fetch failed:", error.message);
-    return { week: null, ratings: {} };
-  }
+  if (error) throw error;
   return {
     week: prior.week,
     ratings: Object.fromEntries((data ?? []).map((r) => [r.team_abbr, r.power_rating])),
@@ -125,10 +112,7 @@ export async function fetchUnitRatings(
     .select("*")
     .eq("season", season)
     .eq("week", week);
-  if (error) {
-    console.error("nfl unit ratings fetch failed:", error.message);
-    return [];
-  }
+  if (error) throw error;
   return (data ?? []) as NflTeamUnitRating[];
 }
 
@@ -259,7 +243,7 @@ export async function fetchNflLivePerformance(): Promise<FootballLivePerformance
 async function fetchGradeIndex(season: number): Promise<IndexRow[]> {
   const rows: IndexRow[] = [];
   for (let from = 0; ; from += PAGE) {
-    const res = await supabaseNflGrades
+    const res = await supabaseNfl
       .from("position_traits")
       .select(INDEX_COLUMNS)
       .eq("season", season)
@@ -281,8 +265,8 @@ export async function fetchNflPlayerTraitRows(
   const parts = await Promise.all(
     chunk(ids, ID_CHUNK).map((part) =>
       Promise.all([
-        supabaseNflGrades.from("position_traits").select("*").eq("season", season).in("athlete_id", part).limit(PAGE),
-        supabaseNflGrades.from("player_season_stats").select(STATS_COLUMNS).eq("season", season).in("athlete_id", part).limit(ID_CHUNK),
+        supabaseNfl.from("position_traits").select("*").eq("season", season).in("athlete_id", part).limit(PAGE),
+        supabaseNfl.from("player_season_stats").select(STATS_COLUMNS).eq("season", season).in("athlete_id", part).limit(ID_CHUNK),
       ]),
     ),
   );
@@ -298,9 +282,9 @@ export async function fetchNflPlayerTraitRows(
 }
 
 // Each team's division in the season's latest ratings week, for the grade
-// filters. Read through the grades client so the page keeps its day window.
+// filters.
 async function fetchGradeDivisions(season: number): Promise<Map<string, string | null>> {
-  const weekRes = await supabaseNflGrades
+  const weekRes = await supabaseNfl
     .from("team_ratings")
     .select("week")
     .eq("season", season)
@@ -309,38 +293,33 @@ async function fetchGradeDivisions(season: number): Promise<Map<string, string |
   if (weekRes.error) throw weekRes.error;
   const week = weekRes.data?.[0]?.week;
   if (week == null) return new Map();
-  const res = await supabaseNflGrades.from("team_ratings").select("team_abbr, division").eq("season", season).eq("week", week);
+  const res = await supabaseNfl.from("team_ratings").select("team_abbr, division").eq("season", season).eq("week", week);
   if (res.error) throw res.error;
   return new Map((res.data ?? []).map((r) => [r.team_abbr, r.division] as const));
 }
 
-// Team logos for the grade cards, keyed by abbreviation like the trait rows,
-// through the grades client. A failure degrades to cards without logos.
+// Team logos for the grade cards, keyed by abbreviation like the trait rows.
 export async function fetchGradeTeams(): Promise<GradeTeam[]> {
-  const { data, error } = await supabaseNflGrades.from("teams").select("team_abbr, logo_light, logo_dark");
-  if (error) {
-    console.error("nfl grade teams fetch failed:", error.message);
-    return [];
-  }
+  const { data, error } = await supabaseNfl.from("teams").select("team_abbr, logo_light, logo_dark");
+  if (error) throw error;
   return (data ?? []).map((t) => ({ team: t.team_abbr, logo_light: t.logo_light, logo_dark: t.logo_dark }));
 }
 
 // The grade index and trait rows throw on a failed read so ISR keeps the last
-// good page, except during the build (see buildSafe).
-export const fetchNflPositionGrades = cache(
-  async () => (await buildSafe("NFL position grades", readNflPositionGrades)) ?? EMPTY_GRADES,
-);
+// good page.
+export const fetchNflPositionGrades = cache(readNflPositionGrades);
 
 async function readNflPositionGrades(): Promise<PositionGrades> {
-  const latestRes = await supabaseNflGrades
+  const latestRes = await supabaseNfl
     .from("position_traits")
     .select("season, week, as_of, model_version")
     .eq("trait", "grade")
     .order("season", { ascending: false })
     .order("week", { ascending: false })
     .limit(1);
+  if (latestRes.error) throw latestRes.error;
   const latest = latestRes.data?.[0];
-  if (latestRes.error || !latest) return EMPTY_GRADES;
+  if (!latest) return EMPTY_GRADES;
 
   const [gradeRows, divisionOf] = await Promise.all([fetchGradeIndex(latest.season), fetchGradeDivisions(latest.season)]);
   const { index, topIds, gradedCounts } = rankIndex(

@@ -1,13 +1,12 @@
 import { PageDescription, PageHeader, PageSection, PageShell, PageTitle } from "@/components/page-layout";
 import type { Metadata } from "next";
 import { AwardFavorites, AwardRace, AwardTrackRecord, GoldGloveField } from "@/components/mlb-awards";
-import { buildSafe } from "@/lib/build-safe";
 import { fetchAwards } from "@/lib/mlb-awards.server";
-import { Notice } from "@/components/notice";
 
-// Not a week: a deploy whose build read times out serves the unavailable state
-// until this timer runs out. An unchanged regeneration bills no ISR write.
-export const revalidate = 86400;
+// Every read here is expired by the revalidation webhook when its table is
+// published, and nothing on the page depends on the clock, so the week is only
+// a backstop.
+export const revalidate = 604800;
 export const metadata: Metadata = {
   title: "MLB Awards Forecast",
   description:
@@ -34,9 +33,7 @@ function Unavailable({ children }: { children: React.ReactNode }) {
 }
 
 export default async function MlbAwardsPage() {
-  const data = await buildSafe("MLB awards", fetchAwards);
-  if (!data) return <Unavailable><Notice role="status">Award forecasts are temporarily unavailable.</Notice></Unavailable>;
-  const { season, models, rows } = data;
+  const { season, models, rows } = await fetchAwards();
   if (season == null || rows.length === 0) return <Unavailable><p className="text-muted-foreground">No award forecasts have been published yet.</p></Unavailable>;
 
   const race = (award: string, league: string, position = "") =>

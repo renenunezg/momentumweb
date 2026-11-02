@@ -4,10 +4,13 @@ import { Notice } from "@/components/notice";
 import Link from "next/link";
 import { LastUpdated } from "@/components/last-updated";
 import { WeeklyFootballPredictions } from "@/components/weekly-football-predictions";
-import { keepLastGood } from "@/lib/build-safe";
+import { keepLastGood } from "@/lib/keep-last-good";
 import { fetchCfbWeeklyPredictions, weeklyGames } from "@/lib/cfb-picks";
 
-export const revalidate = 3600;
+// Every read here is expired by the revalidation webhook when its table is
+// published, and nothing on the page depends on the clock, so the week is only
+// a backstop.
+export const revalidate = 604800;
 export const metadata: Metadata = {
   title: "This Week's College Football Predictions",
   description:

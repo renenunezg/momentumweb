@@ -8,43 +8,31 @@ import {
 import { PlayerSectionTabs } from "@/components/player-section-tabs";
 import { LastUpdated } from "@/components/last-updated";
 import DraftWorkspace from "@/components/draft-workspace";
-import { Notice } from "@/components/notice";
-import { buildSafe } from "@/lib/build-safe";
 import { fetchDraft, fetchPlayerPage } from "@/lib/draft-server";
 import { fetchTeams as fetchNflTeams } from "@/lib/nfl";
-export const revalidate = 3600;
+// Every read here is expired by the revalidation webhook when its table is
+// published, and nothing on the page depends on the clock, so the week is only
+// a backstop.
+export const revalidate = 604800;
 export const metadata: Metadata = {
   title: "NFL Draft Board",
   description:
     "Explore an editable NFL mock draft, team priorities, current rosters, and college player performance.",
 };
 export default async function DraftPage() {
-  // An unavailable publication throws so ISR keeps the last good page, except
-  // during the build (see buildSafe).
-  const read = await buildSafe("NFL draft", async () => {
-    const [data, nflTeams] = await Promise.all([
-      fetchDraft("workspace"),
-      fetchNflTeams(),
-    ]);
-    const [initialPlayers, initialRoster] = data
-      ? await Promise.all([
-          fetchPlayerPage(data.board.season),
-          fetchDraft("roster", data.board.season).then((rows) =>
-            rows.filter((row) => row.team === data.board.picks[0].owner),
-          ),
-        ])
-      : [null, []];
-    return { data, nflTeams, initialPlayers, initialRoster };
-  });
-  if (!read) {
-    return (
-      <PageShell width="wide">
-        <PageTitle>NFL Draft</PageTitle>
-        <Notice role="status">The draft board is temporarily unavailable.</Notice>
-      </PageShell>
-    );
-  }
-  const { data, nflTeams, initialPlayers, initialRoster } = read;
+  // An unavailable publication throws so ISR keeps the last good page.
+  const [data, nflTeams] = await Promise.all([
+    fetchDraft("workspace"),
+    fetchNflTeams(),
+  ]);
+  const [initialPlayers, initialRoster] = data
+    ? await Promise.all([
+        fetchPlayerPage(data.board.season),
+        fetchDraft("roster", data.board.season).then((rows) =>
+          rows.filter((row) => row.team === data.board.picks[0].owner),
+        ),
+      ])
+    : [null, []];
   return (
     <PageShell width="wide">
       <PageHeader>

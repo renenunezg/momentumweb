@@ -15,7 +15,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { keepLastGood } from "@/lib/build-safe";
+import { keepLastGood } from "@/lib/keep-last-good";
 import { SITE_TIME_ZONE, siteDate, zonedDayRange } from "@/lib/daily-picks";
 import {
   bestMoneyline,

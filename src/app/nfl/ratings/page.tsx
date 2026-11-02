@@ -7,12 +7,15 @@ import {
   fetchTeams,
   fetchUnitRatings,
 } from "@/lib/nfl";
-import { keepLastGood } from "@/lib/build-safe";
+import { keepLastGood } from "@/lib/keep-last-good";
 import { fetchComparisonProjections } from "@/lib/football-comparison.server";
 import { LastUpdated } from "@/components/last-updated";
 import NflRatings from "@/components/nfl-ratings";
 
-export const revalidate = 3600;
+// Every read here is expired by the revalidation webhook when its table is
+// published, and nothing on the page depends on the clock, so the week is only
+// a backstop.
+export const revalidate = 604800;
 
 export async function generateMetadata(): Promise<Metadata> {
   const { season, week } = await fetchLatestRatings();

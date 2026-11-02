@@ -1,19 +1,20 @@
 import { PageDescription, PageHeader, PageShell, PageTitle } from "@/components/page-layout";
 import type { Metadata } from "next";
-import { buildSafe } from "@/lib/build-safe";
 import { fetchPlayerValues } from "@/lib/mlb-players";
 import { formatNumber } from "@/lib/utils";
 import { KpiCard } from "@/components/kpi-card";
 import { LastUpdated } from "@/components/last-updated";
-import { Notice } from "@/components/notice";
 import MlbPlayerValues from "@/components/mlb-player-values";
 import { GRADE_TIP, TRADE_VALUE_TIP, formatMillions } from "@/lib/player-values";
 
-export const revalidate = 3600;
+// Every read here is expired by the revalidation webhook when its table is
+// published, and nothing on the page depends on the clock, so the week is only
+// a backstop.
+export const revalidate = 604800;
 
 export async function generateMetadata(): Promise<Metadata> {
-  const values = await buildSafe("MLB player values", fetchPlayerValues);
-  const year = values?.season ?? new Date().getFullYear();
+  const values = await fetchPlayerValues();
+  const year = values.season ?? new Date().getFullYear();
   return {
     title: `MLB Player Values ${year}`,
     description: `A projected 20 to 80 grade, a trade value in dollars over control years, and this season's wins above replacement for every MLB 40-man player, built from skill measurements rather than box score totals.`,
@@ -21,18 +22,8 @@ export async function generateMetadata(): Promise<Metadata> {
 }
 
 export default async function MlbPlayersPage() {
-  // A failed read throws so ISR keeps the last good page, except during the
-  // build (see buildSafe).
-  const values = await buildSafe("MLB player values", fetchPlayerValues);
-  if (!values) {
-    return (
-      <PageShell>
-        <PageTitle>Player Values</PageTitle>
-        <Notice role="status">Player values are temporarily unavailable.</Notice>
-      </PageShell>
-    );
-  }
-  const { season, index } = values;
+  // A failed read throws so ISR keeps the last good page.
+  const { season, index, updatedAt } = await fetchPlayerValues();
 
   if (season == null || index.length === 0) {
     return (
@@ -56,7 +47,7 @@ export default async function MlbPlayersPage() {
             Projecting the {season} season
           </PageDescription>
         </div>
-        <LastUpdated timestamp={values.updatedAt} schedule="Updates nightly" />
+        <LastUpdated timestamp={updatedAt} schedule="Updates nightly" />
       </PageHeader>
 
       <p className="max-w-4xl text-sm text-muted-foreground leading-relaxed">

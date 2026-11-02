@@ -8,8 +8,10 @@ import { LastUpdated } from "@/components/last-updated";
 import PositionGrades from "@/components/position-grades";
 import { GRADE_TIP, WAR_TIP } from "@/lib/position-traits";
 
-// The grades change once a week; the webhook refreshes the page when they do.
-export const revalidate = 86400;
+// Every read here is expired by the revalidation webhook when its table is
+// published, and nothing on the page depends on the clock, so the week is only
+// a backstop.
+export const revalidate = 604800;
 
 export async function generateMetadata(): Promise<Metadata> {
   const { season, week } = await fetchPositionGrades();

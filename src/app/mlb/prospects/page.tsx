@@ -1,16 +1,17 @@
 import { PageDescription, PageHeader, PageShell, PageTitle } from "@/components/page-layout";
 import type { Metadata } from "next";
-import { buildSafe } from "@/lib/build-safe";
 import { fetchProspectPage, fetchProspectSummary } from "@/lib/mlb-prospects";
 import { DEFAULT_PROSPECT_FILTERS, PEAK_GRADE_TIP, PROSPECT_TRADE_VALUE_TIP } from "@/lib/prospect-values";
 import { formatMillions } from "@/lib/player-values";
 import { formatNumber } from "@/lib/utils";
 import { KpiCard } from "@/components/kpi-card";
 import { LastUpdated } from "@/components/last-updated";
-import { Notice } from "@/components/notice";
 import MlbProspects from "@/components/mlb-prospects";
 
-export const revalidate = 3600;
+// Every read here is expired by the revalidation webhook when its table is
+// published, and nothing on the page depends on the clock, so the week is only
+// a backstop.
+export const revalidate = 604800;
 
 export const metadata: Metadata = {
   title: "MLB Prospect Values",
@@ -20,19 +21,11 @@ export const metadata: Metadata = {
 
 export default async function MlbProspectsPage() {
   // Three small reads per regeneration; a failure throws so ISR keeps the last
-  // good page, except during the build (see buildSafe).
-  const read = await buildSafe("MLB prospects", () =>
-    Promise.all([fetchProspectPage(DEFAULT_PROSPECT_FILTERS, 0), fetchProspectSummary()]),
-  );
-  if (!read) {
-    return (
-      <PageShell>
-        <PageTitle>Prospects</PageTitle>
-        <Notice role="status">Prospect values are temporarily unavailable.</Notice>
-      </PageShell>
-    );
-  }
-  const [first, summary] = read;
+  // good page.
+  const [first, summary] = await Promise.all([
+    fetchProspectPage(DEFAULT_PROSPECT_FILTERS, 0),
+    fetchProspectSummary(),
+  ]);
   const total = first.total ?? first.rows.length;
 
   if (total === 0) {

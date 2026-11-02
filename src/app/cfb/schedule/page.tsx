@@ -1,7 +1,5 @@
 import { PageDescription, PageHeader, PageShell, PageTitle } from "@/components/page-layout";
 import type { Metadata } from "next";
-import { Notice } from "@/components/notice";
-import { buildSafe } from "@/lib/build-safe";
 import { supabaseCfb } from "@/lib/supabase";
 import { fetchLatestRatings, fetchTeams } from "@/lib/cfb";
 import { formatHomeLine, marketHomeLine } from "@/lib/football";
@@ -34,7 +32,10 @@ import {
   TableRow,
 } from "@/components/ui/table";
 
-export const revalidate = 3600;
+// Every read here is expired by the revalidation webhook when its table is
+// published, and nothing on the page depends on the clock, so the week is only
+// a backstop.
+export const revalidate = 604800;
 export const metadata: Metadata = {
   title: "College Football Spread Projections and Predictions",
   description:
@@ -73,7 +74,7 @@ const NEUTRAL: ScheduleMarker = {
 };
 
 // Every read the page needs; a failed read throws so ISR keeps the last good
-// page, except during the build (see buildSafe).
+// page.
 async function loadSchedule() {
   const latestRes = await supabaseCfb
     .from("game_projections")
@@ -130,17 +131,7 @@ async function loadSchedule() {
 }
 
 export default async function SchedulePage() {
-  const read = await buildSafe("CFB schedule", loadSchedule);
-  if (!read) {
-    return (
-      <PageShell>
-        <PageTitle>
-          College Football Schedule and Projections
-        </PageTitle>
-        <Notice role="status">Projections are temporarily unavailable.</Notice>
-      </PageShell>
-    );
-  }
+  const read = await loadSchedule();
   if (read.latest === null) {
     return (
       <PageShell>

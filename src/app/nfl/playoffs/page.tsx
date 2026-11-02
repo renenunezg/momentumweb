@@ -8,14 +8,16 @@ import {
 import { NflPlayoffViewer } from "@/components/nfl-playoff-viewer";
 import { fetchNflPlayoffForecast } from "@/lib/nfl-playoffs.server";
 import { fetchTeams } from "@/lib/nfl";
-export const revalidate = 3600;
+// The webhook refreshes the forecast; the day bounds the stale-results notice
+// below, which is judged against the clock.
+export const revalidate = 86400;
 export const metadata: Metadata = {
   title: "NFL Playoff & Super Bowl Forecast",
   description:
     "The projected NFL bracket, division races, and each team's chance to reach and win the Super Bowl.",
 };
 // Judged on the server when the page regenerates, so the browser never reads
-// the clock during render; the hourly regeneration bounds the lag.
+// the clock during render; the daily regeneration bounds the lag.
 function isStale(resultsAsOf: string) {
   return Date.now() - Date.parse(resultsAsOf) > 48 * 3600 * 1000;
 }

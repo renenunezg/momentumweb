@@ -1,5 +1,5 @@
 import "server-only";
-import { tableCacheTag } from "./cache-tags";
+import { TAGGED_READ_SECONDS, tableCacheTag } from "./cache-tags";
 
 export type AwardRow = {
   league: "AL" | "NL";
@@ -29,17 +29,13 @@ export type AwardModel = {
   backtest: AwardBacktest;
 };
 
-// The boards are frozen, so the day is only a safety net: grading a race fires
-// the revalidate trigger, which refreshes the page at once.
-export const AWARDS_CACHE_SECONDS = 86400;
-
 async function read<T>(table: string, query: Record<string, string>): Promise<T[]> {
   const url = new URL(`/rest/v1/${table}`, process.env.NEXT_PUBLIC_SUPABASE_URL);
   url.search = new URLSearchParams(query).toString();
   const key = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!;
   const response = await fetch(url, {
     headers: { apikey: key, Authorization: `Bearer ${key}`, "Accept-Profile": "mlb" },
-    next: { revalidate: AWARDS_CACHE_SECONDS, tags: ["mlb", tableCacheTag("mlb", table)] },
+    next: { revalidate: TAGGED_READ_SECONDS, tags: ["mlb", tableCacheTag("mlb", table)] },
     signal: AbortSignal.timeout(8000),
   });
   if (!response.ok) throw new Error(`MLB awards request failed (${response.status})`);
