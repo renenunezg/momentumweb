@@ -36,18 +36,18 @@ export function CfbPlayoffBracket({
         key={seed}
         onClick={() => onTeam(team.id)}
         aria-label={`${team.team}, seed ${seed}, ${playoffPercent(team.playoff)} playoff chance`}
-        className="grid h-full min-h-11 w-full grid-cols-[10px_16px_minmax(0,1fr)] items-center gap-x-1 px-2 py-2 text-left hover:bg-muted focus-visible:outline-2 focus-visible:outline-ring sm:grid-cols-[18px_20px_minmax(0,1fr)] sm:gap-x-2 sm:px-3"
+        className="grid h-full min-h-11 w-full grid-cols-[1rem_1rem_minmax(0,1fr)] items-center gap-x-1 px-2 py-2 text-left hover:bg-muted focus-visible:outline-2 focus-visible:outline-ring sm:grid-cols-[1.25rem_1.25rem_minmax(0,1fr)] sm:gap-x-2 sm:px-3"
       >
-        <span className="text-[10px] tabular-nums text-muted-foreground">
+        <span className="type-meta tabular-nums text-muted-foreground">
           {seed}
         </span>
         <TeamLogo team={identities[team.id]} name={team.team} className="size-4 sm:size-5" />
         <span className="flex min-w-0 flex-col gap-0.5 sm:flex-row sm:items-center sm:justify-between sm:gap-2">
-          <span className="text-[11px] font-semibold leading-tight sm:text-sm">
+          <span className="type-meta font-semibold sm:type-label sm:font-semibold">
             {team.team}
             {bye && <span className="sr-only">, first-round bye</span>}
           </span>
-          <span className="shrink-0 text-[10px] font-semibold leading-tight tabular-nums text-primary sm:text-xs">
+          <span className="shrink-0 type-meta font-semibold tabular-nums text-primary">
             {playoffPercent(team.playoff)}
           </span>
         </span>
@@ -98,7 +98,7 @@ export function CfbPlayoffBracket({
               </div>
               <div className="overflow-hidden rounded-lg border border-primary/30 bg-card">
                 {line(b, true)}
-                <p className="border-t border-border px-2 py-1.5 text-[9px] text-muted-foreground sm:px-3 sm:text-[10px]">
+                <p className="border-t border-border px-2 py-1.5 type-meta text-muted-foreground sm:px-3">
                   Bye · faces {h} / {a} winner
                 </p>
               </div>
@@ -140,7 +140,7 @@ export function CfbPlayoffBracket({
           </div>
         </div>
       </div>
-      <p className="text-[11px] text-muted-foreground lg:hidden">
+      <p className="type-meta text-muted-foreground lg:hidden">
         Semifinals: the 1 and 4 paths meet; the 2 and 3 paths meet. Winners
         advance to the national championship.
       </p>

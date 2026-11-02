@@ -14,6 +14,11 @@ export const metadata: Metadata = {
   description:
     "The projected NFL bracket, division races, and each team's chance to reach and win the Super Bowl.",
 };
+// Judged on the server when the page regenerates, so the browser never reads
+// the clock during render; the hourly regeneration bounds the lag.
+function isStale(resultsAsOf: string) {
+  return Date.now() - Date.parse(resultsAsOf) > 48 * 3600 * 1000;
+}
 export default async function NflPlayoffsPage() {
   const [payload, teams] = await Promise.all([
     fetchNflPlayoffForecast(),
@@ -39,7 +44,11 @@ export default async function NflPlayoffsPage() {
         </div>
       </PageHeader>
       {payload ? (
-        <NflPlayoffViewer payload={payload} identities={identities} />
+        <NflPlayoffViewer
+          payload={payload}
+          identities={identities}
+          stale={isStale(payload.results_as_of)}
+        />
       ) : (
         <section className="rounded-xl border border-dashed border-border p-8 text-center sm:p-16">
           <h2 className="type-section">

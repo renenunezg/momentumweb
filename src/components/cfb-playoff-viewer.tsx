@@ -1,6 +1,14 @@
 "use client";
 import { useMemo, useState } from "react";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { ViewTabPanel, ViewTabs } from "@/components/view-tabs";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
 import { PlayoffMetric as Metric, PlayoffTeamFilter, type PlayoffFilter } from "./football-playoff-summary";
 import { TeamLogo } from "@/components/team-logo";
 import {
@@ -33,7 +41,7 @@ function TeamButton({
       <TeamLogo team={identities[team.id]} name={team.team} className="size-4 sm:size-5" />
       <span>
         {team.ap_rank && (
-          <span className="mr-1 text-[9px] font-normal text-muted-foreground">
+          <span className="mr-1 type-meta text-muted-foreground">
             #{team.ap_rank}
           </span>
         )}
@@ -43,7 +51,13 @@ function TeamButton({
   );
 }
 const rate = (w: number, l: number) => (w + l ? w / (w + l) : 0);
-const cell = "px-1.5 py-3 text-right tabular-nums sm:px-4";
+// Uppercase eyebrow headers would force the four-number conference table
+// wider than a phone, so they may wrap below sm.
+const numHead = "whitespace-normal text-right sm:whitespace-nowrap";
+const VIEWS = [
+  { key: "bracket", label: "Playoff bracket" },
+  { key: "conferences", label: "Conferences" },
+] as const;
 
 export function CfbPlayoffViewer({
   payload,
@@ -57,6 +71,7 @@ export function CfbPlayoffViewer({
   const [filter, setFilter] = useState<PlayoffFilter>("contenders");
   const [conference, setConference] = useState("SEC");
   const [selected, setSelected] = useState<number | null>(null);
+  const [view, setView] = useState<(typeof VIEWS)[number]["key"]>("bracket");
   const field = new Set(payload.bracket.map((s) => s.team_id));
   const teams = forecast.teams;
   const conferences = [...new Set(teams.map((t) => t.conference))].sort();
@@ -87,7 +102,7 @@ export function CfbPlayoffViewer({
   );
   return (
     <div className="min-w-0 space-y-6">
-      <div className="flex flex-wrap items-center gap-x-5 gap-y-2 text-[11px] text-muted-foreground">
+      <div className="flex flex-wrap items-center gap-x-5 gap-y-1 type-meta text-muted-foreground">
         <span>
           Results: {playoffDate(payload.results_as_of)} ·{" "}
           {new Date(payload.results_as_of).toLocaleTimeString("en-US", {
@@ -107,16 +122,14 @@ export function CfbPlayoffViewer({
           </span>
         )}
       </div>
-      <Tabs defaultValue="bracket" className="min-w-0 gap-6">
-        <TabsList variant="line" aria-label="Playoff views">
-          <TabsTrigger value="bracket" className="px-4">
-            Playoff bracket
-          </TabsTrigger>
-          <TabsTrigger value="conferences" className="px-4">
-            Conferences
-          </TabsTrigger>
-        </TabsList>
-        <TabsContent value="bracket" className="min-w-0 space-y-8">
+      <ViewTabs
+        label="Playoff views"
+        options={VIEWS}
+        value={view}
+        onValueChange={setView}
+        className="min-w-0"
+      >
+        <ViewTabPanel value="bracket" className="min-w-0 space-y-8">
           <div className="grid grid-cols-3 gap-3 border-y border-rule-strong sm:gap-4">
             {(
               [
@@ -173,68 +186,59 @@ export function CfbPlayoffViewer({
               AP ranks are shown beside team names. Select a team to explore its
               remaining schedule.
             </p>
-            <div className="overflow-hidden rounded-lg border border-border">
-              <table className="w-full text-[11px] sm:text-sm">
-                <thead className="bg-muted/50 text-[10px] text-muted-foreground">
-                  <tr>
-                    <th scope="col" className="px-2 py-3 text-left sm:px-4">
-                      Team
-                    </th>
-                    <th scope="col" className={`${cell} hidden sm:table-cell`}>
-                      Record
-                    </th>
-                    <th scope="col" className={cell}>
-                      Make CFP
-                    </th>
-                    <th scope="col" className={cell}>
-                      Bye
-                    </th>
-                    <th scope="col" className={cell}>
-                      Win title
-                    </th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {shown.map((t) => (
-                    <tr
-                      key={t.id}
-                      className="border-t border-border hover:bg-muted/30"
-                    >
-                      <td className="max-w-[145px] px-2 py-3 sm:max-w-none sm:px-4">
-                        <TeamButton
-                          team={t}
-                          identities={identities}
-                          onTeam={setSelected}
-                        />
-                        <p className="mt-1 text-[9px] text-muted-foreground sm:text-[11px]">
-                          {t.conference}
-                          <span className="sm:hidden">
-                            {" "}
-                            · {t.wins}-{t.losses}
-                          </span>
-                        </p>
-                      </td>
-                      <td className={`${cell} hidden sm:table-cell`}>
-                        {t.wins}-{t.losses}
-                      </td>
-                      <td className={`${cell} font-semibold text-primary`}>
-                        {playoffPercent(t.playoff)}
-                      </td>
-                      <td className={cell}>{playoffPercent(t.bye)}</td>
-                      <td className={cell}>{playoffPercent(t.champion)}</td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-              {shown.length === 0 && (
-                <p className="p-8 text-center text-sm text-muted-foreground">
-                  No matching teams.
-                </p>
-              )}
-            </div>
+            <Table density="compact">
+              <TableHeader>
+                <TableRow>
+                  <TableHead>Team</TableHead>
+                  <TableHead className="hidden text-right sm:table-cell">
+                    Record
+                  </TableHead>
+                  <TableHead className={numHead}>Make CFP</TableHead>
+                  <TableHead className={numHead}>Bye</TableHead>
+                  <TableHead className={numHead}>Win title</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {shown.map((t) => (
+                  <TableRow key={t.id}>
+                    <TableCell className="whitespace-normal font-sans">
+                      <TeamButton
+                        team={t}
+                        identities={identities}
+                        onTeam={setSelected}
+                      />
+                      <p className="mt-0.5 type-meta text-muted-foreground">
+                        {t.conference}
+                        <span className="sm:hidden">
+                          {" "}
+                          · {t.wins}-{t.losses}
+                        </span>
+                      </p>
+                    </TableCell>
+                    <TableCell className="hidden text-right sm:table-cell">
+                      {t.wins}-{t.losses}
+                    </TableCell>
+                    <TableCell className="text-right font-semibold text-primary">
+                      {playoffPercent(t.playoff)}
+                    </TableCell>
+                    <TableCell className="text-right">
+                      {playoffPercent(t.bye)}
+                    </TableCell>
+                    <TableCell className="text-right">
+                      {playoffPercent(t.champion)}
+                    </TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+            {shown.length === 0 && (
+              <p className="p-8 text-center text-sm text-muted-foreground">
+                No matching teams.
+              </p>
+            )}
           </section>
-        </TabsContent>
-        <TabsContent value="conferences" className="min-w-0 space-y-6">
+        </ViewTabPanel>
+        <ViewTabPanel value="conferences" className="min-w-0 space-y-6">
           <div className="flex flex-wrap items-center justify-between gap-3">
             <div>
               <h2 className="type-section">{actualConference}</h2>
@@ -242,13 +246,15 @@ export function CfbPlayoffViewer({
                 Current standings and the paths to a championship.
               </p>
             </div>
-            <label className="flex w-full items-center gap-3 text-xs text-muted-foreground sm:w-auto">
-              Conference
+            <label className="flex w-full items-center gap-3 sm:w-auto">
+              <span className="type-eyebrow text-muted-foreground">
+                Conference
+              </span>
               <select
                 aria-label="Choose conference"
                 value={actualConference}
                 onChange={(e) => setConference(e.target.value)}
-                className="min-w-0 flex-1 rounded-md border border-input bg-background p-2 text-base text-foreground sm:text-sm"
+                className="min-w-0 flex-1 rounded-md border border-input bg-background px-3 py-2 text-base text-foreground focus-visible:outline-2 focus-visible:outline-offset-2 sm:text-sm"
               >
                 {conferences.map((c) => (
                   <option key={c}>{c}</option>
@@ -287,82 +293,67 @@ export function CfbPlayoffViewer({
               value={playoffPercent(best(members, "playoff").playoff)}
             />
           </div>
-          <div className="overflow-hidden rounded-lg border border-border">
-            <table
-              aria-label={`${actualConference} standings and probabilities`}
-              className="w-full text-[10px] sm:text-sm"
-            >
-              <thead className="bg-muted/50 text-[9px] text-muted-foreground sm:text-xs">
-                <tr>
-                  <th scope="col" className="px-1.5 py-3 text-left sm:px-4">
-                    Team
-                  </th>
-                  <th scope="col" className={`${cell} hidden sm:table-cell`}>
-                    Overall
-                  </th>
-                  <th scope="col" className={cell}>
-                    Conf.
-                  </th>
-                  <th scope="col" className={cell}>
-                    Title game
-                  </th>
-                  <th scope="col" className={cell}>
-                    Win conf.
-                  </th>
-                  <th scope="col" className={cell}>
-                    Make CFP
-                  </th>
-                </tr>
-              </thead>
-              <tbody>
-                {members.map((t) => (
-                  <tr
-                    key={t.id}
-                    className="border-t border-border hover:bg-muted/30"
-                  >
-                    <td className="max-w-[125px] px-1.5 py-3 sm:max-w-none sm:px-4">
-                      <TeamButton
-                        team={t}
-                        identities={identities}
-                        onTeam={setSelected}
-                      />
-                      <p className="mt-1 text-[9px] text-muted-foreground sm:hidden">
-                        {t.wins}-{t.losses} overall
-                      </p>
-                    </td>
-                    <td className={`${cell} hidden sm:table-cell`}>
-                      {t.wins}-{t.losses}
-                    </td>
-                    <td className={cell}>
-                      {independent
-                        ? "–"
-                        : `${t.conference_wins}-${t.conference_losses}`}
-                    </td>
-                    <td className={cell}>
-                      {independent
-                        ? "–"
-                        : playoffPercent(t.conference_title_game)}
-                    </td>
-                    <td className={`${cell} text-primary`}>
-                      {independent
-                        ? "–"
-                        : playoffPercent(t.conference_champion)}
-                    </td>
-                    <td className={`${cell} font-semibold text-primary`}>
-                      {playoffPercent(t.playoff)}
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
+          <Table
+            density="compact"
+            aria-label={`${actualConference} standings and probabilities`}
+          >
+            <TableHeader>
+              <TableRow>
+                <TableHead>Team</TableHead>
+                <TableHead className="hidden text-right sm:table-cell">
+                  Overall
+                </TableHead>
+                <TableHead className={numHead}>Conf.</TableHead>
+                <TableHead className={numHead}>Title game</TableHead>
+                <TableHead className={numHead}>Win conf.</TableHead>
+                <TableHead className={numHead}>Make CFP</TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {members.map((t) => (
+                <TableRow key={t.id}>
+                  <TableCell className="whitespace-normal font-sans">
+                    <TeamButton
+                      team={t}
+                      identities={identities}
+                      onTeam={setSelected}
+                    />
+                    <p className="mt-0.5 type-meta text-muted-foreground sm:hidden">
+                      {t.wins}-{t.losses} overall
+                    </p>
+                  </TableCell>
+                  <TableCell className="hidden text-right sm:table-cell">
+                    {t.wins}-{t.losses}
+                  </TableCell>
+                  <TableCell className="text-right">
+                    {independent
+                      ? "–"
+                      : `${t.conference_wins}-${t.conference_losses}`}
+                  </TableCell>
+                  <TableCell className="text-right">
+                    {independent
+                      ? "–"
+                      : playoffPercent(t.conference_title_game)}
+                  </TableCell>
+                  <TableCell className="text-right text-primary">
+                    {independent
+                      ? "–"
+                      : playoffPercent(t.conference_champion)}
+                  </TableCell>
+                  <TableCell className="text-right font-semibold text-primary">
+                    {playoffPercent(t.playoff)}
+                  </TableCell>
+                </TableRow>
+              ))}
+            </TableBody>
+          </Table>
           <p className="text-xs leading-relaxed text-muted-foreground">
             Ordered by conference win percentage, then overall win percentage.
             Ties are not shown in official tiebreak order. Select a team to
             explore its remaining schedule.
           </p>
-        </TabsContent>
-      </Tabs>
+        </ViewTabPanel>
+      </ViewTabs>
       <details className="border-t border-border pt-5">
         <summary className="cursor-pointer text-sm font-semibold">
           How this forecast works

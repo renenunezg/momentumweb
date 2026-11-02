@@ -1,6 +1,15 @@
 "use client";
 import { useMemo, useState } from "react";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { ViewTabPanel, ViewTabs } from "@/components/view-tabs";
+import { ToggleGroup } from "@/components/toggle-group";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
 import {
   Dialog,
   DialogContent,
@@ -16,17 +25,29 @@ import type {
 } from "@/lib/nfl-playoffs";
 import { NflPlayoffBracket } from "./nfl-playoff-bracket";
 import { PlayoffMetric, PlayoffTeamFilter, type PlayoffFilter } from "./football-playoff-summary";
-const cell = "px-1.5 py-3 text-right tabular-nums sm:px-4";
+const VIEWS = [
+  { key: "bracket", label: "Bracket" },
+  { key: "odds", label: "Probabilities" },
+  { key: "divisions", label: "Division races" },
+] as const;
+const CONFERENCES = [
+  { key: "AFC", label: "AFC" },
+  { key: "NFC", label: "NFC" },
+] as const;
 const record = (t: NflPlayoffTeam) =>
   `${t.wins}-${t.losses}${t.ties ? `-${t.ties}` : ""}`;
 export function NflPlayoffViewer({
   payload,
   identities,
+  stale,
 }: {
   payload: NflPlayoffPayload;
   identities: Record<string, TeamLogoSource>;
+  stale: boolean;
 }) {
-  const [conference, setConference] = useState("AFC");
+  const [view, setView] = useState<(typeof VIEWS)[number]["key"]>("bracket");
+  const [conference, setConference] =
+    useState<(typeof CONFERENCES)[number]["key"]>("AFC");
   const [filter, setFilter] = useState<PlayoffFilter>("all");
   const field = new Set(payload.bracket.map((slot) => slot.team_id));
   const [query, setQuery] = useState("");
@@ -62,7 +83,7 @@ export function NflPlayoffViewer({
           name={t.team}
           className="size-5 shrink-0"
         />
-        <span className="text-xs sm:text-sm">
+        <span className="type-label font-semibold">
           <span className="sm:hidden">{id}</span>
           <span className="hidden sm:inline">{t.team}</span>
         </span>
@@ -82,63 +103,57 @@ export function NflPlayoffViewer({
           ["champion", "Win SB"],
         ];
     return (
-      <div className="overflow-hidden rounded-lg border border-border">
-        <table className="w-full text-[11px] sm:text-sm">
-          <thead className="bg-muted/50 text-[10px] text-muted-foreground">
-            <tr>
-              <th className="px-2 py-3 text-left sm:px-4" scope="col">
-                Team
-              </th>
-              <th className={`${cell} hidden md:table-cell`} scope="col">
+      <div>
+        <Table density="compact">
+          <TableHeader>
+            <TableRow>
+              <TableHead>Team</TableHead>
+              <TableHead className="hidden text-right md:table-cell">
                 Proj. wins
-              </th>
+              </TableHead>
               {columns.map(([key, label]) => (
-                <th
+                <TableHead
                   key={key}
-                  className={cell}
-                  scope="col"
+                  className="text-right"
                   aria-sort={metric === key ? "descending" : "none"}
                 >
                   <button
                     type="button"
                     onClick={() => setMetric(key)}
-                    className="underline-offset-4 hover:underline"
+                    className="uppercase underline-offset-4 hover:underline"
                     aria-label={`Sort by ${label}`}
                   >
                     {label}
                     {metric === key ? " ↓" : ""}
                   </button>
-                </th>
+                </TableHead>
               ))}
-            </tr>
-          </thead>
-          <tbody>
+            </TableRow>
+          </TableHeader>
+          <TableBody>
             {group.map((t) => (
-              <tr
-                key={t.id}
-                className="border-t border-border hover:bg-muted/30"
-              >
-                <td className="px-2 py-3 sm:px-4">
+              <TableRow key={t.id}>
+                <TableCell className="whitespace-normal font-sans">
                   {teamButton(t.id)}
-                  <p className="mt-1 text-[9px] text-muted-foreground sm:text-[11px]">
+                  <p className="mt-0.5 type-meta text-muted-foreground">
                     {record(t)} · {t.division}
                   </p>
-                </td>
-                <td className={`${cell} hidden md:table-cell`}>
+                </TableCell>
+                <TableCell className="hidden text-right md:table-cell">
                   {t.expected_wins.toFixed(1)}
-                </td>
+                </TableCell>
                 {columns.map(([key]) => (
-                  <td
+                  <TableCell
                     key={key}
-                    className={`${cell} ${key === metric ? "font-semibold text-primary" : ""}`}
+                    className={`text-right ${key === metric ? "font-semibold text-primary" : ""}`}
                   >
                     {playoffPercent(t[key])}
-                  </td>
+                  </TableCell>
                 ))}
-              </tr>
+              </TableRow>
             ))}
-          </tbody>
-        </table>
+          </TableBody>
+        </Table>
         {!group.length && (
           <p className="p-8 text-center text-sm text-muted-foreground">
             No matching teams.
@@ -149,25 +164,26 @@ export function NflPlayoffViewer({
   }
   return (
     <div className="min-w-0 space-y-6">
-      <div className="flex flex-wrap justify-between gap-2 text-xs text-muted-foreground">
+      <div className="flex flex-wrap justify-between gap-x-5 gap-y-1 type-meta text-muted-foreground">
         <p>
           {payload.season} outlook · Results as of{" "}
           {playoffDate(payload.results_as_of)}
         </p>
         <p>{payload.draws.toLocaleString("en-US")} simulated seasons</p>
       </div>
-      {Date.now() - Date.parse(payload.results_as_of) > 48 * 3600 * 1000 && (
-        <p className="rounded-md border border-amber-600/30 bg-amber-500/10 p-3 text-sm">
+      {stale && (
+        <p className="rounded-md border border-accent-amber/30 bg-accent-amber/10 p-3 type-label">
           Older forecast: recent results may not be included.
         </p>
       )}
-      <Tabs defaultValue="bracket" className="min-w-0">
-        <TabsList className="mb-5">
-          <TabsTrigger value="bracket">Bracket</TabsTrigger>
-          <TabsTrigger value="odds">Probabilities</TabsTrigger>
-          <TabsTrigger value="divisions">Division races</TabsTrigger>
-        </TabsList>
-        <TabsContent value="bracket" className="min-w-0 space-y-6">
+      <ViewTabs
+        label="Playoff views"
+        options={VIEWS}
+        value={view}
+        onValueChange={setView}
+        className="min-w-0"
+      >
+        <ViewTabPanel value="bracket" className="min-w-0 space-y-6">
           <div className="grid grid-cols-2 gap-3 border-y border-rule-strong sm:gap-4">
             {([
               ["Playoff leader", "playoff"],
@@ -215,8 +231,8 @@ export function NflPlayoffViewer({
               odds include every possible path.
             </p>
           </section>
-        </TabsContent>
-        <TabsContent value="odds" className="min-w-0 space-y-4">
+        </ViewTabPanel>
+        <ViewTabPanel value="odds" className="min-w-0 space-y-4">
           <div className="flex flex-wrap items-center justify-between gap-3">
             <h2 className="type-section">Playoff probabilities</h2>
             <label className="w-full sm:w-56">
@@ -245,27 +261,17 @@ export function NflPlayoffViewer({
               `${t.team} ${t.id}`.toLowerCase().includes(query.trim().toLowerCase()),
             ),
           )}
-        </TabsContent>
-        <TabsContent value="divisions" className="min-w-0 space-y-5">
+        </ViewTabPanel>
+        <ViewTabPanel value="divisions" className="min-w-0 space-y-5">
           <div className="flex flex-wrap items-center justify-between gap-3">
             <h2 className="type-section">Division races</h2>
-            <div
-              role="group"
-              aria-label="Choose conference"
-              className="flex gap-2"
-            >
-              {["AFC", "NFC"].map((c) => (
-                <button
-                  key={c}
-                  type="button"
-                  aria-pressed={conference === c}
-                  onClick={() => setConference(c)}
-                  className={`rounded-full border px-4 py-2 text-xs ${conference === c ? "border-primary bg-primary text-primary-foreground" : "border-border"}`}
-                >
-                  {c}
-                </button>
-              ))}
-            </div>
+            <ToggleGroup
+              label="Choose conference"
+              variant="pill"
+              options={CONFERENCES}
+              value={conference}
+              onChange={setConference}
+            />
           </div>
           <p className="text-xs text-muted-foreground">
             Division winners take seeds 1-4. Three wild cards complete each
@@ -290,8 +296,8 @@ export function NflPlayoffViewer({
                 </section>
               ))}
           </div>
-        </TabsContent>
-      </Tabs>
+        </ViewTabPanel>
+      </ViewTabs>
       <section className="space-y-3 border-t border-border pt-5" aria-label="QB availability">
         <h2 className="type-section">QB availability</h2>
         <p className="max-w-3xl text-xs leading-relaxed text-muted-foreground">
@@ -412,14 +418,14 @@ export function NflPlayoffViewer({
                   key={i}
                   className="rounded border border-border p-2 text-center"
                 >
-                  <p className="text-[10px] text-muted-foreground">#{i + 1}</p>
-                  <p className="mt-1 text-xs font-semibold tabular-nums">
+                  <p className="type-meta text-muted-foreground">#{i + 1}</p>
+                  <p className="mt-1 type-meta font-semibold tabular-nums">
                     {playoffPercent(p)}
                   </p>
                 </div>
               ))}
             </div>
-            <p className="text-[11px] text-muted-foreground">
+            <p className="type-meta text-muted-foreground">
               Unconditional seed odds. A deep tiebreaker involved this team in{" "}
               {playoffPercent(chosen.deep_tiebreak_rate)} of simulated seasons;
               this is not a confidence interval.
@@ -444,7 +450,7 @@ export function NflPlayoffViewer({
                           {g.neutral ? "vs." : home ? "vs." : "at"}{" "}
                           {opponent.team}
                         </p>
-                        <p className="mt-1 text-[10px] text-muted-foreground">
+                        <p className="mt-1 type-meta text-muted-foreground">
                           Week {g.week} ·{" "}
                           {g.date ? playoffDate(g.date) : "Date TBD"}
                           {g.neutral ? " · Neutral site" : ""}

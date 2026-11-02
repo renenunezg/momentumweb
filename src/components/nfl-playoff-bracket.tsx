@@ -14,15 +14,15 @@ export function NflPlayoffBracket({ payload, byId, identities, onTeam }: {
     return (
       <button type="button" onClick={() => onTeam(id)}
         aria-label={`Explore ${byId.get(id)!.team}${probability === undefined ? ", first-round bye" : `, ${playoffPercent(probability)} matchup win chance`}`}
-        className={`grid min-h-11 w-full grid-cols-[8px_14px_minmax(0,1fr)] items-center gap-x-1 px-1 py-1.5 text-left hover:bg-muted focus-visible:outline-2 focus-visible:outline-ring sm:grid-cols-[10px_20px_minmax(0,1fr)] sm:px-2 ${winner ? "bg-primary/5" : ""}`}>
-        <span className="text-[9px] tabular-nums text-muted-foreground">{seed}</span>
+        className={`grid min-h-11 w-full grid-cols-[0.5rem_0.875rem_minmax(0,1fr)] items-center gap-x-1 px-1 py-1.5 text-left hover:bg-muted focus-visible:outline-2 focus-visible:outline-ring sm:grid-cols-[0.75rem_1.25rem_minmax(0,1fr)] sm:px-2 ${winner ? "bg-primary/5" : ""}`}>
+        <span className="type-meta tabular-nums text-muted-foreground">{seed}</span>
         <TeamLogo team={identities[id]} name={byId.get(id)!.team} className="size-3.5 sm:size-5" />
         <span className="flex min-w-0 flex-col gap-0.5">
-          <span className="text-[10px] font-semibold leading-tight sm:text-xs">
+          <span className="type-meta font-semibold">
             <span className="sm:hidden">{id}</span>
             <span className="hidden sm:inline">{byId.get(id)!.team}</span>
           </span>
-          <span className={`text-[9px] leading-tight tabular-nums sm:text-[10px] ${winner ? "font-semibold text-primary" : "text-muted-foreground"}`}>
+          <span className={`type-meta tabular-nums ${winner ? "font-semibold text-primary" : "text-muted-foreground"}`}>
             {probability === undefined ? "Bye" : playoffPercent(probability)}
           </span>
         </span>
@@ -79,7 +79,7 @@ export function NflPlayoffBracket({ payload, byId, identities, onTeam }: {
                 {matchup(championship)}
               </div>
             </div>
-            <p className="text-[10px] text-muted-foreground">Highlighted teams advance in this scenario. {conference} champion advances to the Super Bowl.</p>
+            <p className="type-meta text-muted-foreground">Highlighted teams advance in this scenario. {conference} champion advances to the Super Bowl.</p>
           </section>
         );
       })}

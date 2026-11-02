@@ -108,7 +108,7 @@ export function CfbPlayoffTeamDialog({
                         {forecast.names.get(id)}
                       </span>
                     </p>
-                    <p className="mt-1 text-[10px] text-muted-foreground">
+                    <p className="mt-1 type-meta text-muted-foreground">
                       {playoffDate(g.date)}
                       {g.provisional ? " · provisional flex matchup" : ""}
                     </p>
