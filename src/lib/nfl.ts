@@ -308,7 +308,7 @@ async function readNflPositionGrades(): Promise<PositionGrades> {
   const { index, topIds, gradedCounts } = rankIndex(
     gradeRows.map((row) => toIndexRow(row, divisionOf.get(row.team ?? "") ?? null)),
   );
-  const details = buildGradedPlayers(await fetchNflPlayerTraitRows(latest.season, topIds));
+  const details = buildGradedPlayers(await fetchNflPlayerTraitRows(latest.season, topIds), []);
   return {
     season: latest.season,
     week: latest.week,

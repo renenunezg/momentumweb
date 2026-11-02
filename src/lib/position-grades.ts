@@ -3,6 +3,8 @@
 // through these helpers, so the page and its card component never know which
 // schema they are rendering.
 
+import { footballStatsLine, type FootballStatsLine } from "./football-season-stats.ts";
+
 // The columns both position_traits tables carry. The CFB table also has a
 // team_id and the NFL table a headshot_url; neither is needed here beyond the
 // optional headshot.
@@ -51,7 +53,19 @@ export interface GradedPlayer {
   warPercentile: number | null;
   pointsAboveReplacement: number | null;
   traits: GradedPlayerTrait[];
+  seasonStats: FootballStatsLine | null;
 }
+
+// A row of the sport's player_season_stats, read for the same ids as the traits.
+export interface PlayerSeasonStatsRow {
+  athlete_id: string;
+  season: number;
+  week: number;
+  position_group: string;
+  stats: unknown;
+}
+
+export const STATS_COLUMNS = "athlete_id, season, week, position_group, stats";
 
 // One row per graded player for search and filters. `group` is the filter
 // the page offers beside position: the conference in college football, the
@@ -112,8 +126,10 @@ export function chunk<T>(items: T[], size: number): T[][] {
 const HIDDEN_TRAITS = new Set(["qb.receiver_independence"]);
 
 // Players and the OL unit rows of one position, as the page's card model,
-// built from every row of those athletes for the season.
-export function buildGradedPlayers(rows: PositionTraitRow[]): Record<string, GradedPlayer> {
+// built from every row of those athletes for the season, with each one's stat
+// line. A player without a stats row simply has no stat block.
+export function buildGradedPlayers(rows: PositionTraitRow[], statRows: PlayerSeasonStatsRow[]): Record<string, GradedPlayer> {
+  const statsOf = new Map(statRows.map((row) => [row.athlete_id, footballStatsLine(row)]));
   const byAthlete = new Map<string, PositionTraitRow[]>();
   for (const row of rows) {
     const list = byAthlete.get(row.athlete_id) ?? [];
@@ -146,6 +162,7 @@ export function buildGradedPlayers(rows: PositionTraitRow[]): Record<string, Gra
         .map(({ trait, value, percentile, kind, in_grade, reliability }) => ({
           trait, value, percentile, kind, in_grade, reliability,
         })),
+      seasonStats: statsOf.get(athleteId) ?? null,
     };
   }
   return out;

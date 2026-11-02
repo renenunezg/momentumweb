@@ -417,7 +417,7 @@ async function readPositionGrades(): Promise<CfbPositionGrades> {
   const { index, topIds, gradedCounts } = rankIndex(
     gradeRows.map((row) => toIndexRow(row, conferenceOf.get(row.team ?? "") ?? null))
   );
-  const details = buildGradedPlayers(await fetchPlayerTraitRows(latest.season, topIds));
+  const details = buildGradedPlayers(await fetchPlayerTraitRows(latest.season, topIds), []);
   return {
     season: latest.season,
     week: latest.week,

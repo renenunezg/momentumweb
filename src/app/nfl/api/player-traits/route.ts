@@ -22,7 +22,7 @@ export async function GET(request: Request) {
   try {
     const rows = await fetchNflPlayerTraitRows(Number(season), [...new Set(ids)].sort());
     return Response.json(
-      { season: Number(season), players: buildGradedPlayers(rows) },
+      { season: Number(season), players: buildGradedPlayers(rows, []) },
       {
         headers: {
           "Cache-Control": "public, max-age=0, must-revalidate",

@@ -34,7 +34,7 @@ export function SeasonStatsPanel({ stats }: { stats: SeasonStatsData }) {
                 key={metric.label}
                 className="min-w-0 bg-background px-2 py-2.5 last:[grid-column:span_var(--last)] sm:px-3 sm:last:[grid-column:span_var(--last-sm)]"
               >
-                <dt className="flex items-center gap-1 whitespace-nowrap text-[10px] text-muted-foreground">
+                <dt className="flex items-center gap-1 text-[10px] leading-tight text-muted-foreground">
                   {metric.label}
                   <InfoTip text={metric.tip} label={`What is ${metric.label}?`} />
                 </dt>

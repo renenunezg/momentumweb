@@ -22,6 +22,8 @@ import { EMPTY, cn, formatNumber, formatSigned } from "@/lib/utils";
 import { InfoTip } from "@/components/info-tip";
 import { PlayerRowDisclosure, PlayerRowHeader } from "@/components/player-row-disclosure";
 import { PlayerCell } from "@/components/player-cell";
+import { SeasonStatsPanel } from "@/components/season-stats-panel";
+import { footballSeasonStats } from "@/lib/football-season-stats";
 import { TeamLogo, type TeamLogoSource } from "@/components/team-logo";
 import { PlayerComparisonPicker } from "@/components/player-comparison-picker";
 import { ToggleGroup } from "@/components/toggle-group";
@@ -229,6 +231,7 @@ function GradeCard({
   const grade = player?.grade ?? row.grade;
   const rating = RATING_LABELS[row.positionGroup];
   const rated = rating != null && player?.rating != null;
+  const seasonStats = footballSeasonStats(sport, player?.seasonStats);
   const sections: { kind: TraitSection | null; names: string[] }[] = [];
   for (const line of lines) {
     const last = sections[sections.length - 1];
@@ -313,6 +316,7 @@ function GradeCard({
           </Accordion.Root>
         )}
         {player && <BarLegend traits={player.traits.filter((t) => lines.some((line) => line.name === t.trait))} />}
+        {seasonStats && <SeasonStatsPanel stats={seasonStats} />}
       </div>
   );
   if (desktop) {

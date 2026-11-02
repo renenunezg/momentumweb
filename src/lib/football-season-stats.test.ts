@@ -2,6 +2,7 @@ import { test } from "node:test";
 import assert from "node:assert/strict";
 import { footballSeasonStats, footballStatsLine, passerRating, passingEfficiency, type FootballStatsLine } from "./football-season-stats.ts";
 import type { SeasonStatsData } from "./season-stats.ts";
+import { buildGradedPlayers, type PlayerSeasonStatsRow, type PositionTraitRow } from "./position-grades.ts";
 
 // QB order: games, att, cmp, pass_yds, pass_td, int, sacks, rush_att, rush_yds,
 // rush_td, epa_plays, epa_total×10, cpoe×10, adot×10, espn_qbr×10.
@@ -85,4 +86,17 @@ test("advanced tips name their source per sport", () => {
   assert.match(cell(footballSeasonStats("nfl", line("QB", QB)), "EPA/play")?.tip ?? "", /From nflfastR play-by-play\.$/);
   assert.match(cell(footballSeasonStats("cfb", line("QB", QB)), "EPA/play")?.tip ?? "", /Computed by our model\.$/);
   assert.match(cell(footballSeasonStats("cfb", line("QB", QB)), "QBR")?.tip ?? "", /ESPN's Total QBR\.$/);
+});
+
+test("buildGradedPlayers attaches each player's stat line and ignores strays", () => {
+  const trait = (athlete_id: string): PositionTraitRow => ({
+    season: 2026, week: 9, as_of: "2026-11-01T00:00:00Z", model_version: "v1", athlete_id, athlete_name: athlete_id,
+    team: "BUF", position_group: "QB", games: 8, trait: "grade", value: 60, percentile: 80, kind: "quality",
+    in_grade: true, uncertainty: 3, points_above_replacement: null,
+  });
+  const stats = (athlete_id: string): PlayerSeasonStatsRow => ({ athlete_id, season: 2026, week: 9, position_group: "QB", stats: QB });
+  const players = buildGradedPlayers([trait("A"), trait("B")], [stats("A"), stats("C")]);
+  assert.deepEqual(players.A.seasonStats, { season: 2026, week: 9, positionGroup: "QB", stats: QB });
+  assert.equal(players.B.seasonStats, null);
+  assert.equal("C" in players, false);
 });
