@@ -78,8 +78,7 @@ export function MethodologyContent({ example }: { example: PickExample | null })
           Gaussian ridge, a closed-form Bayesian update: the posterior mean
           gives the fitted ratings and the posterior covariance gives their
           uncertainty, with no sampling. The ratings shown on the site are
-          these fitted ratings shifted to the week&apos;s published lines, as
-          described under Market Blend.
+          these fitted ratings, as described under Market Blend.
         </p>
         <p className={p}>
           The target fuses points per drive, what the scoreboard said, with
@@ -146,21 +145,21 @@ export function MethodologyContent({ example }: { example: PickExample | null })
           published total.
         </p>
         <p className={p}>
-          Published team ratings are the fitted ratings shifted so that, for
-          every game a team plays that week, the rating difference plus home
-          field equals the published line exactly. Each game&apos;s gap is
-          split evenly between its two teams, offense and defense each take
-          half of a team&apos;s shift, and the size of the shift is stored
-          per team. A team with no game that week keeps its fitted rating.
+          Published team ratings are the fitted ratings. Nothing about the
+          coming week&apos;s matchups enters a rating, so a change from one
+          week to the next reflects games played, not who a team plays next.
+          A scheduled game&apos;s published line also carries the market,
+          quarterback and rest adjustments, so it can sit a few points from
+          the two teams&apos; rating difference plus home field.
         </p>
         <p className={p}>
-          The Compare tab on the Ratings page follows from this. When the
-          selected away team, home team and venue match a published game, it
-          shows that game&apos;s published forecast: the line, the market
-          line at forecast time and the projected score. For any other
-          pairing or venue it shows a ratings-based line: away rating minus
-          home rating minus home-field advantage, which is zero on a neutral
-          field.
+          The Compare tab on the Ratings page uses the published line where
+          one exists. When the selected away team, home team and venue match
+          a published game, it shows that game&apos;s published forecast: the
+          line, the market line at forecast time and the projected score. For
+          any other pairing or venue it shows a ratings-based line: away
+          rating minus home rating minus home-field advantage, which is zero
+          on a neutral field.
         </p>
         <p className={p}>
           Spread and moneyline probabilities use a discrete margin
