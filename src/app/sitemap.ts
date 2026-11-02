@@ -7,6 +7,7 @@ const DATA_ROUTES = [
   "/mlb/games",
   "/mlb/players",
   "/mlb/prospects",
+  "/mlb/awards",
   "/mlb/history",
   "/mlb/performance",
   "/cfb/predictions",

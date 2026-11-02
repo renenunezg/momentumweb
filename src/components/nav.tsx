@@ -11,6 +11,7 @@ const mlbLinks = [
   { href: "/mlb/carry#lab", label: "Swing Lab", match: ["/mlb/carry"] },
   { href: "/mlb/games", label: "Games" },
   { href: "/mlb/playoffs", label: "Playoffs" },
+  { href: "/mlb/awards", label: "Awards" },
   { href: "/mlb/history", label: "History" },
   { href: "/mlb/performance", label: "Performance" },
   { href: "/mlb/methodology", label: "Methodology" },
