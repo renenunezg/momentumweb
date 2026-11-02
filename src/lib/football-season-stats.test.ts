@@ -74,9 +74,9 @@ test("half sacks and tackles for loss decode from tenths", () => {
 });
 
 test("null entries blank one cell and keep the rest", () => {
-  const cfb = footballSeasonStats("cfb", line("QB", QB.map((v, i) => (i === 14 ? null : v))));
-  assert.equal(cell(cfb, "QBR")?.value, null);
-  assert.equal(cell(cfb, "Pass yds")?.value, "250");
+  const qb = footballSeasonStats("nfl", line("QB", QB.map((v, i) => (i === 14 ? null : v))));
+  assert.equal(cell(qb, "QBR")?.value, null);
+  assert.equal(cell(qb, "Pass yds")?.value, "250");
   const def = footballSeasonStats("nfl", line("DB", DEF));
   assert.equal(cell(def, "Rating allowed")?.value, null);
   assert.equal(cell(def, "Tackles")?.value, "50");
@@ -84,8 +84,8 @@ test("null entries blank one cell and keep the rest", () => {
 
 test("advanced tips name their source per sport", () => {
   assert.match(cell(footballSeasonStats("nfl", line("QB", QB)), "EPA/play")?.tip ?? "", /From nflfastR play-by-play\.$/);
-  assert.match(cell(footballSeasonStats("cfb", line("QB", QB)), "EPA/play")?.tip ?? "", /Computed by our model\.$/);
-  assert.match(cell(footballSeasonStats("cfb", line("QB", QB)), "QBR")?.tip ?? "", /ESPN's Total QBR\.$/);
+  assert.match(cell(footballSeasonStats("cfb", line("QB", QB)), "EPA/play")?.tip ?? "", /From CollegeFootballData play-by-play\.$/);
+  assert.match(cell(footballSeasonStats("nfl", line("QB", QB)), "QBR")?.tip ?? "", /ESPN's Total QBR\.$/);
 });
 
 test("buildGradedPlayers attaches each player's stat line and ignores strays", () => {
@@ -105,7 +105,7 @@ test("play-by-play counts name play-by-play, not the box score, as their source"
   const rb = [8, 140, 650, 6, 1, 30, 24, 190, 1, 62, 14, -73, 31, 58];
   const ol = [8, 210, 38, 8170, 290, 14, 81];
   const rec = [8, 80, 55, 720, 5, 280, 256, 112, 95];
-  for (const [sport, source] of [["nfl", /From nflfastR play-by-play\.$/], ["cfb", /From college play-by-play\.$/]] as const) {
+  for (const [sport, source] of [["nfl", /From nflfastR play-by-play\.$/], ["cfb", /From CollegeFootballData play-by-play\.$/]] as const) {
     assert.match(cell(footballSeasonStats(sport, line("RB", rb)), "Explosive%")?.tip ?? "", source);
     assert.match(cell(footballSeasonStats(sport, line("OL", ol)), "Stuff%")?.tip ?? "", source);
     assert.match(cell(footballSeasonStats(sport, line("WR", rec)), "Target share")?.tip ?? "", source);
@@ -117,6 +117,36 @@ test("CFB cards drop coverage cells and label their RYOE as ours", () => {
   const labels = (data: SeasonStatsData | null) => data?.tiers[1].stats.map((stat) => stat.label);
   assert.match(cell(footballSeasonStats("cfb", line("RB", rb)), "RYOE/carry")?.tip ?? "", /No player tracking.*Computed by our model\.$/);
   assert.match(cell(footballSeasonStats("nfl", line("RB", rb)), "RYOE/carry")?.tip ?? "", /From NFL Next Gen Stats\.$/);
-  assert.deepEqual(labels(footballSeasonStats("cfb", line("DB", DEF))), ["Pressures", "EPA credit"]);
+  assert.deepEqual(labels(footballSeasonStats("cfb", line("DB", DEF))), ["EPA credit"]);
   assert.equal(labels(footballSeasonStats("nfl", line("DB", DEF)))?.length, 6);
+});
+
+const LINES: Record<string, (number | null)[]> = {
+  QB, DL: DEF, LB: DEF, DB: DEF,
+  RB: [8, 140, 650, 6, 1, 30, 24, 190, 1, 62, 14, -73, 31, 58],
+  WR: [8, 80, 55, 720, 5, 280, 256, 112, 95],
+  TE: [8, 50, 38, 410, 3, 210, 165, 71, 40],
+  OL: [8, 210, 38, 8170, 290, 14, 81],
+  P: [8, 32, 1520, 1340, 14, 3, -12],
+};
+const labelsOf = (data: SeasonStatsData | null) => data?.tiers.flatMap((tier) => tier.stats.map((stat) => stat.label)) ?? [];
+
+test("CFB cards leave off what college data does not record", () => {
+  const cfb = (group: string) => labelsOf(footballSeasonStats("cfb", line(group, LINES[group])));
+  for (const label of ["CPOE", "aDOT", "QBR"]) assert.equal(cfb("QB").includes(label), false, label);
+  for (const label of ["aDOT", "YAC/rec"]) assert.equal(cfb("WR").includes(label), false, label);
+  for (const label of ["QB hits", "Pressures"]) assert.equal(cfb("LB").includes(label), false, label);
+  assert.equal(cfb("OL").includes("Pressures allowed"), false);
+  assert.deepEqual(footballSeasonStats("cfb", line("P", LINES.P))?.tiers.map((tier) => tier.label), ["Box score"]);
+  for (const label of ["CPOE", "aDOT", "QBR"]) assert.equal(labelsOf(footballSeasonStats("nfl", line("QB", QB))).includes(label), true, label);
+});
+
+test("every Advanced cell shown names a source", () => {
+  for (const sport of ["cfb", "nfl"] as const) {
+    for (const [group, stats] of Object.entries(LINES)) {
+      for (const stat of footballSeasonStats(sport, line(group, stats))?.tiers[1]?.stats ?? []) {
+        assert.match(stat.tip, /(Computed from the box score|From nflfastR play-by-play|From CollegeFootballData play-by-play|Computed by our model|ESPN's Total QBR|From NFL Next Gen Stats|From Pro Football Reference)\.$/, `${sport} ${group} ${stat.label}`);
+      }
+    }
+  }
 });

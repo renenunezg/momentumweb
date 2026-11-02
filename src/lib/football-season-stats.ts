@@ -33,10 +33,11 @@ const GROUP_OF: Record<string, StatGroup> = {
 
 // Where each Advanced value comes from, named at the end of its tip. Values
 // our own models compute say so (René's condition for showing them, 2026-11-02).
-// A null source means the sport has no data for it, so the cell is left off
-// rather than shown as a permanent blank: college data never records the
-// defender in coverage.
-type Source = "box" | "nflfastr" | "model" | "espn" | "ngs" | "pfr" | "college";
+// A sport missing from an entry has no data for it, so its cells are left off
+// rather than shown as a permanent blank. CFBD play-by-play has no air yards,
+// completion probability, QB hits, coverage charting or punt EPA; CFB season
+// QBR and pressures are not published yet.
+type Source = "box" | "nflfastr" | "cfbd" | "model" | "espn" | "ngs" | "pfr";
 
 const SOURCE_TEXT: Record<Source, string> = {
   box: "Computed from the box score.",
@@ -45,20 +46,22 @@ const SOURCE_TEXT: Record<Source, string> = {
   espn: "ESPN's Total QBR.",
   ngs: "From NFL Next Gen Stats.",
   pfr: "From Pro Football Reference.",
-  college: "From college play-by-play.",
+  cfbd: "From CollegeFootballData play-by-play.",
 };
 
-const SOURCES: Record<string, Record<GradeSport, Source | null>> = {
+const SOURCES: Record<string, Partial<Record<GradeSport, Source>>> = {
   box: { cfb: "box", nfl: "box" },
-  epa: { cfb: "model", nfl: "nflfastr" },
-  cpoe: { cfb: "model", nfl: "nflfastr" },
-  air: { cfb: "college", nfl: "nflfastr" },
-  qbr: { cfb: "espn", nfl: "espn" },
+  epa: { cfb: "cfbd", nfl: "nflfastr" },
+  pbp: { cfb: "cfbd", nfl: "nflfastr" },
   ryoe: { cfb: "model", nfl: "ngs" },
-  pressure: { cfb: "college", nfl: "pfr" },
-  coverage: { cfb: null, nfl: "pfr" },
   credit: { cfb: "model", nfl: "model" },
-  pbp: { cfb: "college", nfl: "nflfastr" },
+  cpoe: { nfl: "nflfastr" },
+  air: { nfl: "nflfastr" },
+  hits: { nfl: "nflfastr" },
+  puntEpa: { nfl: "nflfastr" },
+  qbr: { nfl: "espn" },
+  pressure: { nfl: "pfr" },
+  coverage: { nfl: "pfr" },
 };
 
 type Raw = Record<string, number | null>;
@@ -109,13 +112,16 @@ function rating(s: Raw, keys: [string, string, string, string, string], formula:
   return formula(cmp, att, yds, td, int);
 }
 
-type Tiers = { box: SeasonStat[]; advanced: (SeasonStat | null)[] };
+type Tiers = { box: (SeasonStat | null)[]; advanced: (SeasonStat | null)[] };
 
 function build(group: StatGroup, s: Raw, sport: GradeSport): Tiers {
-  const stat = (label: string, value: string | null, tip: string): SeasonStat => ({ label, value, tip });
+  // A box score cell that only some feeds carry names its source to be left
+  // off where the sport lacks it; its tip stays plain.
+  const stat = (label: string, value: string | null, tip: string, needs?: keyof typeof SOURCES): SeasonStat | null =>
+    needs && !SOURCES[needs][sport] ? null : { label, value, tip };
   const adv = (label: string, value: string | null, tip: string, source: keyof typeof SOURCES): SeasonStat | null => {
     const from = SOURCES[source][sport];
-    return from && stat(label, value, `${tip} ${SOURCE_TEXT[from]}`);
+    return from ? { label, value, tip: `${tip} ${SOURCE_TEXT[from]}` } : null;
   };
 
   switch (group) {
@@ -199,7 +205,7 @@ function build(group: StatGroup, s: Raw, sport: GradeSport): Tiers {
           stat("Solo", count(s.solo), "Solo tackles."),
           stat("TFL", fixed(s.tfl, 1), "Tackles for loss; shared ones count half."),
           stat("Sacks", fixed(s.sacks, 1), "Sacks; shared ones count half."),
-          stat("QB hits", count(s.qb_hits), "Hits on the quarterback as or after he throws."),
+          stat("QB hits", count(s.qb_hits), "Hits on the quarterback as or after he throws.", "hits"),
           stat("PBU", count(s.pbu), "Passes broken up."),
           stat("INT", count(s.int), "Interceptions."),
           stat("FF", count(s.ff), "Forced fumbles."),
@@ -219,7 +225,7 @@ function build(group: StatGroup, s: Raw, sport: GradeSport): Tiers {
           stat("Carries", count(s.rush_att), "Team carries behind this line."),
           stat("Dropbacks", count(s.dropbacks), "Team dropbacks behind this line."),
           stat("Sacks allowed", count(s.sacks_allowed), "Sacks of the team's passers."),
-          stat("Pressures allowed", count(s.pressures_allowed), "Sacks, hits and hurries allowed."),
+          stat("Pressures allowed", count(s.pressures_allowed), "Sacks, hits and hurries allowed.", "pressure"),
         ],
         advanced: [
           adv("Stuff%", pct(ratio(s.stuffs, s.rush_att), 0), "Share of carries stopped at or behind the line.", "pbp"),
@@ -236,7 +242,7 @@ function build(group: StatGroup, s: Raw, sport: GradeSport): Tiers {
           stat("Inside 20", count(s.inside_20), "Punts downed inside the opponent's 20."),
           stat("Touchbacks", count(s.touchbacks), "Punts into the end zone."),
         ],
-        advanced: [adv("EPA/punt", signed(ratio(s.punt_epa, s.punts), 2), "Expected points added per punt.", "epa")],
+        advanced: [adv("EPA/punt", signed(ratio(s.punt_epa, s.punts), 2), "Expected points added per punt.", "puntEpa")],
       };
   }
 }
@@ -253,9 +259,9 @@ export function footballSeasonStats(sport: GradeSport, line: FootballStatsLine |
     season: line.season,
     context: `Through week ${line.week}${games}`,
     tiers: [
-      { label: "Box score", stats: box },
+      { label: "Box score", stats: box.filter((stat) => stat != null) },
       { label: "Advanced", stats: advanced.filter((stat) => stat != null) },
-    ],
+    ].filter((tier) => tier.stats.length > 0),
     note: "Raw season totals and rates. Traits above are opponent-adjusted unless their tip says otherwise.",
   };
 }
