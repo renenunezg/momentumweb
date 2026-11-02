@@ -109,14 +109,16 @@ const HITTER_COLUMNS =
   "player_id, season, player_name, team, bats, pa, ab, h, tb, hr, bb, hbp, sf, so, swings, whiffs, n_air, carry, carry_raw, physics, backspin, sidespin, tilt, attack, bat_speed, lab_carry";
 const MINOR_COLUMNS = "player_id, season, level, player_name, team, pa, hr, n_air, carry, carry_raw, exit_velo";
 
+// Each request gets its own limit: a build's first read waits seconds on a cold API.
+const timeout = () => AbortSignal.timeout(10_000);
+
 export const fetchCarry = cache(async (): Promise<CarryData> => {
-  const signal = AbortSignal.timeout(10_000);
   const studyRes = await supabase
     .from("carry_study")
     .select("season, model_version, payload, updated_at")
     .order("season", { ascending: false })
     .limit(1)
-    .abortSignal(signal);
+    .abortSignal(timeout());
   if (studyRes.error) throw new Error(`carry_study: ${studyRes.error.message}`);
   const row = studyRes.data[0];
   if (!row) return { study: null, updatedAt: null, hitters: [], minors: [] };
@@ -129,7 +131,7 @@ export const fetchCarry = cache(async (): Promise<CarryData> => {
       .order("season", { ascending: true })
       .order("player_id", { ascending: true })
       .range(from, from + PAGE - 1)
-      .abortSignal(signal);
+      .abortSignal(timeout());
     // Reject incomplete snapshots so ISR keeps the last successful page.
     if (res.error) throw new Error(`carry_hitters: ${res.error.message}`);
     hitters.push(...res.data);
@@ -144,7 +146,7 @@ export const fetchCarry = cache(async (): Promise<CarryData> => {
       .order("level", { ascending: true })
       .order("player_id", { ascending: true })
       .range(from, from + PAGE - 1)
-      .abortSignal(signal);
+      .abortSignal(timeout());
     if (res.error) throw new Error(`carry_minors: ${res.error.message}`);
     minors.push(...res.data);
     if (res.data.length < PAGE) break;

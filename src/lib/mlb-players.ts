@@ -50,14 +50,14 @@ export const DETAIL_IDS = 40;
 
 export const fetchPlayerValues = cache(async (): Promise<PlayerValues> => {
   const index: PlayerValueIndex[] = [];
-  const signal = AbortSignal.timeout(10_000);
   for (let from = 0; ; from += PAGE) {
     const res = await supabase
       .from("player_values")
       .select(INDEX_COLUMNS)
       .order("player_id", { ascending: true })
       .range(from, from + PAGE - 1)
-      .abortSignal(signal);
+      // Each page gets its own limit: a build's first read waits seconds on a cold API.
+      .abortSignal(AbortSignal.timeout(10_000));
     if (res.error) {
       // Reject incomplete snapshots so ISR keeps the last successful page.
       throw new Error(`Player values read failed: ${res.error.message}`);
