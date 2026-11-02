@@ -67,6 +67,14 @@ export interface PlayerSeasonStatsRow {
 
 export const STATS_COLUMNS = "athlete_id, season, week, position_group, stats";
 
+// A team's logos keyed by the same team string the trait rows carry: the
+// school in college football, the franchise abbreviation in the NFL.
+export interface GradeTeam {
+  team: string;
+  logo_light: string | null;
+  logo_dark: string | null;
+}
+
 // One row per graded player for search and filters. `group` is the filter
 // the page offers beside position: the conference in college football, the
 // division in the NFL.

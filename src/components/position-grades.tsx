@@ -3,7 +3,7 @@
 import { Accordion } from "@base-ui/react/accordion";
 import { ChevronDown } from "lucide-react";
 import { Fragment, useDeferredValue, useEffect, useMemo, useState } from "react";
-import type { GradedPlayer, GradedPlayerTrait, PlayerIndexRow } from "@/lib/position-grades";
+import type { GradedPlayer, GradedPlayerTrait, GradeTeam, PlayerIndexRow } from "@/lib/position-grades";
 import {
   CFB_SECTION_ORDER,
   TRAIT_SECTION_LABELS,
@@ -31,12 +31,6 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 
 const PAGE_ROWS = 40;
 const ALL = "all";
-
-// A team's logos keyed by the same team string the trait rows carry: the
-// school in college football, the franchise abbreviation in the NFL.
-export interface GradeTeam extends TeamLogoSource {
-  team: string;
-}
 
 // Diagonal stripes mark a trait inferred from unit outcomes or teammates
 // rather than counted from the player's own tagged plays.

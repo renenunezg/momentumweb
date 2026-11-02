@@ -10,12 +10,13 @@ import {
   rankIndex,
   toIndexRow,
   type GradedPlayer,
+  type GradeTeam,
   type IndexRow,
   type PlayerIndexRow,
   type PlayerSeasonStatsRow,
   type PositionGrades,
 } from "@/lib/position-grades";
-import { supabaseCfb } from "@/lib/supabase";
+import { supabaseCfb, supabaseCfbGrades } from "@/lib/supabase";
 import type {
   CfbBacktestPrediction,
   CfbGradedGame,
@@ -367,7 +368,7 @@ const CFB_INDEX_COLUMNS = "athlete_id, athlete_name, team, position_group, games
 async function fetchGradeIndex(season: number): Promise<IndexRow[]> {
   const rows: IndexRow[] = [];
   for (let from = 0; ; from += PAGE) {
-    const res = await supabaseCfb
+    const res = await supabaseCfbGrades
       .from("position_traits")
       .select(CFB_INDEX_COLUMNS)
       .eq("season", season)
@@ -389,8 +390,8 @@ export async function fetchPlayerTraitRows(
   const parts = await Promise.all(
     chunk(ids, ID_CHUNK).map((part) =>
       Promise.all([
-        supabaseCfb.from("position_traits").select("*").eq("season", season).in("athlete_id", part).limit(PAGE),
-        supabaseCfb.from("player_season_stats").select(STATS_COLUMNS).eq("season", season).in("athlete_id", part).limit(ID_CHUNK),
+        supabaseCfbGrades.from("position_traits").select("*").eq("season", season).in("athlete_id", part).limit(PAGE),
+        supabaseCfbGrades.from("player_season_stats").select(STATS_COLUMNS).eq("season", season).in("athlete_id", part).limit(ID_CHUNK),
       ])
     )
   );
@@ -405,6 +406,34 @@ export async function fetchPlayerTraitRows(
   return { traits, stats };
 }
 
+// Each team's conference in the season's latest ratings week, for the grade
+// filters. Read through the grades client so the page keeps its day window.
+async function fetchGradeConferences(season: number): Promise<Map<string, string | null>> {
+  const weekRes = await supabaseCfbGrades
+    .from("team_ratings")
+    .select("week")
+    .eq("season", season)
+    .order("week", { ascending: false })
+    .limit(1);
+  if (weekRes.error) throw weekRes.error;
+  const week = weekRes.data?.[0]?.week;
+  if (week == null) return new Map();
+  const res = await supabaseCfbGrades.from("team_ratings").select("team, conference").eq("season", season).eq("week", week);
+  if (res.error) throw res.error;
+  return new Map((res.data ?? []).map((r) => [r.team, r.conference] as const));
+}
+
+// Team logos for the grade cards, through the grades client. A failure
+// degrades to cards without logos rather than taking the page down.
+export async function fetchGradeTeams(): Promise<GradeTeam[]> {
+  const { data, error } = await supabaseCfbGrades.from("teams").select("team, logo_light, logo_dark");
+  if (error) {
+    console.error("cfb grade teams fetch failed:", error.message);
+    return [];
+  }
+  return data ?? [];
+}
+
 // The grade index and trait rows throw on a failed read so ISR keeps the last
 // good page, except during the build (see buildSafe).
 export const fetchPositionGrades = cache(
@@ -412,7 +441,7 @@ export const fetchPositionGrades = cache(
 );
 
 async function readPositionGrades(): Promise<CfbPositionGrades> {
-  const latestRes = await supabaseCfb
+  const latestRes = await supabaseCfbGrades
     .from("position_traits")
     .select("season, week, as_of, model_version")
     .eq("trait", "grade")
@@ -422,8 +451,7 @@ async function readPositionGrades(): Promise<CfbPositionGrades> {
   const latest = latestRes.data?.[0];
   if (latestRes.error || !latest) return EMPTY_GRADES;
 
-  const [gradeRows, { ratings }] = await Promise.all([fetchGradeIndex(latest.season), fetchLatestRatings()]);
-  const conferenceOf = new Map(ratings.map((r) => [r.team, r.conference] as const));
+  const [gradeRows, conferenceOf] = await Promise.all([fetchGradeIndex(latest.season), fetchGradeConferences(latest.season)]);
   const { index, topIds, gradedCounts } = rankIndex(
     gradeRows.map((row) => toIndexRow(row, conferenceOf.get(row.team ?? "") ?? null))
   );

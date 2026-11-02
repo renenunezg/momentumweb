@@ -1,14 +1,15 @@
 import { PageDescription, PageHeader, PageShell, PageTitle } from "@/components/page-layout";
 import { NFL_PLAYER_SECTIONS, PlayerSectionTabs } from "@/components/player-section-tabs";
 import type { Metadata } from "next";
-import { fetchNflPositionGrades, fetchTeams } from "@/lib/nfl";
+import { fetchGradeTeams, fetchNflPositionGrades } from "@/lib/nfl";
 import { formatNumber, formatSigned } from "@/lib/utils";
 import { KpiCard } from "@/components/kpi-card";
 import { LastUpdated } from "@/components/last-updated";
-import PositionGrades, { type GradeTeam } from "@/components/position-grades";
+import PositionGrades from "@/components/position-grades";
 import { SPORT_COPY } from "@/lib/position-traits";
 
-export const revalidate = 3600;
+// The grades change once a week; the webhook refreshes the page when they do.
+export const revalidate = 86400;
 
 export async function generateMetadata(): Promise<Metadata> {
   const { season, week } = await fetchNflPositionGrades();
@@ -20,7 +21,7 @@ export async function generateMetadata(): Promise<Metadata> {
 }
 
 export default async function NflPlayersPage() {
-  const [grades, teams] = await Promise.all([fetchNflPositionGrades(), fetchTeams()]);
+  const [grades, teams] = await Promise.all([fetchNflPositionGrades(), fetchGradeTeams()]);
   const { season, week, index, details, gradedCounts } = grades;
   const copy = SPORT_COPY.nfl;
 
@@ -42,11 +43,6 @@ export default async function NflPlayersPage() {
     .filter((p) => p.war != null)
     .sort((a, b) => (b.war ?? 0) - (a.war ?? 0))[0] ?? null;
   const gradedTotal = Object.values(gradedCounts).reduce((sum, n) => sum + n, 0);
-  const logos: GradeTeam[] = [...teams.values()].map((t) => ({
-    team: t.team_abbr,
-    logo_light: t.logo_light,
-    logo_dark: t.logo_dark,
-  }));
 
   return (
     <PageShell>
@@ -95,7 +91,7 @@ export default async function NflPlayersPage() {
         index={index}
         details={details}
         gradedCounts={gradedCounts}
-        teams={logos}
+        teams={teams}
       />
     </PageShell>
   );

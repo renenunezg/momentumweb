@@ -38,7 +38,13 @@ export const supabase = createClient<Database, "mlb">(url, anonKey, {
 export const CACHE_SECONDS = 3600;
 const RETRY_TIMEOUT_MS = 10_000;
 
-function cachedPublicFetch(sport: string): typeof fetch {
+// The football player grade pages change once a week, when the cron rewrites
+// position_traits and player_season_stats, so their reads live a day and the
+// webhook keeps them fresh. Their own clients keep that window from mixing
+// with the hourly reads; no grade query URL is shared with an hourly page.
+export const GRADES_CACHE_SECONDS = 86400;
+
+function cachedPublicFetch(sport: string, seconds = CACHE_SECONDS): typeof fetch {
   return async (input, init) => {
     const method = (init?.method ?? "GET").toUpperCase();
     const restRead =
@@ -46,7 +52,7 @@ function cachedPublicFetch(sport: string): typeof fetch {
       method === "GET" &&
       String(input).startsWith(`${url}/rest/v1/`);
     if (!restRead) return fetch(input, init);
-    const options = { ...init, next: { revalidate: CACHE_SECONDS, tags: restCacheTags(sport, new URL(String(input))) } };
+    const options = { ...init, next: { revalidate: seconds, tags: restCacheTags(sport, new URL(String(input))) } };
     const response = await fetch(input, options);
     if (response.status < 500) return response;
     // A statement timeout on the Nano instance usually passes, so a read gets
@@ -75,6 +81,18 @@ export const supabaseNfl = createClient<Database, "nfl">(url, anonKey, {
   db: { schema: "nfl" },
   auth: anonAuth("nfl"),
   global: { fetch: cachedPublicFetch("nfl") },
+});
+
+export const supabaseCfbGrades = createClient<Database, "cfb">(url, anonKey, {
+  db: { schema: "cfb" },
+  auth: anonAuth("cfb-grades"),
+  global: { fetch: cachedPublicFetch("cfb", GRADES_CACHE_SECONDS) },
+});
+
+export const supabaseNflGrades = createClient<Database, "nfl">(url, anonKey, {
+  db: { schema: "nfl" },
+  auth: anonAuth("nfl-grades"),
+  global: { fetch: cachedPublicFetch("nfl", GRADES_CACHE_SECONDS) },
 });
 
 export const supabaseNhl = createClient<Database, "nhl">(url, anonKey, {

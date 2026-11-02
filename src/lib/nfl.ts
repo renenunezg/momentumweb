@@ -1,6 +1,6 @@
 import { cache } from "react";
 import { buildSafe } from "@/lib/build-safe";
-import { supabaseNfl } from "@/lib/supabase";
+import { supabaseNfl, supabaseNflGrades } from "@/lib/supabase";
 import type { FootballLivePerformance } from "@/lib/football-performance";
 import {
   EMPTY_GRADES,
@@ -11,6 +11,7 @@ import {
   chunk,
   rankIndex,
   toIndexRow,
+  type GradeTeam,
   type IndexRow,
   type PositionGrades,
 } from "@/lib/position-grades";
@@ -256,7 +257,7 @@ export async function fetchNflLivePerformance(): Promise<FootballLivePerformance
 async function fetchGradeIndex(season: number): Promise<IndexRow[]> {
   const rows: IndexRow[] = [];
   for (let from = 0; ; from += PAGE) {
-    const res = await supabaseNfl
+    const res = await supabaseNflGrades
       .from("position_traits")
       .select(INDEX_COLUMNS)
       .eq("season", season)
@@ -272,7 +273,7 @@ async function fetchGradeIndex(season: number): Promise<IndexRow[]> {
 export async function fetchNflPlayerTraitRows(season: number, ids: string[]): Promise<NflPositionTrait[]> {
   const parts = await Promise.all(
     chunk(ids, ID_CHUNK).map((part) =>
-      supabaseNfl
+      supabaseNflGrades
         .from("position_traits")
         .select("*")
         .eq("season", season)
@@ -286,6 +287,34 @@ export async function fetchNflPlayerTraitRows(season: number, ids: string[]): Pr
   });
 }
 
+// Each team's division in the season's latest ratings week, for the grade
+// filters. Read through the grades client so the page keeps its day window.
+async function fetchGradeDivisions(season: number): Promise<Map<string, string | null>> {
+  const weekRes = await supabaseNflGrades
+    .from("team_ratings")
+    .select("week")
+    .eq("season", season)
+    .order("week", { ascending: false })
+    .limit(1);
+  if (weekRes.error) throw weekRes.error;
+  const week = weekRes.data?.[0]?.week;
+  if (week == null) return new Map();
+  const res = await supabaseNflGrades.from("team_ratings").select("team_abbr, division").eq("season", season).eq("week", week);
+  if (res.error) throw res.error;
+  return new Map((res.data ?? []).map((r) => [r.team_abbr, r.division] as const));
+}
+
+// Team logos for the grade cards, keyed by abbreviation like the trait rows,
+// through the grades client. A failure degrades to cards without logos.
+export async function fetchGradeTeams(): Promise<GradeTeam[]> {
+  const { data, error } = await supabaseNflGrades.from("teams").select("team_abbr, logo_light, logo_dark");
+  if (error) {
+    console.error("nfl grade teams fetch failed:", error.message);
+    return [];
+  }
+  return (data ?? []).map((t) => ({ team: t.team_abbr, logo_light: t.logo_light, logo_dark: t.logo_dark }));
+}
+
 // The grade index and trait rows throw on a failed read so ISR keeps the last
 // good page, except during the build (see buildSafe).
 export const fetchNflPositionGrades = cache(
@@ -293,7 +322,7 @@ export const fetchNflPositionGrades = cache(
 );
 
 async function readNflPositionGrades(): Promise<PositionGrades> {
-  const latestRes = await supabaseNfl
+  const latestRes = await supabaseNflGrades
     .from("position_traits")
     .select("season, week, as_of, model_version")
     .eq("trait", "grade")
@@ -303,8 +332,7 @@ async function readNflPositionGrades(): Promise<PositionGrades> {
   const latest = latestRes.data?.[0];
   if (latestRes.error || !latest) return EMPTY_GRADES;
 
-  const [gradeRows, { ratings }] = await Promise.all([fetchGradeIndex(latest.season), fetchLatestRatings()]);
-  const divisionOf = new Map(ratings.map((r) => [r.team_abbr, r.division] as const));
+  const [gradeRows, divisionOf] = await Promise.all([fetchGradeIndex(latest.season), fetchGradeDivisions(latest.season)]);
   const { index, topIds, gradedCounts } = rankIndex(
     gradeRows.map((row) => toIndexRow(row, divisionOf.get(row.team ?? "") ?? null)),
   );

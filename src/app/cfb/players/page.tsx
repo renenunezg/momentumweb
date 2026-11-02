@@ -1,14 +1,15 @@
 import { PageDescription, PageHeader, PageShell, PageTitle } from "@/components/page-layout";
 import { PlayerSectionTabs } from "@/components/player-section-tabs";
 import type { Metadata } from "next";
-import { fetchPositionGrades, fetchTeams } from "@/lib/cfb";
+import { fetchGradeTeams, fetchPositionGrades } from "@/lib/cfb";
 import { formatNumber, formatSigned } from "@/lib/utils";
 import { KpiCard } from "@/components/kpi-card";
 import { LastUpdated } from "@/components/last-updated";
 import PositionGrades from "@/components/position-grades";
 import { GRADE_TIP, WAR_TIP } from "@/lib/position-traits";
 
-export const revalidate = 3600;
+// The grades change once a week; the webhook refreshes the page when they do.
+export const revalidate = 86400;
 
 export async function generateMetadata(): Promise<Metadata> {
   const { season, week } = await fetchPositionGrades();
@@ -20,7 +21,7 @@ export async function generateMetadata(): Promise<Metadata> {
 }
 
 export default async function PlayersPage() {
-  const [grades, teams] = await Promise.all([fetchPositionGrades(), fetchTeams()]);
+  const [grades, teams] = await Promise.all([fetchPositionGrades(), fetchGradeTeams()]);
   const { season, week, index, details, gradedCounts } = grades;
 
   if (season == null || index.length === 0) {
@@ -90,7 +91,7 @@ export default async function PlayersPage() {
         index={index}
         details={details}
         gradedCounts={gradedCounts}
-        teams={[...teams.values()]}
+        teams={teams}
       />
     </PageShell>
   );
