@@ -536,16 +536,18 @@ export function MethodologyContent({ example, backtestVersion }: { example: Pick
             <span className="text-muted-foreground">{"//"} w = 0.55 through week 3, 0.35 after</span>
           </FormulaBlock>
           <p>
-            Published team ratings are the fitted ratings shifted so that, for
-            every game a team plays that week, the rating difference plus home
-            field equals the published line exactly. Each game&apos;s gap is
-            split evenly between its two teams, offense and defense each take
-            half of a team&apos;s shift, and the size of the shift is stored
-            per team. A team with no game that week moves part of the way
-            toward its market-history rating, by the same share the line uses
-            (0.55 through week 3, 0.35 after). The underlying fit is unchanged
-            and uses no market input: market information enters only at the
-            output layer.
+            Published team ratings are the fitted ratings moved part of the way
+            toward each team&apos;s market-history rating, by the same share
+            the line uses (0.55 through week 3, 0.35 after). Offense and defense
+            each take half of a team&apos;s shift, and the size of the shift is
+            stored per team. Nothing about the coming week&apos;s matchups
+            enters a rating, so a change from one week to the next reflects
+            games played and the market&apos;s history, not who a team plays
+            next. A scheduled game&apos;s published line also carries the
+            market&apos;s view of that game, so it can sit a point or two from
+            the two teams&apos; rating difference plus home field. The
+            underlying fit is unchanged and uses no market input: market
+            information enters only at the output layer.
           </p>
           <p>
             The Compare tab on the{" "}

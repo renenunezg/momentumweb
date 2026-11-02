@@ -74,9 +74,9 @@ export default async function RatingsPage() {
       <p className="max-w-4xl text-sm text-muted-foreground leading-relaxed">
         Model and market-implied strength, in points above an average FBS team
         on a neutral field. Rankings follow the model. The published model
-        ratings are the fitted ratings shifted so that this week&apos;s
-        rating differences plus home field match the published lines. Tap a
-        rating for its uncertainty and source.
+        ratings are the fitted ratings moved part of the way toward each
+        team&apos;s market-history rating; they carry nothing from the coming
+        week&apos;s matchups. Tap a rating for its uncertainty and source.
       </p>
 
       <CfbRatings
