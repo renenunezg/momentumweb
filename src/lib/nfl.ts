@@ -7,12 +7,14 @@ import {
   ID_CHUNK,
   INDEX_COLUMNS,
   PAGE,
+  STATS_COLUMNS,
   buildGradedPlayers,
   chunk,
   rankIndex,
   toIndexRow,
   type GradeTeam,
   type IndexRow,
+  type PlayerSeasonStatsRow,
   type PositionGrades,
 } from "@/lib/position-grades";
 import type {
@@ -270,21 +272,29 @@ async function fetchGradeIndex(season: number): Promise<IndexRow[]> {
   }
 }
 
-export async function fetchNflPlayerTraitRows(season: number, ids: string[]): Promise<NflPositionTrait[]> {
+// Each chunk reads its trait rows and its stat lines together; a player
+// without a stats row simply has no stat block.
+export async function fetchNflPlayerTraitRows(
+  season: number,
+  ids: string[],
+): Promise<{ traits: NflPositionTrait[]; stats: PlayerSeasonStatsRow[] }> {
   const parts = await Promise.all(
     chunk(ids, ID_CHUNK).map((part) =>
-      supabaseNflGrades
-        .from("position_traits")
-        .select("*")
-        .eq("season", season)
-        .in("athlete_id", part)
-        .limit(PAGE),
+      Promise.all([
+        supabaseNflGrades.from("position_traits").select("*").eq("season", season).in("athlete_id", part).limit(PAGE),
+        supabaseNflGrades.from("player_season_stats").select(STATS_COLUMNS).eq("season", season).in("athlete_id", part).limit(ID_CHUNK),
+      ]),
     ),
   );
-  return parts.flatMap((res) => {
-    if (res.error) throw res.error;
-    return (res.data ?? []) as NflPositionTrait[];
-  });
+  const traits: NflPositionTrait[] = [];
+  const stats: PlayerSeasonStatsRow[] = [];
+  for (const [traitRes, statsRes] of parts) {
+    if (traitRes.error) throw traitRes.error;
+    if (statsRes.error) throw statsRes.error;
+    traits.push(...((traitRes.data ?? []) as NflPositionTrait[]));
+    stats.push(...(statsRes.data ?? []));
+  }
+  return { traits, stats };
 }
 
 // Each team's division in the season's latest ratings week, for the grade
@@ -336,7 +346,8 @@ async function readNflPositionGrades(): Promise<PositionGrades> {
   const { index, topIds, gradedCounts } = rankIndex(
     gradeRows.map((row) => toIndexRow(row, divisionOf.get(row.team ?? "") ?? null)),
   );
-  const details = buildGradedPlayers(await fetchNflPlayerTraitRows(latest.season, topIds), []);
+  const { traits, stats } = await fetchNflPlayerTraitRows(latest.season, topIds);
+  const details = buildGradedPlayers(traits, stats);
   return {
     season: latest.season,
     week: latest.week,
