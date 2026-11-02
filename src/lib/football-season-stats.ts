@@ -2,8 +2,8 @@
 // player_season_stats. The key order and scales are the contract with the
 // momentumcfb and momentumnfl publishers and must stay in step with them; a
 // key marked ":10" is stored in tenths. Ratios of stored counts are derived
-// here so a rate can never disagree with its own counts. Pure, so the server
-// reads and the card share one decoder.
+// here so a rate can never disagree with its own counts. Pure: the server
+// passes each raw line through footballStatsLine, and the card decodes it.
 
 import type { SeasonStat, SeasonStatsData } from "./season-stats.ts";
 import type { GradeSport } from "./position-traits.ts";
@@ -33,6 +33,9 @@ const GROUP_OF: Record<string, StatGroup> = {
 
 // Where each Advanced value comes from, named at the end of its tip. Values
 // our own models compute say so (René's condition for showing them, 2026-11-02).
+// A null source means the sport has no data for it, so the cell is left off
+// rather than shown as a permanent blank: college data never records the
+// defender in coverage.
 type Source = "box" | "nflfastr" | "model" | "espn" | "ngs" | "pfr" | "college";
 
 const SOURCE_TEXT: Record<Source, string> = {
@@ -45,7 +48,7 @@ const SOURCE_TEXT: Record<Source, string> = {
   college: "From college play-by-play.",
 };
 
-const SOURCES: Record<string, Record<GradeSport, Source>> = {
+const SOURCES: Record<string, Record<GradeSport, Source | null>> = {
   box: { cfb: "box", nfl: "box" },
   epa: { cfb: "model", nfl: "nflfastr" },
   cpoe: { cfb: "model", nfl: "nflfastr" },
@@ -53,7 +56,7 @@ const SOURCES: Record<string, Record<GradeSport, Source>> = {
   qbr: { cfb: "espn", nfl: "espn" },
   ryoe: { cfb: "model", nfl: "ngs" },
   pressure: { cfb: "college", nfl: "pfr" },
-  coverage: { cfb: "college", nfl: "pfr" },
+  coverage: { cfb: null, nfl: "pfr" },
   credit: { cfb: "model", nfl: "model" },
   pbp: { cfb: "college", nfl: "nflfastr" },
 };
@@ -106,12 +109,14 @@ function rating(s: Raw, keys: [string, string, string, string, string], formula:
   return formula(cmp, att, yds, td, int);
 }
 
-type Tiers = { box: SeasonStat[]; advanced: SeasonStat[] };
+type Tiers = { box: SeasonStat[]; advanced: (SeasonStat | null)[] };
 
 function build(group: StatGroup, s: Raw, sport: GradeSport): Tiers {
   const stat = (label: string, value: string | null, tip: string): SeasonStat => ({ label, value, tip });
-  const adv = (label: string, value: string | null, tip: string, source: keyof typeof SOURCES): SeasonStat =>
-    stat(label, value, `${tip} ${SOURCE_TEXT[SOURCES[source][sport]]}`);
+  const adv = (label: string, value: string | null, tip: string, source: keyof typeof SOURCES): SeasonStat | null => {
+    const from = SOURCES[source][sport];
+    return from && stat(label, value, `${tip} ${SOURCE_TEXT[from]}`);
+  };
 
   switch (group) {
     case "QB": {
@@ -158,7 +163,14 @@ function build(group: StatGroup, s: Raw, sport: GradeSport): Tiers {
           adv("Total EPA", signed(s.epa_total, 1), "Expected points added rushing and receiving.", "epa"),
           adv("Success%", pct(ratio(s.rush_success, s.rush_att), 0), "Share of carries with positive expected points added.", "epa"),
           adv("Explosive%", pct(ratio(s.rush_explosive, s.rush_att), 0), "Share of carries gaining 10 or more yards.", "pbp"),
-          adv("RYOE/carry", signed(ratio(s.ryoe_total, s.rush_att), 1), "Rushing yards over what the blocking and defenders' positions predicted, per carry.", "ryoe"),
+          adv(
+            "RYOE/carry",
+            signed(ratio(s.ryoe_total, s.rush_att), 1),
+            sport === "nfl"
+              ? "Rushing yards over what the blocking and defenders' positions predicted, per carry."
+              : "Rushing yards over what the down, distance, field position and run defense predicted, per carry. No player tracking, so it can't see the blocking.",
+            "ryoe"
+          ),
           adv("Catch%", pct(ratio(s.rec, s.targets), 0), "Receptions divided by targets.", "box"),
         ],
       };
@@ -242,7 +254,7 @@ export function footballSeasonStats(sport: GradeSport, line: FootballStatsLine |
     context: `Through week ${line.week}${games}`,
     tiers: [
       { label: "Box score", stats: box },
-      { label: "Advanced", stats: advanced },
+      { label: "Advanced", stats: advanced.filter((stat) => stat != null) },
     ],
     note: "Raw season totals and rates. Traits above are opponent-adjusted unless their tip says otherwise.",
   };

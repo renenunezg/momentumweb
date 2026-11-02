@@ -77,7 +77,7 @@ test("null entries blank one cell and keep the rest", () => {
   const cfb = footballSeasonStats("cfb", line("QB", QB.map((v, i) => (i === 14 ? null : v))));
   assert.equal(cell(cfb, "QBR")?.value, null);
   assert.equal(cell(cfb, "Pass yds")?.value, "250");
-  const def = footballSeasonStats("cfb", line("DB", DEF));
+  const def = footballSeasonStats("nfl", line("DB", DEF));
   assert.equal(cell(def, "Rating allowed")?.value, null);
   assert.equal(cell(def, "Tackles")?.value, "50");
 });
@@ -110,4 +110,13 @@ test("play-by-play counts name play-by-play, not the box score, as their source"
     assert.match(cell(footballSeasonStats(sport, line("OL", ol)), "Stuff%")?.tip ?? "", source);
     assert.match(cell(footballSeasonStats(sport, line("WR", rec)), "Target share")?.tip ?? "", source);
   }
+});
+
+test("CFB cards drop coverage cells and label their RYOE as ours", () => {
+  const rb = [8, 140, 650, 6, 1, 30, 24, 190, 1, 62, 14, null, 31, 58];
+  const labels = (data: SeasonStatsData | null) => data?.tiers[1].stats.map((stat) => stat.label);
+  assert.match(cell(footballSeasonStats("cfb", line("RB", rb)), "RYOE/carry")?.tip ?? "", /No player tracking.*Computed by our model\.$/);
+  assert.match(cell(footballSeasonStats("nfl", line("RB", rb)), "RYOE/carry")?.tip ?? "", /From NFL Next Gen Stats\.$/);
+  assert.deepEqual(labels(footballSeasonStats("cfb", line("DB", DEF))), ["Pressures", "EPA credit"]);
+  assert.equal(labels(footballSeasonStats("nfl", line("DB", DEF)))?.length, 6);
 });
