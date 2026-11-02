@@ -20,6 +20,22 @@ const STATS_API_CODE: Record<string, string> = {
   AZ: "ARI", CWS: "CHW", KC: "KCR", SD: "SDP", SF: "SFG", TB: "TBR", WSH: "WSN",
 };
 
+// Award boards store the Stats API's club name, frozen with the forecast.
+const MLB_TEAM_CODE_BY_NAME: Record<string, string> = {
+  "Arizona Diamondbacks": "ARI", Athletics: "ATH", "Atlanta Braves": "ATL", "Baltimore Orioles": "BAL",
+  "Boston Red Sox": "BOS", "Chicago Cubs": "CHC", "Chicago White Sox": "CHW", "Cincinnati Reds": "CIN",
+  "Cleveland Guardians": "CLE", "Colorado Rockies": "COL", "Detroit Tigers": "DET", "Houston Astros": "HOU",
+  "Kansas City Royals": "KCR", "Los Angeles Angels": "LAA", "Los Angeles Dodgers": "LAD", "Miami Marlins": "MIA",
+  "Milwaukee Brewers": "MIL", "Minnesota Twins": "MIN", "New York Mets": "NYM", "New York Yankees": "NYY",
+  "Philadelphia Phillies": "PHI", "Pittsburgh Pirates": "PIT", "San Diego Padres": "SDP", "Seattle Mariners": "SEA",
+  "San Francisco Giants": "SFG", "St. Louis Cardinals": "STL", "Tampa Bay Rays": "TBR", "Texas Rangers": "TEX",
+  "Toronto Blue Jays": "TOR", "Washington Nationals": "WSN",
+};
+
+export function mlbTeamCodeByName(name: string | null | undefined): string | undefined {
+  return name ? MLB_TEAM_CODE_BY_NAME[name] : undefined;
+}
+
 // MLB serves cap logos as SVG off a public CDN keyed by team id, with separate
 // artwork cut for light and dark backgrounds. Nothing is fetched or stored: the
 // URL is a pure function of the code, so logos cost no request at build time

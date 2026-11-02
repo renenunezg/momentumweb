@@ -7,11 +7,13 @@ export function ProbabilityBar({
   value,
   domain = 1,
   digits = 0,
+  label,
   className,
 }: {
   value: number | null | undefined;
   domain?: number;
   digits?: number;
+  label?: string; // Shown in place of the exact value when a page caps its precision.
   className?: string;
 }) {
   const width = value == null || domain <= 0 ? 0 : Math.min(1, Math.max(0, value / domain)) * 100;
@@ -21,7 +23,7 @@ export function ProbabilityBar({
         <span className="block h-full rounded-full bg-chart-primary" style={{ width: `${width}%` }} />
       </span>
       <span className={cn("w-11 text-right tabular-nums", value == null && "text-muted-foreground")}>
-        {formatPct(value, digits)}
+        {label ?? formatPct(value, digits)}
       </span>
     </span>
   );
