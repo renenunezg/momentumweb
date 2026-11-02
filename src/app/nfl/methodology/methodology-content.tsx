@@ -222,23 +222,27 @@ export function MethodologyContent({ example }: { example: PickExample | null })
       <Section id="picks" title="Predictions">
         <p className={p}>
           Predictions come from a versioned policy, currently{" "}
-          <span className="font-mono">nfl-picks-v5</span>, that selects at
+          <span className="font-mono">nfl-picks-v6</span>, that selects at
           most one side per game and market across moneylines, spreads and
-          totals. A prediction needs the priced line to sit at least two points
-          beyond the offered price&apos;s break-even line, plus positive
-          estimated EV. An edge in points holds favorites and underdogs to the
-          same standard.
+          totals. Every market is priced from the median line across books at
+          decision time with the vig removed. Spreads and moneylines move that
+          line 4.5 percent of the way toward the pure model margin, the weight
+          the model earned against 2016 through 2021 closing lines, a small
+          weight that later seasons do not improve on. Totals use the market alone,
+          because the model total showed no weight against the close. Any offer
+          with positive estimated EV at its price is a prediction.
         </p>
         <p className={p}>
-          Spreads are priced off the published margin. Moneylines start from
-          the market line and move only 20 percent of the way toward the pure
-          model, because on 2019 through 2025 the model added nothing to the
-          market on who wins outright. Totals use the published total, the
-          model total moved halfway toward the sportsbook total. All three use the spread of
-          actual results around the priced line (12.8 points on margins, 13.3
-          on totals), not the engine&apos;s wider uncertainty. If fewer than
-          five predictions clear the gate in a week, the highest-edge positive-EV
-          offers fill the slate and are recorded as floor predictions.
+          When fewer than five games have a positive-EV offer, the highest-EV
+          model sides on spreads and moneylines fill a five-game weekly slate as
+          ranked leans. A lean is close to a coin flip and its estimated EV is
+          near zero or negative; it is staked and counted in the record like any
+          other prediction, and labeled so it can be told apart. Probabilities
+          use the spread of actual results around the priced line (12.8 points
+          on margins, 13.3 on totals), not the engine&apos;s wider uncertainty.
+          Through November 1, 2026, v5 priced spreads and totals from the
+          published blended numbers, required a two-point edge, and promoted
+          floor predictions to reach five a week.
         </p>
         <p className={p}>
           Each prediction records its exact line, price, book and decision time and

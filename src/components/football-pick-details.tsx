@@ -11,7 +11,7 @@ import {
   DialogTrigger,
 } from "@/components/ui/dialog";
 import { formatSiteTimestamp } from "@/lib/site-time";
-import { pickLabel, pickReason, pickQualification, pickResearchContext, usesKeyNumberSpread, usesPairedMoneylineBlend, type WeeklyPick } from "@/lib/football-picks";
+import { pickLabel, pickPricing, pickReason, pickQualification, pickResearchContext, type WeeklyPick } from "@/lib/football-picks";
 import type { FootballLeague } from "@/lib/football-slates";
 import { impliedProbability } from "@/lib/utils";
 import { formatNumber, formatOdds, formatPct, formatSigned } from "@/lib/utils";
@@ -56,9 +56,8 @@ function PickDetailsContent({
   gamePickCount?: number;
 }) {
   const research = pickResearchContext(pick);
-  const blendedMoneyline = usesPairedMoneylineBlend(pick);
-  const keySpread = usesKeyNumberSpread(pick);
-  const blendedTotal = pick.market === "totals" && ["cfb-picks-v10", "cfb-picks-v11"].includes(pick.policy_version);
+  const pricing = pickPricing(pick);
+  const listedOnly = pick.reason === "volume_floor" || pick.reason === "ranked_lean";
   const timestamp = (value: string | null) =>
     value ? formatSiteTimestamp(value) : "Not recorded";
   const margin = pick.model_home_margin;
@@ -101,7 +100,7 @@ function PickDetailsContent({
           <div className="flex flex-wrap items-center justify-between gap-2">
             <h3 className="flex items-center gap-2 font-semibold">
               <ChartNoAxesCombined className="size-4 text-muted-foreground" aria-hidden="true" />
-              {pick.reason === "volume_floor" ? "Why it is listed" : "Why it qualified"}
+              {listedOnly ? "Why it is listed" : "Why it qualified"}
             </h3>
             <span className="rounded-sm border border-border px-2 py-1 text-xs text-muted-foreground">
               {pickQualification(pick) ?? pickReason(pick.reason)}
@@ -109,6 +108,9 @@ function PickDetailsContent({
           </div>
           {pick.reason === "volume_floor" && (
             <p className="mt-3 text-xs text-muted-foreground">{research?.softCap ? "Included under the weekly research target and market cap, with no replacement predictions." : "Included for exploration under the earlier weekly prediction minimum."} It has positive estimated EV but does not clear the standard two-point selection threshold (measured in forecast points, not probability percentage points). Its results are tracked separately.</p>
+          )}
+          {pick.reason === "ranked_lean" && (
+            <p className="mt-3 text-xs text-muted-foreground">Fewer than five games had a positive expected value offer, so the highest-EV model sides fill the five-game weekly slate. A lean&rsquo;s win probability is close to a coin flip and its expected value at this price is near zero or negative. It is staked and counted in the record like every other prediction.</p>
           )}
           <dl className="my-5 grid grid-cols-2 gap-4">
             <div>
@@ -128,7 +130,7 @@ function PickDetailsContent({
           </dl>
           <div className="space-y-3">
             {[
-              { label: blendedMoneyline || keySpread || blendedTotal ? "Blended win probability" : "Model win probability", value: pick.win_probability, color: "bg-primary" },
+              { label: pricing ? pricing.probabilityLabel.replace("probability", "win probability") : "Model win probability", value: pick.win_probability, color: "bg-primary" },
               { label: "Needed to break even", value: breakEven, color: "bg-accent-blue" },
             ].map(({ label, value, color }) => (
               <div key={label}>
@@ -163,7 +165,7 @@ function PickDetailsContent({
             <p className="mt-1 text-xs text-muted-foreground">Points in favor of the selected side.</p>
             <dl className="mt-3 space-y-2 text-xs">
               {[
-                ["Model contribution (20%)", research.spread.model_contribution_points],
+                ["Model contribution", research.spread.model_contribution_points],
                 ["Offered line vs frozen market", research.spread.quote_difference_points],
                 ["Price and distribution adjustment", research.spread.price_distribution_adjustment_points],
                 ["Selection edge", research.spread.edge_points],
@@ -174,25 +176,19 @@ function PickDetailsContent({
           </section>
         )}
         <section>
-          <h3 className="mb-2 text-xs font-medium text-muted-foreground">{blendedMoneyline ? "Published forecast context" : "Forecast used for this prediction"}</h3>
+          <h3 className="mb-2 text-xs font-medium text-muted-foreground">{pricing ? "Published forecast context" : "Forecast used for this prediction"}</h3>
           <dl className="grid grid-cols-2 gap-3">
             <div className="rounded-lg border border-border p-3">
               <dt className="text-xs text-muted-foreground">Total points</dt>
               <dd className="mt-1 font-mono text-xl font-semibold">{pick.model_total == null ? "Not recorded" : formatNumber(pick.model_total)}</dd>
             </div>
             <div className="rounded-lg border border-border p-3">
-              <dt className="text-xs text-muted-foreground">{keySpread ? "Spread pricing margin" : "Winning margin"}</dt>
+              <dt className="text-xs text-muted-foreground">{pricing?.kind === "key_number_spread" ? "Spread pricing margin" : "Winning margin"}</dt>
               <dd className="mt-1 text-xl font-semibold">{marginLabel}</dd>
             </div>
           </dl>
         </section>
-        <p className="text-xs text-muted-foreground">{blendedMoneyline
-          ? "Moneylines blend 20% of the pure model margin with 80% of the paired market’s equivalent margin, then convert that result to win probability. The market reference has vig removed."
-          : keySpread
-            ? "Spreads blend 20% of the model/history margin with 80% of the frozen market margin. Development-fitted integer-margin weights account for football key numbers and pushes. The published point forecast is unchanged."
-            : blendedTotal
-              ? "Totals retain the published 50% model and 50% market blend with 15.93-point pricing dispersion. Expected profit is an estimate, not a guaranteed return."
-              : "Expected profit is a model estimate, not a guaranteed return."}</p>
+        <p className="text-xs text-muted-foreground">{pricing?.explanation ?? "Expected profit is a model estimate, not a guaranteed return."}</p>
         {league === "cfb" && gamePickCount != null && gamePickCount > 1 && (
           <p className="text-xs text-muted-foreground">{gamePickCount} predictions share this game: {gamePickCount} research units in total, one per prediction. Their outcomes are correlated.</p>
         )}

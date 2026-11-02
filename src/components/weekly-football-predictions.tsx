@@ -18,9 +18,7 @@ import {
 import {
   MARKET_LABELS,
   pickLabel,
-  usesPairedMoneylineBlend,
-  usesKeyNumberSpread,
-  usesBlendedTotal,
+  pickPricing,
   pickQualification,
   type PickMarket,
   type WeeklyGame,
@@ -369,9 +367,9 @@ function GamePredictions({
               <span>{pick.provider}</span>
               <span
                 className="font-mono tabular-nums"
-                title={usesPairedMoneylineBlend(pick) ? "Win probability from a 20% model and 80% paired-market blend in margin space." : usesKeyNumberSpread(pick) ? "Win probability from a 20% model/history and 80% market margin blend with football key-number weights." : usesBlendedTotal(pick) ? "Win probability from the published 50% model and 50% market total; pushes are separate." : "Model probability that this selection wins; pushes are separate."}
+                title={`${pickPricing(pick)?.explanation ?? "Model probability that this selection wins."} Pushes are separate.`}
               >
-                {usesPairedMoneylineBlend(pick) || usesKeyNumberSpread(pick) || usesBlendedTotal(pick) ? "Blended probability" : "Model probability"}{" "}
+                {pickPricing(pick)?.probabilityLabel ?? "Model probability"}{" "}
                 <span className="font-semibold text-foreground">
                   {formatPct(pick.win_probability)}
                 </span>

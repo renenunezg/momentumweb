@@ -221,7 +221,7 @@ export function MethodologyContent({ example, backtestVersion }: { example: Pick
               { label: "Home field", val: "Refit weekly from a 2.5 ± 1.5 point prior" },
               { label: "In-game model", val: "3-parameter Gaussian on the final margin" },
               { label: "Kickoff anchor", val: "Published market-informed line, sd 15.35 points" },
-              { label: "Predictions", val: "Moneyline, spread and total at a flat unit (cfb-picks-v11)" },
+              { label: "Predictions", val: "Moneyline, spread and total at a flat unit (cfb-picks-v13)" },
             ].map(({ label, val }) => (
               <Card key={label} size="sm"><CardContent>
                 <p className="type-eyebrow text-muted-foreground">{label}</p>
@@ -585,16 +585,20 @@ export function MethodologyContent({ example, backtestVersion }: { example: Pick
         <div className="space-y-4 text-sm leading-relaxed">
           <p>
             Predictions come from a separate policy, currently{" "}
-            <span className="font-mono">cfb-picks-v11</span>, that selects at most
+            <span className="font-mono">cfb-picks-v13</span>, that selects at most
             one side per game and market, and every edge is measured after
             shrinking toward the market the prediction is priced against. Spreads
-            blend 20% model and history margin with 80% frozen market margin and
-            apply football key-number weights. Totals use the published total, the
-            model total averaged with the sportsbook total. Moneylines keep only 0.2 of the
+            start from the market spread and move 0.75% of the way toward the
+            model and history margin, the weight fitted against closing lines;
+            football key-number weights set only the push chance. Totals move the
+            median market total 21% of the way toward the model side of the
+            published total, a weight fitted on 2020&ndash;2022 and checked on
+            2023&ndash;2025. Moneylines keep only 0.2 of the
             model&apos;s disagreement with the vig-free median market. Probabilities use the
             measured dispersion of results around these lines (15.35 points for
             margin, 15.93 for total), not the pure model&apos;s wider spread.
-            Earlier predictions this season were made under v5, v6 and v7 and keep
+            Earlier predictions this season were made under v5, v6, v7 and v11 (spreads
+            blended 20% model with 80% market; totals used the published 50/50 blend) and keep
             their rules; the record on the performance page pools them.
           </p>
           <p>

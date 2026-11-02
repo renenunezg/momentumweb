@@ -26,8 +26,7 @@ import {
   pickReason,
   pickQualification,
   QUALIFICATION_LABELS,
-  usesPairedMoneylineBlend,
-  usesKeyNumberSpread,
+  pickPricing,
   type FootballPick,
   type FootballPickMetric,
   type PickMarket,
@@ -218,11 +217,8 @@ export function PickTable({
                       <div className="mt-1 max-w-64 space-y-1 break-all">
                         <p>Decision: {new Date(pick.decision_at).toISOString()}</p>
                         <p>Rule: {pick.policy_version}</p>
-                        {usesPairedMoneylineBlend(pick) && (
-                          <p>Probability: 20% model / 80% paired market · margin blend</p>
-                        )}
-                        {usesKeyNumberSpread(pick) && (
-                          <p>Probability: 20% model/history / 80% market margin with football key-number weights</p>
+                        {pickPricing(pick) && (
+                          <p>Probability: {pickPricing(pick)?.summary}</p>
                         )}
                         {pick.missing_input_count != null ? (
                           <p>
@@ -428,13 +424,17 @@ export function PickPolicy({
       </p>
       {sport === "nhl" ? (
         <p>
-          NHL prediction policy v2 prices the published forecast, which blends the model
-          halfway with the market. A moneyline qualifies when the
-          published win probability beats the posted price&apos;s break-even
-          probability by at least 4.5 percentage points with positive
-          estimated EV; a total when the published total differs from the
-          posted line by at least half a goal. A game without a two-sided
-          price is No Play. Predictions through October 9, 2026 (v1) used the model
+          NHL prediction policy v3, from November 2, 2026, prices moneylines
+          from the vig-free market consensus, moved only when a team played the
+          day before: on 2023&ndash;2025 games the opening line under-priced
+          that fatigue. A moneyline qualifies with positive estimated EV at its
+          price. Totals price the published forecast, which blends the model
+          halfway with the market, and need the published total to differ from
+          the posted line by at least half a goal with positive estimated EV at
+          its price. A game without a two-sided price is No Play. From October
+          10 through November 1 (v2) moneylines also priced the published blend
+          and needed a 4.5 percentage point edge, and totals needed the
+          half-goal gap only. Predictions through October 9, 2026 (v1) used the model
           alone with the spreadsheet&apos;s thresholds of 13 percentage points
           and one goal. Prices come from the NHL&apos;s partner sportsbook
           feed (DraftKings and FanDuel), the better of the two, and must be
@@ -446,14 +446,21 @@ export function PickPolicy({
         </p>
       ) : sport === "nfl" ? (
         <p>
-          NFL prediction policy v5 requires the priced line to sit at least 2.0 points
-          beyond the price&apos;s break-even line, plus positive estimated EV.
-          Spreads are priced from the published blended margin, totals from
-          the published total, and moneylines from the market margin moved 0.2 of
-          the way toward the pure model, with fixed dispersions of 12.82
-          points for margins and 13.28 for totals. If fewer than 5 predictions
-          qualify in a week, the highest-edge positive-EV offers are promoted
-          and recorded as volume-floor predictions. Each prediction risks 1 unit.
+          NFL prediction policy v6, from November 2, 2026, prices every market
+          from the median line across books at decision time with the vig
+          removed. Spreads and moneylines move that line 4.5% of the way toward
+          the pure model margin, the weight the model earned against 2016&ndash;2021
+          closing lines; totals use the market alone. Any offer with positive
+          estimated EV at its price is a prediction. When fewer than five games
+          have one, the highest-EV model sides on spreads and moneylines fill a
+          five-game weekly slate as ranked leans: close to a coin flip, with
+          estimated EV near zero or negative, and staked and counted like every
+          other prediction. Dispersions are fixed at 12.82 points for margins
+          and 13.28 for totals. Through November 1 (v5) the priced line had to
+          sit at least 2.0 points beyond break-even against the published
+          blended numbers, and the highest-edge positive-EV offers were promoted
+          as volume-floor predictions when fewer than five qualified. Each
+          prediction risks 1 unit.
           Prices require an opposing quote, an exact kickoff, a verified game
           match, an explicitly configured available bookmaker, and an update
           within one hour. Schedule receipts must be within 24 hours,
@@ -473,19 +480,26 @@ export function PickPolicy({
           Each prediction also records its price source: The Odds API (a
           timestamped quote, best of DraftKings, FanDuel and BetMGM) through
           October 6, 2026, and ESPN&apos;s scoreboard (DraftKings&apos; line, no
-          book timestamp) from October 11.
+          book timestamp) from October 11. When The Odds API is the source,
+          the configured books from November 2 are DraftKings, FanDuel, BetMGM
+          and Pinnacle.
         </p>
       ) : (
         <p>
-          CFB research prediction policy v11 uses fresh paired bookmaker moneylines, removes
+          CFB research prediction policy v13 uses fresh paired bookmaker moneylines, removes
           each book&apos;s vig, and takes the median market probability. Its
           equivalent margin receives 80% weight and the pure model margin 20%;
           the blended margin determines win probability. Moneylines need positive
           estimated EV and at least 2.0 probability-equivalent points of edge;
-          they cannot be promoted to fill the weekly quota. Spreads blend 20%
-          model/history with 80% frozen market margin and apply development-fitted
-          football key-number weights, with 15.35-point dispersion. Totals retain
-          the published 50/50 blend and 15.93-point dispersion. The 15-prediction research target
+          they cannot be promoted to fill the weekly quota. Spreads (since v12)
+          are priced from the market spread moved 0.75% of the way toward the
+          model/history margin, the weight fitted against closing lines;
+          development-fitted football key-number weights set only the push
+          chance, with 15.35-point dispersion. Totals (since v13) move the
+          decision-time median total 21% of the way toward the model side of the
+          published total, with 15.93-point dispersion. Through v11, spreads
+          blended 20% model/history with 80% market margin and totals priced the
+          published 50/50 blend. The 15-prediction research target
           can promote positive-EV spreads and totals only. Each market is capped
           at half the available exploratory slots, rounded up, after shortlisting.
           Capped slots stay empty; qualified predictions are unchanged. These exploratory predictions
@@ -497,8 +511,9 @@ export function PickPolicy({
           have correlated outcomes and their shared exposure is flagged.
           Pushes return the stake and moneyline ties are void. Predictions
           remain active for research; estimated edges are not validated profits.
-          Prices are the best available among nine bookmakers in The Odds API
-          feed, several of them offshore, so the record assumes access to all of
+          Prices are the best available among the bookmakers in The Odds API
+          feed (nine through November 1, ten with Pinnacle from November 2),
+          several of them offshore, so the record assumes access to all of
           them. A prediction stays in the graded record unless a
           newer model version replaces it before kickoff; a later price move that
           turns the open decision into a No Play does not remove it. On October

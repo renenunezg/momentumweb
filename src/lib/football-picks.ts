@@ -300,32 +300,98 @@ export function pickReason(reason: string): string {
     not_pregame: "Game has started",
     missing_provider: "Missing bookmaker",
     invalid_probability: "Invalid model probability",
+    positive_ev: "Positive expected value at the offered price",
+    ranked_lean: "Ranked lean: fills the weekly slate below break-even",
+    outside_slate: "Outside the weekly slate",
+    price_below_break_even: "Price is below break-even",
   };
   return reasons[reason] ?? reason.replaceAll("_", " ");
 }
 
-export function usesPairedMoneylineBlend(pick: Pick<WeeklyPick, "market" | "policy_version">): boolean {
-  return pick.market === "h2h" && ["cfb-picks-v9", "cfb-picks-v10", "cfb-picks-v11"].includes(pick.policy_version);
-}
+export type PickPricing = {
+  kind: "paired_moneyline" | "key_number_spread" | "market_spread" | "blended_total" | "market_total" | "market_anchor";
+  probabilityLabel: string;
+  summary: string;
+  explanation: string;
+};
 
-export function usesKeyNumberSpread(pick: Pick<WeeklyPick, "market" | "policy_version">): boolean {
-  return pick.market === "spreads" && ["cfb-picks-v10", "cfb-picks-v11"].includes(pick.policy_version);
-}
+const policyIn = (pick: Pick<WeeklyPick, "policy_version">, versions: number[], sport = "cfb") =>
+  versions.some((version) => pick.policy_version === `${sport}-picks-v${version}`);
 
-export function usesBlendedTotal(pick: Pick<WeeklyPick, "market" | "policy_version">): boolean {
-  return pick.market === "totals" && ["cfb-picks-v10", "cfb-picks-v11"].includes(pick.policy_version);
+// How a policy priced the selection's win probability. The weights are the
+// model repos' own constants for each frozen policy version; a version not
+// listed priced from the model alone.
+export function pickPricing(pick: Pick<WeeklyPick, "market" | "policy_version">): PickPricing | null {
+  if (policyIn(pick, [6], "nfl")) {
+    return pick.market === "totals"
+      ? {
+          kind: "market_anchor",
+          probabilityLabel: "Market probability",
+          summary: "Median market total at decision; the model total carries no weight",
+          explanation: "Totals are priced from the median total across books at decision time. The model total showed no predictive weight against closing lines, so it does not move the price.",
+        }
+      : {
+          kind: "market_anchor",
+          probabilityLabel: "Market-anchored probability",
+          summary: "Median market line moved 4.5% toward the model margin",
+          explanation: "Priced from the median line across books at decision time with the vig removed, moved 4.5% of the way toward the model margin: the weight the model earned against 2016–2021 closing lines.",
+        };
+  }
+  if (pick.market === "h2h" && policyIn(pick, [9, 10, 11, 12, 13])) {
+    return {
+      kind: "paired_moneyline",
+      probabilityLabel: "Blended probability",
+      summary: "20% model / 80% paired market · margin blend",
+      explanation: "Moneylines blend 20% of the pure model margin with 80% of the paired market’s equivalent margin, then convert that result to win probability. The market reference has vig removed.",
+    };
+  }
+  if (pick.market === "spreads" && policyIn(pick, [10, 11])) {
+    return {
+      kind: "key_number_spread",
+      probabilityLabel: "Blended probability",
+      summary: "20% model/history / 80% market margin with football key-number weights",
+      explanation: "Spreads blend 20% of the model/history margin with 80% of the frozen market margin. Development-fitted integer-margin weights account for football key numbers and pushes. The published point forecast is unchanged.",
+    };
+  }
+  if (pick.market === "spreads" && policyIn(pick, [12, 13])) {
+    return {
+      kind: "market_spread",
+      probabilityLabel: "Market-anchored probability",
+      summary: "Market spread moved 0.75% toward the model/history margin; key numbers set pushes only",
+      explanation: "Spreads are priced from the market spread moved 0.75% of the way toward the model/history margin, the weight fitted against closing lines. Football key-number weights set only the push chance, so the market line stays the center of the outcome distribution.",
+    };
+  }
+  if (pick.market === "totals" && policyIn(pick, [10, 11, 12])) {
+    return {
+      kind: "blended_total",
+      probabilityLabel: "Blended probability",
+      summary: "50% model / 50% market total",
+      explanation: "Totals retain the published 50% model and 50% market blend with 15.93-point pricing dispersion. Expected profit is an estimate, not a guaranteed return.",
+    };
+  }
+  if (pick.market === "totals" && policyIn(pick, [13])) {
+    return {
+      kind: "market_total",
+      probabilityLabel: "Market-anchored probability",
+      summary: "Median market total moved 21% toward the model side of the published total",
+      explanation: "Totals are priced from the median market total at decision time, moved 21% of the way toward the model side of the published total: the weight fitted on 2020–2022 and checked on 2023–2025. Pricing dispersion is 15.93 points.",
+    };
+  }
+  return null;
 }
 
 export const QUALIFICATION_LABELS: Record<string, string> = {
   edge_qualified: "Edge-qualified",
   exploratory: "Exploratory",
+  ranked_lean: "Ranked lean",
   legacy: "Earlier policy",
 };
 
 export function pickQualification(pick: Pick<WeeklyPick, "status" | "reason">): string | null {
   if (pick.status !== "recommended") return null;
   if (pick.reason === "volume_floor") return QUALIFICATION_LABELS.exploratory;
-  if (pick.reason === "qualifying_edge") return QUALIFICATION_LABELS.edge_qualified;
+  if (pick.reason === "ranked_lean") return QUALIFICATION_LABELS.ranked_lean;
+  if (["qualifying_edge", "edge_gate", "positive_ev"].includes(pick.reason)) return QUALIFICATION_LABELS.edge_qualified;
   return QUALIFICATION_LABELS.legacy;
 }
 
