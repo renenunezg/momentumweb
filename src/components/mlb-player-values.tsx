@@ -25,7 +25,7 @@ import { PlayerComparisonPicker } from "@/components/player-comparison-picker";
 import { ComparisonGrades, ComparisonMetrics, type ComparisonMetric } from "@/components/player-comparison";
 import { ToggleGroup } from "@/components/toggle-group";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { BaseballSeasonStats } from "@/components/baseball-season-stats";
+import { SeasonStatsPanel } from "@/components/season-stats-panel";
 import { seasonStats } from "@/lib/season-stats";
 
 const PAGE_ROWS = 40;
@@ -238,7 +238,7 @@ function PlayerCard({ row, detail, failed, onRetry }: {
           })}
         </div>
       )}
-      {stats && <BaseballSeasonStats stats={stats} />}
+      {stats && <SeasonStatsPanel stats={stats} />}
       {detail != null && detail.outlook.length > 0 && (
         <div className="space-y-1.5">
           <div className="type-eyebrow inline-flex items-center gap-1 text-muted-foreground">

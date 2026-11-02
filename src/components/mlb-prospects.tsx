@@ -37,7 +37,7 @@ import { PlayerCell } from "@/components/player-cell";
 import { ComparisonGrades, ComparisonMetrics, type ComparisonMetric } from "@/components/player-comparison";
 import { PlayerComparisonPicker, type ComparisonPlayer } from "@/components/player-comparison-picker";
 import { PlayerRowDisclosure, PlayerRowHeader } from "@/components/player-row-disclosure";
-import { BaseballSeasonStats } from "@/components/baseball-season-stats";
+import { SeasonStatsPanel } from "@/components/season-stats-panel";
 import { seasonStats } from "@/lib/season-stats";
 import { TeamLogo } from "@/components/team-logo";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
@@ -216,7 +216,7 @@ function ProspectCard({ row }: { row: ProspectRow }) {
           </div>
         </>
       )}
-      {stats && <BaseballSeasonStats stats={stats} />}
+      {stats && <SeasonStatsPanel stats={stats} />}
     </div>
   );
 }

@@ -12,18 +12,25 @@ export interface SeasonStatsLine {
   stats: (number | null)[];
 }
 
-export interface BaseballStat {
+// The display shape of the season stat block, shared with the football cards
+// (lib/football-season-stats).
+export interface SeasonStat {
   label: string;
   value: string | null;
   tip: string;
 }
 
-export interface BaseballSeasonStatsData {
+export interface SeasonStatsData {
   season: number;
-  level: string;
+  context: string;
+  tiers: { label: string; stats: SeasonStat[] }[];
+  note: string;
+}
+
+interface BaseballLines {
   sample: string;
-  production: BaseballStat[];
-  underlying: BaseballStat[];
+  production: SeasonStat[];
+  underlying: SeasonStat[];
   trackingNote: string;
 }
 
@@ -43,7 +50,7 @@ function unpack(stats: (number | null)[], keys: readonly string[]): Raw | null {
   return Object.fromEntries(keys.map((key, i) => [key, stats[i] ?? null]));
 }
 
-const stat = (label: string, value: string | null, tip: string): BaseballStat => ({ label, value, tip });
+const stat = (label: string, value: string | null, tip: string): SeasonStat => ({ label, value, tip });
 const count = (v: number | null) => (v == null ? null : v.toLocaleString("en-US"));
 const fixed = (v: number | null, scale: number, digits: number) => (v == null ? null : (v / scale).toFixed(digits));
 // Batting-average style: .286, or 1.133 once past one.
@@ -59,7 +66,7 @@ function levelText(line: SeasonStatsLine, prospect: boolean): string {
   return levels.map((level) => levelLabel(level) ?? level.toUpperCase()).join(" · ") || "Minors";
 }
 
-function hitter(s: Raw, prospect: boolean): Pick<BaseballSeasonStatsData, "sample" | "production" | "underlying" | "trackingNote"> {
+function hitter(s: Raw, prospect: boolean): BaseballLines {
   const pa = s.pa ?? 0;
   return {
     sample: `${count(pa)} PA`,
@@ -95,7 +102,7 @@ function hitter(s: Raw, prospect: boolean): Pick<BaseballSeasonStatsData, "sampl
   };
 }
 
-function pitcher(s: Raw, prospect: boolean): Pick<BaseballSeasonStatsData, "sample" | "production" | "underlying" | "trackingNote"> {
+function pitcher(s: Raw, prospect: boolean): BaseballLines {
   const bf = s.bf ?? 0;
   const k = share(s.k, bf);
   const bb = share(s.bb, bf);
@@ -130,13 +137,18 @@ function pitcher(s: Raw, prospect: boolean): Pick<BaseballSeasonStatsData, "samp
   };
 }
 
-export function seasonStats(line: SeasonStatsLine | null | undefined, isPitcher: boolean, prospect: boolean): BaseballSeasonStatsData | null {
+export function seasonStats(line: SeasonStatsLine | null | undefined, isPitcher: boolean, prospect: boolean): SeasonStatsData | null {
   if (!line) return null;
   const raw = unpack(line.stats, isPitcher ? PIT : BAT);
   if (!raw) return null;
+  const lines = isPitcher ? pitcher(raw, prospect) : hitter(raw, prospect);
   return {
     season: line.season,
-    level: levelText(line, prospect),
-    ...(isPitcher ? pitcher(raw, prospect) : hitter(raw, prospect)),
+    context: `${levelText(line, prospect)} · ${lines.sample}`,
+    tiers: [
+      { label: "Production", stats: lines.production },
+      { label: "Underlying skills", stats: lines.underlying },
+    ],
+    note: lines.trackingNote,
   };
 }
