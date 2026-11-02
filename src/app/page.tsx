@@ -22,7 +22,9 @@ import {
 import { posts } from "./blog/posts";
 import { SITE_DESCRIPTION, SITE_NAME, SITE_URL, SOCIAL_LINKS } from "@/lib/site";
 
-export const revalidate = 3600;
+// Publishes refresh the page through the webhook and the rollover job turns
+// the day over at midnight; the daily timer is only a backstop.
+export const revalidate = 86400;
 
 // Each section reads only what it shows. A failed read throws so ISR keeps the
 // last good page; a section with nothing published says it is unavailable.

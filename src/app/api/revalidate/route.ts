@@ -46,7 +46,14 @@ export async function POST(request: Request) {
   const body = (await request.json().catch(() => null)) as {
     schema?: unknown;
     table?: unknown;
+    path?: unknown;
   } | null;
+  // The home page shows the site day's picks, so the daily rollover job
+  // (sql/002_site_day_rollover.sql) refreshes it just after midnight.
+  if (body?.path === "/") {
+    revalidatePath("/");
+    return NextResponse.json({ revalidated: "/" });
+  }
   const sport = typeof body?.schema === "string" ? body.schema : "";
   if (!SPORTS.has(sport)) {
     return NextResponse.json({ error: "unknown schema" }, { status: 400 });

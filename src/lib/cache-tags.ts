@@ -13,9 +13,6 @@ export const TAGGED_READ_SECONDS = 604800;
 const UNTRIGGERED = new Set([
   "mlb:grading_rules",
   "mlb:rewritten_forecast_days",
-  "nfl:closing_lines",
-  "nhl:closing_lines",
-  "nhl:forecast_snapshots",
   "nhl:market_snapshots",
 ]);
 const UNTRIGGERED_READ_SECONDS = 3600;
