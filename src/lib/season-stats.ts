@@ -17,7 +17,7 @@ export interface SeasonStatsLine {
 export interface SeasonStat {
   label: string;
   value: string | null;
-  tip: string;
+  tip: string | null;
 }
 
 export interface SeasonStatsData {
@@ -50,7 +50,7 @@ function unpack(stats: (number | null)[], keys: readonly string[]): Raw | null {
   return Object.fromEntries(keys.map((key, i) => [key, stats[i] ?? null]));
 }
 
-const stat = (label: string, value: string | null, tip: string): SeasonStat => ({ label, value, tip });
+const stat = (label: string, value: string | null, tip: string | null): SeasonStat => ({ label, value, tip });
 const count = (v: number | null) => (v == null ? null : v.toLocaleString("en-US"));
 const fixed = (v: number | null, scale: number, digits: number) => (v == null ? null : (v / scale).toFixed(digits));
 // Batting-average style: .286, or 1.133 once past one.
@@ -78,9 +78,9 @@ function hitter(s: Raw, prospect: boolean): BaseballLines {
       stat("OBP", rate(s.obp), "How often he reaches base by hit, walk or hit by pitch."),
       stat("SLG", rate(s.slg), "Total bases per at-bat."),
       stat("OPS", rate(s.ops), "On-base percentage plus slugging percentage."),
-      stat("HR", count(s.hr), "Home runs this season."),
+      stat("HR", count(s.hr), null),
       stat("RBI", count(s.rbi), "Runs batted in. Opportunity depends on teammates and lineup position."),
-      stat("SB", count(s.sb), "Stolen bases this season."),
+      stat("SB", count(s.sb), null),
     ],
     underlying: [
       prospect
@@ -115,7 +115,7 @@ function pitcher(s: Raw, prospect: boolean): BaseballLines {
       stat("FIP", fixed(s.fip, 100, 2), "Pitching estimate based on strikeouts, walks, hit batters and home runs, on the league's ERA scale. Lower is better."),
       stat("WHIP", fixed(s.whip, 100, 2), "Walks plus hits allowed per inning."),
       stat("IP", s.outs == null ? null : innings(s.outs), "Innings pitched. The .2 means two outs, not two tenths of an inning."),
-      stat("K", count(s.k), "Total strikeouts."),
+      stat("K", count(s.k), null),
       stat("BB", count(s.bb), "Total walks allowed."),
       stat("HR", count(s.hr), "Home runs allowed."),
     ],

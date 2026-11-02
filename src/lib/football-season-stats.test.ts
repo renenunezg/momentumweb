@@ -151,7 +151,7 @@ test("every Advanced cell shown names a source", () => {
   for (const sport of ["cfb", "nfl"] as const) {
     for (const [group, stats] of Object.entries(LINES)) {
       for (const stat of footballSeasonStats(sport, line(group, stats))?.tiers[1]?.stats ?? []) {
-        assert.match(stat.tip, /(Computed from the box score|From nflfastR play-by-play|From CollegeFootballData play-by-play|Computed by our model|ESPN's Total QBR|From NFL Next Gen Stats|From Pro Football Reference|From ESPN box scores)\.$/, `${sport} ${group} ${stat.label}`);
+        assert.match(stat.tip ?? "", /(Computed from the box score|From nflfastR play-by-play|From CollegeFootballData play-by-play|Computed by our model|ESPN's Total QBR|From NFL Next Gen Stats|From Pro Football Reference|From ESPN box scores)\.$/, `${sport} ${group} ${stat.label}`);
       }
     }
   }

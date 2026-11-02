@@ -15,6 +15,18 @@ function gridVars(count: number): CSSProperties {
   return { "--cols": cols, "--cols-sm": colsSm, "--last": span(cols), "--last-sm": span(colsSm) } as CSSProperties;
 }
 
+function TippedLabel({ label, tip }: { label: string; tip: string }) {
+  const cut = label.lastIndexOf(" ") + 1;
+  return (
+    <>
+      {label.slice(0, cut)}
+      <span className="whitespace-nowrap">
+        {label.slice(cut)} <InfoTip text={tip} label={`What is ${label}?`} className="align-middle" />
+      </span>
+    </>
+  );
+}
+
 export function SeasonStatsPanel({ stats }: { stats: SeasonStatsData }) {
   return (
     <section aria-label="Season stats" className="space-y-3 border-t border-border pt-4">
@@ -32,13 +44,14 @@ export function SeasonStatsPanel({ stats }: { stats: SeasonStatsData }) {
             {metrics.map((metric) => (
               <div
                 key={metric.label}
-                className="min-w-0 bg-background px-2 py-2.5 last:[grid-column:span_var(--last)] sm:px-3 sm:last:[grid-column:span_var(--last-sm)]"
+                className="flex min-w-0 flex-col bg-background px-1.5 py-1.5 last:[grid-column:span_var(--last)] sm:px-3 sm:last:[grid-column:span_var(--last-sm)]"
               >
-                <dt className="flex items-center gap-1 text-[10px] leading-tight text-muted-foreground">
-                  {metric.label}
-                  <InfoTip text={metric.tip} label={`What is ${metric.label}?`} />
+                {/* A label that wraps on a phone keeps its tip on the line of its last word, and
+                    the value sits at the bottom so values in a row stay level. */}
+                <dt className="text-center text-[10px] leading-tight text-muted-foreground">
+                  {metric.tip ? <TippedLabel label={metric.label} tip={metric.tip} /> : metric.label}
                 </dt>
-                <dd className="mt-1 whitespace-nowrap font-mono text-sm font-semibold tabular-nums sm:text-base">
+                <dd className="mt-auto whitespace-nowrap pt-0.5 text-center font-mono text-sm font-semibold tabular-nums sm:text-base">
                   {metric.value ?? EMPTY}
                 </dd>
               </div>

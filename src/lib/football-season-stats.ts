@@ -120,10 +120,11 @@ type Tiers = { box: (SeasonStat | null)[]; advanced: (SeasonStat | null)[] };
 
 function build(group: StatGroup, s: Raw, sport: GradeSport): Tiers {
   // A box score cell that only some feeds carry names its source to be left
-  // off where the sport lacks it; its tip stays plain.
+  // off where the sport lacks it; its tip stays plain. A count the label already
+  // explains gets no tip.
   const shown = (value: string | null, source: keyof typeof SOURCES) =>
     SOURCES[source][sport] != null && !(value == null && PARTIAL.has(source));
-  const stat = (label: string, value: string | null, tip: string, needs?: keyof typeof SOURCES): SeasonStat | null =>
+  const stat = (label: string, value: string | null, tip: string | null, needs?: keyof typeof SOURCES): SeasonStat | null =>
     needs && !shown(value, needs) ? null : { label, value, tip };
   const adv = (label: string, value: string | null, tip: string, source: keyof typeof SOURCES): SeasonStat | null => {
     const from = SOURCES[source][sport];
@@ -142,14 +143,14 @@ function build(group: StatGroup, s: Raw, sport: GradeSport): Tiers {
       const passRating = fixed(rating(s, ["cmp", "att", "pass_yds", "pass_td", "int"], sport === "nfl" ? passerRating : passingEfficiency), 1);
       return {
         box: [
-          stat("Cmp/Att", s.cmp == null || s.att == null ? null : `${count(s.cmp)}/${count(s.att)}`, "Completions and pass attempts."),
+          stat("Cmp/Att", s.cmp == null || s.att == null ? null : `${count(s.cmp)}/${count(s.att)}`, null),
           stat("Cmp%", pct(ratio(s.cmp, s.att), 1), "Completions divided by attempts."),
-          stat("Pass yds", count(s.pass_yds), "Passing yards."),
-          stat("Pass TD", count(s.pass_td), "Passing touchdowns."),
-          stat("INT", count(s.int), "Interceptions thrown."),
+          stat("Pass yds", count(s.pass_yds), null),
+          stat("Pass TD", count(s.pass_td), null),
+          stat("INT", count(s.int), null),
           stat("Sacks", count(s.sacks), "Times sacked."),
           stat("Rush yds", count(s.rush_yds), "Rushing yards, including scrambles."),
-          stat("Rush TD", count(s.rush_td), "Rushing touchdowns."),
+          stat("Rush TD", count(s.rush_td), null),
         ],
         advanced: [
           sport === "nfl"
@@ -168,14 +169,14 @@ function build(group: StatGroup, s: Raw, sport: GradeSport): Tiers {
     case "RB":
       return {
         box: [
-          stat("Carries", count(s.rush_att), "Rushing attempts."),
-          stat("Rush yds", count(s.rush_yds), "Rushing yards."),
+          stat("Carries", count(s.rush_att), null),
+          stat("Rush yds", count(s.rush_yds), null),
           stat("YPC", fixed(ratio(s.rush_yds, s.rush_att), 1), "Rushing yards per carry."),
-          stat("Rush TD", count(s.rush_td), "Rushing touchdowns."),
-          stat("Rec", count(s.rec), "Receptions."),
-          stat("Rec yds", count(s.rec_yds), "Receiving yards."),
-          stat("Rec TD", count(s.rec_td), "Receiving touchdowns."),
-          stat("Fum lost", count(s.fumbles_lost), "Fumbles lost."),
+          stat("Rush TD", count(s.rush_td), null),
+          stat("Rec", count(s.rec), null),
+          stat("Rec yds", count(s.rec_yds), null),
+          stat("Rec TD", count(s.rec_td), null),
+          stat("Fum lost", count(s.fumbles_lost), null),
         ],
         advanced: [
           adv("EPA/carry", signed(ratio(s.rush_epa, s.rush_att), 2), "Expected points added per carry, not adjusted for the defense.", "epa"),
@@ -196,10 +197,10 @@ function build(group: StatGroup, s: Raw, sport: GradeSport): Tiers {
     case "REC":
       return {
         box: [
-          stat("Targets", count(s.targets), "Passes thrown his way."),
-          stat("Rec", count(s.rec), "Receptions."),
-          stat("Rec yds", count(s.rec_yds), "Receiving yards."),
-          stat("Rec TD", count(s.rec_td), "Receiving touchdowns."),
+          stat("Targets", count(s.targets), null),
+          stat("Rec", count(s.rec), null),
+          stat("Rec yds", count(s.rec_yds), null),
+          stat("Rec TD", count(s.rec_td), null),
           stat("Catch%", pct(ratio(s.rec, s.targets), 0), "Receptions divided by targets."),
           stat("Y/Rec", fixed(ratio(s.rec_yds, s.rec), 1), "Receiving yards per reception."),
         ],
@@ -214,13 +215,13 @@ function build(group: StatGroup, s: Raw, sport: GradeSport): Tiers {
     case "DEF":
       return {
         box: [
-          stat("Tackles", count(s.tackles), "Total tackles."),
+          stat("Tackles", count(s.tackles), null),
           stat("Solo", count(s.solo), "Solo tackles."),
           stat("TFL", fixed(s.tfl, 1), "Tackles for loss; shared ones count half."),
           stat("Sacks", fixed(s.sacks, 1), "Sacks; shared ones count half."),
           stat("QB hits", count(s.qb_hits), "Hits on the quarterback as or after he throws.", "hits"),
           stat("PBU", count(s.pbu), "Passes broken up."),
-          stat("INT", count(s.int), "Interceptions."),
+          stat("INT", count(s.int), null),
           stat("FF", count(s.ff), "Forced fumbles."),
         ],
         advanced: [
@@ -249,7 +250,7 @@ function build(group: StatGroup, s: Raw, sport: GradeSport): Tiers {
     case "P":
       return {
         box: [
-          stat("Punts", count(s.punts), "Punts."),
+          stat("Punts", count(s.punts), null),
           stat("Avg", fixed(ratio(s.punt_yds, s.punts), 1), "Gross yards per punt."),
           stat("Net avg", fixed(ratio(s.net_yds, s.punts), 1), "Yards per punt after returns and touchbacks."),
           stat("Inside 20", count(s.inside_20), "Punts downed inside the opponent's 20."),
