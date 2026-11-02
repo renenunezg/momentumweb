@@ -69,14 +69,15 @@ export function GamesLive({
   const router = useRouter();
   const [matchups, setMatchups] = useState<GameMatchup[]>(initial);
   const [unavailable, setUnavailable] = useState(unavailableGames);
+  const [rendered, setRendered] = useState({ initial, unavailableGames });
+  if (rendered.initial !== initial || rendered.unavailableGames !== unavailableGames) {
+    setRendered({ initial, unavailableGames });
+    setMatchups((prev) => keepStartedPicks(prev, initial));
+    setUnavailable(unavailableGames);
+  }
   const finished = allFinal([...matchups, ...unavailable]);
   const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const versionRef = useRef(picksVersion);
-
-  useEffect(() => {
-    setMatchups((prev) => keepStartedPicks(prev, initial));
-    setUnavailable(unavailableGames);
-  }, [initial, unavailableGames]);
 
   useEffect(() => {
     let cancelled = false;
