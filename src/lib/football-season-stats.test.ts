@@ -73,12 +73,13 @@ test("half sacks and tackles for loss decode from tenths", () => {
   assert.equal(cell(def, "TFL")?.value, "6.5");
 });
 
-test("null entries blank one cell and keep the rest", () => {
-  const qb = footballSeasonStats("nfl", line("QB", QB.map((v, i) => (i === 14 ? null : v))));
-  assert.equal(cell(qb, "QBR")?.value, null);
+test("a null blanks its cell, except from sources that skip players, which leave it off", () => {
+  const qb = footballSeasonStats("nfl", line("QB", QB.map((v, i) => (i === 14 || i === 8 ? null : v))));
+  assert.equal(cell(qb, "Rush yds")?.value, null);
+  assert.equal(cell(qb, "QBR"), undefined);
   assert.equal(cell(qb, "Pass yds")?.value, "250");
   const def = footballSeasonStats("nfl", line("DB", DEF));
-  assert.equal(cell(def, "Rating allowed")?.value, null);
+  assert.equal(cell(def, "Rating allowed"), undefined);
   assert.equal(cell(def, "Tackles")?.value, "50");
 });
 
@@ -113,12 +114,13 @@ test("play-by-play counts name play-by-play, not the box score, as their source"
 });
 
 test("CFB cards drop coverage cells and label their RYOE as ours", () => {
-  const rb = [8, 140, 650, 6, 1, 30, 24, 190, 1, 62, 14, null, 31, 58];
+  const rb = [8, 140, 650, 6, 1, 30, 24, 190, 1, 62, 14, -73, 31, 58];
+  const covered = [...DEF.slice(0, 11), 30, 21, 230, 2, 1];
   const labels = (data: SeasonStatsData | null) => data?.tiers[1].stats.map((stat) => stat.label);
   assert.match(cell(footballSeasonStats("cfb", line("RB", rb)), "RYOE/carry")?.tip ?? "", /No player tracking.*Computed by our model\.$/);
   assert.match(cell(footballSeasonStats("nfl", line("RB", rb)), "RYOE/carry")?.tip ?? "", /From NFL Next Gen Stats\.$/);
-  assert.deepEqual(labels(footballSeasonStats("cfb", line("DB", DEF))), ["EPA credit"]);
-  assert.equal(labels(footballSeasonStats("nfl", line("DB", DEF)))?.length, 6);
+  assert.deepEqual(labels(footballSeasonStats("cfb", line("DB", covered))), ["Sacks + hurries", "EPA credit"]);
+  assert.equal(labels(footballSeasonStats("nfl", line("DB", covered)))?.length, 6);
 });
 
 const LINES: Record<string, (number | null)[]> = {
@@ -133,10 +135,14 @@ const labelsOf = (data: SeasonStatsData | null) => data?.tiers.flatMap((tier) =>
 
 test("CFB cards leave off what college data does not record", () => {
   const cfb = (group: string) => labelsOf(footballSeasonStats("cfb", line(group, LINES[group])));
-  for (const label of ["CPOE", "aDOT", "QBR"]) assert.equal(cfb("QB").includes(label), false, label);
+  for (const label of ["CPOE", "aDOT"]) assert.equal(cfb("QB").includes(label), false, label);
+  assert.equal(cfb("QB").includes("QBR"), true);
   for (const label of ["aDOT", "YAC/rec"]) assert.equal(cfb("WR").includes(label), false, label);
   for (const label of ["QB hits", "Pressures"]) assert.equal(cfb("LB").includes(label), false, label);
+  assert.equal(cfb("LB").includes("Sacks + hurries"), true);
   assert.equal(cfb("OL").includes("Pressures allowed"), false);
+  assert.equal(cfb("OL").includes("Sacks + hurries allowed"), true);
+  assert.match(cell(footballSeasonStats("cfb", line("LB", DEF)), "Sacks + hurries")?.tip ?? "", /hits.*From ESPN box scores\.$/);
   assert.deepEqual(footballSeasonStats("cfb", line("P", LINES.P))?.tiers.map((tier) => tier.label), ["Box score"]);
   for (const label of ["CPOE", "aDOT", "QBR"]) assert.equal(labelsOf(footballSeasonStats("nfl", line("QB", QB))).includes(label), true, label);
 });
@@ -145,7 +151,7 @@ test("every Advanced cell shown names a source", () => {
   for (const sport of ["cfb", "nfl"] as const) {
     for (const [group, stats] of Object.entries(LINES)) {
       for (const stat of footballSeasonStats(sport, line(group, stats))?.tiers[1]?.stats ?? []) {
-        assert.match(stat.tip, /(Computed from the box score|From nflfastR play-by-play|From CollegeFootballData play-by-play|Computed by our model|ESPN's Total QBR|From NFL Next Gen Stats|From Pro Football Reference)\.$/, `${sport} ${group} ${stat.label}`);
+        assert.match(stat.tip, /(Computed from the box score|From nflfastR play-by-play|From CollegeFootballData play-by-play|Computed by our model|ESPN's Total QBR|From NFL Next Gen Stats|From Pro Football Reference|From ESPN box scores)\.$/, `${sport} ${group} ${stat.label}`);
       }
     }
   }

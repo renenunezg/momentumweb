@@ -35,9 +35,8 @@ const GROUP_OF: Record<string, StatGroup> = {
 // our own models compute say so (René's condition for showing them, 2026-11-02).
 // A sport missing from an entry has no data for it, so its cells are left off
 // rather than shown as a permanent blank. CFBD play-by-play has no air yards,
-// completion probability, QB hits, coverage charting or punt EPA; CFB season
-// QBR and pressures are not published yet.
-type Source = "box" | "nflfastr" | "cfbd" | "model" | "espn" | "ngs" | "pfr";
+// completion probability, QB hits, coverage charting or punt EPA.
+type Source = "box" | "nflfastr" | "cfbd" | "model" | "espn" | "espnBox" | "ngs" | "pfr";
 
 const SOURCE_TEXT: Record<Source, string> = {
   box: "Computed from the box score.",
@@ -47,6 +46,7 @@ const SOURCE_TEXT: Record<Source, string> = {
   ngs: "From NFL Next Gen Stats.",
   pfr: "From Pro Football Reference.",
   cfbd: "From CollegeFootballData play-by-play.",
+  espnBox: "From ESPN box scores.",
 };
 
 const SOURCES: Record<string, Partial<Record<GradeSport, Source>>> = {
@@ -59,10 +59,14 @@ const SOURCES: Record<string, Partial<Record<GradeSport, Source>>> = {
   air: { nfl: "nflfastr" },
   hits: { nfl: "nflfastr" },
   puntEpa: { nfl: "nflfastr" },
-  qbr: { nfl: "espn" },
-  pressure: { nfl: "pfr" },
+  qbr: { cfb: "espn", nfl: "espn" },
+  pressure: { cfb: "espnBox", nfl: "pfr" },
   coverage: { nfl: "pfr" },
 };
+
+// Sources that publish only qualifying or matched players. A player they skip
+// has the cell left off instead of a blank; other nulls still show as blank.
+const PARTIAL = new Set<keyof typeof SOURCES>(["qbr", "ryoe", "pressure", "coverage"]);
 
 type Raw = Record<string, number | null>;
 
@@ -117,12 +121,21 @@ type Tiers = { box: (SeasonStat | null)[]; advanced: (SeasonStat | null)[] };
 function build(group: StatGroup, s: Raw, sport: GradeSport): Tiers {
   // A box score cell that only some feeds carry names its source to be left
   // off where the sport lacks it; its tip stays plain.
+  const shown = (value: string | null, source: keyof typeof SOURCES) =>
+    SOURCES[source][sport] != null && !(value == null && PARTIAL.has(source));
   const stat = (label: string, value: string | null, tip: string, needs?: keyof typeof SOURCES): SeasonStat | null =>
-    needs && !SOURCES[needs][sport] ? null : { label, value, tip };
+    needs && !shown(value, needs) ? null : { label, value, tip };
   const adv = (label: string, value: string | null, tip: string, source: keyof typeof SOURCES): SeasonStat | null => {
     const from = SOURCES[source][sport];
-    return from ? { label, value, tip: `${tip} ${SOURCE_TEXT[from]}` } : null;
+    return from && shown(value, source) ? { label, value, tip: `${tip} ${SOURCE_TEXT[from]}` } : null;
   };
+  // College box scores record hurries but not QB hits, so the college count is
+  // named for what it holds rather than compared with NFL pressures.
+  const pressureLabel = sport === "nfl" ? "Pressures" : "Sacks + hurries";
+  const pressureTip =
+    sport === "nfl"
+      ? "Sacks, hits and hurries on the quarterback."
+      : "Sacks plus quarterback hurries. College box scores don't record QB hits, so this counts fewer plays than NFL pressures.";
 
   switch (group) {
     case "QB": {
@@ -211,7 +224,7 @@ function build(group: StatGroup, s: Raw, sport: GradeSport): Tiers {
           stat("FF", count(s.ff), "Forced fumbles."),
         ],
         advanced: [
-          adv("Pressures", count(s.pressures), "Sacks, hits and hurries on the quarterback.", "pressure"),
+          adv(pressureLabel, count(s.pressures), pressureTip, "pressure"),
           adv("EPA credit", signed(s.epa_credit, 1), "Expected points taken away from the offense on plays credited to him.", "credit"),
           adv("Targets allowed", count(s.cov_targets), "Passes thrown at the receiver he covered.", "coverage"),
           adv("Cmp% allowed", pct(ratio(s.cov_cmp, s.cov_targets), 1), "Completions allowed divided by targets.", "coverage"),
@@ -225,7 +238,7 @@ function build(group: StatGroup, s: Raw, sport: GradeSport): Tiers {
           stat("Carries", count(s.rush_att), "Team carries behind this line."),
           stat("Dropbacks", count(s.dropbacks), "Team dropbacks behind this line."),
           stat("Sacks allowed", count(s.sacks_allowed), "Sacks of the team's passers."),
-          stat("Pressures allowed", count(s.pressures_allowed), "Sacks, hits and hurries allowed.", "pressure"),
+          stat(`${pressureLabel} allowed`, count(s.pressures_allowed), sport === "nfl" ? "Sacks, hits and hurries allowed." : "Sacks plus hurries allowed. College box scores don't record QB hits.", "pressure"),
         ],
         advanced: [
           adv("Stuff%", pct(ratio(s.stuffs, s.rush_att), 0), "Share of carries stopped at or behind the line.", "pbp"),
