@@ -55,7 +55,7 @@ const SOURCES: Record<string, Record<GradeSport, Source>> = {
   pressure: { cfb: "college", nfl: "pfr" },
   coverage: { cfb: "college", nfl: "pfr" },
   credit: { cfb: "model", nfl: "model" },
-  line: { cfb: "college", nfl: "nflfastr" },
+  pbp: { cfb: "college", nfl: "nflfastr" },
 };
 
 type Raw = Record<string, number | null>;
@@ -157,7 +157,7 @@ function build(group: StatGroup, s: Raw, sport: GradeSport): Tiers {
           adv("EPA/carry", signed(ratio(s.rush_epa, s.rush_att), 2), "Expected points added per carry, not adjusted for the defense.", "epa"),
           adv("Total EPA", signed(s.epa_total, 1), "Expected points added rushing and receiving.", "epa"),
           adv("Success%", pct(ratio(s.rush_success, s.rush_att), 0), "Share of carries with positive expected points added.", "epa"),
-          adv("Explosive%", pct(ratio(s.rush_explosive, s.rush_att), 0), "Share of carries gaining 10 or more yards.", "box"),
+          adv("Explosive%", pct(ratio(s.rush_explosive, s.rush_att), 0), "Share of carries gaining 10 or more yards.", "pbp"),
           adv("RYOE/carry", signed(ratio(s.ryoe_total, s.rush_att), 1), "Rushing yards over what the blocking and defenders' positions predicted, per carry.", "ryoe"),
           adv("Catch%", pct(ratio(s.rec, s.targets), 0), "Receptions divided by targets.", "box"),
         ],
@@ -173,7 +173,7 @@ function build(group: StatGroup, s: Raw, sport: GradeSport): Tiers {
           stat("Y/Rec", fixed(ratio(s.rec_yds, s.rec), 1), "Receiving yards per reception."),
         ],
         advanced: [
-          adv("Target share", s.target_share == null ? null : `${fixed(s.target_share, 1)}%`, "Share of team targets in games he played.", "box"),
+          adv("Target share", s.target_share == null ? null : `${fixed(s.target_share, 1)}%`, "Share of team targets in games he played.", "pbp"),
           adv("aDOT", fixed(s.adot, 1), "Average depth of target: air yards per target.", "air"),
           adv("YAC/rec", fixed(ratio(s.yac, s.rec), 1), "Yards after the catch per reception.", "air"),
           adv("EPA/target", signed(ratio(s.epa_total, s.targets), 2), "Expected points added per target, not adjusted for the defense.", "epa"),
@@ -210,8 +210,8 @@ function build(group: StatGroup, s: Raw, sport: GradeSport): Tiers {
           stat("Pressures allowed", count(s.pressures_allowed), "Sacks, hits and hurries allowed."),
         ],
         advanced: [
-          adv("Stuff%", pct(ratio(s.stuffs, s.rush_att), 0), "Share of carries stopped at or behind the line.", "box"),
-          adv("Line yds/carry", fixed(ratio(s.line_yds, s.rush_att), 1), "Rushing yards credited to the line per carry: losses count extra and gains past 10 yards don't count.", "line"),
+          adv("Stuff%", pct(ratio(s.stuffs, s.rush_att), 0), "Share of carries stopped at or behind the line.", "pbp"),
+          adv("Line yds/carry", fixed(ratio(s.line_yds, s.rush_att), 1), "Rushing yards credited to the line per carry: losses count extra and gains past 10 yards don't count.", "pbp"),
           adv("Sack%", pct(ratio(s.sacks_allowed, s.dropbacks), 0), "Sacks allowed divided by dropbacks.", "box"),
         ],
       };

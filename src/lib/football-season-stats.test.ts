@@ -100,3 +100,14 @@ test("buildGradedPlayers attaches each player's stat line and ignores strays", (
   assert.equal(players.B.seasonStats, null);
   assert.equal("C" in players, false);
 });
+
+test("play-by-play counts name play-by-play, not the box score, as their source", () => {
+  const rb = [8, 140, 650, 6, 1, 30, 24, 190, 1, 62, 14, -73, 31, 58];
+  const ol = [8, 210, 38, 8170, 290, 14, 81];
+  const rec = [8, 80, 55, 720, 5, 280, 256, 112, 95];
+  for (const [sport, source] of [["nfl", /From nflfastR play-by-play\.$/], ["cfb", /From college play-by-play\.$/]] as const) {
+    assert.match(cell(footballSeasonStats(sport, line("RB", rb)), "Explosive%")?.tip ?? "", source);
+    assert.match(cell(footballSeasonStats(sport, line("OL", ol)), "Stuff%")?.tip ?? "", source);
+    assert.match(cell(footballSeasonStats(sport, line("WR", rec)), "Target share")?.tip ?? "", source);
+  }
+});
