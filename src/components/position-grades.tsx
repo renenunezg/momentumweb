@@ -172,6 +172,12 @@ function Identity({ row, logo }: { row: PlayerIndexRow; logo: TeamLogoSource | u
   );
 }
 
+// The change to his team's projected margin if he is ruled out: losing a
+// player above replacement reads negative.
+function formatIfOut(spreadValue: number | null): string {
+  return spreadValue == null ? EMPTY : formatSigned(-spreadValue || 0, 1);
+}
+
 const HEADLINE_GRID: Record<number, string> = {
   1: "grid-cols-1",
   2: "grid-cols-2 divide-x divide-border",
@@ -266,17 +272,17 @@ function GradeCard({
                   ? "loading"
                   : player.pointsAboveReplacement == null
                     ? "no credited plays"
-                    : `${formatSigned(player.pointsAboveReplacement, 0)} pts`
+                    : `${formatSigned(player.pointsAboveReplacement, 0)} season pts`
               }
               positive={player?.war != null && player.war > 0}
             />
             {priced && (
               <Headline
-                label="Line value"
+                label="If out"
                 tip={NFL_SPREAD_TIP}
-                tipLabel="What is line value?"
-                value={formatSigned(player.spreadValue, 1)}
-                sub="pts if ruled out"
+                tipLabel="What is If out?"
+                value={formatIfOut(player.spreadValue)}
+                sub="per game"
               />
             )}
           </div>
@@ -365,7 +371,7 @@ function GradeCard({
           )}
           <TableCell className="text-center">{player?.war == null ? EMPTY : formatSigned(player.war, 2)}</TableCell>
           <TableCell className="text-center">{player?.pointsAboveReplacement == null ? EMPTY : formatSigned(player.pointsAboveReplacement, 1)}</TableCell>
-          {showSpread && <TableCell className="text-center">{player?.spreadValue == null ? EMPTY : formatSigned(player.spreadValue, 1)}</TableCell>}
+          {showSpread && <TableCell className="text-center">{player?.spreadValue == null ? EMPTY : formatIfOut(player.spreadValue)}</TableCell>}
           <TableCell><ChevronDown aria-hidden="true" className={cn("size-4 text-muted-foreground transition-transform", open && "rotate-180")} /></TableCell>
         </TableRow>
         <TableRow hidden={!open} className="hover:bg-transparent">
@@ -470,9 +476,9 @@ function ComparePanel({
       ...(rating && player?.rating != null
         ? [{ label: rating.label, value: formatSigned(player.rating, 2), sub: rating.unit }]
         : []),
-      { label: "WAR", value: player?.war == null ? EMPTY : formatSigned(player.war, 2), sub: player?.pointsAboveReplacement == null ? "" : `${formatSigned(player.pointsAboveReplacement, 0)} pts` },
+      { label: "WAR", value: player?.war == null ? EMPTY : formatSigned(player.war, 2), sub: player?.pointsAboveReplacement == null ? "" : `${formatSigned(player.pointsAboveReplacement, 0)} season pts` },
       ...(sport === "nfl" && player?.spreadValue != null
-        ? [{ label: "line value", value: formatSigned(player.spreadValue, 1), sub: "pts if ruled out" }]
+        ? [{ label: "if out", value: formatIfOut(player.spreadValue), sub: "per game" }]
         : []),
     ];
     return (
@@ -779,8 +785,8 @@ export default function PositionGrades({
                   })}
                   {showForecast && <TableHead className="text-center">Forecast</TableHead>}
                   <TableHead className="text-center">WAR</TableHead>
-                  <TableHead className="text-center"><span className="inline-flex items-center gap-1">Pts <InfoTip text="Points above replacement credited to this player, as shown in the full card." label="What are points above replacement?" /></span></TableHead>
-                  {showSpread && <TableHead className="text-center"><span className="inline-flex items-center gap-1">Line <InfoTip text={NFL_SPREAD_TIP} label="What is line value?" /></span></TableHead>}
+                  <TableHead className="text-center"><span className="inline-flex items-center gap-1">Season pts <InfoTip text="Points above replacement credited to this player so far this season, as shown in the full card." label="What are season points above replacement?" /></span></TableHead>
+                  {showSpread && <TableHead className="text-center"><span className="inline-flex items-center gap-1">If out <InfoTip text={NFL_SPREAD_TIP} label="What is If out?" /></span></TableHead>}
                   <TableHead className="w-8"><span className="sr-only">Expand player</span></TableHead>
                 </TableRow>
               </TableHeader>
