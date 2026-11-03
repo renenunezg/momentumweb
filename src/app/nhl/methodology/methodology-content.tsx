@@ -104,7 +104,10 @@ export function MethodologyContent() {
           visitor&apos;s defense times the league average home goals per
           game; the visitor&apos;s use its attack, the home defense, and the
           league road average. Home ice comes from those two league averages,
-          the same for every team. Each side&apos;s goals are independent
+          the same for every team. A team on the second night of a
+          back-to-back scores about 7 percent fewer goals than that and its
+          opponent about 5 percent more, as fitted on four seasons of
+          backtest games. Each side&apos;s goals are independent
           Poisson counts: a win probability is the mass on that side of the
           diagonal plus half the tie mass, and the same grid gives over, under
           and push probabilities for a posted total.
@@ -114,7 +117,7 @@ export function MethodologyContent() {
           windows: the last 25 home and 25 road games, summed by situation and
           turned into goals through a linear fit on ten shot-quality rates. On
           the 2025-26 backtest season the current method lowers log loss from
-          0.709 to 0.686 and the average total miss from 1.90 to 1.84 goals.
+          0.709 to 0.685 and the average total miss from 1.90 to 1.84 goals.
           Separate home and road windows, weighting recent games more heavily,
           and a rolling league scoring rate did not improve it.
         </p>
@@ -134,8 +137,13 @@ export function MethodologyContent() {
           book that quotes both sides (the two implied probabilities scaled to
           sum to one), averaged over DraftKings and FanDuel, then moved 0.19 in
           log-odds against a team on the second night of a back-to-back. The
-          model total is averaged halfway with the posted total, using the
-          median line when the books disagree.
+          model total is averaged halfway with the market&apos;s total, which
+          reads the juice as well as the line: each book&apos;s no-vig over
+          probability is turned into the average goal total that makes it
+          true on a Poisson curve, and the median is taken across books. Even
+          prices on 5.5 work out to about 5.67 goals; an over at -140 against an
+          under at +120 moves it to about 6.05. On the 2025-26 opening lines that market total missed
+          by 1.86 goals against 1.88 for the bare line.
         </p>
         <p className={p}>
           Each side&apos;s expected goals are then reset so the Poisson grid
@@ -193,17 +201,19 @@ export function MethodologyContent() {
         <p className={p}>
           A walk-forward replay of the 2022-23 through 2025-26 regular seasons
           prices every game from windows that end the day before it, with
-          league averages from earlier seasons only. Across 5,248 games the
-          model alone scores a log loss of 0.670 against 0.693 for a coin flip
+          league averages from earlier seasons only (the two back-to-back
+          effects are fitted on all four seasons). Across 5,248 games the
+          model alone scores a log loss of 0.668 against 0.693 for a coin flip
           and predicts the winner 59 percent of the time; the model total
-          misses by 1.85 goals on average. Between 30 and 70 percent its
-          probabilities land within about a point of how often home teams
-          won; games priced near 73 percent were won 79 percent of the time.
+          misses by 1.85 goals on average. Between 40 and 70 percent, where most
+          games fall, its probabilities land within a point of how often home
+          teams won; the edges are rougher: games priced near 36 percent were
+          won 33 percent of the time, and games near 73 percent 79 percent.
           It ran 0.14 goals low in 2025-26, when scoring rose.
         </p>
         <p className={p}>
           Over the 3,936 games from 2023-24 through 2025-26 the closing
-          moneyline scores a log loss of 0.665 against 0.673 for the model, so
+          moneyline scores a log loss of 0.665 against 0.671 for the model, so
           the market is still better on winners. The closing total misses by
           1.87 goals on average against 1.86 for the model. Walk-forward over
           2024-25 and 2025-26, the current moneyline rule went 325-230 at the
