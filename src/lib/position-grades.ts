@@ -52,6 +52,9 @@ export interface GradedPlayer {
   war: number | null;
   warPercentile: number | null;
   pointsAboveReplacement: number | null;
+  // NFL only: points the team model's line gives up if he is ruled out of
+  // the next game, as its absence layer prices it.
+  spreadValue: number | null;
   traits: GradedPlayerTrait[];
   seasonStats: FootballStatsLine | null;
 }
@@ -129,6 +132,9 @@ export function chunk<T>(items: T[], size: number): T[][] {
   return out;
 }
 
+// Rows the card shows as headlines rather than in the trait list.
+const HEADLINE_ROWS = new Set(["grade", "war", "rating", "spread_value"]);
+
 // Traits the card never shows. QB receiver independence carries a fitted grade
 // weight of 0.00002 and is blank for most passers, so its GRADE tag misled.
 const HIDDEN_TRAITS = new Set(["qb.receiver_independence"]);
@@ -149,6 +155,7 @@ export function buildGradedPlayers(rows: PositionTraitRow[], statRows: PlayerSea
     const grade = list.find((r) => r.trait === "grade") ?? null;
     const rating = list.find((r) => r.trait === "rating") ?? null;
     const war = list.find((r) => r.trait === "war") ?? null;
+    const spread = list.find((r) => r.trait === "spread_value") ?? null;
     const first = grade ?? list[0];
     out[athleteId] = {
       athleteId,
@@ -164,8 +171,9 @@ export function buildGradedPlayers(rows: PositionTraitRow[], statRows: PlayerSea
       war: war?.value ?? null,
       warPercentile: war?.percentile ?? null,
       pointsAboveReplacement: war?.points_above_replacement ?? null,
+      spreadValue: spread?.value ?? null,
       traits: list
-        .filter((r) => r.trait !== "grade" && r.trait !== "war" && r.trait !== "rating" && !HIDDEN_TRAITS.has(r.trait))
+        .filter((r) => !HEADLINE_ROWS.has(r.trait) && !HIDDEN_TRAITS.has(r.trait))
         .sort((a, b) => Number(b.in_grade) - Number(a.in_grade) || a.trait.localeCompare(b.trait))
         .map(({ trait, value, percentile, kind, in_grade, reliability }) => ({
           trait, value, percentile, kind, in_grade, reliability,

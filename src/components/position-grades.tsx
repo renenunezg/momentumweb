@@ -17,6 +17,7 @@ import {
   type GradeSport,
   type TraitSection,
   type PositionGroup,
+  NFL_SPREAD_TIP,
 } from "@/lib/position-traits";
 import { EMPTY, cn, formatNumber, formatSigned } from "@/lib/utils";
 import { InfoTip } from "@/components/info-tip";
@@ -172,6 +173,12 @@ function Identity({ row, logo }: { row: PlayerIndexRow; logo: TeamLogoSource | u
   );
 }
 
+const HEADLINE_GRID: Record<number, string> = {
+  1: "grid-cols-1",
+  2: "grid-cols-2 divide-x divide-border",
+  3: "grid-cols-3 divide-x divide-border",
+};
+
 function Headline({
   label,
   tip,
@@ -201,6 +208,7 @@ function Headline({
 function GradeCard({
   desktop = false,
   showForecast = false,
+  showSpread = false,
   desktopTraits = [],
   sport,
   rank,
@@ -211,6 +219,7 @@ function GradeCard({
 }: {
   desktop?: boolean;
   showForecast?: boolean;
+  showSpread?: boolean;
   desktopTraits?: string[];
   sport: GradeSport;
   rank: number;
@@ -225,6 +234,8 @@ function GradeCard({
   const grade = player?.grade ?? row.grade;
   const rating = RATING_LABELS[row.positionGroup];
   const rated = rating != null && player?.rating != null;
+  const priced = sport === "nfl" && player?.spreadValue != null;
+  const headlines = 1 + Number(rated) + Number(priced);
   const seasonStats = footballSeasonStats(sport, player?.seasonStats);
   const sections: { kind: TraitSection | null; names: string[] }[] = [];
   for (const line of lines) {
@@ -235,7 +246,7 @@ function GradeCard({
   const details = (
       <div id={panelId} className={cn("space-y-3 p-3 md:block md:p-4", open ? "border-t border-border md:border-t-0" : "hidden")}>
         {!desktop && (
-          <div className={cn("grid gap-2 py-1", rated ? "grid-cols-2 divide-x divide-border" : "grid-cols-1")}>
+          <div className={cn("grid gap-2 py-1", HEADLINE_GRID[headlines])}>
             {rated && (
               <Headline
                 label={rating.label}
@@ -260,6 +271,15 @@ function GradeCard({
               }
               positive={player?.war != null && player.war > 0}
             />
+            {priced && (
+              <Headline
+                label="Line value"
+                tip={NFL_SPREAD_TIP}
+                tipLabel="What is line value?"
+                value={formatSigned(player.spreadValue, 1)}
+                sub="pts if ruled out"
+              />
+            )}
           </div>
         )}
         {player && (
@@ -346,10 +366,11 @@ function GradeCard({
           )}
           <TableCell className="text-center">{player?.war == null ? EMPTY : formatSigned(player.war, 2)}</TableCell>
           <TableCell className="text-center">{player?.pointsAboveReplacement == null ? EMPTY : formatSigned(player.pointsAboveReplacement, 1)}</TableCell>
+          {showSpread && <TableCell className="text-center">{player?.spreadValue == null ? EMPTY : formatSigned(player.spreadValue, 1)}</TableCell>}
           <TableCell><ChevronDown aria-hidden="true" className={cn("size-4 text-muted-foreground transition-transform", open && "rotate-180")} /></TableCell>
         </TableRow>
         <TableRow hidden={!open} className="hover:bg-transparent">
-          <TableCell colSpan={(showForecast ? 11 : 10) + desktopTraits.length} className="whitespace-normal bg-muted/20">{details}</TableCell>
+          <TableCell colSpan={(showForecast ? 11 : 10) + (showSpread ? 1 : 0) + desktopTraits.length} className="whitespace-normal bg-muted/20">{details}</TableCell>
         </TableRow>
       </Fragment>
     );
@@ -451,6 +472,9 @@ function ComparePanel({
         ? [{ label: rating.label, value: formatSigned(player.rating, 2), sub: rating.unit }]
         : []),
       { label: "WAR", value: player?.war == null ? EMPTY : formatSigned(player.war, 2), sub: player?.pointsAboveReplacement == null ? "" : `${formatSigned(player.pointsAboveReplacement, 0)} pts` },
+      ...(sport === "nfl" && player?.spreadValue != null
+        ? [{ label: "line value", value: formatSigned(player.spreadValue, 1), sub: "pts if ruled out" }]
+        : []),
     ];
     return (
       <div className={cn("grid gap-3 sm:flex sm:flex-wrap", align === "right" ? "justify-end text-right" : "text-left")}>
@@ -631,6 +655,7 @@ export default function PositionGrades({
   }, [index, loaded, sport]);
   const graded = gradedCounts[position] ?? 0;
   const showForecast = visible.some((row) => RATING_LABELS[row.positionGroup] != null && loaded[row.athleteId]?.rating != null);
+  const showSpread = visible.some((row) => loaded[row.athleteId]?.spreadValue != null);
   const desktopTraits = search ? [] : linesFor(position)
     .filter(({ name }) => visible.some((row) => loaded[row.athleteId]?.traits.some((trait) => trait.trait === name && trait.in_grade)))
     .slice(0, 2)
@@ -640,6 +665,7 @@ export default function PositionGrades({
       key={row.athleteId}
       desktop={desktop}
       showForecast={showForecast}
+      showSpread={showSpread}
       desktopTraits={desktopTraits}
       sport={sport}
       rank={i + 1}
@@ -729,6 +755,7 @@ export default function PositionGrades({
                 {desktopTraits.map((name) => <col key={name} className="w-28" />)}
                 {showForecast && <col className="w-28" />}
                 <col /><col />
+                {showSpread && <col />}
                 <col className="w-8" />
               </colgroup>
               <TableHeader>
@@ -754,6 +781,7 @@ export default function PositionGrades({
                   {showForecast && <TableHead className="text-center">Forecast</TableHead>}
                   <TableHead className="text-center">WAR</TableHead>
                   <TableHead className="text-center"><span className="inline-flex items-center gap-1">Pts <InfoTip text="Points above replacement credited to this player, as shown in the full card." label="What are points above replacement?" /></span></TableHead>
+                  {showSpread && <TableHead className="text-center"><span className="inline-flex items-center gap-1">Line <InfoTip text={NFL_SPREAD_TIP} label="What is line value?" /></span></TableHead>}
                   <TableHead className="w-8"><span className="sr-only">Expand player</span></TableHead>
                 </TableRow>
               </TableHeader>
