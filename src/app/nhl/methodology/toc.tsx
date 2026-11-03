@@ -6,7 +6,6 @@ const sections = [
   { id: "overview", label: "Overview" },
   { id: "data", label: "Data" },
   { id: "windows", label: "Windows" },
-  { id: "goal-map", label: "Goal Map" },
   { id: "matchup", label: "Ratings and Matchup" },
   { id: "market", label: "Market Blend" },
   { id: "picks", label: "Pricing and Predictions" },

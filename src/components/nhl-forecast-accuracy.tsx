@@ -217,7 +217,7 @@ export async function NhlForecastAccuracy({
       <p className="max-w-4xl text-sm leading-relaxed text-muted-foreground">
         {source === "live"
           ? "Published forecasts archived before puck drop and graded against official final scores. Each game uses its last pregame revision."
-          : "Walk-forward replay of the 2022-23 through 2025-26 regular seasons with the same windows and goal map, kept separate from live forecasts."}{" "}
+          : "Walk-forward replay of the 2022-23 through 2025-26 regular seasons with the current pure model, kept separate from live forecasts."}{" "}
         Log loss and Brier score judge the home win probability (a coin flip
         scores 0.693 and 0.250); total MAE and bias judge the model total in
         goals. The comparison with the closing line follows.

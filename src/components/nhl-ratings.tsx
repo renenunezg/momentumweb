@@ -17,7 +17,7 @@ import type { NhlTeamIdentity, NhlTeamRating } from "@/lib/types";
 
 const num = "text-right font-mono tabular-nums";
 const WINDOW_NOTE =
-  "Fewer than ten games in a venue window; this team's games are projected but not priced.";
+  "Fewer than ten games in the window; this team's games are projected but not priced.";
 
 const COLUMNS = [
   { key: "rating", label: "Rating", digits: 3, lowerIsBetter: false },
@@ -25,10 +25,10 @@ const COLUMNS = [
   { key: "home_xga", label: "Home xGA", digits: 2, lowerIsBetter: true },
   { key: "away_xgf", label: "Away xGF", digits: 2, lowerIsBetter: false },
   { key: "away_xga", label: "Away xGA", digits: 2, lowerIsBetter: true },
-  { key: "home_attack", label: "Home Att", digits: 3, lowerIsBetter: false },
-  { key: "home_defense", label: "Home Def", digits: 3, lowerIsBetter: true },
-  { key: "away_attack", label: "Away Att", digits: 3, lowerIsBetter: false },
-  { key: "away_defense", label: "Away Def", digits: 3, lowerIsBetter: true },
+  // Since nhl-poisson-v2.0 strengths pool both venues, so the away columns
+  // repeat the home ones.
+  { key: "home_attack", label: "Attack", digits: 3, lowerIsBetter: false },
+  { key: "home_defense", label: "Defense", digits: 3, lowerIsBetter: true },
 ] as const;
 
 // Rows arrive sorted by rating, so the index is the league rank.

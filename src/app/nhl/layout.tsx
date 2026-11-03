@@ -5,7 +5,7 @@ import { SiteFooter } from "@/components/site-footer";
 export const metadata: Metadata = {
   title: "NHL Team Ratings & Analysis",
   description:
-    "NHL team ratings, expected goals, shot-quality analysis, and home and road splits, with daily game projections.",
+    "NHL team ratings from goals and expected goals, attack and defense strengths, and daily game projections priced against the market.",
 };
 
 const nhlLinks = [

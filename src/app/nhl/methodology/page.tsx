@@ -6,7 +6,7 @@ import { MethodologyContent } from "./methodology-content";
 export const metadata: Metadata = {
   title: "NHL Model Methodology",
   description:
-    "How the NHL model works: last-25-game shot-quality windows by venue and situation, a linear goal map, attack and defense strengths, a Poisson goal grid, a halfway blend with the sportsbook market, and partner-book pricing with frozen predictions.",
+    "How the NHL model works: 50-game goal and expected-goal windows shrunk to the league average, attack and defense strengths, a Poisson goal grid, the sportsbook market with a back-to-back adjustment, and partner-book pricing with frozen predictions.",
 };
 
 export default function Page() {
@@ -16,8 +16,8 @@ export default function Page() {
         <div>
           <PageTitle>NHL Model Methodology</PageTitle>
           <PageDescription>
-            Shot-quality windows, a Poisson goal grid, a market blend, and
-            frozen partner-book predictions: the spreadsheet model, run daily
+            Goal and expected-goal strengths, a Poisson goal grid, the
+            market price, and frozen partner-book predictions, run daily
           </PageDescription>
         </div>
       </PageHeader>

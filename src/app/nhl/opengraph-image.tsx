@@ -9,7 +9,7 @@ export default function OpenGraphImage() {
     eyebrow: "NHL",
     title: "NHL Team Analysis",
     subtitle:
-      "Explore team strength through shot quality, expected goals, and attack and defense splits at home and on the road.",
-    chips: ["Team ratings", "Expected goals", "Shot quality"],
+      "Explore team strength through goals, expected goals, and attack and defense ratings, with daily game projections.",
+    chips: ["Team ratings", "Expected goals", "Projections"],
   });
 }

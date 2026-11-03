@@ -83,7 +83,7 @@ const models = [
   {
     name: "NHL",
     href: "/nhl/methodology",
-    body: "Shot-quality team ratings and a Poisson goal model, with attack and defense strengths, home and road splits, and public evaluation of win probabilities against the market.",
+    body: "Team ratings from goals and expected goals and a Poisson goal model, with attack and defense strengths and public evaluation of win probabilities against the market.",
   },
 ];
 

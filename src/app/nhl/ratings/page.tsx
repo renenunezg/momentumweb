@@ -15,7 +15,7 @@ export async function generateMetadata(): Promise<Metadata> {
   return {
     title: `NHL Model Ratings${asOf ? ` ${asOf.slice(0, 4)}` : ""}`,
     description:
-      "NHL team ratings from last-25-game shot-quality windows: expected goals for and against at home and on the road, attack and defense strengths, and the overall rating.",
+      "NHL team ratings from each team's last 50 games of goals and expected goals: expected goals for and against at home and on the road, attack and defense strengths, and the overall rating.",
   };
 }
 
@@ -51,12 +51,14 @@ export default async function RatingsPage() {
         />
       </PageHeader>
       <p className="max-w-4xl text-sm leading-relaxed text-muted-foreground">
-        Expected goals for and against per game come from each team&apos;s
-        last 25 games at that venue, by situation. Attack and defense
-        strengths are ratios to the league average at the venue (1.000 is
-        average; a defense below 1.000 allows fewer goals). Rating is home
-        attack plus away attack minus home defense minus away defense. The
-        window column counts the home and away games behind the numbers.
+        Attack and defense strengths come from each team&apos;s last 50
+        games, home and road together: goals and expected goals, each padded
+        with ten games of league-average play, as ratios to the league
+        average (1.000 is average; a defense below 1.000 allows fewer goals).
+        Expected goals for and against are those strengths against an average
+        opponent at the league&apos;s home and road scoring rates. Rating is
+        twice attack minus twice defense. The window column counts the home
+        and road games behind the numbers.
       </p>
       <NhlRatingsTable ratings={ratings} teams={teams} />
     </PageShell>
