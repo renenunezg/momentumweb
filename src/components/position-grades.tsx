@@ -105,7 +105,7 @@ function TraitRow({
   return (
     <div
       className={cn(
-        "grid grid-cols-[minmax(0,1fr)_2rem] items-center gap-x-2 gap-y-1 text-xs sm:grid-cols-[minmax(0,15rem)_1fr_2.25rem] sm:gap-2.5",
+        "grid grid-cols-[minmax(0,1fr)_2rem] items-center gap-x-2 gap-y-1 text-xs sm:grid-cols-[minmax(0,16rem)_1fr_2.25rem] sm:gap-x-4",
         dimmed && "text-muted-foreground"
       )}
     >
@@ -249,7 +249,7 @@ function GradeCard({
     else sections.push({ kind: line.kind, names: [line.name] });
   }
   const details = (
-      <div id={panelId} className={cn("space-y-3 p-3 md:block md:p-4", open ? "border-t border-border md:border-t-0" : "hidden")}>
+      <div id={panelId} className={cn("space-y-3 p-3 md:block md:space-y-5 md:px-6 md:py-5", open ? "border-t border-border md:border-t-0" : "hidden")}>
         {!desktop && (
           <div className={cn("grid gap-2 py-1", HEADLINE_GRID[headlines])}>
             {rated && (
@@ -304,13 +304,15 @@ function GradeCard({
                 <InfoTip text={TRAIT_SECTION_LABELS[section.kind].tip} label={`What are ${label} measures?`} />
               );
               if (desktop || sport === "cfb") {
+                // A lone section on the desktop card takes the full width and splits its rows into two columns.
+                const lone = desktop && sections.length === 1;
                 return (
-                  <section key={section.kind ?? "traits"} className="min-w-0 border-t border-border">
+                  <section key={section.kind ?? "traits"} className={cn("min-w-0 border-t border-border", lone && "col-span-2")}>
                     <div className="flex min-h-11 items-center gap-2">
                       <h3 className="font-mono text-xs">{label}</h3>
                       {info}
                     </div>
-                    <div className="space-y-1.5 pb-3">{traits}</div>
+                    <div className={cn("pb-3", lone ? "grid grid-cols-2 gap-x-12 gap-y-2" : "space-y-1.5")}>{traits}</div>
                   </section>
                 );
               }
@@ -754,13 +756,17 @@ export default function PositionGrades({
             <Table className="table-fixed min-w-[1080px]">
               <colgroup>
                 <col className="w-8" />
-                <col className="w-[22%]" />
+                <col />
                 <col className="w-12" />
-                <col /><col /><col /><col />
-                {desktopTraits.map((name) => <col key={name} className="w-28" />)}
+                <col className="w-16" />
+                <col className="w-16" />
+                <col className="w-12" />
+                <col className="w-12" />
+                {desktopTraits.map((name) => <col key={name} className="w-34" />)}
                 {showForecast && <col className="w-28" />}
-                <col /><col />
-                {showSpread && <col />}
+                <col className="w-16" />
+                <col className="w-30" />
+                {showSpread && <col className="w-18" />}
                 <col className="w-8" />
               </colgroup>
               <TableHeader>
