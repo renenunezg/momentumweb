@@ -126,6 +126,21 @@ export type IndexRow = Pick<
   "athlete_id" | "athlete_name" | "headshot_url" | "team" | "position_group" | "games" | "value" | "percentile"
 >;
 
+// PostgREST returns at most PAGE rows per request and drops the rest without
+// an error, so a read whose rows can exceed that pages until a short page.
+// The read must order by a unique key so pages neither overlap nor skip rows.
+export async function readAllPages<T>(
+  read: (from: number, to: number) => PromiseLike<{ data: T[] | null; error: unknown }>
+): Promise<T[]> {
+  const rows: T[] = [];
+  for (let from = 0; ; from += PAGE) {
+    const { data, error } = await read(from, from + PAGE - 1);
+    if (error) throw error;
+    rows.push(...(data ?? []));
+    if ((data?.length ?? 0) < PAGE) return rows;
+  }
+}
+
 export function chunk<T>(items: T[], size: number): T[][] {
   const out: T[][] = [];
   for (let i = 0; i < items.length; i += size) out.push(items.slice(i, i + size));

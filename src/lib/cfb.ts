@@ -2,11 +2,11 @@ import { cache } from "react";
 import {
   EMPTY_GRADES,
   ID_CHUNK,
-  PAGE,
   STATS_COLUMNS,
   buildGradedPlayers,
   chunk,
   rankIndex,
+  readAllPages,
   toIndexRow,
   type GradedPlayer,
   type GradeTeam,
@@ -346,19 +346,16 @@ export type CfbPositionGrades = PositionGrades;
 const CFB_INDEX_COLUMNS = "athlete_id, athlete_name, team, position_group, games, value, percentile";
 
 async function fetchGradeIndex(season: number): Promise<IndexRow[]> {
-  const rows: IndexRow[] = [];
-  for (let from = 0; ; from += PAGE) {
-    const res = await supabaseCfb
+  const rows = await readAllPages((from, to) =>
+    supabaseCfb
       .from("position_traits")
       .select(CFB_INDEX_COLUMNS)
       .eq("season", season)
       .eq("trait", "grade")
       .order("athlete_id", { ascending: true })
-      .range(from, from + PAGE - 1);
-    if (res.error) throw res.error;
-    rows.push(...((res.data ?? []) as IndexRow[]));
-    if ((res.data?.length ?? 0) < PAGE) return rows;
-  }
+      .range(from, to)
+  );
+  return rows as IndexRow[];
 }
 
 // Each chunk reads its trait rows and its stat lines together; a player
@@ -370,17 +367,25 @@ export async function fetchPlayerTraitRows(
   const parts = await Promise.all(
     chunk(ids, ID_CHUNK).map((part) =>
       Promise.all([
-        supabaseCfb.from("position_traits").select("*").eq("season", season).in("athlete_id", part).limit(PAGE),
+        readAllPages((from, to) =>
+          supabaseCfb
+            .from("position_traits")
+            .select("*")
+            .eq("season", season)
+            .in("athlete_id", part)
+            .order("athlete_id")
+            .order("trait")
+            .range(from, to)
+        ),
         supabaseCfb.from("player_season_stats").select(STATS_COLUMNS).eq("season", season).in("athlete_id", part).limit(ID_CHUNK),
       ])
     )
   );
   const traits: CfbPositionTrait[] = [];
   const stats: PlayerSeasonStatsRow[] = [];
-  for (const [traitRes, statsRes] of parts) {
-    if (traitRes.error) throw traitRes.error;
+  for (const [traitRows, statsRes] of parts) {
     if (statsRes.error) throw statsRes.error;
-    traits.push(...((traitRes.data ?? []) as CfbPositionTrait[]));
+    traits.push(...traitRows);
     stats.push(...(statsRes.data ?? []));
   }
   return { traits, stats };

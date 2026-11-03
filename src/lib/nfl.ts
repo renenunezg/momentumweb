@@ -5,11 +5,11 @@ import {
   EMPTY_GRADES,
   ID_CHUNK,
   INDEX_COLUMNS,
-  PAGE,
   STATS_COLUMNS,
   buildGradedPlayers,
   chunk,
   rankIndex,
+  readAllPages,
   toIndexRow,
   type GradeTeam,
   type IndexRow,
@@ -241,19 +241,16 @@ export async function fetchNflLivePerformance(): Promise<FootballLivePerformance
 // graded player; the full rows of the top of each position come with it and
 // the rest load on demand through /nfl/api/player-traits.
 async function fetchGradeIndex(season: number): Promise<IndexRow[]> {
-  const rows: IndexRow[] = [];
-  for (let from = 0; ; from += PAGE) {
-    const res = await supabaseNfl
+  const rows = await readAllPages((from, to) =>
+    supabaseNfl
       .from("position_traits")
       .select(INDEX_COLUMNS)
       .eq("season", season)
       .eq("trait", "grade")
       .order("athlete_id", { ascending: true })
-      .range(from, from + PAGE - 1);
-    if (res.error) throw res.error;
-    rows.push(...((res.data ?? []) as IndexRow[]));
-    if ((res.data?.length ?? 0) < PAGE) return rows;
-  }
+      .range(from, to)
+  );
+  return rows as IndexRow[];
 }
 
 // Each chunk reads its trait rows and its stat lines together; a player
@@ -265,17 +262,25 @@ export async function fetchNflPlayerTraitRows(
   const parts = await Promise.all(
     chunk(ids, ID_CHUNK).map((part) =>
       Promise.all([
-        supabaseNfl.from("position_traits").select("*").eq("season", season).in("athlete_id", part).limit(PAGE),
+        readAllPages((from, to) =>
+          supabaseNfl
+            .from("position_traits")
+            .select("*")
+            .eq("season", season)
+            .in("athlete_id", part)
+            .order("athlete_id")
+            .order("trait")
+            .range(from, to)
+        ),
         supabaseNfl.from("player_season_stats").select(STATS_COLUMNS).eq("season", season).in("athlete_id", part).limit(ID_CHUNK),
       ]),
     ),
   );
   const traits: NflPositionTrait[] = [];
   const stats: PlayerSeasonStatsRow[] = [];
-  for (const [traitRes, statsRes] of parts) {
-    if (traitRes.error) throw traitRes.error;
+  for (const [traitRows, statsRes] of parts) {
     if (statsRes.error) throw statsRes.error;
-    traits.push(...((traitRes.data ?? []) as NflPositionTrait[]));
+    traits.push(...traitRows);
     stats.push(...(statsRes.data ?? []));
   }
   return { traits, stats };
