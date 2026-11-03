@@ -21,7 +21,7 @@ const NFL_WAR_TIP =
   "Estimated wins above a replacement-level player at the position, using opponent-adjusted credit on competitive plays and game leverage. Defensive value excludes coverage and is understated.";
 
 export const NFL_SPREAD_TIP =
-  "How many points his team's projected margin for the next game changes if he is ruled out: his opponent-adjusted play credit above a replacement, times his share of the team's recent games. It measures his absence for one game, not his talent; the grade does that. Quarterbacks are priced separately and the offensive line only as a unit.";
+  "Point spread rating: how many points his team's projected line for the next game gives up if he is ruled out, from his opponent-adjusted play credit above a replacement times his share of the team's recent games. It measures what his absence costs for one game, not his talent; the grade does that. Quarterbacks are priced separately and the offensive line only as a unit.";
 
 // Copy that differs between the sports: who the percentile pool is, and how
 // the grade and WAR explain themselves.
