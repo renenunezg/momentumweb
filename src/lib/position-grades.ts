@@ -113,9 +113,12 @@ export const EMPTY_GRADES: PositionGrades = {
   gradedCounts: {},
 };
 
-// Full rows are fetched for this many players per position on the server;
-// the rest load on demand through the sport's player-traits API route.
+// The grades page lists this many players at a time, and the server fetches
+// full rows for that many per position. The rest load on demand through the
+// sport's player-traits API route, one request covering a listed page plus the
+// two compared players.
 export const GRADE_ROWS = 40;
+export const MAX_TRAIT_IDS = GRADE_ROWS + 2;
 export const ID_CHUNK = 50;
 export const PAGE = 1000;
 export const INDEX_COLUMNS =

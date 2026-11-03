@@ -1,11 +1,10 @@
 import { fetchPlayerTraitRows } from "@/lib/cfb";
-import { buildGradedPlayers } from "@/lib/position-grades";
+import { MAX_TRAIT_IDS, buildGradedPlayers } from "@/lib/position-grades";
 
-// Rows for up to forty players of one season, for players the grades page did
-// not render on the server (search hits and filtered lists). Each distinct id
-// set is one Supabase read per CDN hour, which keeps the page's egress bounded
-// by what people actually look at.
-const MAX_IDS = 40;
+// Rows for one listed page plus the compared players of one season, for
+// players the grades page did not render on the server (search hits and
+// filtered lists). Each distinct id set is one Supabase read per CDN hour,
+// which keeps the page's egress bounded by what people actually look at.
 const SEASON = /^20\d{2}$/;
 const ID = /^(?:[1-9]\d{0,15}|unit:[A-Za-z0-9 .&'()-]{1,60})$/;
 
@@ -16,7 +15,7 @@ export async function GET(request: Request) {
   const bad = (error: string) =>
     Response.json({ error }, { status: 400, headers: { "Cache-Control": "no-store" } });
   if (!SEASON.test(season)) return bad("Invalid season");
-  if (ids.length === 0 || ids.length > MAX_IDS || ids.some((id) => !ID.test(id))) {
+  if (ids.length === 0 || ids.length > MAX_TRAIT_IDS || ids.some((id) => !ID.test(id))) {
     return bad("Invalid player list");
   }
   try {

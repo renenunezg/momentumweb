@@ -3,7 +3,7 @@
 import { Accordion } from "@base-ui/react/accordion";
 import { ChevronDown } from "lucide-react";
 import { Fragment, useDeferredValue, useEffect, useMemo, useState } from "react";
-import type { GradedPlayer, GradedPlayerTrait, GradeTeam, PlayerIndexRow } from "@/lib/position-grades";
+import { GRADE_ROWS, type GradedPlayer, type GradedPlayerTrait, type GradeTeam, type PlayerIndexRow } from "@/lib/position-grades";
 import {
   CFB_SECTION_ORDER,
   TRAIT_SECTION_LABELS,
@@ -30,7 +30,6 @@ import { PlayerComparisonPicker } from "@/components/player-comparison-picker";
 import { ToggleGroup } from "@/components/toggle-group";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 
-const PAGE_ROWS = 40;
 const ALL = "all";
 
 // Diagonal stripes mark a trait inferred from unit outcomes or teammates
@@ -598,7 +597,7 @@ export default function PositionGrades({
       ),
     [index, search, position, group]
   );
-  const visible = matches.slice(0, PAGE_ROWS);
+  const visible = matches.slice(0, GRADE_ROWS);
 
   useEffect(() => {
     const wanted = [...visible.map((row) => row.athleteId), ...compare];
