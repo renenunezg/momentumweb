@@ -81,8 +81,9 @@ async function LeadStudy() {
           Each preseason from {first} to {last}, the grade was rebuilt from inputs dated before opening day and
           scored against what hitters went on to produce: batting runs plus Statcast fielding and baserunning per
           600 PA, the target the grade is built around, with the systems&apos; positional adjustment removed. On
-          hitting alone the published grade trails all three systems. These seasons were in view while the grade
-          was designed.
+          hitting alone the published grade trails all three systems, clearly only THE BAT X; a batting-only
+          version of the grade ties them at opening day and runs ahead of them at the in-season checkpoints, within
+          sampling noise. These seasons were in view while the grade was designed.
         </p>
         <MoreLink href="/mlb/performance">The full evaluation</MoreLink>
       </div>

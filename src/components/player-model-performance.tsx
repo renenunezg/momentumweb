@@ -241,7 +241,7 @@ async function MlbForward({ modelVersion, gradesFittedAt }: { modelVersion: stri
         </p>
       </div>
       <EvalTable
-        caption="Hitters: the full grade on bat, glove and legs against the systems' WAR rate, where it is ahead; the published grade on hitting alone against their projected wOBA, where it trails all three; and a batting-only refit of the grade on the same hitting target, which ties them."
+        caption="Hitters: the full grade on bat, glove and legs against the systems' WAR rate, where it is ahead; the published grade on hitting alone against their projected wOBA, where it trails all three; and a batting-only refit of the grade on the same hitting target, which ties them at opening day and runs ahead of them at the in-season checkpoints, within sampling noise."
         columns={columns}
         rows={[
           ...forwardRows(full, "preseason", "Full grade, bat, glove and legs"),
