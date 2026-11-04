@@ -13,13 +13,17 @@ const LAYOUT: [keyof typeof GLYPHS, number][] = [
   ["G0", 0], ["G1", 821], ["G0", 1369], ["G2", 2190], ["G3", 2723], ["G4", 3259], ["G5", 3625], ["G0", 4158],
 ];
 
-export function MomentumWordmark({ className }: { className?: string }) {
+// The share card's image renderer ignores classes and needs pixel dimensions,
+// so it passes a height; the page header sizes the mark with a class.
+export function MomentumWordmark({ className, height }: { className?: string; height?: number }) {
   return (
     <svg
       viewBox="7.2 47.29 724.27 101.04"
       role="img"
       aria-label="momentum"
       className={className ?? "h-[19px] w-auto"}
+      width={height === undefined ? undefined : (height * 724.27) / 101.04}
+      height={height}
     >
       <g fill="currentColor" transform="translate(0 145) scale(0.148386 -0.148386)">
         {LAYOUT.map(([glyph, x]) => (

@@ -349,7 +349,10 @@ export interface RatedTeam {
 }
 
 export interface LeagueRatings {
-  period: string;
+  // What the rating measures, when it was published, and which teams it ranks.
+  measure: string;
+  asOf: string;
+  scope: string | null;
   digits: number;
   teams: RatedTeam[];
 }
@@ -376,36 +379,55 @@ async function logos<K extends string | number>(
   return new Map((data ?? []).map((t) => [t[key] as K, t]));
 }
 
-export async function fetchHomeRatings(): Promise<{ cfb: LeagueRatings | null; nfl: LeagueRatings | null; nhl: LeagueRatings | null }> {
-  const [cfb, nfl, nhl] = await Promise.all([fetchCfbRatings(), fetchNflRatings(), fetchNhlRatings()]);
+const POINTS = "Points better than average on a neutral field";
+
+export async function fetchCfbHomeRatings(): Promise<LeagueRatings | null> {
+  const cfb = await fetchCfbRatings();
   const fbs = cfb.ratings.filter((r) => r.classification === "fbs");
-  const cfbTop = fbs.slice(0, SHOWN);
-  const nflTop = nfl.ratings.slice(0, SHOWN);
-  const nhlTop = nhl.ratings.slice(0, SHOWN);
-  const [cfbLogos, nflLogos, nhlLogos] = await Promise.all([
-    logos<number>(supabaseCfb.from("teams").select("team_id, logo_light, logo_dark").in("team_id", cfbTop.map((r) => r.team_id)), "team_id"),
-    logos<string>(supabaseNfl.from("teams").select("team_abbr, logo_light, logo_dark").in("team_abbr", nflTop.map((r) => r.team_abbr)), "team_abbr"),
-    logos<string>(supabaseNhl.from("teams").select("team_abbr, logo_light, logo_dark").in("team_abbr", nhlTop.map((r) => r.team_abbr)), "team_abbr"),
-  ]);
-  const asOf = (date: string) => new Date(`${date}T12:00:00Z`).toLocaleDateString("en-US", { month: "short", day: "numeric", timeZone: "UTC" });
+  if (!fbs.length) return null;
+  const top = fbs.slice(0, SHOWN);
+  const logo = await logos<number>(supabaseCfb.from("teams").select("team_id, logo_light, logo_dark").in("team_id", top.map((r) => r.team_id)), "team_id");
   return {
-    cfb: fbs.length ? {
-      period: `Points better than average on a neutral field | ${cfb.season} week ${cfb.week} | ${fbs.length} FBS teams`,
-      digits: 1,
-      teams: rank(fbs, (r) => r.power_rating, (r) => ({ key: String(r.team_id), team: r.team, rating: r.power_rating, offense: r.offense_points, defense: r.defense_points }))
-        .map((t, i) => ({ ...t, logo: cfbLogos.get(cfbTop[i].team_id) })),
-    } : null,
-    nfl: nflTop.length ? {
-      period: `Points better than average on a neutral field | ${nfl.season} week ${nfl.week}`,
-      digits: 1,
-      teams: rank(nfl.ratings, (r) => r.power_rating, (r) => ({ key: r.team_abbr, team: r.team, rating: r.power_rating, offense: r.offense_points, defense: r.defense_points }))
-        .map((t, i) => ({ ...t, logo: nflLogos.get(nflTop[i].team_abbr) })),
-    } : null,
-    nhl: nhlTop.length && nhl.asOf ? {
-      period: `Attack minus defense strength, home and away, 0 is average | ${asOf(nhl.asOf)}`,
-      digits: 2,
-      teams: rank(nhl.ratings, (r) => r.rating, (r) => ({ key: r.team_abbr, team: r.team, rating: r.rating, offense: null, defense: null }))
-        .map((t, i) => ({ ...t, logo: nhlLogos.get(nhlTop[i].team_abbr) })),
-    } : null,
+    measure: POINTS,
+    asOf: `${cfb.season} week ${cfb.week}`,
+    scope: `${fbs.length} FBS teams`,
+    digits: 1,
+    teams: rank(fbs, (r) => r.power_rating, (r) => ({ key: String(r.team_id), team: r.team, rating: r.power_rating, offense: r.offense_points, defense: r.defense_points }))
+      .map((t, i) => ({ ...t, logo: logo.get(top[i].team_id) })),
   };
+}
+
+export async function fetchNflHomeRatings(): Promise<LeagueRatings | null> {
+  const nfl = await fetchNflRatings();
+  if (!nfl.ratings.length) return null;
+  const top = nfl.ratings.slice(0, SHOWN);
+  const logo = await logos<string>(supabaseNfl.from("teams").select("team_abbr, logo_light, logo_dark").in("team_abbr", top.map((r) => r.team_abbr)), "team_abbr");
+  return {
+    measure: POINTS,
+    asOf: `${nfl.season} week ${nfl.week}`,
+    scope: null,
+    digits: 1,
+    teams: rank(nfl.ratings, (r) => r.power_rating, (r) => ({ key: r.team_abbr, team: r.team, rating: r.power_rating, offense: r.offense_points, defense: r.defense_points }))
+      .map((t, i) => ({ ...t, logo: logo.get(top[i].team_abbr) })),
+  };
+}
+
+export async function fetchNhlHomeRatings(): Promise<LeagueRatings | null> {
+  const nhl = await fetchNhlRatings();
+  if (!nhl.ratings.length || !nhl.asOf) return null;
+  const top = nhl.ratings.slice(0, SHOWN);
+  const logo = await logos<string>(supabaseNhl.from("teams").select("team_abbr, logo_light, logo_dark").in("team_abbr", top.map((r) => r.team_abbr)), "team_abbr");
+  return {
+    measure: "Attack minus defense strength, home and away, 0 is average",
+    asOf: new Date(`${nhl.asOf}T12:00:00Z`).toLocaleDateString("en-US", { month: "short", day: "numeric", timeZone: "UTC" }),
+    scope: null,
+    digits: 2,
+    teams: rank(nhl.ratings, (r) => r.rating, (r) => ({ key: r.team_abbr, team: r.team, rating: r.rating, offense: null, defense: null }))
+      .map((t, i) => ({ ...t, logo: logo.get(top[i].team_abbr) })),
+  };
+}
+
+export async function fetchHomeRatings(): Promise<{ cfb: LeagueRatings | null; nfl: LeagueRatings | null; nhl: LeagueRatings | null }> {
+  const [cfb, nfl, nhl] = await Promise.all([fetchCfbHomeRatings(), fetchNflHomeRatings(), fetchNhlHomeRatings()]);
+  return { cfb, nfl, nhl };
 }

@@ -5,11 +5,12 @@ import type { LeagueRatings } from "@/lib/home-research.server";
 
 export function HomePowerRatings({ league }: { league: LeagueRatings }) {
   const split = league.teams.some((t) => t.offense != null);
+  const period = [league.measure, league.asOf, league.scope].filter(Boolean).join(" | ");
   return (
     <div>
-      <p className="mb-1 type-meta text-muted-foreground">{league.period}</p>
+      <p className="mb-1 type-meta text-muted-foreground">{period}</p>
       <table className="w-full type-label tabular-nums">
-        <caption className="sr-only">Top power ratings. {league.period}</caption>
+        <caption className="sr-only">Top power ratings. {period}</caption>
         <thead className="sr-only">
           <tr>
             <th scope="col">Rank</th>
