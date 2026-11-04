@@ -28,7 +28,7 @@ export function HomeComparisons({ rows }: { rows: ComparisonRow[] }) {
           <TableHead className="hidden md:table-cell">Compared with</TableHead>
           <TableHead className="hidden text-right md:table-cell">Model</TableHead>
           <TableHead className="hidden text-right md:table-cell">Benchmark</TableHead>
-          <TableHead>Difference</TableHead>
+          <TableHead>Model edge</TableHead>
           <TableHead className="hidden pr-0 lg:table-cell">Sample</TableHead>
         </TableRow>
       </TableHeader>
@@ -49,10 +49,9 @@ export function HomeComparisons({ rows }: { rows: ComparisonRow[] }) {
             <TableCell className="hidden text-right text-muted-foreground md:table-cell">{row.theirs}</TableCell>
             <TableCell className="py-2.5">
               <SignedBar
-                value={row.diff}
+                value={row.edge}
                 extent={row.extent}
                 digits={row.digits}
-                lowerIsBetter={row.lowerIsBetter}
                 tone={row.verdict === "noise" ? "neutral" : "semantic"}
               />
               <span className="block type-meta">

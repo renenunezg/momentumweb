@@ -74,10 +74,11 @@ export interface ComparisonRow {
   measure: string;
   ours: string;
   theirs: string;
-  diff: number;
+  // Oriented so positive always means the model did better, whatever the
+  // measure's direction, so one sign convention reads down the whole table.
+  edge: number;
   digits: number;
   extent: number;
-  lowerIsBetter: boolean;
   verdict: Verdict;
   // Forecast errors are scored on every graded game and publish no interval,
   // so their verdict reads the sign alone and says so.
@@ -85,12 +86,9 @@ export interface ComparisonRow {
   sample: string;
 }
 
-function verdictOf(diff: number, ci: [number, number] | null, lowerIsBetter: boolean): Verdict {
-  const flip = lowerIsBetter ? -1 : 1;
-  if (!ci) return diff * flip > 0 ? "model" : diff * flip < 0 ? "benchmark" : "noise";
-  const lo = Math.min(ci[0] * flip, ci[1] * flip);
-  const hi = Math.max(ci[0] * flip, ci[1] * flip);
-  const { verdict } = describeGap(diff * flip, lo, hi);
+function verdictOf(edge: number, ci: [number, number] | null): Verdict {
+  if (!ci) return edge > 0 ? "model" : edge < 0 ? "benchmark" : "noise";
+  const { verdict } = describeGap(edge, Math.min(ci[0], ci[1]), Math.max(ci[0], ci[1]));
   return verdict === "clear of zero" ? "model" : verdict === "behind, clear of zero" ? "benchmark" : "noise";
 }
 
@@ -106,11 +104,10 @@ function mlbRow(key: string, model: string, benchmark: string, measure: string, 
     measure,
     ours: c.rho_grade.toFixed(2),
     theirs: c.rho_system.toFixed(2),
-    diff: c.diff,
+    edge: c.diff,
     digits: 2,
     extent: 0.15,
-    lowerIsBetter: false,
-    verdict: verdictOf(c.diff, c.ci95, false),
+    verdict: verdictOf(c.diff, c.ci95),
     hasInterval: true,
     sample: `${c.checkpoints} preseasons, about ${Math.round(c.mean_n)} ${unit}; seasons in view during development`,
   }];
@@ -152,11 +149,10 @@ async function nflQbRows(): Promise<ComparisonRow[]> {
       measure: "Rank correlation with rest-of-season EPA per dropback",
       ours: r.grade_spearman.toFixed(2),
       theirs: r.baseline_spearman.toFixed(2),
-      diff: r.difference,
+      edge: r.difference,
       digits: 2,
       extent: 0.15,
-      lowerIsBetter: false,
-      verdict: verdictOf(r.difference, ci, false),
+      verdict: verdictOf(r.difference, ci),
       hasInterval: ci != null,
       sample: `${r.player_seasons} passer-seasons, ${range(r.seasons)}, development seasons${baseline.endsWith("_prior") ? ", equal information" : ", rating carries last season"}`,
     }];
@@ -174,6 +170,9 @@ function forecastRow(
   ci: [number, number] | null = null,
   diff = ours - theirs,
 ): ComparisonRow {
+  // Error measures are lower-is-better, so the model's edge is the negated gap.
+  const edge = -diff;
+  const edgeCi: [number, number] | null = ci ? [-ci[1], -ci[0]] : null;
   return {
     key: `${sport}-forecast`,
     href: `/${sport}/performance`,
@@ -182,11 +181,10 @@ function forecastRow(
     measure,
     ours: ours.toFixed(digits),
     theirs: theirs.toFixed(digits),
-    diff,
+    edge,
     digits,
     extent,
-    lowerIsBetter: true,
-    verdict: verdictOf(diff, ci, true),
+    verdict: verdictOf(edge, edgeCi),
     hasInterval: ci != null,
     sample,
   };
