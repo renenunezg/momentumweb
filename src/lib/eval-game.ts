@@ -175,6 +175,24 @@ export async function runEvalForGame(
     preds.push(...(data ?? []) as Pred[]);
     if (!data || data.length < pageSize) break;
   }
+  // The unified view carries no prediction context, so published picks are
+  // read from the v2 table, the only source bet_ledger_v takes them from.
+  const pickMarket = new Map<string, "ml" | "rl">();
+  for (let offset = 0; ; offset += pageSize) {
+    const { data, error } = await sb
+      .from("model_outputs_season")
+      .select("game_pk, date, team, market:prediction_context->pick->>market")
+      .gte("date", "2026-05-12")
+      .not("prediction_context->pick->>market", "is", null)
+      .order("game_pk").order("team").order("date")
+      .range(offset, offset + pageSize - 1);
+    if (error) return { ok: false, error: `picks query failed: ${error.message}` };
+    for (const p of (data ?? []) as { game_pk: number; date: string; team: string; market: string }[]) {
+      if (p.market !== "ml" && p.market !== "rl") return { ok: false, error: `unknown pick market ${p.market}` };
+      pickMarket.set(`${p.game_pk}|${p.team}|${p.date.slice(0, 10)}`, p.market);
+    }
+    if (!data || data.length < pageSize) break;
+  }
   for (let offset = 0; ; offset += pageSize) {
     const { data, error } = await sb
       .from("games")
@@ -248,6 +266,7 @@ export async function runEvalForGame(
       total_under_odds: p.total_under_odds,
       p_over: p.p_over,
       p_under: p.p_under,
+      pick_market: pickMarket.get(`${p.game_pk}|${p.team}|${g.game_date}`) ?? null,
       game_date: g.game_date,
     });
   }

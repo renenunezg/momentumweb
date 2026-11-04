@@ -103,6 +103,20 @@ test("published grading rules drop flagged moneyline plays below the edge gate",
   assert.equal(computeSegmentRow(rows, rules).n_underdogs, 1);
 });
 
+test("a published pick is graded at 1u below the edge gate and with no Kelly stake, as in the ledger", () => {
+  const rules = { ml: { min_edge: 0.045 }, rl: { min_edge: 0.045 }, total: { min_edge: 0.065 } };
+  const rows: EvalRow[] = [
+    // A lean: 2 points of edge and no Kelly stake, still a 1u bet that won at +100.
+    row({ team: "DOG", game_pk: 1, ev_flag: "DOG", moneyline: 100, kelly_quarter_ml: 0, win_prob: 0.52, actual_win: 1, pick_market: "ml" }),
+    // A run-line pick is not a moneyline bet even when the row carries a moneyline flag.
+    row({ team: "DOG", game_pk: 2, ev_flag: "DOG", moneyline: 150, kelly_quarter_ml: 0.02, win_prob: 0.46, actual_win: 0, pick_market: "rl" }),
+  ];
+  const seg = computeSegmentRow(rows, rules);
+  assert.equal(seg.n_underdogs, 1);
+  assert.equal(seg.underdogs_correct, 1);
+  assert.equal(seg.roi_underdogs, 1);
+});
+
 test("live grading retries failures, rejects rescheduled rows, and commits complete calendar windows", async () => {
   const { runEvalForGame } = await import("./eval-game.ts");
   type Client = Parameters<typeof runEvalForGame>[0];
@@ -145,7 +159,7 @@ test("live grading retries failures, rejects rescheduled rows, and commits compl
     let update: unknown;
     let upsert: Record<string, unknown>[] | undefined;
     const query = {
-      select() { return query; }, eq() { return query; }, not() { return query; }, order() { return query; },
+      select() { return query; }, eq() { return query; }, gte() { return query; }, not() { return query; }, order() { return query; },
       range(from: number, to: number) { bounds = [from, to]; return query; },
       update(value: unknown) { gameWrites++; update = value; return query; },
       upsert(value: Record<string, unknown>[]) { upsert = value; return query; },
@@ -164,6 +178,7 @@ test("live grading retries failures, rejects rescheduled rows, and commits compl
             { bet_type: "ml", min_edge: 0.045 }, { bet_type: "rl", min_edge: 0.045 }, { bet_type: "total", min_edge: 0.065 },
           ], error: null });
         }
+        if (table === "model_outputs_season") return resolve({ data: [], error: null });
         const rows = table === "games" ? games : predictions;
         return resolve({ data: update || upsert ? null : rows.slice(bounds[0], bounds[1] + 1), error: null });
       },

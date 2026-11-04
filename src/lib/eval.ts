@@ -25,6 +25,9 @@ export type EvalRow = {
   total_under_odds?: number | null;
   p_over?: number | null;
   p_under?: number | null;
+  // The published pick (mlb-picks-v3, prediction_context.pick). A pick is
+  // graded at a flat 1u whatever its edge or Kelly stake, as in bet_ledger_v.
+  pick_market?: "ml" | "rl" | null;
 };
 
 // The minimum edge over the vig-inclusive implied probability a flagged play
@@ -215,7 +218,9 @@ export function computeSegmentRow(rows: EvalRow[], rules?: GradingRules): Segmen
 
   const mlBets = dedupeByGamePk(
     rows.filter((r) => r.ev_flag === r.team && r.moneyline != null
-      && (!rules || r.win_prob - impliedProbability(r.moneyline) >= rules.ml.min_edge)),
+      && (r.pick_market != null
+        ? r.pick_market === "ml"
+        : !rules || r.win_prob - impliedProbability(r.moneyline) >= rules.ml.min_edge)),
   );
   if (mlBets.length > 0) {
     let favStake = 0,
@@ -231,7 +236,7 @@ export function computeSegmentRow(rows: EvalRow[], rules?: GradingRules): Segmen
       const dec = americanToDecimal(am);
       // The ledger view grades only bets with a positive stake; a row with
       // none is not a bet, so it is not invented as one here either.
-      const stake = r.kelly_quarter_ml;
+      const stake = r.pick_market != null ? 1 : r.kelly_quarter_ml;
       if (stake == null || stake <= 0) continue;
       const won = r.actual_win === 1;
       const payout = won ? stake * dec : 0;
