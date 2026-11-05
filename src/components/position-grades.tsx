@@ -275,7 +275,7 @@ function GradeCard({
                 tip={rating.tip}
                 tipLabel="What is the forecast?"
                 value={formatSigned(player.rating, 2)}
-                sub={`${rating.unit}${player.ratingRange != null ? ` · range ±${formatNumber(player.ratingRange, 0)}` : ""}`}
+                sub={`${rating.unit}${player.ratingRange != null ? ` · range ±${formatNumber(player.ratingRange, 2)}` : ""}`}
                 positive={player.rating != null && player.rating > 0}
               />
             )}

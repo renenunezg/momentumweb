@@ -307,12 +307,12 @@ export const RATING_LABELS: Record<string, { label: string; unit: string; tip: s
   QB: {
     label: "Forecast",
     unit: "EPA per dropback",
-    tip: "Projected EPA per dropback for the rest of the season. Grade ranks that forecast among qualified QBs. Grade ± measures rating uncertainty; the wider forecast range reflects future performance uncertainty.",
+    tip: "Projected EPA per dropback for the rest of the season. The grade places that forecast among qualified QBs, pulled toward 50 by the share of it that is still sample noise. Grade ± is that uncertainty; the range is how far the rest-of-season result typically lands from the forecast.",
   },
   RB: {
     label: "Forecast",
     unit: "EPA over average per game",
-    tip: "Projected EPA over an average back per game for the rest of the season: forecast efficiency per touch times his touches per game, each pulled toward the league average until his sample supports it. Efficiency repeats poorly, so the range is wide.",
+    tip: "Projected EPA over an average back per game for the rest of the season: forecast efficiency per touch times his touches per game, each pulled toward the league average until his sample supports it. Efficiency repeats poorly, so grades stay near 50 and the range is wide.",
   },
 };
 
