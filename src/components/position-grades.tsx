@@ -799,7 +799,8 @@ export default function PositionGrades({
           </div>
           <div className="hidden md:block">
             <p className="pb-2 text-xs text-muted-foreground">Select a row for the full player card. ± is grade uncertainty; Pct and trait columns are position percentiles.</p>
-            <Table className="table-fixed min-w-[1080px]">
+            {/* The value columns add 160px, so the player column keeps its width. */}
+            <Table className={cn("table-fixed", showValue ? "min-w-[1240px]" : "min-w-[1080px]")}>
               <colgroup>
                 <col className="w-8" />
                 <col />
