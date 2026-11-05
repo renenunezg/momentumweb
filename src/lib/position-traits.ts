@@ -311,8 +311,8 @@ export const RATING_LABELS: Record<string, { label: string; unit: string; tip: s
   },
   RB: {
     label: "Forecast",
-    unit: "EPA per game",
-    tip: "Projected EPA per game for the rest of the season. Mostly driven by workload because efficiency is less repeatable; the wide range reflects that uncertainty.",
+    unit: "EPA over average per game",
+    tip: "Projected EPA over an average back per game for the rest of the season: forecast efficiency per touch times his touches per game, each pulled toward the league average until his sample supports it. Efficiency repeats poorly, so the range is wide.",
   },
 };
 
@@ -356,6 +356,7 @@ const RATED_MEASURE_LABELS: Record<string, { label: string; tip: string }> = {
   explosive_rate: { label: "Explosive completions", tip: "Completions of 20 or more yards per dropback." },
   scramble_epa: { label: "Scramble EPA", tip: "EPA per scramble." },
   // Running back
+  epa_oe_game: { label: "EPA over average per game", tip: "His rushing EPA plus half the EPA of his targets, less what an average back would add on the same touches, per game." },
   epa_game: { label: "EPA per game", tip: "His rushing EPA plus half the EPA of his targets, per game." },
   epa_touch: { label: "EPA per touch", tip: "Rushing EPA plus half the EPA on targets, divided by carries plus targets." },
   first_down_rate: { label: "First-down rate", tip: "Share of carries that gain a first down." },

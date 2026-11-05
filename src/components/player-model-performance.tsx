@@ -556,7 +556,7 @@ function NflEvaluation({ rows }: { rows: NflGradeEvaluationRow[] }) {
       )}
       {rb.length > 0 && (
         <EvalTable
-          caption="RB rating, rest-of-season EPA per game, same layout. No RB gap is distinguishable from noise."
+          caption="RB rating, rest-of-season EPA over the average back per game, same layout."
           columns={ratingColumns}
           rows={ratingPivot(rb)}
         />

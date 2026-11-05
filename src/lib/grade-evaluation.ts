@@ -25,6 +25,8 @@ export const NFL_BASELINE_LABELS: Record<string, string> = {
   qbr_prior: "QBR + last season",
   epa_game: "EPA per game to date",
   epa_game_prior: "EPA per game + last season",
+  epa_oe_game: "EPA over average per game to date",
+  epa_oe_game_prior: "EPA over average per game + last season",
 };
 
 export const NFL_HOLDOUT_LABELS: Record<string, string> = {

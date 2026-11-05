@@ -45,8 +45,8 @@ export interface GradedPlayer {
   gradePercentile: number | null;
   uncertainty: number | null;
   // The fitted forecast behind a rated position's grade, in its own units
-  // (EPA per dropback for a passer, EPA per game for a back), with the
-  // out-of-sample range of outcomes.
+  // (EPA per dropback for a passer, EPA over the average back per game for a
+  // back), with the out-of-sample range of outcomes.
   rating: number | null;
   ratingRange: number | null;
   war: number | null;
