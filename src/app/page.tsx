@@ -119,8 +119,8 @@ async function CarryEntry() {
         <CarryFigure puzzle={puzzle} />
         <figcaption className="mt-2 type-meta text-muted-foreground">
           <span className="font-semibold text-foreground">Figure 2.</span> {ball(long)} (solid). {ball(short)} (dashed).
-          Swing physics predicts {Math.round(puzzle.share * 100)}% of the differences in hitters&apos; carry in 2025, a
-          season not used for the slope; its constants were fitted on 2026 and checked on 2025.
+          Swing physics predicts {Math.round(puzzle.share * 100)}% of the differences in hitters&apos; carry in {puzzle.season - 1}, a
+          season not used to fit the slope, though it was the check season while the physics constants were chosen.
         </figcaption>
       </figure>
       <MoreLink href="/mlb/carry">Read the carry study</MoreLink>

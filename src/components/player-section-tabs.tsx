@@ -16,18 +16,25 @@ export const NFL_PLAYER_SECTIONS = [
   { href: "/nfl/players", label: "Grades" },
   { href: "/nfl/awards", label: "Awards" },
 ] as const;
+// The carry study and its lab share the MLB Swing Lab nav entry.
+export const MLB_SWING_SECTIONS = [
+  { href: "/mlb/swing-lab", label: "Swing lab" },
+  { href: "/mlb/carry", label: "Carry study" },
+] as const;
 
 export function PlayerSectionTabs({
   sections = CFB_PLAYER_SECTIONS,
+  label = "Player pages",
   className,
 }: {
   sections?: readonly { href: string; label: string }[];
+  label?: string;
   className?: string;
 }) {
   const pathname = usePathname();
   return (
     <nav
-      aria-label="Player pages"
+      aria-label={label}
       className={cn(TAB_LIST, className)}
     >
       {sections.map((section) => {

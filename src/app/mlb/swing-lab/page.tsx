@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { PageDescription, PageHeader, PageShell, PageTitle } from "@/components/page-layout";
 import { LastUpdated } from "@/components/last-updated";
+import { MLB_SWING_SECTIONS, PlayerSectionTabs } from "@/components/player-section-tabs";
 import { SwingLab } from "@/components/mlb-swing-lab";
 import { fetchCarry } from "@/lib/mlb-carry";
 
@@ -40,11 +41,13 @@ export default async function MlbSwingLabPage() {
         </div>
         <LastUpdated timestamp={updatedAt} schedule="Updates each offseason" />
       </PageHeader>
+      <PlayerSectionTabs sections={MLB_SWING_SECTIONS} label="Swing lab pages" />
 
       <div className="max-w-3xl space-y-3 text-sm leading-relaxed">
         <p>
           Pick a hitter or a generic one and change his swing. Carry comes from rerunning the collision and flight physics on his own
-          batted balls with each ball&apos;s contact held fixed; the season line comes from the hitters who changed. The{" "}
+          batted balls with each ball&apos;s contact held fixed, scaled by how much modeled spin translates into observed carry across hitters; the season
+          line comes from the hitters who changed. The{" "}
           <Link href="/mlb/carry" className="underline underline-offset-2 hover:text-foreground">
             carry study
           </Link>{" "}

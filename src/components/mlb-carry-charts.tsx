@@ -289,7 +289,7 @@ export function ChangerBars({ groups, outcome, label }: {
             <YAxis {...axis} width={40} tickFormatter={format} />
             <ReferenceLine y={0} stroke={theme["rule-strong"]} />
             <Tooltip contentStyle={chartTooltipStyle(theme)} cursor={{ fill: theme.grid }}
-              formatter={(v) => format(Number(v))} labelFormatter={(l, p) => `${l} (${p?.[0]?.payload?.n ?? 0} hitters)`} />
+              formatter={(v) => format(Number(v))} labelFormatter={(l, p) => `${l} (${p?.[0]?.payload?.n ?? 0} season-to-season changes)`} />
             <Bar dataKey={outcome} maxBarSize={24} radius={2}>
               {groups.map((g, i) => (
                 <Cell key={g.group} fill={colors[i]} />

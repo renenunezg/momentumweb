@@ -49,8 +49,8 @@ export interface SwingTypeRow {
 export type CarryOutcome = "ba" | "obp" | "slg" | "ops" | "hr600" | "so600" | "bb600" | "carry";
 
 /** Per outcome: the fitted change per degree of tilt, per degree of attack angle at the mean whiff rate, the extra per degree of
- *  attack angle per standard deviation of whiff rate, and per mph of bat speed, with their covariance in that order (clustered by
- *  hitter, since a hitter contributes one season-to-season pair per span). n counts pairs, n_hitters distinct hitters. */
+ *  attack angle per standard deviation of whiff rate, and per mph of bat speed, each with the outcome's first-season level held
+ *  as a control, and their covariance in that order (clustered by hitter, since a hitter contributes one season-to-season pair per span). n counts pairs, n_hitters distinct hitters. */
 export interface ChangerCoefficients {
   n: number;
   n_hitters: number;

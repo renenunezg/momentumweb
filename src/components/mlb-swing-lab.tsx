@@ -169,7 +169,8 @@ export function SwingLab({ study, hitters }: { study: LabStudy; hitters: CarryHi
           <p className="font-mono text-2xl tabular-nums">{signed(carry)} ft</p>
           <p className="text-xs leading-relaxed text-muted-foreground">
             Per ball in the air, from rerunning the collision and flight physics on {hitter ? "his own" : "the league's"} {study.season} batted balls
-            with every ball&apos;s exit velocity and launch angle held fixed. It is what the same contact would carry with the spin the new swing
+            with every ball&apos;s exit velocity and launch angle held fixed, scaled by how much modeled spin translates into observed carry
+            across hitters. It is what the same contact would carry with the spin the new swing
             puts on it, not a forecast of the contact a new swing would make; the season line below is the observed version.
           </p>
         </div>
@@ -213,7 +214,8 @@ export function SwingLab({ study, hitters }: { study: LabStudy; hitters: CarryHi
           </p>
         )}
         <p className="text-xs leading-relaxed text-muted-foreground">
-          Season-line changes come from {coefs.n} season-to-season changes by {coefs.n_hitters} hitters (bat speed held constant), shown
+          Season-line changes come from {coefs.n} season-to-season changes by {coefs.n_hitters} hitters, holding bat speed and the prior season&apos;s line constant so a rebound from an
+          unusual year is not credited to the swing, shown
           with a one-standard-error range that carries the fitted coefficients&apos; correlation and treats each hitter&apos;s seasons as one cluster.
           Those swings changed naturally, so the numbers describe what tended to follow a change, not what a change guarantees.
         </p>
