@@ -18,7 +18,13 @@ const NFL_GRADE_TIP =
   "Talent on a 20 to 80 scale among qualified NFL players at the position this week. 50 is average; 10 points is one standard deviation. ± shows uncertainty.";
 
 const NFL_WAR_TIP =
-  "Estimated wins above a replacement-level player at the position, using opponent-adjusted credit on competitive plays and game leverage. Defensive value excludes coverage and is understated.";
+  "Estimated wins above a replacement-level player at the position, using opponent-adjusted credit on competitive plays and game leverage. Defensive plays are weighted by how closely each kind tracks a defender's on-field impact; coverage that never shows up on a tagged play is not counted.";
+
+export const NFL_VALUE_TIP =
+  "What his projected wins are worth over the rest of his contract, in millions of this season's cap dollars, at the league's price of a win. ± is the range of the projection.";
+
+export const NFL_SURPLUS_TIP =
+  "His value minus the cash a team taking on his contract would still owe, cutting him in any later year where that is cheaper. Positive means the contract pays less than his wins are worth. It is not a trade price: deadline buyers routinely pay picks for players with negative surplus.";
 
 export const NFL_SPREAD_TIP =
   "Point spread rating: how many points his team's projected line for the next game gives up if he is ruled out, from his opponent-adjusted play credit above a replacement times his share of the team's recent games. It measures what his absence costs for one game, not his talent; the grade does that. Quarterbacks are priced separately and the offensive line only as a unit.";

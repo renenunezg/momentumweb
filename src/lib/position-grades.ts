@@ -55,6 +55,13 @@ export interface GradedPlayer {
   // NFL only: points the team model's line gives up if he is ruled out of
   // the next game, as its absence layer prices it.
   spreadValue: number | null;
+  // NFL only: worth of his projected wins over the rest of his contract, and
+  // that worth less the cash an acquiring team would owe, in millions of
+  // current cap dollars, each with the half-width of its range.
+  playerValue: number | null;
+  playerValueRange: number | null;
+  contractSurplus: number | null;
+  contractSurplusRange: number | null;
   traits: GradedPlayerTrait[];
   seasonStats: FootballStatsLine | null;
 }
@@ -151,7 +158,7 @@ export function chunk<T>(items: T[], size: number): T[][] {
 }
 
 // Rows the card shows as headlines rather than in the trait list.
-const HEADLINE_ROWS = new Set(["grade", "war", "rating", "spread_value"]);
+const HEADLINE_ROWS = new Set(["grade", "war", "rating", "spread_value", "player_value", "contract_surplus"]);
 
 // Traits the card never shows. QB receiver independence carries a fitted grade
 // weight of 0.00002 and is blank for most passers, so its GRADE tag misled.
@@ -174,6 +181,8 @@ export function buildGradedPlayers(rows: PositionTraitRow[], statRows: PlayerSea
     const rating = list.find((r) => r.trait === "rating") ?? null;
     const war = list.find((r) => r.trait === "war") ?? null;
     const spread = list.find((r) => r.trait === "spread_value") ?? null;
+    const worth = list.find((r) => r.trait === "player_value") ?? null;
+    const surplus = list.find((r) => r.trait === "contract_surplus") ?? null;
     const first = grade ?? list[0];
     out[athleteId] = {
       athleteId,
@@ -190,6 +199,10 @@ export function buildGradedPlayers(rows: PositionTraitRow[], statRows: PlayerSea
       warPercentile: war?.percentile ?? null,
       pointsAboveReplacement: war?.points_above_replacement ?? null,
       spreadValue: spread?.value ?? null,
+      playerValue: worth?.value ?? null,
+      playerValueRange: worth?.uncertainty ?? null,
+      contractSurplus: surplus?.value ?? null,
+      contractSurplusRange: surplus?.uncertainty ?? null,
       traits: list
         .filter((r) => !HEADLINE_ROWS.has(r.trait) && !HIDDEN_TRAITS.has(r.trait))
         .sort((a, b) => Number(b.in_grade) - Number(a.in_grade) || a.trait.localeCompare(b.trait))

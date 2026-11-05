@@ -18,6 +18,8 @@ import {
   type TraitSection,
   type PositionGroup,
   NFL_SPREAD_TIP,
+  NFL_SURPLUS_TIP,
+  NFL_VALUE_TIP,
 } from "@/lib/position-traits";
 import { EMPTY, cn, formatNumber, formatSigned } from "@/lib/utils";
 import { InfoTip } from "@/components/info-tip";
@@ -178,6 +180,18 @@ function formatPsr(spreadValue: number | null): string {
   return spreadValue == null ? EMPTY : formatSigned(spreadValue, 1);
 }
 
+// Millions of cap dollars: "$45.6M", or signed for a surplus.
+function formatMillions(value: number | null, signed = false): string {
+  if (value == null) return EMPTY;
+  const text = `$${Math.abs(value).toFixed(1)}M`;
+  if (value < 0) return `−${text}`;
+  return signed ? `+${text}` : text;
+}
+
+function rangeSub(range: number | null): string {
+  return range == null ? "rest of contract" : `±${Math.abs(range).toFixed(1)}M · rest of contract`;
+}
+
 const HEADLINE_GRID: Record<number, string> = {
   1: "grid-cols-1",
   2: "grid-cols-2 divide-x divide-border",
@@ -214,6 +228,7 @@ function GradeCard({
   desktop = false,
   showForecast = false,
   showSpread = false,
+  showValue = false,
   desktopTraits = [],
   sport,
   rank,
@@ -225,6 +240,7 @@ function GradeCard({
   desktop?: boolean;
   showForecast?: boolean;
   showSpread?: boolean;
+  showValue?: boolean;
   desktopTraits?: string[];
   sport: GradeSport;
   rank: number;
@@ -240,6 +256,7 @@ function GradeCard({
   const rating = RATING_LABELS[row.positionGroup];
   const rated = rating != null && player?.rating != null;
   const priced = sport === "nfl" && player?.spreadValue != null;
+  const valued = sport === "nfl" && player?.playerValue != null;
   const headlines = 1 + Number(rated) + Number(priced);
   const seasonStats = footballSeasonStats(sport, player?.seasonStats);
   const sections: { kind: TraitSection | null; names: string[] }[] = [];
@@ -285,6 +302,25 @@ function GradeCard({
                 sub="pts if ruled out"
               />
             )}
+          </div>
+        )}
+        {!desktop && valued && (
+          <div className={cn("grid gap-2 py-1", HEADLINE_GRID[2])}>
+            <Headline
+              label="Value"
+              tip={NFL_VALUE_TIP}
+              tipLabel="What is value?"
+              value={formatMillions(player.playerValue)}
+              sub={rangeSub(player.playerValueRange)}
+            />
+            <Headline
+              label="Surplus"
+              tip={NFL_SURPLUS_TIP}
+              tipLabel="What is contract surplus?"
+              value={formatMillions(player.contractSurplus, true)}
+              sub={rangeSub(player.contractSurplusRange)}
+              positive={player.contractSurplus != null && player.contractSurplus > 0}
+            />
           </div>
         )}
         {player && (
@@ -374,10 +410,12 @@ function GradeCard({
           <TableCell className="text-center">{player?.war == null ? EMPTY : formatSigned(player.war, 2)}</TableCell>
           <TableCell className="text-center">{player?.pointsAboveReplacement == null ? EMPTY : formatSigned(player.pointsAboveReplacement, 1)}</TableCell>
           {showSpread && <TableCell className="text-center">{player?.spreadValue == null ? EMPTY : formatPsr(player.spreadValue)}</TableCell>}
+          {showValue && <TableCell className="text-center">{formatMillions(player?.playerValue ?? null)}</TableCell>}
+          {showValue && <TableCell className="text-center">{formatMillions(player?.contractSurplus ?? null, true)}</TableCell>}
           <TableCell><ChevronDown aria-hidden="true" className={cn("size-4 text-muted-foreground transition-transform", open && "rotate-180")} /></TableCell>
         </TableRow>
         <TableRow hidden={!open} className="hover:bg-transparent">
-          <TableCell colSpan={(showForecast ? 11 : 10) + (showSpread ? 1 : 0) + desktopTraits.length} className="whitespace-normal bg-muted/20">{details}</TableCell>
+          <TableCell colSpan={(showForecast ? 11 : 10) + (showSpread ? 1 : 0) + (showValue ? 2 : 0) + desktopTraits.length} className="whitespace-normal bg-muted/20">{details}</TableCell>
         </TableRow>
       </Fragment>
     );
@@ -481,6 +519,12 @@ function ComparePanel({
       { label: "WAR", value: player?.war == null ? EMPTY : formatSigned(player.war, 2), sub: player?.pointsAboveReplacement == null ? "" : `${formatSigned(player.pointsAboveReplacement, 0)} season pts` },
       ...(sport === "nfl" && player?.spreadValue != null
         ? [{ label: "PSR", value: formatPsr(player.spreadValue), sub: "pts if ruled out" }]
+        : []),
+      ...(sport === "nfl" && player?.playerValue != null
+        ? [
+            { label: "Value", value: formatMillions(player.playerValue), sub: rangeSub(player.playerValueRange) },
+            { label: "Surplus", value: formatMillions(player.contractSurplus, true), sub: rangeSub(player.contractSurplusRange) },
+          ]
         : []),
     ];
     return (
@@ -663,6 +707,7 @@ export default function PositionGrades({
   const graded = gradedCounts[position] ?? 0;
   const showForecast = visible.some((row) => RATING_LABELS[row.positionGroup] != null && loaded[row.athleteId]?.rating != null);
   const showSpread = visible.some((row) => loaded[row.athleteId]?.spreadValue != null);
+  const showValue = visible.some((row) => loaded[row.athleteId]?.playerValue != null);
   const desktopTraits = search ? [] : linesFor(position)
     .filter(({ name }) => visible.some((row) => loaded[row.athleteId]?.traits.some((trait) => trait.trait === name && trait.in_grade)))
     .slice(0, 2)
@@ -673,6 +718,7 @@ export default function PositionGrades({
       desktop={desktop}
       showForecast={showForecast}
       showSpread={showSpread}
+      showValue={showValue}
       desktopTraits={desktopTraits}
       sport={sport}
       rank={i + 1}
@@ -767,6 +813,8 @@ export default function PositionGrades({
                 <col className="w-16" />
                 <col className="w-30" />
                 {showSpread && <col className="w-18" />}
+                {showValue && <col className="w-20" />}
+                {showValue && <col className="w-20" />}
                 <col className="w-8" />
               </colgroup>
               <TableHeader>
@@ -793,6 +841,8 @@ export default function PositionGrades({
                   <TableHead className="text-center">WAR</TableHead>
                   <TableHead className="text-center"><span className="inline-flex items-center gap-1">Season pts <InfoTip text="Points above replacement credited to this player so far this season, as shown in the full card." label="What are season points above replacement?" /></span></TableHead>
                   {showSpread && <TableHead className="text-center"><span className="inline-flex items-center gap-1">PSR <InfoTip text={NFL_SPREAD_TIP} label="What is PSR?" /></span></TableHead>}
+                  {showValue && <TableHead className="text-center"><span className="inline-flex items-center gap-1">Value <InfoTip text={NFL_VALUE_TIP} label="What is value?" /></span></TableHead>}
+                  {showValue && <TableHead className="text-center"><span className="inline-flex items-center gap-1">Surplus <InfoTip text={NFL_SURPLUS_TIP} label="What is contract surplus?" /></span></TableHead>}
                   <TableHead className="w-8"><span className="sr-only">Expand player</span></TableHead>
                 </TableRow>
               </TableHeader>
