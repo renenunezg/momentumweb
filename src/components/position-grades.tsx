@@ -710,7 +710,8 @@ export default function PositionGrades({
   const showValue = visible.some((row) => loaded[row.athleteId]?.playerValue != null);
   const desktopTraits = search ? [] : linesFor(position)
     .filter(({ name }) => visible.some((row) => loaded[row.athleteId]?.traits.some((trait) => trait.trait === name && trait.in_grade)))
-    .slice(0, 2)
+    // The NFL value columns take the second trait column's room.
+    .slice(0, showValue ? 1 : 2)
     .map(({ name }) => name);
   const renderPlayers = (desktop: boolean) => visible.map((row, i) => (
     <GradeCard
@@ -799,8 +800,7 @@ export default function PositionGrades({
           </div>
           <div className="hidden md:block">
             <p className="pb-2 text-xs text-muted-foreground">Select a row for the full player card. ± is grade uncertainty; Pct and trait columns are position percentiles.</p>
-            {/* The value columns add 160px, so the player column keeps its width. */}
-            <Table className={cn("table-fixed", showValue ? "min-w-[1240px]" : "min-w-[1080px]")}>
+            <Table className="table-fixed min-w-[1080px]">
               <colgroup>
                 <col className="w-8" />
                 <col />
