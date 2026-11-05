@@ -4,6 +4,7 @@ import type {
   ChangerCoefficients,
   SwingTypeRow,
 } from "@/lib/mlb-carry";
+import { formatSigned } from "@/lib/utils";
 
 // Pure formatting and interpolation over carry-study rows. Kept apart from the
 // loader so client components can import these without bundling supabase-js.
@@ -33,6 +34,9 @@ export function slashLine(row: CarryHitterRow): SlashLine {
     whiff: row.swings ? (row.whiffs ?? 0) / row.swings : null,
   };
 }
+
+/** A signed rate stat in baseball's style, without the leading zero: "+.012". */
+export const signedRate = (v: number) => formatSigned(v, 3).replace(/^([+-])0/, "$1");
 
 export function swingType(rows: SwingTypeRow[], value: number | null): string | null {
   if (value == null) return null;

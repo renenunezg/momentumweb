@@ -8,7 +8,7 @@ import { mlbPlayerHeadshotUrl } from "@/lib/player-headshots";
 import { useChartTheme } from "@/lib/chart-theme";
 import { foldSearch, formatSigned as signed } from "@/lib/utils";
 import type { CarryHitterRow, CarryOutcome, LabStudy } from "@/lib/mlb-carry";
-import { changerEffect, labCarry, slashLine, swingType } from "@/lib/mlb-carry-format";
+import { changerEffect, labCarry, signedRate, slashLine, swingType } from "@/lib/mlb-carry-format";
 
 const GENERIC = "generic";
 const PROFILES = [
@@ -28,7 +28,6 @@ const STATS: { key: CarryOutcome; label: string; rate: boolean }[] = [
 ];
 
 const rate = (v: number) => v.toFixed(3).replace(/^0/, "").replace(/^-0/, "-");
-const signedRate = (v: number) => signed(v, 3).replace(/^([+-])0/, "$1");
 
 function Slider({ label, value, onChange, base }: { label: string; value: number; onChange: (v: number) => void; base: number | null }) {
   return (

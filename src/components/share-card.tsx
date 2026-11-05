@@ -1,4 +1,5 @@
 import { ImageResponse } from "next/og";
+import type { ReactNode } from "react";
 import { MomentumWordmark } from "@/components/momentum-wordmark";
 import { monogram } from "@/components/team-logo";
 import type { LeagueRatings } from "@/lib/home-research.server";
@@ -21,19 +22,23 @@ export type ShareCardProps = {
 
 // The brand book's carbon social layout: white wordmark over a hairline rule,
 // white title, gray copy. Hex values are the dark theme tokens in globals.css.
-const CARBON = "#101114";
-const WHITE = "#f0f2ee";
-const GRAY = "#b0b5b0";
-const RULE = "#33363b";
-const GREEN = "#36b098";
-// The dark theme's --better heat fill and the --on-fill type on it.
-const BETTER = "#2aa575";
-const ON_FILL = "#07150d";
+export const SHARE_COLORS = {
+  carbon: "#101114",
+  white: "#f0f2ee",
+  gray: "#b0b5b0",
+  rule: "#33363b",
+  green: "#36b098",
+  // The dark theme's --better and --worse heat fills and the --on-fill type on them.
+  better: "#2aa575",
+  worse: "#e2554e",
+  onFill: "#07150d",
+};
+const { carbon: CARBON, white: WHITE, gray: GRAY, rule: RULE, green: GREEN, better: BETTER, onFill: ON_FILL } = SHARE_COLORS;
 
-// One renderer behind every opengraph-image route: link previews on X and
+// One frame behind every opengraph-image route: link previews on X and
 // Reddit are the main referral channel, and a bare URL gets no clicks. Satori
 // needs display:flex on every multi-child box.
-export async function renderShareCard({ eyebrow, title, subtitle, chips, league }: ShareCardProps) {
+export async function renderShareFrame({ eyebrow, body, footer }: { eyebrow: string; body: ReactNode; footer: ReactNode }) {
   const [regular, semibold] = await Promise.all([loadBarlow(400), loadBarlow(600)]);
   return new ImageResponse(
     (
@@ -66,30 +71,9 @@ export async function renderShareCard({ eyebrow, title, subtitle, chips, league 
             {eyebrow}
           </div>
         </div>
-        <div style={{ display: "flex", alignItems: "center", gap: 56 }}>
-          <div style={{ display: "flex", flexDirection: "column", gap: 16, flex: 1 }}>
-            <div style={{ fontSize: 64, fontWeight: 600, lineHeight: 1.05 }}>{title}</div>
-            <div style={{ fontSize: 28, color: GRAY, lineHeight: 1.3 }}>{subtitle}</div>
-          </div>
-          {league?.ratings ? <LeagueTable name={league.name} league={league.ratings} /> : <RatingsGlyph />}
-        </div>
+        {body}
         <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
-          <div style={{ display: "flex", gap: 14 }}>
-            {chips.map((chip) => (
-              <div
-                key={chip}
-                style={{
-                  fontSize: 22,
-                  color: WHITE,
-                  padding: "8px 18px",
-                  border: `1.5px solid ${RULE}`,
-                  borderRadius: 999,
-                }}
-              >
-                {chip}
-              </div>
-            ))}
-          </div>
+          {footer}
           <div style={{ fontSize: 24, fontWeight: 600, color: GREEN }}>renenunez.dev</div>
         </div>
       </div>
@@ -102,6 +86,39 @@ export async function renderShareCard({ eyebrow, title, subtitle, chips, league 
       ],
     },
   );
+}
+
+export function renderShareCard({ eyebrow, title, subtitle, chips, league }: ShareCardProps) {
+  return renderShareFrame({
+    eyebrow,
+    body: (
+      <div style={{ display: "flex", alignItems: "center", gap: 56 }}>
+        <div style={{ display: "flex", flexDirection: "column", gap: 16, flex: 1 }}>
+          <div style={{ fontSize: 64, fontWeight: 600, lineHeight: 1.05 }}>{title}</div>
+          <div style={{ fontSize: 28, color: GRAY, lineHeight: 1.3 }}>{subtitle}</div>
+        </div>
+        {league?.ratings ? <LeagueTable name={league.name} league={league.ratings} /> : <RatingsGlyph />}
+      </div>
+    ),
+    footer: (
+      <div style={{ display: "flex", gap: 14 }}>
+        {chips.map((chip) => (
+          <div
+            key={chip}
+            style={{
+              fontSize: 22,
+              color: WHITE,
+              padding: "8px 18px",
+              border: `1.5px solid ${RULE}`,
+              borderRadius: 999,
+            }}
+          >
+            {chip}
+          </div>
+        ))}
+      </div>
+    ),
+  });
 }
 
 const CARD_ROWS = 5;
