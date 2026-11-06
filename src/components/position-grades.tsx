@@ -197,7 +197,7 @@ function formatPay(value: number | null, signed = false): string {
   if (value == null) return EMPTY;
   const size = Math.abs(value);
   const text = size < 1 ? `$${Math.round(size * 1000)}K` : `$${size.toFixed(1)}M`;
-  if (size < 0.0005) return text;
+  if (size < 0.0005) return "$0";
   if (value < 0) return `−${text}`;
   return signed ? `+${text}` : text;
 }
