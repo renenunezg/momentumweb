@@ -109,6 +109,9 @@ function PickDetailsContent({
           {pick.reason === "volume_floor" && (
             <p className="mt-3 text-xs text-muted-foreground">{research?.softCap ? "Included under the weekly research target and market cap, with no replacement predictions." : "Included for exploration under the earlier weekly prediction minimum."} It has positive estimated EV but does not clear the standard two-point selection threshold (measured in forecast points, not probability percentage points). Its results are tracked separately.</p>
           )}
+          {pick.reason === "rivalry_road_favorite" && (
+            <p className="mt-3 text-xs text-muted-foreground">In a listed rivalry where the home team is the underdog on its own field, the road favorite is priced 1.37 points better than the market line and taken at any positive edge, without the standard two-point threshold. In past seasons these home underdogs finished about three points short of the closing line. Its results are tracked separately.</p>
+          )}
           {pick.reason === "ranked_lean" && (
             <p className="mt-3 text-xs text-muted-foreground">Fewer than five games had a positive expected value offer, so the highest-EV model sides fill the five-game weekly slate. A lean&rsquo;s win probability is close to a coin flip and its expected value at this price is near zero or negative. It is staked and counted in the record like every other prediction.</p>
           )}

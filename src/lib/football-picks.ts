@@ -272,6 +272,7 @@ export function pickReason(reason: string): string {
   const reasons: Record<string, string> = {
     qualifying_edge: "Qualifying edge",
     volume_floor: "Exploratory: below the standard edge threshold",
+    rivalry_road_favorite: "Rivalry rule: road favorite at a home underdog",
     unverified_book_availability: "Bookmaker availability is not verified",
     stale_or_missing_expected_qb: "Expected QB information is missing or stale",
     below_edge_threshold: "Below the edge threshold",
@@ -383,6 +384,7 @@ export function pickPricing(pick: Pick<WeeklyPick, "market" | "policy_version">)
 export const QUALIFICATION_LABELS: Record<string, string> = {
   edge_qualified: "Edge-qualified",
   exploratory: "Exploratory",
+  rivalry_rule: "Rivalry rule",
   ranked_lean: "Ranked lean",
   legacy: "Earlier policy",
 };
@@ -391,6 +393,7 @@ export function pickQualification(pick: Pick<WeeklyPick, "status" | "reason">): 
   if (pick.status !== "recommended") return null;
   if (pick.reason === "volume_floor") return QUALIFICATION_LABELS.exploratory;
   if (pick.reason === "ranked_lean") return QUALIFICATION_LABELS.ranked_lean;
+  if (pick.reason === "rivalry_road_favorite") return QUALIFICATION_LABELS.rivalry_rule;
   if (["qualifying_edge", "edge_gate", "positive_ev"].includes(pick.reason)) return QUALIFICATION_LABELS.edge_qualified;
   return QUALIFICATION_LABELS.legacy;
 }
