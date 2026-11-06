@@ -74,58 +74,57 @@
   --font-weight-extrabold: 600;
 }
 
-/* Forest on bone; white on carbon. Red and green encode better and worse only,
-   so the interface itself carries no decorative accent color. */
+/* Carbon and teal in both modes: light is the daytime twin of dark. Red and
+   green encode better and worse only; teal is the one interface accent. */
 :root {
-  --background: #f3f0e7;
-  --foreground: #10342d;
-  --card: #fbfaf6;
-  --card-foreground: #10342d;
-  --popover: #fbfaf6;
-  --popover-foreground: #10342d;
-  --primary: #10342d;
-  --primary-foreground: #f3f0e7;
-  --secondary: #e8e4d8;
-  --secondary-foreground: #10342d;
-  --muted: #e8e4d8;
-  --muted-foreground: #5a675f;
-  --accent: #e8e4d8;
-  --accent-foreground: #10342d;
+  --background: #f3f4f6;
+  --foreground: #15171a;
+  --card: #ffffff;
+  --card-foreground: #15171a;
+  --popover: #ffffff;
+  --popover-foreground: #15171a;
+  --primary: #0f7f6b;
+  --primary-foreground: #ffffff;
+  --secondary: #e8eaed;
+  --secondary-foreground: #15171a;
+  --muted: #e8eaed;
+  --muted-foreground: #5d636b;
+  --accent: #e8eaed;
+  --accent-foreground: #15171a;
   --destructive: #b8362f;
-  --border: #d6d2c5;
-  --rule-strong: #9aa199;
-  --grid: #dcd8cc;
-  --input: #d6d2c5;
-  --ring: #10342d;
-  --chart-primary: #10342d;
-  /* A mid gray, not the book's near-black, so the pair separates by lightness. */
+  --border: #dcdfe3;
+  --rule-strong: #9ba1a8;
+  --grid: #e2e5e9;
+  --input: #dcdfe3;
+  --ring: #15171a;
+  --chart-primary: #0f7f6b;
   --chart-comparison: #858a8f;
-  --highlight: #2a8c78;
+  --highlight: #0f7f6b;
   --chart-1: var(--chart-primary);
   --chart-2: var(--chart-comparison);
   --chart-3: #a8742a;
   --chart-4: #4f6b8c;
   --chart-5: #8a5878;
-  /* Text-weight semantic colors; the fills below are too light for type on bone. */
+  /* Text-weight semantic colors; the fills below are too light for type on paper. */
   --positive: #1b7a4f;
   --negative: #b8362f;
   --better: #2aa575;
   --worse: #e2554e;
   --neutral-fill: #c9cac7;
   --on-fill: #07150d;
-  --cell-neutral: #e3e0d6;
+  --cell-neutral: #e4e6ea;
   --rating-strong: var(--better);
   --rating-weak: var(--worse);
   --accent-blue: #4f6b8c;
   --accent-amber: #8f6210;
   --radius: 0.5rem;
-  --sidebar: #f3f0e7;
-  --sidebar-foreground: #10342d;
+  --sidebar: #f3f4f6;
+  --sidebar-foreground: #15171a;
   --sidebar-primary: var(--primary);
-  --sidebar-primary-foreground: #f3f0e7;
-  --sidebar-accent: #e8e4d8;
-  --sidebar-accent-foreground: #10342d;
-  --sidebar-border: #d6d2c5;
+  --sidebar-primary-foreground: #ffffff;
+  --sidebar-accent: #e8eaed;
+  --sidebar-accent-foreground: #15171a;
+  --sidebar-border: #dcdfe3;
   --sidebar-ring: var(--primary);
 }
 
