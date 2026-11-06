@@ -26,6 +26,15 @@ export const NFL_VALUE_TIP =
 export const NFL_SURPLUS_TIP =
   "His value minus the cash a team taking on his contract would still owe, cutting him in any later year where that is cheaper. Positive means the contract pays less than his wins are worth. It is not a trade price: deadline buyers routinely pay picks for players with negative surplus.";
 
+export const CFB_NIL_PRICE_TIP =
+  "What landing him would cost in school revenue share for one season, from the College Sports Commission's 2026 pay at his position. Players are ranked by how strong a program the market would send them to: a portal entrant by his portal rating, everyone else by his production, which predicts it less well and is marked est. Third-party NIL comes on top. Above the 90th percentile of published pay the figure is extrapolated. ± is the range of where he would land.";
+
+export const CFB_NIL_WORTH_TIP =
+  "What his projected wins next season are worth: the same revenue-share pay, read at his rank in projected wins above replacement among quarterbacks. Quarterbacks only; at other positions the projection did not beat portal ratings.";
+
+export const CFB_NIL_SURPLUS_TIP =
+  "Worth minus price. Positive means his projected wins are worth more than the market's read of him would cost.";
+
 export const NFL_SPREAD_TIP =
   "Point spread rating: how many points his team's projected line for the next game gives up if he is ruled out, from his opponent-adjusted play credit above a replacement times his share of the team's recent games. It measures what his absence costs for one game, not his talent; the grade does that. Quarterbacks are priced separately and the offensive line only as a unit.";
 

@@ -62,6 +62,15 @@ export interface GradedPlayer {
   playerValueRange: number | null;
   contractSurplus: number | null;
   contractSurplusRange: number | null;
+  // CFB only: one season of revenue share it would take to land him, in
+  // millions, with the half-width of its range and whether his portal rating
+  // or only his production set it; for quarterbacks the worth of his
+  // projected wins at the same prices and worth less price.
+  nilPrice: number | null;
+  nilPriceRange: number | null;
+  nilPriceSource: "portal" | "production" | null;
+  nilWorth: number | null;
+  nilSurplus: number | null;
   traits: GradedPlayerTrait[];
   seasonStats: FootballStatsLine | null;
 }
@@ -158,7 +167,9 @@ export function chunk<T>(items: T[], size: number): T[][] {
 }
 
 // Rows the card shows as headlines rather than in the trait list.
-const HEADLINE_ROWS = new Set(["grade", "war", "rating", "spread_value", "player_value", "contract_surplus"]);
+const HEADLINE_ROWS = new Set([
+  "grade", "war", "rating", "spread_value", "player_value", "contract_surplus", "nil_price", "nil_worth", "nil_surplus",
+]);
 
 // Traits the card never shows. QB receiver independence carries a fitted grade
 // weight of 0.00002 and is blank for most passers, so its GRADE tag misled.
@@ -183,6 +194,9 @@ export function buildGradedPlayers(rows: PositionTraitRow[], statRows: PlayerSea
     const spread = list.find((r) => r.trait === "spread_value") ?? null;
     const worth = list.find((r) => r.trait === "player_value") ?? null;
     const surplus = list.find((r) => r.trait === "contract_surplus") ?? null;
+    const nilPrice = list.find((r) => r.trait === "nil_price") ?? null;
+    const nilWorth = list.find((r) => r.trait === "nil_worth") ?? null;
+    const nilSurplus = list.find((r) => r.trait === "nil_surplus") ?? null;
     const first = grade ?? list[0];
     out[athleteId] = {
       athleteId,
@@ -203,6 +217,11 @@ export function buildGradedPlayers(rows: PositionTraitRow[], statRows: PlayerSea
       playerValueRange: worth?.uncertainty ?? null,
       contractSurplus: surplus?.value ?? null,
       contractSurplusRange: surplus?.uncertainty ?? null,
+      nilPrice: nilPrice?.value ?? null,
+      nilPriceRange: nilPrice?.uncertainty ?? null,
+      nilPriceSource: nilPrice == null ? null : nilPrice.kind === "portal_rating" ? "portal" : "production",
+      nilWorth: nilWorth?.value ?? null,
+      nilSurplus: nilSurplus?.value ?? null,
       traits: list
         .filter((r) => !HEADLINE_ROWS.has(r.trait) && !HIDDEN_TRAITS.has(r.trait))
         .sort((a, b) => Number(b.in_grade) - Number(a.in_grade) || a.trait.localeCompare(b.trait))

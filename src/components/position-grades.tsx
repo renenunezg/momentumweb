@@ -20,6 +20,9 @@ import {
   NFL_SPREAD_TIP,
   NFL_SURPLUS_TIP,
   NFL_VALUE_TIP,
+  CFB_NIL_PRICE_TIP,
+  CFB_NIL_SURPLUS_TIP,
+  CFB_NIL_WORTH_TIP,
 } from "@/lib/position-traits";
 import { EMPTY, cn, formatNumber, formatSigned } from "@/lib/utils";
 import { InfoTip } from "@/components/info-tip";
@@ -188,6 +191,23 @@ function formatMillions(value: number | null, signed = false): string {
   return signed ? `+${text}` : text;
 }
 
+// Millions of revenue-share dollars at a readable grain: "$180K" under a
+// million, "$2.4M" above it, signed for a surplus.
+function formatPay(value: number | null, signed = false): string {
+  if (value == null) return EMPTY;
+  const size = Math.abs(value);
+  const text = size < 1 ? `$${Math.round(size * 1000)}K` : `$${size.toFixed(1)}M`;
+  if (size < 0.0005) return text;
+  if (value < 0) return `−${text}`;
+  return signed ? `+${text}` : text;
+}
+
+// The price card's sub line: its range and what set it.
+function paySub(player: GradedPlayer): string {
+  const source = player.nilPriceSource === "portal" ? "portal rating" : "est. from production";
+  return player.nilPriceRange == null ? source : `±${formatPay(player.nilPriceRange)} · ${source}`;
+}
+
 function rangeSub(range: number | null): string {
   return range == null ? "rest of contract" : `±${Math.abs(range).toFixed(1)}M · rest of contract`;
 }
@@ -229,6 +249,8 @@ function GradeCard({
   showForecast = false,
   showSpread = false,
   showValue = false,
+  showNil = false,
+  showNilSurplus = false,
   desktopTraits = [],
   sport,
   rank,
@@ -241,6 +263,8 @@ function GradeCard({
   showForecast?: boolean;
   showSpread?: boolean;
   showValue?: boolean;
+  showNil?: boolean;
+  showNilSurplus?: boolean;
   desktopTraits?: string[];
   sport: GradeSport;
   rank: number;
@@ -257,6 +281,8 @@ function GradeCard({
   const rated = rating != null && player?.rating != null;
   const priced = sport === "nfl" && player?.spreadValue != null;
   const valued = sport === "nfl" && player?.playerValue != null;
+  const nilPriced = sport === "cfb" && player?.nilPrice != null;
+  const nilWorthed = nilPriced && player?.nilWorth != null;
   const headlines = 1 + Number(rated) + Number(priced);
   const seasonStats = footballSeasonStats(sport, player?.seasonStats);
   const sections: { kind: TraitSection | null; names: string[] }[] = [];
@@ -321,6 +347,36 @@ function GradeCard({
               sub={rangeSub(player.contractSurplusRange)}
               positive={player.contractSurplus != null && player.contractSurplus > 0}
             />
+          </div>
+        )}
+        {!desktop && nilPriced && (
+          <div className={cn("grid gap-2 py-1", HEADLINE_GRID[nilWorthed ? 3 : 1])}>
+            <Headline
+              label="NIL price"
+              tip={CFB_NIL_PRICE_TIP}
+              tipLabel="What is NIL price?"
+              value={formatPay(player.nilPrice)}
+              sub={paySub(player)}
+            />
+            {nilWorthed && (
+              <>
+                <Headline
+                  label="Worth"
+                  tip={CFB_NIL_WORTH_TIP}
+                  tipLabel="What is worth?"
+                  value={formatPay(player.nilWorth)}
+                  sub="projected wins"
+                />
+                <Headline
+                  label="Surplus"
+                  tip={CFB_NIL_SURPLUS_TIP}
+                  tipLabel="What is surplus?"
+                  value={formatPay(player.nilSurplus, true)}
+                  sub="worth minus price"
+                  positive={player.nilSurplus != null && player.nilSurplus > 0}
+                />
+              </>
+            )}
           </div>
         )}
         {player && (
@@ -412,10 +468,19 @@ function GradeCard({
           {showSpread && <TableCell className="text-center">{player?.spreadValue == null ? EMPTY : formatPsr(player.spreadValue)}</TableCell>}
           {showValue && <TableCell className="text-center">{formatMillions(player?.playerValue ?? null)}</TableCell>}
           {showValue && <TableCell className="text-center">{formatMillions(player?.contractSurplus ?? null, true)}</TableCell>}
+          {showNil && (
+            <TableCell className="text-center">
+              <div className={cn(player?.nilPriceSource === "production" && "text-muted-foreground")}>{formatPay(player?.nilPrice ?? null)}</div>
+              {player?.nilPrice != null && (
+                <div className="text-[11px] text-muted-foreground">{player.nilPriceSource === "portal" ? "portal" : "est."}</div>
+              )}
+            </TableCell>
+          )}
+          {showNilSurplus && <TableCell className="text-center">{formatPay(player?.nilSurplus ?? null, true)}</TableCell>}
           <TableCell><ChevronDown aria-hidden="true" className={cn("size-4 text-muted-foreground transition-transform", open && "rotate-180")} /></TableCell>
         </TableRow>
         <TableRow hidden={!open} className="hover:bg-transparent">
-          <TableCell colSpan={(showForecast ? 11 : 10) + (showSpread ? 1 : 0) + (showValue ? 2 : 0) + desktopTraits.length} className="whitespace-normal bg-muted/20">{details}</TableCell>
+          <TableCell colSpan={(showForecast ? 11 : 10) + (showSpread ? 1 : 0) + (showValue ? 2 : 0) + (showNil ? 1 : 0) + (showNilSurplus ? 1 : 0) + desktopTraits.length} className="whitespace-normal bg-muted/20">{details}</TableCell>
         </TableRow>
       </Fragment>
     );
@@ -524,6 +589,15 @@ function ComparePanel({
         ? [
             { label: "Value", value: formatMillions(player.playerValue), sub: rangeSub(player.playerValueRange) },
             { label: "Surplus", value: formatMillions(player.contractSurplus, true), sub: rangeSub(player.contractSurplusRange) },
+          ]
+        : []),
+      ...(sport === "cfb" && player?.nilPrice != null
+        ? [{ label: "NIL price", value: formatPay(player.nilPrice), sub: paySub(player) }]
+        : []),
+      ...(sport === "cfb" && player?.nilWorth != null
+        ? [
+            { label: "Worth", value: formatPay(player.nilWorth), sub: "projected wins" },
+            { label: "NIL surplus", value: formatPay(player.nilSurplus, true), sub: "worth minus price" },
           ]
         : []),
     ];
@@ -708,10 +782,12 @@ export default function PositionGrades({
   const showForecast = visible.some((row) => RATING_LABELS[row.positionGroup] != null && loaded[row.athleteId]?.rating != null);
   const showSpread = visible.some((row) => loaded[row.athleteId]?.spreadValue != null);
   const showValue = visible.some((row) => loaded[row.athleteId]?.playerValue != null);
+  const showNil = sport === "cfb" && visible.some((row) => loaded[row.athleteId]?.nilPrice != null);
+  const showNilSurplus = sport === "cfb" && visible.some((row) => loaded[row.athleteId]?.nilSurplus != null);
   const desktopTraits = search ? [] : linesFor(position)
     .filter(({ name }) => visible.some((row) => loaded[row.athleteId]?.traits.some((trait) => trait.trait === name && trait.in_grade)))
-    // The NFL value columns take the second trait column's room.
-    .slice(0, showValue ? 1 : 2)
+    // The NFL value columns and the CFB price column take the second trait column's room.
+    .slice(0, showValue || showNil ? 1 : 2)
     .map(({ name }) => name);
   const renderPlayers = (desktop: boolean) => visible.map((row, i) => (
     <GradeCard
@@ -720,6 +796,8 @@ export default function PositionGrades({
       showForecast={showForecast}
       showSpread={showSpread}
       showValue={showValue}
+      showNil={showNil}
+      showNilSurplus={showNilSurplus}
       desktopTraits={desktopTraits}
       sport={sport}
       rank={i + 1}
@@ -844,6 +922,8 @@ export default function PositionGrades({
                   {showSpread && <TableHead className="text-center"><span className="inline-flex items-center gap-1">PSR <InfoTip text={NFL_SPREAD_TIP} label="What is PSR?" /></span></TableHead>}
                   {showValue && <TableHead className="text-center"><span className="inline-flex items-center gap-1">Value <InfoTip text={NFL_VALUE_TIP} label="What is value?" /></span></TableHead>}
                   {showValue && <TableHead className="text-center"><span className="inline-flex items-center gap-1">Surplus <InfoTip text={NFL_SURPLUS_TIP} label="What is contract surplus?" /></span></TableHead>}
+                  {showNil && <TableHead className="text-center"><span className="inline-flex items-center gap-1">NIL price <InfoTip text={CFB_NIL_PRICE_TIP} label="What is NIL price?" /></span></TableHead>}
+                  {showNilSurplus && <TableHead className="text-center"><span className="inline-flex items-center gap-1">Surplus <InfoTip text={CFB_NIL_SURPLUS_TIP} label="What is surplus?" /></span></TableHead>}
                   <TableHead className="w-8"><span className="sr-only">Expand player</span></TableHead>
                 </TableRow>
               </TableHeader>
