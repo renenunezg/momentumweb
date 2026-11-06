@@ -197,7 +197,11 @@ export function MethodologyContent({ example, backtestVersion }: { example: Pick
             12.71 points against the closing line&apos;s 12.19, and the market wins
             every season. The live 2026 forecasts come from joint_scoring_v14,
             which adds a process margin adjustment and a total offset on top of
-            that core, and are graded separately. So the published line, total and scores
+            that core, and from November 9 joint_scoring_v15, which also adds
+            1.77 points to the home side for every 1,000 miles the visitor
+            travels beyond the home team&apos;s own trip (fitted on 2020&ndash;2022,
+            centered so the average home edge is unchanged). Both are graded
+            separately from the core. So the published line, total and scores
             are blended halfway to the market, predictions are priced from those
             market-informed numbers, and the in-game model anchors on the
             published line instead of the pure model&apos;s number.
@@ -676,7 +680,9 @@ export function MethodologyContent({ example, backtestVersion }: { example: Pick
             is the walk-forward of the current model core, published to the
             public backtest table with its version; the live 2026 record is
             graded on joint_scoring_v14, which adds a process margin adjustment
-            and a total offset on top of it, so the two are separate populations.
+            and a total offset on top of it, and from November 9 on
+            joint_scoring_v15, which also adds the visitor travel term, so the
+            core and the live record are separate populations.
             The June 2026 base engine&apos;s earlier table (13.40 against 12.14 on
             3,853 games, 2021 to 2025) is superseded. What the model can claim is
             calibration: on the 2023&ndash;2025 validation seasons (2,258 games),
