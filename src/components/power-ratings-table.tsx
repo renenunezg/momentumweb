@@ -142,7 +142,13 @@ export function PowerRatingsTable<T extends PowerRatingRow>({
   // A badge on every row singles out nobody: whole tiers (all of FCS today)
   // run on reduced inputs, so say it once above the table instead.
   const allLimited = rows.length > 0 && rows.every(limited.isLimited);
-  const value = cn("text-center", EVEN_COLUMN_HEAD);
+  // Abbreviated team names leave a phone room for the weekly change bar, which
+  // then takes the spare width while the rating fills keep one fixed size.
+  // Full school names leave none, so there the data columns split it evenly.
+  const changeBar = change != null && shortName != null;
+  const even = changeBar ? undefined : EVEN_COLUMN_HEAD;
+  const fill = changeBar ? "max-sm:w-10" : undefined;
+  const value = cn("text-center", even);
   const dataColumns = 3 + (market ? 1 : 0) + (change ? 1 : 0) + (gapColumn ? 1 : 0);
 
   return (
@@ -159,13 +165,13 @@ export function PowerRatingsTable<T extends PowerRatingRow>({
       </div>
       {allLimited && <p className="type-meta text-accent-amber">{limited.allNote}</p>}
       <div className="overflow-hidden rounded-xl border border-border bg-card">
-        {/* Phones: the data columns split the width evenly. Abbreviated team names
-            leave the team column only what it needs; full school names keep about
-            38%, enough for most to stay on one line on a large phone. */}
+        {/* Phones without the change bar: the data columns split 62% of the width
+            evenly, leaving full school names enough to stay on one line on a
+            large phone. */}
         <Table
           density="compact"
           className="type-label max-sm:[--table-cell-x:0.125rem] max-sm:[&_td]:text-xs"
-          style={evenColumns(dataColumns, shortName ? 100 : 62)}
+          style={changeBar ? undefined : evenColumns(dataColumns, 62)}
         >
           <TableCaption className="sr-only">
             {query.trim() && searchRows ? "Team search power ratings" : caption}
@@ -196,12 +202,12 @@ export function PowerRatingsTable<T extends PowerRatingRow>({
               <TableHead className={value}><HeaderTip full="Offense" short="Off" tip={OFFENSE_TIP} /></TableHead>
               <TableHead className={value}><HeaderTip full="Defense" short="Def" tip={DEFENSE_TIP} /></TableHead>
               {change && (
-                <TableHead className={cn("text-right", EVEN_COLUMN_HEAD)}>
+                <TableHead className={cn("text-right", changeBar && "max-sm:w-[30%] max-sm:text-center", even)}>
                   <HeaderTip full={change.short} short="Chg" tip={`${change.label}.`} />
                 </TableHead>
               )}
               {gapColumn && (
-                <TableHead className={cn("pr-2 text-right sm:pr-3", EVEN_COLUMN_HEAD)}>
+                <TableHead className={cn("pr-2 text-right sm:pr-3", even)}>
                   <HeaderTip full={gapColumn.label} short="Gap" tip={gapColumn.title} />
                 </TableHead>
               )}
@@ -243,7 +249,7 @@ export function PowerRatingsTable<T extends PowerRatingRow>({
                   </TableCell>
                 )}
                 <TableCell className={value}>
-                  <HeatValue compact style={scales.model(row.power_rating)} className="font-semibold">
+                  <HeatValue compact style={scales.model(row.power_rating)} className={cn("font-semibold", fill)}>
                     {market ? (
                       <RatingButton team={row.team} label="Model" value={row.power_rating} onClick={() => setDetail(row)} />
                     ) : formatNumber(row.power_rating)}
@@ -251,25 +257,25 @@ export function PowerRatingsTable<T extends PowerRatingRow>({
                 </TableCell>
                 {market && (
                   <TableCell className={value}>
-                    <HeatValue compact style={scales.market(market(row).rating)}>
+                    <HeatValue compact style={scales.market(market(row).rating)} className={fill}>
                       <RatingButton team={row.team} label="Market" value={market(row).rating} onClick={() => setDetail(row)} />
                     </HeatValue>
                   </TableCell>
                 )}
                 <TableCell className={value}>
-                  <HeatValue compact style={scales.offense(row.offense_points)}>{formatNumber(row.offense_points)}</HeatValue>
+                  <HeatValue compact style={scales.offense(row.offense_points)} className={fill}>{formatNumber(row.offense_points)}</HeatValue>
                 </TableCell>
                 <TableCell className={value}>
-                  <HeatValue compact style={scales.defense(row.defense_points)}>{formatNumber(row.defense_points)}</HeatValue>
+                  <HeatValue compact style={scales.defense(row.defense_points)} className={fill}>{formatNumber(row.defense_points)}</HeatValue>
                 </TableCell>
                 {change && (
-                  <TableCell className="text-right">
-                    <SignedBar value={change.value(row)} extent={scales.change} tone="semantic" compact />
+                  <TableCell className={cn("text-right", changeBar && "max-sm:pl-2.5")}>
+                    <SignedBar value={change.value(row)} extent={scales.change} tone="semantic" compact={changeBar ? "fill" : "text"} />
                   </TableCell>
                 )}
                 {gapColumn && (
                   <TableCell className="pr-2 text-right sm:pr-3">
-                    <SignedBar value={gapColumn.value(row)} extent={scales.gap} tone="neutral" compact />
+                    <SignedBar value={gapColumn.value(row)} extent={scales.gap} tone="neutral" compact="text" />
                   </TableCell>
                 )}
               </TableRow>
