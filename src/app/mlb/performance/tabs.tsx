@@ -13,7 +13,8 @@ import { replaceLocation, useLocationSearch } from "@/lib/use-location-search";
 import { ViewTabPanel, ViewTabs } from "@/components/view-tabs";
 import { WindowPager, usePagedWindow } from "@/components/window-pager";
 import { KpiCard } from "@/components/kpi-card";
-import { AccuracyChart } from "@/components/accuracy-chart";
+import { CoverageTargets } from "@/components/coverage-targets";
+import { AccuracyChart, type AccuracySeries } from "@/components/accuracy-chart";
 import { MetricLineChart } from "@/components/metric-line-chart";
 import { CalibrationChart } from "@/components/calibration-chart";
 import { EquityCurveChart } from "@/components/equity-curve-chart";
@@ -99,45 +100,33 @@ function brierGapVerdict(lo: number | null | undefined, hi: number | null | unde
   return "within noise";
 }
 
-// Observed coverage of each nominal interval as a dot against its target tick.
-// Closer to the tick is better; neither side earns a color.
-function CoverageTargets({ latest }: { latest: ModelEvaluation | undefined }) {
+function MlbCoverageTargets({ latest }: { latest: ModelEvaluation | undefined }) {
   const n = latest?.interval_coverage_predictions;
-  const rows = [
-    { nominal: 0.5, observed: latest?.interval_coverage_50 },
-    { nominal: 0.8, observed: latest?.interval_coverage_80 },
-    { nominal: 0.9, observed: latest?.interval_coverage_90 },
-  ];
   if (!n) return <p className="type-label text-muted-foreground">Frozen distributions are not available yet.</p>;
   return (
-    <div className="max-w-xl space-y-3">
-      {rows.map((row) => (
-        <div key={row.nominal} className="grid grid-cols-[3rem_minmax(0,1fr)_3.5rem] items-center gap-3">
-          <span className="type-label font-semibold tabular-nums">{formatPct(row.nominal, 0)}</span>
-          <span aria-hidden="true" className="relative h-4">
-            <span className="absolute inset-x-0 top-1/2 h-px bg-grid" />
-            <span
-              className="absolute top-0 h-4 w-0 border-l border-dashed border-chart-comparison"
-              style={{ left: `${row.nominal * 100}%` }}
-            />
-            {row.observed != null && (
-              <span
-                className="absolute top-1/2 h-2.5 w-2.5 -translate-x-1/2 -translate-y-1/2 rounded-full bg-chart-primary"
-                style={{ left: `${row.observed * 100}%` }}
-              />
-            )}
-          </span>
-          <span className="text-right type-label tabular-nums">{formatPct(row.observed, 0)}</span>
-        </div>
-      ))}
-      <p className="type-meta text-muted-foreground">
-        Dot: share of team run totals that landed inside the interval. Dashed tick: the interval&apos;s nominal level.
-        {" "}{n} team rows, v2 games only (v1 published no intervals). The intervals use inclusive integer
-        endpoints, so they cover somewhat more than their nominal level by construction.
-      </p>
-    </div>
+    <CoverageTargets
+      rows={[
+        { nominal: 0.5, observed: latest?.interval_coverage_50 },
+        { nominal: 0.8, observed: latest?.interval_coverage_80 },
+        { nominal: 0.9, observed: latest?.interval_coverage_90 },
+      ]}
+      note={
+        <>
+          Dot: share of team run totals that landed inside the interval. Dashed tick: the interval&apos;s nominal level.
+          {" "}{n} team rows, v2 games only (v1 published no intervals). The intervals use inclusive integer
+          endpoints, so they cover somewhat more than their nominal level by construction.
+        </>
+      }
+    />
   );
 }
+
+const MLB_ACCURACY_SERIES: AccuracySeries<ModelEvaluation>[] = [
+  { key: "total_accuracy", correct: "total_correct", predictions: "total_predictions", name: "All predictions" },
+  { key: "ml_accuracy", correct: "ml_correct", predictions: "ml_predictions", name: "Moneyline" },
+  { key: "run_line_accuracy", correct: "run_line_correct", predictions: "run_line_predictions", name: "Run line" },
+  { key: "totals_accuracy", correct: "totals_correct", predictions: "totals_predictions", name: "Totals" },
+];
 
 export function PerformanceTabs({
   evaluations,
@@ -296,7 +285,11 @@ export function PerformanceTabs({
             )}
 
             <Section title="Accuracy by market">
-              <AccuracyChart data={dailyEvals.filter((d) => d.date >= "2026-04-12")} />
+              <AccuracyChart
+                data={dailyEvals.filter((d) => d.date >= "2026-04-12")}
+                series={MLB_ACCURACY_SERIES}
+                cutover={{ date: V2_CUTOVER_DATE, note: "The thin vertical line marks the switch to the v2 model." }}
+              />
             </Section>
 
             <Section
@@ -332,7 +325,7 @@ export function PerformanceTabs({
             </Section>
 
             <Section title="Interval coverage" note="How often the actual run total landed inside the model's 50%, 80% and 90% intervals. Coverage should match the target, not be maximized.">
-              <CoverageTargets latest={latest} />
+              <MlbCoverageTargets latest={latest} />
             </Section>
 
             <Section title="Model diagnostics">

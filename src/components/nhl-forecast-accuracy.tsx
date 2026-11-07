@@ -1,4 +1,5 @@
 import { NavigationLink as Link } from "@/components/navigation-link";
+import { AccuracyChart, type AccuracySeries } from "@/components/accuracy-chart";
 import { CalibrationChart } from "@/components/calibration-chart";
 import { KpiCard } from "@/components/kpi-card";
 import { Notice } from "@/components/notice";
@@ -11,10 +12,19 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { fetchForecastAccuracy, type NhlAccuracy, type NhlAccuracySlice } from "@/lib/nhl";
+import {
+  fetchForecastAccuracy,
+  type NhlAccuracy,
+  type NhlAccuracyDay,
+  type NhlAccuracySlice,
+} from "@/lib/nhl";
 import { cn, formatNumber, formatPct, formatSigned } from "@/lib/utils";
 
 const num = "text-right font-mono tabular-nums";
+
+const NHL_ACCURACY_SERIES: AccuracySeries<NhlAccuracyDay>[] = [
+  { key: "winner", name: "Picked the winner", correct: "correct", predictions: "n" },
+];
 
 function SourceToggle({ source, page }: { source: "live" | "backtest"; page: string }) {
   return (
@@ -211,6 +221,9 @@ export async function NhlForecastAccuracy({
     accuracy = null;
   }
   const overall = accuracy?.overall ?? null;
+  // A cached response from before the function published by_day lacks it
+  // until the next NHL data write expires the read.
+  const byDay = accuracy?.by_day ?? [];
   return (
     <div className="space-y-section">
       <SourceToggle source={source} page={page} />
@@ -269,6 +282,12 @@ export async function NhlForecastAccuracy({
               tooltip="Average predicted minus actual goals. Negative means the model predicts too few."
             />
           </div>
+          {byDay.length > 0 && (
+            <section className="space-y-2">
+              <h2 className="type-section">Accuracy over time</h2>
+              <AccuracyChart data={byDay} series={NHL_ACCURACY_SERIES} />
+            </section>
+          )}
           {accuracy.by_season.length > 1 && (
             <Table>
               <TableCaption className="sr-only">Accuracy by season</TableCaption>

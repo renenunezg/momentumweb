@@ -7,10 +7,13 @@ import {
   type FootballLivePerformance,
   type FootballPerformanceCopy,
   type FootballPerformanceMetric,
+  weeklyErrorPoints,
 } from "@/lib/football-performance";
 import type { CfbPredictionSource } from "@/lib/types";
 import { describeGap, formatNumber, formatPct, formatSigned } from "@/lib/utils";
 import { KpiCard } from "@/components/kpi-card";
+import { CoverageTargets } from "@/components/coverage-targets";
+import { WeeklyErrorChart } from "@/components/weekly-error-chart";
 import {
   Table,
   TableBody,
@@ -147,6 +150,7 @@ export function FootballForecastPerformance({
   );
   const segmentRows = (kind: string) =>
     publishedSegments.filter((m) => m.segment_kind === kind);
+  const weekly = weeklyErrorPoints(live.metrics, publishedSource);
 
   return (
     <div className="space-y-8">
@@ -234,6 +238,30 @@ export function FootballForecastPerformance({
                 tooltip="Share of results inside the published 80% range. Target: 80%. Much higher suggests overly wide ranges; much lower suggests overly narrow ranges."
               />
             </div>
+
+            {(weekly.length > 1 || livePublished?.coverage_80 != null) && (
+              <div className="grid gap-x-10 gap-y-8 lg:grid-cols-[minmax(0,3fr)_minmax(0,2fr)]">
+                {weekly.length > 1 && (
+                  <div className="min-w-0 space-y-2">
+                    <h3 className="type-subsection">Week by week against the closing line</h3>
+                    <WeeklyErrorChart data={weekly} />
+                  </div>
+                )}
+                {livePublished?.coverage_80 != null && (
+                  <div className="min-w-0 space-y-2">
+                    <h3 className="type-subsection">Do the ranges hold?</h3>
+                    <CoverageTargets
+                      rows={[
+                        { nominal: 0.5, observed: livePublished.coverage_50 },
+                        { nominal: 0.8, observed: livePublished.coverage_80 },
+                        { nominal: 0.9, observed: livePublished.coverage_90 },
+                      ]}
+                      note={`Dot: share of final margins that landed inside the published range. Dashed tick: the range's nominal level. ${livePublished.games} games.`}
+                    />
+                  </div>
+                )}
+              </div>
+            )}
 
             <p className="max-w-4xl text-xs text-muted-foreground">
               {live.closingSources && Object.values(live.closingSources).some((games) => games > 0) ? (

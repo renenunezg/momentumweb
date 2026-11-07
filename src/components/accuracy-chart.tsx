@@ -1,7 +1,6 @@
 "use client";
 
 import { useMemo, useState } from "react";
-import type { ModelEvaluation } from "@/lib/types";
 import { formatPct } from "@/lib/utils";
 import {
   LineChart,
@@ -13,25 +12,19 @@ import {
   ReferenceLine,
   ResponsiveContainer,
 } from "recharts";
-import { V2_CUTOVER_DATE } from "@/lib/constants";
 import { chartAxisProps, chartTooltipStyle, useChartTheme } from "@/lib/chart-theme";
 import { ToggleGroup } from "@/components/toggle-group";
 
-type SeriesKey = "total_accuracy" | "ml_accuracy" | "run_line_accuracy" | "totals_accuracy";
+// A row per day with count columns. Series name their columns rather than
+// pass accessors, so a server component can render the chart.
+type DailyRow = { date: string } & Record<string, unknown>;
 
-interface Series {
-  key: SeriesKey;
-  correct: keyof ModelEvaluation;
-  predictions: keyof ModelEvaluation;
+export interface AccuracySeries<Row extends DailyRow> {
+  key: string;
   name: string;
+  correct: keyof Row & string;
+  predictions: keyof Row & string;
 }
-
-const SERIES: Series[] = [
-  { key: "total_accuracy", correct: "total_correct", predictions: "total_predictions", name: "All predictions" },
-  { key: "ml_accuracy", correct: "ml_correct", predictions: "ml_predictions", name: "Moneyline" },
-  { key: "run_line_accuracy", correct: "run_line_correct", predictions: "run_line_predictions", name: "Run line" },
-  { key: "totals_accuracy", correct: "totals_correct", predictions: "totals_predictions", name: "Totals" },
-];
 
 const WINDOWS = [
   { key: "7", label: "7 days" },
@@ -49,7 +42,7 @@ function formatDateLabel(dateStr: string) {
   return date.toLocaleDateString("en-US", { month: "short", day: "numeric" });
 }
 
-function count(row: ModelEvaluation, field: keyof ModelEvaluation): number {
+function count<Row extends DailyRow>(row: Row, field: keyof Row): number {
   const value = row[field];
   return typeof value === "number" && Number.isFinite(value) ? value : 0;
 }
@@ -64,22 +57,26 @@ function count(row: ModelEvaluation, field: keyof ModelEvaluation): number {
  * the season a market can go days with a handful of predictions, and a 0-for-2
  * window would draw as a collapse to 0%.
  */
-function rollingAccuracy(data: ModelEvaluation[], windowDays: number): Point[] {
+function rollingAccuracy<Row extends DailyRow>(
+  data: Row[],
+  series: AccuracySeries<Row>[],
+  windowDays: number,
+): Point[] {
   return data.map((row, i) => {
     const point: Point = { date: row.date };
     if (i < windowDays - 1) {
-      for (const series of SERIES) point[series.key] = null;
+      for (const one of series) point[one.key] = null;
       return point;
     }
     const slice = data.slice(i - windowDays + 1, i + 1);
-    for (const series of SERIES) {
+    for (const one of series) {
       let correct = 0;
       let predictions = 0;
       for (const day of slice) {
-        correct += count(day, series.correct);
-        predictions += count(day, series.predictions);
+        correct += count(day, one.correct);
+        predictions += count(day, one.predictions);
       }
-      point[series.key] = predictions >= MIN_WINDOW_PREDICTIONS ? correct / predictions : null;
+      point[one.key] = predictions >= MIN_WINDOW_PREDICTIONS ? correct / predictions : null;
     }
     return point;
   });
@@ -90,9 +87,9 @@ function rollingAccuracy(data: ModelEvaluation[], windowDays: number): Point[] {
  * accuracy sits in a narrow band, so the axis fits the data (always including
  * the 50% coin flip) and snaps outward to 5% steps.
  */
-function sharedDomain(points: Point[]): [number, number] {
+function sharedDomain(points: Point[], keys: string[]): [number, number] {
   const values = points.flatMap((point) =>
-    SERIES.map((series) => point[series.key]).filter(
+    keys.map((key) => point[key]).filter(
       (value): value is number => typeof value === "number" && Number.isFinite(value),
     ),
   );
@@ -105,16 +102,26 @@ function sharedDomain(points: Point[]): [number, number] {
 }
 
 // Small multiples: one market per panel on a shared axis, each with its
-// season-to-date record, instead of four tangled lines on one plot.
-export function AccuracyChart({ data }: { data: ModelEvaluation[] }) {
+// season-to-date record, instead of tangled lines on one plot. A cutover marks
+// a model change inside the range.
+export function AccuracyChart<Row extends DailyRow>({
+  data,
+  series,
+  cutover,
+}: {
+  data: Row[];
+  series: AccuracySeries<Row>[];
+  cutover?: { date: string; note: string };
+}) {
   const theme = useChartTheme();
   const axis = chartAxisProps(theme);
   const [windowKey, setWindowKey] = useState<WindowKey>("14");
   const windowDays = Number(windowKey);
-  const points = useMemo(() => rollingAccuracy(data, windowDays), [data, windowDays]);
-  const domain = sharedDomain(points);
+  const points = useMemo(() => rollingAccuracy(data, series, windowDays), [data, series, windowDays]);
+  const domain = sharedDomain(points, series.map((one) => one.key));
   const ticks = [domain[0], 0.5, domain[1]].filter((t, i, all) => all.indexOf(t) === i);
-  const showCutover = data.some((d) => d.date <= V2_CUTOVER_DATE) && data.some((d) => d.date > V2_CUTOVER_DATE);
+  const showCutover =
+    cutover != null && data.some((d) => d.date <= cutover.date) && data.some((d) => d.date > cutover.date);
 
   return (
     <div className="space-y-4">
@@ -124,18 +131,18 @@ export function AccuracyChart({ data }: { data: ModelEvaluation[] }) {
         </p>
         <ToggleGroup label="Window" options={WINDOWS} value={windowKey} onChange={setWindowKey} variant="pill" />
       </div>
-      <div className="grid gap-x-6 gap-y-5 sm:grid-cols-2 lg:grid-cols-4">
-        {SERIES.map((series) => {
+      <div className={series.length > 1 ? "grid gap-x-6 gap-y-5 sm:grid-cols-2 lg:grid-cols-4" : undefined}>
+        {series.map((one) => {
           let correct = 0;
           let predictions = 0;
           for (const day of data) {
-            correct += count(day, series.correct);
-            predictions += count(day, series.predictions);
+            correct += count(day, one.correct);
+            predictions += count(day, one.predictions);
           }
           return (
-            <figure key={series.key} className="min-w-0">
+            <figure key={one.key} className="min-w-0">
               <figcaption className="flex items-baseline justify-between gap-2">
-                <span className="type-label font-semibold">{series.name}</span>
+                <span className="type-label font-semibold">{one.name}</span>
                 <span className="tabular-nums">
                   <span className="type-subsection">{predictions > 0 ? formatPct(correct / predictions, 1) : "–"}</span>
                   <span className="ml-1.5 type-meta text-muted-foreground">
@@ -145,26 +152,26 @@ export function AccuracyChart({ data }: { data: ModelEvaluation[] }) {
               </figcaption>
               <div
                 role="img"
-                aria-label={`${series.name}: trailing ${windowDays}-day accuracy by day, ${predictions > 0 ? formatPct(correct / predictions, 1) : "no"} correct over the season`}
+                aria-label={`${one.name}: trailing ${windowDays}-day accuracy by day, ${predictions > 0 ? formatPct(correct / predictions, 1) : "no"} correct over the season`}
               >
-                <ResponsiveContainer width="100%" height={150}>
+                <ResponsiveContainer width="100%" height={series.length > 1 ? 150 : 220}>
                   <LineChart data={points} margin={{ top: 8, right: 4, left: 0, bottom: 0 }}>
                     <CartesianGrid vertical={false} stroke={theme.grid} strokeWidth={1} />
                     <XAxis dataKey="date" tickFormatter={formatDateLabel} minTickGap={40} {...axis} />
                     <YAxis domain={domain} ticks={ticks} tickFormatter={(v) => formatPct(Number(v), 0)} width={40} {...axis} />
                     <Tooltip
-                      formatter={(value) => [formatPct(Number(value), 1), series.name]}
+                      formatter={(value) => [formatPct(Number(value), 1), one.name]}
                       labelFormatter={(label) => formatDateLabel(String(label))}
                       cursor={{ stroke: theme.border, strokeWidth: 1 }}
                       contentStyle={chartTooltipStyle(theme)}
                     />
                     <ReferenceLine y={0.5} stroke={theme["chart-comparison"]} strokeDasharray="6 4" strokeWidth={1} />
-                    {showCutover && (
-                      <ReferenceLine x={V2_CUTOVER_DATE} stroke={theme.border} strokeWidth={1} />
+                    {cutover && showCutover && (
+                      <ReferenceLine x={cutover.date} stroke={theme.border} strokeWidth={1} />
                     )}
                     <Line
                       type="monotone"
-                      dataKey={series.key}
+                      dataKey={one.key}
                       stroke={theme["chart-primary"]}
                       strokeWidth={2}
                       dot={false}
@@ -179,8 +186,8 @@ export function AccuracyChart({ data }: { data: ModelEvaluation[] }) {
           );
         })}
       </div>
-      {showCutover && (
-        <p className="type-meta text-muted-foreground">The thin vertical line marks the switch to the v2 model.</p>
+      {cutover && showCutover && (
+        <p className="type-meta text-muted-foreground">{cutover.note}</p>
       )}
     </div>
   );

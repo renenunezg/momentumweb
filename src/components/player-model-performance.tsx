@@ -3,6 +3,7 @@ import { MLB_PLAYER_EVALUATION } from "@/lib/mlb-player-evaluation";
 import { supabase, supabaseCfb, supabaseNfl } from "@/lib/supabase";
 import { traitLabel } from "@/lib/position-traits";
 import { formatNumber } from "@/lib/utils";
+import { RankComparisonChart, type RankComparisonRow } from "@/components/rank-comparison-chart";
 import {
   FORWARD_SYSTEM_LABELS,
   NFL_BASELINE_LABELS,
@@ -407,20 +408,32 @@ async function CfbResults() {
             const subset = validationRows.filter((row) => row.eval_kind === kind);
             if (subset.length === 0) return null;
             return (
-              <EvalTable
-                key={kind}
-                caption={`${title}, ${subset[0].seasons}. ${detail}`}
-                columns={columns}
-                rows={subset.map((row) => [
-                  row.position_group,
-                  formatNumber(row.players, 0),
-                  formatNumber(row.spearman_grade, 2),
-                  formatNumber(row.spearman_epa_credit, 2),
-                  formatNumber(row.spearman_games, 2),
-                  formatNumber(row.spearman_value_above_replacement, 2),
-                  <Gap key="gap" diff={row.diff_grade_minus_epa} lo={row.diff_lo_95} hi={row.diff_hi_95} />,
-                ])}
-              />
+              <div key={kind} className="space-y-4">
+                <RankComparisonChart
+                  baselineLabel="EPA credit to date"
+                  rows={subset.map((row) => ({
+                    label: row.position_group,
+                    grade: row.spearman_grade,
+                    baseline: row.spearman_epa_credit,
+                    diff: row.diff_grade_minus_epa,
+                    lo: row.diff_lo_95,
+                    hi: row.diff_hi_95,
+                  }))}
+                />
+                <EvalTable
+                  caption={`${title}, ${subset[0].seasons}. ${detail}`}
+                  columns={columns}
+                  rows={subset.map((row) => [
+                    row.position_group,
+                    formatNumber(row.players, 0),
+                    formatNumber(row.spearman_grade, 2),
+                    formatNumber(row.spearman_epa_credit, 2),
+                    formatNumber(row.spearman_games, 2),
+                    formatNumber(row.spearman_value_above_replacement, 2),
+                    <Gap key="gap" diff={row.diff_grade_minus_epa} lo={row.diff_lo_95} hi={row.diff_hi_95} />,
+                  ])}
+                />
+              </div>
             );
           })}
           <p className="text-xs text-muted-foreground">
@@ -485,6 +498,21 @@ function ratingPivot(rows: NflGradeEvaluationRow[]): ReactNode[][] {
   });
 }
 
+// One point per position against last season's EPA credit, the baseline
+// every position has; the table keeps the standard-stat rows.
+function versusLastSeason(rows: NflGradeEvaluationRow[]): RankComparisonRow[] {
+  return rows
+    .filter((row) => row.baseline === "epa_credit")
+    .map((row) => ({
+      label: row.position_group,
+      grade: row.grade_spearman,
+      baseline: row.baseline_spearman,
+      diff: row.difference,
+      lo: row.difference_ci_low,
+      hi: row.difference_ci_high,
+    }));
+}
+
 function NflEvaluation({ rows }: { rows: NflGradeEvaluationRow[] }) {
   const grade = rows
     .filter((row) => row.evaluation === "next_season")
@@ -534,18 +562,24 @@ function NflEvaluation({ rows }: { rows: NflGradeEvaluationRow[] }) {
         </p>
       </div>
       {validation.length > 0 && (
-        <EvalTable
-          caption={`Trait grades, next season, ${validation[0].seasons} pair: ${NFL_HOLDOUT_LABELS[validation[0].holdout_status] ?? validation[0].holdout_status}.`}
-          columns={gradeColumns}
-          rows={validation.map(gradeRow)}
-        />
+        <div className="space-y-4">
+          <RankComparisonChart rows={versusLastSeason(validation)} baselineLabel={NFL_BASELINE_LABELS.epa_credit} />
+          <EvalTable
+            caption={`Trait grades, next season, ${validation[0].seasons} pair: ${NFL_HOLDOUT_LABELS[validation[0].holdout_status] ?? validation[0].holdout_status}.`}
+            columns={gradeColumns}
+            rows={validation.map(gradeRow)}
+          />
+        </div>
       )}
       {development.length > 0 && (
-        <EvalTable
-          caption={`Trait grades, next season, development pairs ${development[0].seasons}, cross-validated; sample counts player-seasons.`}
-          columns={gradeColumns}
-          rows={development.map(gradeRow)}
-        />
+        <div className="space-y-4">
+          <RankComparisonChart rows={versusLastSeason(development)} baselineLabel={NFL_BASELINE_LABELS.epa_credit} />
+          <EvalTable
+            caption={`Trait grades, next season, development pairs ${development[0].seasons}, cross-validated; sample counts player-seasons.`}
+            columns={gradeColumns}
+            rows={development.map(gradeRow)}
+          />
+        </div>
       )}
       {qb.length > 0 && (
         <EvalTable

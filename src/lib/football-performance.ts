@@ -31,6 +31,33 @@ export async function fetchOverallMetrics(
   return { season, metrics: rows.filter((m) => m.season === season) };
 }
 
+// Week rows of one prediction source as chart points: the closing line's
+// error and the model's on the same games (market error plus the paired gap),
+// so the two lines never compare different populations. A week with fewer
+// than half the median week's games is still in progress or a short playoff
+// round; one game would read as a collapse, so it stays in the table only.
+export function weeklyErrorPoints(
+  metrics: FootballPerformanceMetric[],
+  source: string,
+): { label: string; games: number; model: number; market: number }[] {
+  const weeks = metrics
+    .filter((m) => m.segment_kind === "week" && m.prediction_source === source)
+    .sort((a, b) => (a.segment_order ?? 0) - (b.segment_order ?? 0))
+    .flatMap((m) =>
+      m.market_mae != null && m.model_minus_market_mae != null && (m.games_with_market ?? 0) > 0
+        ? [{
+            label: /^\d+$/.test(m.segment ?? "") ? `Wk ${m.segment}` : (m.segment ?? ""),
+            games: m.games_with_market ?? 0,
+            market: m.market_mae,
+            model: m.market_mae + m.model_minus_market_mae,
+          }]
+        : [],
+    );
+  const counts = weeks.map((w) => w.games).sort((a, b) => a - b);
+  const median = counts[Math.floor(counts.length / 2)] ?? 0;
+  return weeks.filter((w) => w.games >= median / 2);
+}
+
 export interface FootballLivePerformance {
   season: number | null;
   metrics: FootballPerformanceMetric[];

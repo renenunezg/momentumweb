@@ -134,10 +134,14 @@ export type NhlAccuracySlice = {
   pure_model_total_mae_on_market_games: number | null;
 };
 
+// Graded games and correct winner calls per game date; the backtest's is empty.
+export type NhlAccuracyDay = { date: string; n: number; correct: number };
+
 export type NhlAccuracy = {
   overall: NhlAccuracySlice | null;
   by_season: NhlAccuracySlice[];
   calibration: { bin: number; n: number; predicted: number; observed: number }[];
+  by_day?: NhlAccuracyDay[];
   missing_forecast: number;
 };
 
