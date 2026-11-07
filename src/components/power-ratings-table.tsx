@@ -160,7 +160,7 @@ export function PowerRatingsTable<T extends PowerRatingRow>({
           </TableCaption>
           <TableHeader>
             <TableRow className="hover:bg-transparent">
-              <TableHead className="sticky left-0 z-10 bg-card pl-2 sm:pl-3 max-sm:border-r max-sm:border-border">
+              <TableHead className="sticky left-0 z-10 bg-card pl-2 sm:pl-3">
                 <span className="inline-block w-5 text-right sm:w-6">Rk</span>
                 <span className="ml-1.5 sm:ml-3">Team</span>
               </TableHead>
@@ -196,7 +196,7 @@ export function PowerRatingsTable<T extends PowerRatingRow>({
           <TableBody>
             {matches.map(({ row, rank }) => (
               <TableRow key={rowKey(row)} className="group/row border-t border-border first:border-t-0">
-                <TableCell className="sticky left-0 z-10 bg-card py-2 pl-2 whitespace-normal sm:pl-3 max-sm:border-r max-sm:border-border">
+                <TableCell className="sticky left-0 z-10 bg-card py-2 pl-2 whitespace-normal sm:pl-3">
                   <span className="flex items-center gap-1.5 sm:min-w-[9.5rem] sm:gap-3">
                     <span className="w-6 shrink-0 text-right type-meta tabular-nums text-muted-foreground max-sm:w-5">{rank}</span>
                     <TeamLogo team={logo(row)} name={row.team} className="h-5 w-5 sm:h-6 sm:w-6" />
