@@ -492,8 +492,7 @@ export default function MlbProspects({ initial }: { initial: ProspectPage }) {
             ? "No prospects match."
             : filters.search
               ? `${formatNumber(total, 0)} prospect${total === 1 ? "" : "s"} match “${query.trim()}”${rows.length < total ? `, showing ${rows.length}` : ""}.`
-              : `Showing ${rows.length} of ${formatNumber(total, 0)} prospects.`}{" "}
-          Open a player for traits and what moved his grade.
+              : `Showing ${rows.length} of ${formatNumber(total, 0)} prospects.`}
         </p>
       )}
 

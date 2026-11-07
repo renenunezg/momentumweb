@@ -1,6 +1,7 @@
 "use client";
 
 import { useDeferredValue, useMemo, useState } from "react";
+import { HowGraded } from "@/components/how-graded";
 import { ParkCarry } from "@/components/mlb-carry-charts";
 import { Pager } from "@/components/pager";
 import { ToggleGroup } from "@/components/toggle-group";
@@ -59,13 +60,20 @@ export function CarryMinors({ rows, summaries, season }: { rows: CarryMinorRow[]
         }}
         variant="chip"
       />
-      <p className="max-w-3xl text-sm leading-relaxed">
-        In {label}, carry is measured against {label} hitters for the same exit velocity, launch angle, direction, ballpark and
-        month. Among {summary.qualified} hitters with {summary.qualified_air}+ balls in the air in {season}, one half of a season
-        predicts the other at {summary.split_half.toFixed(2)}
-        {Number.isFinite(summary.year_to_year) ? `, and one season predicts the next at ${summary.year_to_year.toFixed(2)}` : ""}. There is no
-        bat tracking below the majors, so these hitters have carry but no swing physics.
-      </p>
+      <div className="max-w-3xl space-y-2">
+        <p className="text-sm leading-relaxed">
+          Carry here is measured against other {label} hitters, with no swing physics below the majors.
+        </p>
+        <HowGraded label="How this works">
+          <p>
+            In {label}, carry is measured against {label} hitters for the same exit velocity, launch angle, direction, ballpark and
+            month. Among {summary.qualified} hitters with {summary.qualified_air}+ balls in the air in {season}, one half of a season
+            predicts the other at {summary.split_half.toFixed(2)}
+            {Number.isFinite(summary.year_to_year) ? `, and one season predicts the next at ${summary.year_to_year.toFixed(2)}` : ""}. There is no
+            bat tracking below the majors, so these hitters have carry but no swing physics.
+          </p>
+        </HowGraded>
+      </div>
       <ParkCarry parks={summary.parks} />
       <div className="flex flex-wrap items-end gap-4">
         <label className="space-y-1">

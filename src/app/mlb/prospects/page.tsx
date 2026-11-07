@@ -55,7 +55,7 @@ export default async function MlbProspectsPage() {
       </PageHeader>
 
       <p className="max-w-4xl text-sm text-muted-foreground leading-relaxed">
-        Expected peak, chance of sticking, and trade value for every rookie-eligible player in the minors. Open a player for traits and what moved his grade.
+        Expected peak, chance of sticking, and trade value for every rookie-eligible player in the minors.
       </p>
 
       <div className="grid grid-cols-3 gap-3 border-y border-rule-strong [&>div]:py-3 sm:gap-4">

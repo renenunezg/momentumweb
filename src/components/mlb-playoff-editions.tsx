@@ -3,6 +3,7 @@
 import { SITE_TIME_ZONE } from "@/lib/site-time";
 
 import { useState } from "react";
+import { HowGraded } from "@/components/how-graded";
 import { MlbPlayoffBracket } from "@/components/mlb-playoff-bracket";
 import { ViewTabs, ViewTabPanel } from "@/components/view-tabs";
 import type { PlayoffEdition, PlayoffStage } from "@/lib/mlb-playoffs";
@@ -42,13 +43,17 @@ export function MlbPlayoffEditions({
               Before the {STAGE_NAMES[key]}
             </h2>
             <p className="text-sm text-muted-foreground">
-              {key === "WC"
-                ? "The original bracket, forecast before the first postseason game."
-                : `Results through the previous round are locked. The rest of the bracket is the forecast going into the ${STAGE_NAMES[key]}.`}{" "}
               {key === latest
-                ? "This is the latest forecast; it stays fixed once the round begins."
-                : "This forecast is frozen and is not updated with later results."}
+                ? "The latest forecast; it stays fixed once the round begins."
+                : "Frozen before this round and not updated with later results."}
             </p>
+            <HowGraded label="How this works">
+              <p>
+                {key === "WC"
+                  ? "The original bracket, forecast before the first postseason game."
+                  : `Results through the previous round are locked. The rest of the bracket is the forecast going into the ${STAGE_NAMES[key]}.`}
+              </p>
+            </HowGraded>
             <p className="text-xs text-muted-foreground">
               Published{" "}
               {new Date(forecast.generated_at).toLocaleDateString("en-US", {

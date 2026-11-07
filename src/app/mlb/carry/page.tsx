@@ -21,6 +21,7 @@ import { CarryMinors } from "@/components/mlb-carry-minors";
 import { PlayerHeadshot } from "@/components/player-headshot";
 import { SwingHoopPair } from "@/components/mlb-swing-hoop-pair";
 import { SwingLab } from "@/components/mlb-swing-lab";
+import { HowGraded } from "@/components/how-graded";
 import { fetchCarry, type CarryHitterRow, type SwingTypeRow } from "@/lib/mlb-carry";
 import { mlbPlayerHeadshotUrl } from "@/lib/player-headshots";
 
@@ -66,8 +67,13 @@ function Section({ id, title, question, children }: { id: string; title: string;
   );
 }
 
-function Prose({ children }: { children: ReactNode }) {
-  return <div className="max-w-3xl space-y-3 text-sm leading-relaxed">{children}</div>;
+function Explain({ lead, children }: { lead: ReactNode; children?: ReactNode }) {
+  return (
+    <div className="max-w-3xl space-y-2">
+      <p className="text-sm leading-relaxed">{lead}</p>
+      {children && <HowGraded label="How this works">{children}</HowGraded>}
+    </div>
+  );
 }
 
 // The carry trade-off in three numbers: distance, ground balls, home runs.
@@ -176,13 +182,12 @@ export default async function MlbCarryPage() {
         ))}
       </nav>
 
-      <Prose>
+      <Explain lead="Two balls struck alike can land dozens of feet apart, and some hitters come out ahead all season.">
         <p>
-          Exit velocity and launch angle say how a ball left the bat. They do not say how far it will fly: two balls struck alike can land
-          dozens of feet apart, and some hitters come out ahead all season. This study measures that carry, separates what the air does from
-          what the hitter does, and traces the hitter&apos;s part back through spin to the swing.
+          Exit velocity and launch angle say how a ball left the bat, not how far it will fly. This study measures that carry, separates
+          what the air does from what the hitter does, and traces the hitter&apos;s part back through spin to the swing.
         </p>
-      </Prose>
+      </Explain>
 
       <div className="grid grid-cols-3 gap-3 border-y border-rule-strong [&>div]:py-3 sm:gap-4">
         <KpiCard compact label="Most carry" value={top?.player_name ?? "–"} sub={top ? `${signed(top.carry)} ft per ball` : ""}
@@ -213,67 +218,64 @@ export default async function MlbCarryPage() {
             ))}
           </div>
         )}
-        <Prose>
+        <Explain lead="The cards are picked to show the gap at its widest; one ball proves nothing, the season pattern does.">
           <p>
-            Each card is that hitter&apos;s most extreme ball hit 100+ mph at 20° to 35°, chosen to show the gap at its widest, and the
-            league average here holds only exit velocity and launch angle, not direction. One ball proves nothing; a single fly ball
-            varies by about 20 feet either way. The pattern across a season does. Every ball{" "}
-            {everyBall.map((s) => s.name).join(" and ")} hit in the air in {season}, against what the league averages for the same contact:
+            Each card is that hitter&apos;s most extreme ball hit 100+ mph at 20° to 35°, and the league average there holds only exit
+            velocity and launch angle, not direction. A single fly ball varies by about 20 feet either way. The chart shows every ball{" "}
+            {everyBall.map((s) => s.name).join(" and ")} hit in the air in {season}, against what the league averages for the same contact.
           </p>
-        </Prose>
+        </Explain>
         <EveryBall series={everyBall} />
       </Section>
 
       <Section id="skill" question="Is it real?" title="Carry is a repeatable hitter skill">
-        <Prose>
+        <Explain lead={<>Among {qualified.length} hitters with {QUALIFIED}+ balls in the air, one season predicts the next at {study.repeatability.year_to_year.toFixed(2)}.</>}>
           <p>
-            Among {qualified.length} hitters with {QUALIFIED}+ balls in the air, one half of a season predicts the other at{" "}
-            {study.repeatability.split_half.toFixed(2)}, which puts a full season&apos;s reliability near {study.repeatability.full_season.toFixed(2)},
-            and one season predicts the next at {study.repeatability.year_to_year.toFixed(2)}.
-            Here carry also removes the ballpark, the month, and the direction of the ball, so a hitter&apos;s home park and summer air
-            do not count as his.
+            One half of a season predicts the other at {study.repeatability.split_half.toFixed(2)}, which puts a full season&apos;s
+            reliability near {study.repeatability.full_season.toFixed(2)}. Here carry also removes the ballpark, the month, and the
+            direction of the ball, so a hitter&apos;s home park and summer air do not count as his.
           </p>
-        </Prose>
+        </Explain>
         <CarryDistribution values={qualified.map((h) => h.carry)} marks={marks.map((h) => ({ name: h.player_name, carry: h.carry }))} />
         <CarryRepeat pairs={pairs} highlight={highlight} />
       </Section>
 
       <Section id="air" question="What does the air do?" title="Thin air, warm air">
-        <Prose>
+        <Explain lead="A ball flies farther where the air is thinner: high elevation and heat.">
           <p>
-            A ball flies farther where the air is thinner: high elevation and heat. The flight model, built from published drag and lift
+            The flight model, built from published drag and lift
             measurements plus a low-speed drag rise fitted to distances, predicts {Math.abs(study.air.ft_per_density_model).toFixed(0)} feet per unit of air density (kg/m³); the
             data measure {Math.abs(study.air.ft_per_density_measured).toFixed(0)}.
             {coors && ` At Coors Field balls carry ${signed(coors.measured)} feet against the league; the flight model credits its thin air alone with ${signed(coors.air)}, in line with the model's density effect running stronger than the data's.`}{" "}
             In a separate check, the posted game-time wind barely registers in the data: about 0.5 feet per m/s of tailwind where the flight model expects 5 to 10, so it is left out.
           </p>
-        </Prose>
+        </Explain>
         <ParkCarry parks={study.air.parks} />
       </Section>
 
       <Section id="spin" question="How does spin move a fly ball?" title="Backspin lifts, sidespin bends">
-        <Prose>
+        <Explain lead={<>Backspin lifts a fly ball up to about {peakRpm.toLocaleString()} rpm; past that, its drag costs distance.</>}>
           <p>
             A ball with backspin pushes air down behind it and is pushed up in return, the same lift that keeps a golf ball aloft. For a{" "}
-            {curve.exit} mph fly ball at {curve.launch}°, going from no backspin to 1,000 rpm adds {at(1000) - at(0)} feet. Past about{" "}
-            {peakRpm.toLocaleString()} rpm more spin adds nothing, and the drag the spin creates starts to cost distance. Below the peak,
+            {curve.exit} mph fly ball at {curve.launch}°, going from no backspin to 1,000 rpm adds {at(1000) - at(0)} feet. Below the peak,
             missing backspin costs far more carry than extra backspin adds. Public data cannot say where a typical batted ball sits on this
             curve in absolute rpm, so the study reports each hitter&apos;s spin relative to the league.
           </p>
-        </Prose>
-        <SpinCurve curve={curve} />
-        <Prose>
           <p>
             Spin that is tilted off pure backspin sends part of the lift sideways: in the model, pulled balls hook toward the pull-side
             line and opposite-field balls slice toward the other, and the ball comes down sooner. Statcast does not publish a ball&apos;s
-            launch direction, so these hooks and slices are modeled from the collision, not measured.
+            launch direction.
           </p>
-        </Prose>
+        </Explain>
+        <SpinCurve curve={curve} />
+        <p className="max-w-3xl text-sm leading-relaxed">
+          Hooks and slices from tilted spin are modeled from the collision, not measured.
+        </p>
         <SidespinBars rows={study.sidespin} />
       </Section>
 
       <Section id="swing" question="Where does the spin come from?" title="The swing: plane tilt and attack angle">
-        <Prose>
+        <Explain lead="Hitters with flatter swing planes carry more.">
           <p>
             Spin is made in the collision. When the bat strikes slightly below the ball&apos;s center, the ball rolls back off the barrel with
             backspin. Bat tracking measures two angles that set where that contact happens. Swing path tilt is how slanted the barrel&apos;s
@@ -283,20 +285,19 @@ export default async function MlbCarryPage() {
           <p>
             Solving each collision from the pitch, the measured swing and the launch gives every ball an estimated spin. The collision
             efficiency implied by the measured pitch, bat and exit speeds comes out at {study.collision.efficiency.toFixed(2)}, close to the
-            roughly 0.2 measured for wood bats: a check that the inputs agree with the physics, not a test of the estimated spin. Hitters
-            with flatter planes carry more:
+            roughly 0.2 measured for wood bats: a check that the inputs agree with the physics, not a test of the estimated spin.
           </p>
-        </Prose>
+        </Explain>
         {flat.length > 1 && <SwingHoopPair flat={flat[0]} steep={flat[flat.length - 1]} />}
         <TiltCarry points={qualified.filter((h) => h.tilt != null).map((h) => ({ name: h.player_name, x: h.tilt!, y: h.carry }))} highlight={highlight} />
       </Section>
 
       <Section id="explained" question="How much does the swing explain?" title="A bit over half, and an open question">
-        <Prose>
+        <Explain lead="These shares are validation scores, not untouched holdouts.">
           <p>
             Measured swing physics predicts {pct(ex.share_without_steep_correction)}{" "}of hitters&apos; carry differences in {season - 1}, a season
             not used to fit the slope. {season - 1} was also the check season while the physics constants and about twenty candidate explanations
-            were screened, so read these shares as validation scores, not untouched holdouts. Steep swings carry less than their measured attack angle implies, consistent with a steep barrel still rising faster
+            were screened. Steep swings carry less than their measured attack angle implies, consistent with a steep barrel still rising faster
             at contact than it is measured just before; correcting for it, on the same hitters and the same carry, lifts the share to{" "}
             {pct(ex.share)}. Sampling noise caps any model near {pct(ex.ceiling)} of that same variance, so the swing accounts for about{" "}
             {pct(ex.share / ex.ceiling)} of the carry that is explainable at all.
@@ -305,49 +306,41 @@ export default async function MlbCarryPage() {
             The rest is not all noise: what physics leaves unexplained still repeats from one season to the next (r ={" "}
             {ex.leftover_year_to_year.toFixed(2)}), and in earlier checks it lined up with no swing measurement Statcast publishes. Where on the barrel the ball is struck, the bat itself, and the hand path are candidates public data cannot see.
           </p>
-        </Prose>
+        </Explain>
         <ExplainedBars explained={ex} />
       </Section>
 
       <Section id="types" question="What do swing types produce?" title="Carry against everything else">
-        <Prose>
+        <Explain lead="Level swings carry farthest and miss least but hit more grounders; uppercuts trade carry and contact for fly balls and homers.">
           <p>
-            Level swings carry farthest and miss least, but they put more balls on the ground. Uppercuts trade carry and contact for fly
-            balls and home runs. Hitter-seasons {study.swing_types.seasons.join(", ")}, at a belt-high pitch; the carry column covers
-            only the seasons with swing physics ({study.swing_types.seasons.filter((s) => s >= 2024).join(", ")}) and hitters with 50+ balls in the air.
+            Hitter-seasons {study.swing_types.seasons.join(", ")}, at a belt-high pitch; the carry column covers only the seasons with swing
+            physics ({study.swing_types.seasons.filter((s) => s >= 2024).join(", ")}) and hitters with 50+ balls in the air.
           </p>
-        </Prose>
+        </Explain>
         <TypeTable rows={study.swing_types.attack} caption="By attack angle" />
         <TypeTable rows={study.swing_types.tilt} caption="By swing path tilt" />
       </Section>
 
       <Section id="changers" question="What happens when hitters change?" title="Hitters who changed their swing plane">
-        <Prose>
+        <Explain lead="Each hitter against himself a season later: natural changes, not experiments.">
           <p>
-            Comparing each hitter with himself a season later: those who flattened by 1.5° or more gained {signed(flattened.carry)} feet of
+            Those who flattened by 1.5° or more gained {signed(flattened.carry)} feet of
             carry against hitters who held steady, while their OPS moved {signed(flattened.ops * 1000, 0)} points; those who steepened by as much changed
             by {signed(steepened.carry)} feet and {signed(steepened.ops * 1000, 0)} points. These are natural changes measured against hitters who held steady, not experiments: a hitter who
             steepens after a poor season would be expected to rebound somewhat regardless. Carry follows the swing; production follows
             something more.
           </p>
-        </Prose>
+          <p>Groups from left: {tiltGroups.map((g) => `${g.group} (${g.n})`).join(", ")}.</p>
+        </Explain>
         <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
           <ChangerBars groups={tiltGroups} outcome="carry" label="Carry (ft)" />
           <ChangerBars groups={tiltGroups} outcome="ops" label="OPS (points)" />
           <ChangerBars groups={tiltGroups} outcome="hr600" label="HR per 600 PA" />
           <ChangerBars groups={tiltGroups} outcome="so600" label="K per 600 PA" />
         </div>
-        <p className="text-xs text-muted-foreground">Groups from left: {tiltGroups.map((g) => `${g.group} (${g.n})`).join(", ")}.</p>
       </Section>
 
       <Section id="lab" question="Try it" title="Swing lab">
-        <Prose>
-          <p>
-            Pick a hitter or a generic one and change his swing. Carry comes from rerunning the collision and flight physics on his own
-            batted balls with each ball&apos;s contact held fixed, scaled by how much modeled spin translates into observed carry across hitters; the season
-            line comes from the hitters who changed.
-          </p>
-        </Prose>
         <SwingLab study={{ season, lab: study.lab, swing_types: study.swing_types, changers: { coefficients: study.changers.coefficients } }} hitters={current} />
       </Section>
 
@@ -360,8 +353,8 @@ export default async function MlbCarryPage() {
         <CarryMinors rows={minors} summaries={structuredClone(study.minors)} season={season} />
       </Section>
 
-      <Prose>
-        <p className="text-xs text-muted-foreground">
+      <HowGraded label="How this works">
+        <p>
           Method: regular-season Statcast from 2021 (carry), 2023 (bat tracking for swing types and changers, partial that season) and
           2024 (swing physics). Flight uses Nathan&apos;s drag and lift coefficients (Analysis
           of Baseball Trajectories, 2017) with a fitted drag rise below about {study.physics.cd_transition_mph} mph; the collision follows Cross
@@ -370,7 +363,7 @@ export default async function MlbCarryPage() {
           bat axis tilt, after about twenty candidate explanations were screened the same way.
           {bottom && ` Least carry this season: ${bottom.player_name} (${signed(bottom.carry)} ft).`}
         </p>
-      </Prose>
+      </HowGraded>
     </PageShell>
   );
 }

@@ -51,7 +51,7 @@ export default async function MlbPlayersPage() {
       </PageHeader>
 
       <p className="max-w-4xl text-sm text-muted-foreground leading-relaxed">
-        Projected talent, trade value, and on-field impact. Open a player for traits and season-by-season projections.
+        Projected talent, trade value, and on-field impact.
       </p>
 
       <div className="grid grid-cols-3 gap-3 border-y border-rule-strong [&>div]:py-3 sm:gap-4">

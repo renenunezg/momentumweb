@@ -424,8 +424,7 @@ export function MlbPlayoffBracket({
           The model’s projected path
         </h2>
         <p className="text-[11px] text-muted-foreground">
-          Series favorite + its most likely winning score.{" "}
-          Tap a series for details.
+          Series favorite + its most likely winning score.
         </p>
       </div>
       <BracketView bracket={bracket} teams={teams} initialRound={initialRound} />

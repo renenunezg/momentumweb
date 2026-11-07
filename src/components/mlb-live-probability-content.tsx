@@ -7,6 +7,7 @@ import { chartAxisProps, chartTooltipStyle, useChartTheme } from "@/lib/chart-th
 import { liveProbabilitySettled, liveProbabilityStale, parseLiveProbability } from "@/lib/mlb-live-probability";
 import { baseOccupancyLabel } from "@/lib/mlb-bases";
 import { formatFairOdds, formatPct } from "@/lib/utils";
+import { HowGraded } from "@/components/how-graded";
 import { useLiveProbability } from "@/components/use-live-probability";
 
 export default function LiveProbabilityContent({ gamePk, away, home }: { gamePk: number; away: string; home: string }) {
@@ -69,11 +70,17 @@ export default function LiveProbabilityContent({ gamePk, away, home }: { gamePk:
           {data.abstract_state !== "Final" && !stale && !error && " · Refreshes while open"}
         </p>
       </>}
-      <p className="border-t border-border pt-3 text-xs leading-relaxed text-muted-foreground">
-        Based on score, inning, runners, outs, and count using league-average teams.
-        Pregame predictions stay fixed; live probabilities do not include team strength or sportsbook odds.
-        Fair odds are derived from these probabilities without bookmaker margin.
-      </p>
+      <div className="space-y-2 border-t border-border pt-3">
+        <p className="text-xs text-muted-foreground">
+          Live probabilities assume league-average teams and ignore sportsbook odds.
+        </p>
+        <HowGraded label="How this works">
+          <p>
+            Based on score, inning, runners, outs, and count. Pregame predictions stay fixed. Fair odds are derived from
+            these probabilities without bookmaker margin.
+          </p>
+        </HowGraded>
+      </div>
     </div>
   );
 }

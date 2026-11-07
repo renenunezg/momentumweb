@@ -231,16 +231,30 @@ async function MlbForward({ modelVersion, gradesFittedAt }: { modelVersion: stri
       <div className="space-y-2">
         <h3 className="text-lg">Against the public projection systems</h3>
         <p className="text-sm text-muted-foreground">
-          The grade is rebuilt at each checkpoint of {forward.seasons.join(", ")}{" "}from inputs dated before that
-          morning (the Statcast fielding and baserunning boards are the season&apos;s, prorated, so that cutoff is
-          approximate) and scored against rest-of-season production per 600 PA or per 180 and 65 IP: hitters on the
-          same players for every system, pitchers on each system&apos;s own overlap. Rho is Spearman rank correlation;
-          the gap is grade minus system with a 95 percent paired bootstrap interval over players. The full-grade
-          target is batting runs plus Statcast fielding and baserunning, the construct the grade is built around, so
-          the bat, glove and legs rows remove the positional adjustment from the systems&apos; WAR rate; batting runs
-          are league-relative and only the fielding part is position-relative. All three seasons were in view while
-          the grade was designed, so this is a development result, not an untouched test.
+          Rest-of-season production against the public projection systems: a development result, not an untouched test.
         </p>
+        <HowGraded>
+          <p>
+            The grade is rebuilt at each checkpoint of {forward.seasons.join(", ")}{" "}from inputs dated before that
+            morning (the Statcast fielding and baserunning boards are the season&apos;s, prorated, so that cutoff is
+            approximate) and scored against rest-of-season production per 600 PA or per 180 and 65 IP: hitters on the
+            same players for every system, pitchers on each system&apos;s own overlap. Rho is Spearman rank correlation;
+            the gap is grade minus system with a 95 percent paired bootstrap interval over players. The full-grade
+            target is batting runs plus Statcast fielding and baserunning, the construct the grade is built around, so
+            the bat, glove and legs rows remove the positional adjustment from the systems&apos; WAR rate; batting runs
+            are league-relative and only the fielding part is position-relative. All three seasons were in view while
+            the grade was designed.
+          </p>
+          <p>Where this comparison is not level:</p>
+          <ul className="list-disc space-y-1 pl-5">
+            {forward.caveats.map((caveat) => (
+              <li key={caveat}>{caveat}</li>
+            ))}
+          </ul>
+          {gradesFittedAt && evaluation.fittedAt && gradesFittedAt === evaluation.fittedAt && (
+            <p>The served grades were scored with this model fit ({evaluation.fittedAt.slice(0, 10)}).</p>
+          )}
+        </HowGraded>
       </div>
       <EvalTable
         caption="Hitters: the full grade on bat, glove and legs against the systems' WAR rate, where it is ahead; the published grade on hitting alone against their projected wOBA, where it trails all three; and a batting-only refit of the grade on the same hitting target, which ties them at opening day and runs ahead of them at the in-season checkpoints, within sampling noise."
@@ -259,19 +273,10 @@ async function MlbForward({ modelVersion, gradesFittedAt }: { modelVersion: stri
         columns={columns}
         rows={pitcherRows}
       />
-      <details className="text-sm text-muted-foreground">
-        <summary className="cursor-pointer">Where this comparison is not level</summary>
-        <ul className="mt-2 list-disc space-y-1 pl-5">
-          {forward.caveats.map((caveat) => (
-            <li key={caveat}>{caveat}</li>
-          ))}
-        </ul>
-      </details>
-      {gradesFittedAt && evaluation.fittedAt && (
+      {gradesFittedAt && evaluation.fittedAt && gradesFittedAt !== evaluation.fittedAt && (
         <p className="text-xs text-muted-foreground">
-          {gradesFittedAt === evaluation.fittedAt
-            ? `The served grades were scored with this model fit (${evaluation.fittedAt.slice(0, 10)}).`
-            : `The served grades were scored with a fit from ${gradesFittedAt.slice(0, 10)}; this evaluation describes the refit of ${evaluation.fittedAt.slice(0, 10)}, so grades and table can differ until the next scoring run.`}
+          The served grades were scored with a fit from {gradesFittedAt.slice(0, 10)}; this evaluation describes the refit
+          of {evaluation.fittedAt.slice(0, 10)}, so grades and table can differ until the next scoring run.
         </p>
       )}
       <LastUpdated timestamp={forward.computed_at} schedule="Rebuilt each offseason and after model changes" />
@@ -300,11 +305,29 @@ async function MlbResults() {
         <div className="space-y-2">
           <h3 className="text-lg">Predicting next-season production</h3>
           <p className="text-sm text-muted-foreground">
-            Development pairs {first} to {first + 1} through {last - 1} to {last}, each held out in
-            turn: the grade fitted on the other pairs ranks the held-out season. Rank correlation
-            with next-season runs above average per 600 PA, 180 IP or 65 IP; higher is better, and
-            each baseline uses the same players within its group.
+            Rank correlation with next-season production against simple baselines: a development result, not a holdout.
           </p>
+          <HowGraded>
+            <p>
+              Development pairs {first} to {first + 1} through {last - 1} to {last}, each held out in
+              turn: the grade fitted on the other pairs ranks the held-out season. Rank correlation
+              with next-season runs above average per 600 PA, 180 IP or 65 IP; higher is better, and
+              each baseline uses the same players within its group. Correlation runs from -1 to +1,
+              with zero at the center.
+            </p>
+            <p>
+              Hyperparameters were chosen on these same pairs. The {report.holdoutPair[0]} to {report.holdoutPair[1]} pair
+              is the first the design never saw and will be reported untouched when it arrives. The previous version
+              ({previous.modelVersion}), scored once on the {previous.inputSeason} to {previous.outcomeSeason} pair
+              it never saw, reached {formatNumber(previous.groups[0].grade, 2)} for batters against{" "}
+              {formatNumber(previous.groups[0].priorXwoba, 2)} for prior-season xwOBA (within sampling noise),{" "}
+              {formatNumber(previous.groups[1].grade, 2)} for starters and {formatNumber(previous.groups[2].grade, 2)} for relievers.
+            </p>
+            <p>
+              This evaluates production rankings among players who returned with 100 plate appearances or batters
+              faced; it does not validate trade prices or WAR accuracy.
+            </p>
+          </HowGraded>
         </div>
         <div className="grid gap-4 lg:grid-cols-3">
           {report.groups.map((result) => (
@@ -322,20 +345,6 @@ async function MlbResults() {
             </article>
           ))}
         </div>
-        <p className="text-sm text-muted-foreground">
-          Hyperparameters were chosen on these same pairs, so this is a development result, not a
-          holdout. The {report.holdoutPair[0]} to {report.holdoutPair[1]} pair is the first the
-          design never saw and will be reported untouched when it arrives. The previous version
-          ({previous.modelVersion}), scored once on the {previous.inputSeason} to {previous.outcomeSeason} pair
-          it never saw, reached {formatNumber(previous.groups[0].grade, 2)} for batters against{" "}
-          {formatNumber(previous.groups[0].priorXwoba, 2)} for prior-season xwOBA (within sampling noise),{" "}
-          {formatNumber(previous.groups[1].grade, 2)} for starters and {formatNumber(previous.groups[2].grade, 2)} for relievers.
-        </p>
-        <p className="text-xs text-muted-foreground">
-          Correlation runs from -1 to +1, with zero at the center. This evaluates production rankings
-          among players who returned with 100 plate appearances or batters faced; it does not validate
-          trade prices or WAR accuracy.
-        </p>
         <LastUpdated
           timestamp={report.fittedAt}
           schedule={`Evaluation snapshot · ${report.modelVersion}`}

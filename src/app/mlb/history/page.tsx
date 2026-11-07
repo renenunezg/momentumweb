@@ -228,10 +228,9 @@ export default async function HistoryPage({
         />
       </PageHeader>
 
-      <p className="max-w-4xl text-sm text-muted-foreground leading-relaxed">
-        Every MLB prediction this season next to the final score: the
-        moneyline, run line, and total predictions frozen before first pitch and
-        how each one graded.
+      <p className="max-w-4xl text-sm text-muted-foreground">
+        Every MLB prediction this season, frozen before first pitch, next to the
+        final score.
       </p>
 
       <Filters />

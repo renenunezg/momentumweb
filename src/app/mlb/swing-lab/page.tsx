@@ -43,17 +43,13 @@ export default async function MlbSwingLabPage() {
       </PageHeader>
       <PlayerSectionTabs sections={MLB_SWING_SECTIONS} label="Swing lab pages" />
 
-      <div className="max-w-3xl space-y-3 text-sm leading-relaxed">
-        <p>
-          Pick a hitter or a generic one and change his swing. Carry comes from rerunning the collision and flight physics on his own
-          batted balls with each ball&apos;s contact held fixed, scaled by how much modeled spin translates into observed carry across hitters; the season
-          line comes from the hitters who changed. The{" "}
-          <Link href="/mlb/carry" className="underline underline-offset-2 hover:text-foreground">
-            carry study
-          </Link>{" "}
-          explains where the numbers come from.
-        </p>
-      </div>
+      <p className="max-w-3xl text-sm text-muted-foreground">
+        Change a hitter&apos;s swing and see how his fly balls and season line would move, built on the{" "}
+        <Link href="/mlb/carry" className="underline underline-offset-2 hover:text-foreground">
+          carry study
+        </Link>
+        .
+      </p>
 
       <SwingLab study={{ season, lab: study.lab, swing_types: study.swing_types, changers: { coefficients: study.changers.coefficients } }} hitters={current} />
     </PageShell>

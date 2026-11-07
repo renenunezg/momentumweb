@@ -6,6 +6,7 @@ import type { ModelOutput, GameMatchup, GameInfo } from "@/lib/types";
 import { GamesLive } from "@/components/games-live";
 import { SummaryStats } from "@/components/summary-stats";
 import { Notice } from "@/components/notice";
+import { HowGraded } from "@/components/how-graded";
 import { LastUpdated } from "@/components/last-updated";
 import { latestStamp } from "@/lib/mlb-picks-version";
 import { toLiveScore, type LiveScore, type MlbScheduleGame } from "@/lib/mlb-live-scores";
@@ -181,13 +182,18 @@ export default async function Page() {
         />
       </PageHeader>
 
-      <p className="max-w-4xl text-sm text-muted-foreground leading-relaxed">
-        Win probabilities, projected run totals, and predictions for every MLB game
-        today, from a Bayesian model that simulates each plate appearance.
-        A prediction can change until first pitch as lineups and prices move; the
-        last one before first pitch is the one graded, at the best pregame price
-        published. Each game shows when its prediction was last written.
-      </p>
+      <div className="space-y-2">
+        <p className="max-w-4xl text-sm text-muted-foreground">
+          A Bayesian model simulates every plate appearance of today&apos;s games.
+        </p>
+        <HowGraded label="How this works">
+          <p>
+            A prediction can change until first pitch as lineups and prices move; the
+            last one before first pitch is the one graded, at the best pregame price
+            published. Each game shows when its prediction was last written.
+          </p>
+        </HowGraded>
+      </div>
 
       {outputsError || gamesError ? (
         <Notice>Predictions are temporarily unavailable. Scores remain available.</Notice>

@@ -534,7 +534,7 @@ export default function MlbPlayerValues({ index }: { index: PlayerValueIndex[] }
         {search
           ? `${matches.length} player${matches.length === 1 ? "" : "s"} match “${query.trim()}”.`
           : `Top ${visible.length} of ${matches.length} ${position}, ${graded} graded.`}{" "}
-        Best ranks talent; Bargain ranks trade value. Open a player for details.
+        Best ranks talent; Bargain ranks trade value.
       </p>
       <div className="md:hidden">
         <div className="mb-4 flex items-center gap-2">

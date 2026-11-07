@@ -27,8 +27,7 @@ export default async function PlayoffsPage() {
             The road to the World Series
           </PageTitle>
           <PageDescription className="max-w-2xl">
-            Every series. Every possible path. Powered by our plate-appearance
-            model.
+            Every series and every path, from the plate-appearance model.
           </PageDescription>
         </div>
         <Trophy

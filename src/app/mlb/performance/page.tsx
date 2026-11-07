@@ -12,6 +12,7 @@ import { fetchFullBetLedger } from "@/lib/bet-ledger";
 import { keepLastGood } from "@/lib/keep-last-good";
 import { PerformanceTabs } from "./tabs";
 import { LastUpdated } from "@/components/last-updated";
+import { HowGraded } from "@/components/how-graded";
 import { PlayerModelPerformance } from "@/components/player-model-performance";
 
 // Every read here is expired by the revalidation webhook when its table is
@@ -172,12 +173,18 @@ export default async function PerformancePage() {
           schedule="Updates nightly ~midnight PT"
         />
       </PageHeader>
-      <p className="max-w-3xl type-body text-muted-foreground">
-        How the MLB model&apos;s win probabilities and run totals have held up,
-        scored overnight after every game. Two model versions are pooled here:
-        v1, an XGBoost model, through May 11, 2026, and v2, the Bayesian
-        simulation, from May 12.
-      </p>
+      <div className="space-y-2">
+        <p className="max-w-3xl type-body text-muted-foreground">
+          How the win probabilities and run totals have held up across two model
+          versions.
+        </p>
+        <HowGraded>
+          <p>
+            Scored overnight after every game. v1, an XGBoost model, ran through
+            May 11, 2026, and v2, the Bayesian simulation, from May 12.
+          </p>
+        </HowGraded>
+      </div>
       <PerformanceTabs
         evaluations={evaluations}
         calibration={calibration}

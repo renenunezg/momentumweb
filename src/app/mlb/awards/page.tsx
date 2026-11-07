@@ -2,6 +2,7 @@ import { PageDescription, PageHeader, PageSection, PageShell, PageTitle } from "
 import type { Metadata } from "next";
 import { AwardFavorites, AwardRace, AwardTrackRecord, GoldGloveField } from "@/components/mlb-awards";
 import { fetchAwards } from "@/lib/mlb-awards.server";
+import { HowGraded } from "@/components/how-graded";
 
 // Every read here is expired by the revalidation webhook when its table is
 // published, and nothing on the page depends on the clock, so the week is only
@@ -50,10 +51,15 @@ export default async function MlbAwardsPage() {
         <div>
           <p className="type-eyebrow mb-2 text-muted-foreground">{season} season · Frozen {FROZEN_DATE.format(new Date(models[0].as_of))}</p>
           <PageTitle>MLB Awards Forecast</PageTitle>
-          <PageDescription>
-            Who the voters will pick, not who deserves it. Each race is fitted on past ballots and winners using
-            regular-season numbers only, then frozen and graded against the result.
-          </PageDescription>
+          <PageDescription>Who the voters will pick, not who deserves it.</PageDescription>
+          <div className="mt-2">
+            <HowGraded label="How this works">
+              <p>
+                Each race is fitted on past ballots and winners using regular-season numbers only, then frozen and graded
+                against the result.
+              </p>
+            </HowGraded>
+          </div>
         </div>
       </PageHeader>
 
@@ -63,10 +69,12 @@ export default async function MlbAwardsPage() {
 
       <PageSection>
         <h2 className="type-section">Track record</h2>
-        <p className="max-w-3xl text-sm leading-relaxed text-muted-foreground">
-          Winners called when each season was forecast from earlier seasons only, against simply picking the leader in one stat.
-          Ballot awards cover 2016 to 2025, the others 2020 to 2025.
+        <p className="max-w-3xl text-sm text-muted-foreground">
+          Winners called from earlier seasons only, against picking the leader in one stat.
         </p>
+        <HowGraded>
+          <p>Ballot awards cover 2016 to 2025, the others 2020 to 2025.</p>
+        </HowGraded>
         <AwardTrackRecord rows={track} />
       </PageSection>
 
@@ -86,12 +94,16 @@ export default async function MlbAwardsPage() {
 
       <PageSection id="gold-gloves" className="scroll-mt-24 border-t border-rule-strong pt-section">
         <h2 className="type-section">Gold Gloves</h2>
-        <p className="max-w-3xl text-sm leading-relaxed text-muted-foreground">
-          The forecast Gold Glove team in each league, picked from the three finalists at each position. This board was run
-          without the {season} winners but published after their announcement, so it is a blind test and not an advance call.
-          Pitchers and utility players are ranked with no probability: the pitcher model called {pitchers?.hits} of {pitchers?.races},
-          and utility has too few seasons to test. The track record above picks from every qualified fielder, a harder test than three finalists.
+        <p className="max-w-3xl text-sm text-muted-foreground">
+          Picked from the three finalists at each position: a blind test published after the winners, not an advance call.
         </p>
+        <HowGraded>
+          <p>
+            This board was run without the {season} winners. Pitchers and utility players are ranked with no probability: the pitcher model called{" "}
+            {pitchers?.hits} of {pitchers?.races}, and utility has too few seasons to test. The track record above picks from
+            every qualified fielder, a harder test than three finalists.
+          </p>
+        </HowGraded>
         <div className="grid gap-8 lg:grid-cols-2">
           {LEAGUES.map((league) => (
             <GoldGloveField key={league} league={league} rows={POSITIONS.flatMap((position) => race("GG", league, position).filter((row) => row.rank === 1))} />
