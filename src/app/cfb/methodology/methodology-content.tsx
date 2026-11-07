@@ -876,7 +876,10 @@ export function MethodologyContent({ example, backtestVersion }: { example: Pick
             player produces against that opponent unit, using rush and pass unit
             ratings fit strictly before the game&apos;s week. Early in the season
             those ratings start from a frozen previous-season prior, so opening
-            opponents are not treated as average. How a play&apos;s EPA is split
+            opponents are not treated as average. Teams in a conference share a
+            conference level learned from every non-conference game, so a slate of
+            weaker-conference defenses is discounted as a group, not one team at a
+            time. How a play&apos;s EPA is split
             among credited players is a fixed, documented table, because there is
             no ground truth for responsibility that could fit it. Defensive credit
             covers only tagged disruption plays (sacks, interceptions, breakups,

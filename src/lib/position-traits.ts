@@ -123,6 +123,10 @@ export const TRAIT_LABELS: Record<string, { label: string; tip: string }> = {
     label: "Beyond his quarterback",
     tip: "Value per target compared with the same passer’s other targets in the same games. Inferred.",
   },
+  "rec.room": {
+    label: "Receiver room",
+    tip: "Adjusted receiving EPA per game of his wide receiver and tight end teammates. Inferred; a target share earned beside strong receivers counts for more.",
+  },
   "def.havoc": {
     label: "Havoc",
     tip: "Tackles for loss, forced fumbles, breakups and interceptions per game, adjusted for the offense.",
