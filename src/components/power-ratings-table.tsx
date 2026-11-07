@@ -9,7 +9,7 @@ import { HeatValue } from "@/components/heat-value";
 import { SignedBar } from "@/components/signed-bar";
 import { Dialog, DialogContent, DialogDescription, DialogTitle } from "@/components/ui/dialog";
 import { RatingsSearch, useRatingsSearch } from "@/components/ratings-search";
-import { formatNumber } from "@/lib/utils";
+import { cn, formatNumber } from "@/lib/utils";
 import { TeamLogo, type TeamLogoSource } from "@/components/team-logo";
 import {
   Table,
@@ -60,10 +60,10 @@ export interface LimitedDataRule {
   allNote: string;
 }
 
-export function LimitedDataBadge({ note }: { note: string }) {
+export function LimitedDataBadge({ note, className }: { note: string; className?: string }) {
   return (
     <span
-      className="type-eyebrow ml-2 text-accent-amber"
+      className={cn("type-eyebrow ml-2 text-accent-amber", className)}
       title={note}
     >
       Limited data<span className="sr-only">: {note}</span>
@@ -78,6 +78,7 @@ export function PowerRatingsTable<T extends PowerRatingRow>({
   heatmapRows,
   rowKey,
   logo,
+  shortName,
   caption,
   group,
   overallRank,
@@ -93,6 +94,7 @@ export function PowerRatingsTable<T extends PowerRatingRow>({
   heatmapRows: T[];
   rowKey: (row: T) => string | number;
   logo: (row: T) => TeamLogoSource | undefined;
+  shortName?: (row: T) => string;
   caption: string;
   group?: { label: string; value: (row: T) => string | null };
   overallRank?: { label: string; value: (row: T) => number | undefined };
@@ -152,34 +154,40 @@ export function PowerRatingsTable<T extends PowerRatingRow>({
       </div>
       {allLimited && <p className="type-meta text-accent-amber">{limited.allNote}</p>}
       <div className="overflow-hidden rounded-xl border border-border bg-card">
-        <Table className="type-label">
+        <Table density="compact" className="type-label max-sm:[--table-cell-x:0.125rem] max-sm:[&_td]:text-xs">
           <TableCaption className="sr-only">
             {query.trim() && searchRows ? "Team search power ratings" : caption}
           </TableCaption>
           <TableHeader>
             <TableRow className="hover:bg-transparent">
-              <TableHead className="sticky left-0 z-10 bg-card pl-3 max-sm:border-r max-sm:border-border">
-                <span className="inline-block w-6 text-right">Rk</span>
-                <span className="ml-2 sm:ml-3">Team</span>
+              <TableHead className="sticky left-0 z-10 bg-card pl-2 sm:pl-3 max-sm:border-r max-sm:border-border">
+                <span className="inline-block w-5 text-right sm:w-6">Rk</span>
+                <span className="ml-1.5 sm:ml-3">Team</span>
               </TableHead>
               {overallRank && (
                 <TableHead className="hidden text-right sm:table-cell">
                   {overallRank.label}
                 </TableHead>
               )}
-              <TableHead className={value}>{market ? "Model" : "Rating"}</TableHead>
-              {market && <TableHead className={value}>Market</TableHead>}
-              <TableHead className={value}>Offense</TableHead>
-              <TableHead className={value}>Defense</TableHead>
+              <TableHead className={value}>
+                {market ? <PhoneLabel full="Model" short="Mdl" /> : <PhoneLabel full="Rating" short="Rtg" />}
+              </TableHead>
+              {market && <TableHead className={value}><PhoneLabel full="Market" short="Mkt" /></TableHead>}
+              <TableHead className={value}><PhoneLabel full="Offense" short="Off" /></TableHead>
+              <TableHead className={value}><PhoneLabel full="Defense" short="Def" /></TableHead>
               {change && (
                 <TableHead className="text-right">
-                  <abbr title={change.label} className="no-underline">{change.short}</abbr>
+                  <abbr title={change.label} className="no-underline">
+                    <span className="sm:hidden">Chg</span>
+                    <span className="max-sm:hidden">{change.short}</span>
+                  </abbr>
                 </TableHead>
               )}
               {gapColumn && (
-                <TableHead className="pr-3 text-right">
+                <TableHead className="pr-2 text-right sm:pr-3">
                   <abbr title={gapColumn.title} className="no-underline">
-                    {gapColumn.label}
+                    <span className="sm:hidden">Gap</span>
+                    <span className="max-sm:hidden">{gapColumn.label}</span>
                   </abbr>
                 </TableHead>
               )}
@@ -188,20 +196,29 @@ export function PowerRatingsTable<T extends PowerRatingRow>({
           <TableBody>
             {matches.map(({ row, rank }) => (
               <TableRow key={rowKey(row)} className="group/row border-t border-border first:border-t-0">
-                <TableCell className="sticky left-0 z-10 bg-card py-2 pl-3 whitespace-normal max-sm:border-r max-sm:border-border">
-                  <span className="flex min-w-[9.5rem] items-center gap-2 sm:gap-3">
-                    <span className="w-6 shrink-0 text-right type-meta tabular-nums text-muted-foreground">{rank}</span>
-                    <TeamLogo team={logo(row)} name={row.team} className="h-6 w-6" />
+                <TableCell className="sticky left-0 z-10 bg-card py-2 pl-2 whitespace-normal sm:pl-3 max-sm:border-r max-sm:border-border">
+                  <span className="flex items-center gap-1.5 sm:min-w-[9.5rem] sm:gap-3">
+                    <span className="w-6 shrink-0 text-right type-meta tabular-nums text-muted-foreground max-sm:w-5">{rank}</span>
+                    <TeamLogo team={logo(row)} name={row.team} className="h-5 w-5 sm:h-6 sm:w-6" />
                     <span className="min-w-0">
-                      <span className="block font-semibold leading-tight">
-                        {row.team}
+                      <span className="block font-semibold leading-tight max-sm:hyphens-auto">
+                        {shortName ? (
+                          <>
+                            <span className="sm:hidden">{shortName(row)}</span>
+                            <span className="max-sm:hidden">{row.team}</span>
+                          </>
+                        ) : row.team}
                         {tag?.(row)}
                         {!allLimited && limited.isLimited(row) && (
-                          <LimitedDataBadge note={limited.rowNote} />
+                          <LimitedDataBadge
+                            note={limited.rowNote}
+                            // Uppercase "LIMITED" alone would hold the phone column open.
+                            className="max-sm:ml-0 max-sm:block max-sm:text-[0.625rem] max-sm:tracking-normal max-sm:normal-case"
+                          />
                         )}
                       </span>
                       {group && (
-                        <span className="block type-meta text-muted-foreground">{group.value(row) ?? "–"}</span>
+                        <span className="block type-meta text-muted-foreground max-sm:hidden">{group.value(row) ?? "–"}</span>
                       )}
                     </span>
                   </span>
@@ -212,7 +229,7 @@ export function PowerRatingsTable<T extends PowerRatingRow>({
                   </TableCell>
                 )}
                 <TableCell className={value}>
-                  <HeatValue style={scales.model(row.power_rating)} className="font-semibold">
+                  <HeatValue compact style={scales.model(row.power_rating)} className="font-semibold">
                     {market ? (
                       <RatingButton team={row.team} label="Model" value={row.power_rating} onClick={() => setDetail(row)} />
                     ) : formatNumber(row.power_rating)}
@@ -220,25 +237,25 @@ export function PowerRatingsTable<T extends PowerRatingRow>({
                 </TableCell>
                 {market && (
                   <TableCell className={value}>
-                    <HeatValue style={scales.market(market(row).rating)}>
+                    <HeatValue compact style={scales.market(market(row).rating)}>
                       <RatingButton team={row.team} label="Market" value={market(row).rating} onClick={() => setDetail(row)} />
                     </HeatValue>
                   </TableCell>
                 )}
                 <TableCell className={value}>
-                  <HeatValue style={scales.offense(row.offense_points)}>{formatNumber(row.offense_points)}</HeatValue>
+                  <HeatValue compact style={scales.offense(row.offense_points)}>{formatNumber(row.offense_points)}</HeatValue>
                 </TableCell>
                 <TableCell className={value}>
-                  <HeatValue style={scales.defense(row.defense_points)}>{formatNumber(row.defense_points)}</HeatValue>
+                  <HeatValue compact style={scales.defense(row.defense_points)}>{formatNumber(row.defense_points)}</HeatValue>
                 </TableCell>
                 {change && (
                   <TableCell className="text-right">
-                    <SignedBar value={change.value(row)} extent={scales.change} tone="semantic" />
+                    <SignedBar value={change.value(row)} extent={scales.change} tone="semantic" compact />
                   </TableCell>
                 )}
                 {gapColumn && (
-                  <TableCell className="pr-3 text-right">
-                    <SignedBar value={gapColumn.value(row)} extent={scales.gap} tone="neutral" />
+                  <TableCell className="pr-2 text-right sm:pr-3">
+                    <SignedBar value={gapColumn.value(row)} extent={scales.gap} tone="neutral" compact />
                   </TableCell>
                 )}
               </TableRow>
@@ -252,6 +269,16 @@ export function PowerRatingsTable<T extends PowerRatingRow>({
         </Dialog>
       )}
     </div>
+  );
+}
+
+// Phones get the short header so every column fits without sideways scrolling.
+function PhoneLabel({ full, short }: { full: string; short: string }) {
+  return (
+    <>
+      <abbr title={full} className="no-underline sm:hidden">{short}</abbr>
+      <span className="max-sm:hidden">{full}</span>
+    </>
   );
 }
 

@@ -29,6 +29,7 @@ export function UnitRatingsTable<
   defaultSort,
   rowKey,
   logo,
+  shortName,
   powerRank,
   intro,
   controls,
@@ -41,6 +42,7 @@ export function UnitRatingsTable<
   defaultSort: K;
   rowKey: (unit: U) => string | number;
   logo: (unit: U) => TeamLogoSource | undefined;
+  shortName?: (unit: U) => string;
   powerRank: Map<string | number, number>;
   intro: ReactNode;
   controls?: ReactNode;
@@ -77,16 +79,17 @@ export function UnitRatingsTable<
       />
       <RatingsHeatmapLegend centered />
       <div className="overflow-x-auto">
-        <Table>
+        {/* Phones: tighter columns, wrapped headers and one-line teams so every unit fits. */}
+        <Table density="compact" className="max-sm:[--table-cell-x:0.125rem] max-sm:[&_td]:text-xs">
           <TableCaption className="sr-only">{caption}</TableCaption>
           <TableHeader>
             <TableRow>
-              <TableHead className="w-12 text-right">Rk</TableHead>
+              <TableHead className="w-12 text-right max-sm:w-auto">Rk</TableHead>
               <TableHead>Team</TableHead>
               {columns.map((column) => (
                 <TableHead
                   key={column.key}
-                  className="text-right"
+                  className="text-right max-sm:whitespace-normal max-sm:align-bottom"
                   aria-sort={sortKey === column.key ? "descending" : "none"}
                 >
                   <button
@@ -114,12 +117,19 @@ export function UnitRatingsTable<
                   <TableCell className="text-right font-mono tabular-nums text-muted-foreground">
                     {unitRank}
                   </TableCell>
-                  <TableCell>
-                    <span className="inline-flex items-center gap-2 align-middle">
+                  <TableCell className="max-sm:whitespace-normal">
+                    <span className="inline-flex items-center gap-1.5 align-middle sm:gap-2">
                       <TeamLogo team={logo(unit)} name={unit.team} />
-                      <span className="font-medium">{unit.team}</span>
+                      <span className="font-medium">
+                        {shortName ? (
+                          <>
+                            <span className="sm:hidden">{shortName(unit)}</span>
+                            <span className="max-sm:hidden">{unit.team}</span>
+                          </>
+                        ) : unit.team}
+                      </span>
                       {rank != null && (
-                        <span className="font-mono text-xs text-muted-foreground">
+                        <span className="font-mono text-xs text-muted-foreground max-sm:hidden">
                           <span className="sr-only">power rating rank </span>
                           {rank}
                         </span>
@@ -127,7 +137,7 @@ export function UnitRatingsTable<
                     </span>
                     {flag && (
                       <span
-                        className="type-eyebrow ml-2 text-accent-amber"
+                        className="type-eyebrow ml-2 text-accent-amber max-sm:ml-0 max-sm:block max-sm:text-[0.625rem] max-sm:tracking-normal max-sm:normal-case"
                         title={flag.note}
                       >
                         {flag.label}
@@ -140,7 +150,7 @@ export function UnitRatingsTable<
                       key={column.key}
                       className={cn("text-right", sortKey === column.key && "font-semibold")}
                     >
-                      <HeatValue style={heatmap.get(column.key)?.(unit[column.key])}>
+                      <HeatValue compact style={heatmap.get(column.key)?.(unit[column.key])}>
                         {formatSigned(unit[column.key])}
                       </HeatValue>
                     </TableCell>

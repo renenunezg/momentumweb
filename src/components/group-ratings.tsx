@@ -27,6 +27,7 @@ export function GroupRatings<T extends PowerRatingRow>({
   ratings,
   rowKey,
   logo,
+  shortName,
   groupOf,
   tierOf,
   tiers,
@@ -42,6 +43,7 @@ export function GroupRatings<T extends PowerRatingRow>({
   ratings: T[];
   rowKey: (row: T) => string | number;
   logo: (row: T) => TeamLogoSource | undefined;
+  shortName?: (row: T) => string;
   groupOf: (row: T) => string;
   tierOf: (row: T) => string;
   tiers: readonly string[];
@@ -127,6 +129,7 @@ export function GroupRatings<T extends PowerRatingRow>({
           heatmapRows={ratings}
           rowKey={rowKey}
           logo={logo}
+          shortName={shortName}
           caption={`${selected.name} power ratings`}
           overallRank={{
             label: overallRankLabel,

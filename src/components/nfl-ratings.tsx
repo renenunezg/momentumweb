@@ -147,6 +147,7 @@ export default function NflRatings({
             ratings={ratings}
             rowKey={rowKey}
             logo={logo}
+            shortName={rowKey}
             groupOf={(r) => r.division ?? "Unknown"}
             tierOf={(r) => r.conference ?? "AFC"}
             tiers={["AFC", "NFC"]}
@@ -171,6 +172,7 @@ export default function NflRatings({
               defaultSort="pass_offense"
               rowKey={rowKey}
               logo={logo}
+              shortName={rowKey}
               powerRank={powerRank}
               caption="NFL unit ratings"
               intro="Points per game above league average, opponent adjusted. Companions to the power ratings, not components: they do not sum to Off and Def, and the line ratings attribute outcomes without snap level film data."
@@ -182,6 +184,7 @@ export default function NflRatings({
             heatmapRows={ratings}
             rowKey={rowKey}
             logo={logo}
+            shortName={rowKey}
             caption={`${VIEWS.find((v) => v.key === view)?.label} power ratings`}
             group={{ label: "Division", value: (r) => r.division }}
             limited={LIMITED}

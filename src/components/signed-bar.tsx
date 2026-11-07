@@ -2,13 +2,15 @@ import { cn, formatSigned } from "@/lib/utils";
 
 // A zero-centered bar plus its exact signed value. "semantic" colors the bar
 // by better or worse and needs a known metric direction; "neutral" is for
-// signed gaps that measure disagreement, not quality.
+// signed gaps that measure disagreement, not quality. `compact` hides the bar
+// on phones and colors a semantic value's text instead.
 export function SignedBar({
   value,
   extent,
   tone,
   lowerIsBetter = false,
   digits = 1,
+  compact = false,
   className,
 }: {
   value: number | null | undefined;
@@ -16,6 +18,7 @@ export function SignedBar({
   tone: "semantic" | "neutral";
   lowerIsBetter?: boolean;
   digits?: number;
+  compact?: boolean;
   className?: string;
 }) {
   const shown = formatSigned(value, digits);
@@ -26,7 +29,7 @@ export function SignedBar({
 
   return (
     <span className={cn("inline-flex items-center justify-end gap-2", className)}>
-      <span aria-hidden="true" className="relative h-3 w-20 shrink-0 sm:w-24">
+      <span aria-hidden="true" className={cn("relative h-3 w-20 shrink-0 sm:w-24", compact && "max-sm:hidden")}>
         <span className="absolute inset-y-[-3px] left-1/2 w-px bg-rule-strong" />
         {rounded !== 0 && (
           <span
@@ -35,7 +38,16 @@ export function SignedBar({
           />
         )}
       </span>
-      <span className={cn("w-11 text-right tabular-nums", value == null && "text-muted-foreground")}>{shown}</span>
+      <span
+        className={cn(
+          "w-11 text-right tabular-nums",
+          compact && "max-sm:w-auto",
+          compact && tone === "semantic" && rounded !== 0 && (better ? "max-sm:text-positive" : "max-sm:text-negative"),
+          value == null && "text-muted-foreground",
+        )}
+      >
+        {shown}
+      </span>
     </span>
   );
 }
