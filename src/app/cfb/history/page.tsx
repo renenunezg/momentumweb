@@ -1,4 +1,4 @@
-import { PageDescription, PageHeader, PageShell, PageTitle } from "@/components/page-layout";
+import { PageHeader, PageShell, PageTitle } from "@/components/page-layout";
 import type { Metadata } from "next";
 import { Notice } from "@/components/notice";
 import Link from "next/link";
@@ -65,14 +65,12 @@ export default async function HistoryPage({
       <PageHeader>
         <div>
           <PageTitle>
-            College Football Prediction History
+            CFB Prediction History
           </PageTitle>
-          <PageDescription>
-            The side, line, and odds recorded before kickoff, with each
-            prediction&apos;s result.
-          </PageDescription>
-          <div className="mt-2">
-            <PickPolicy firstDecision={metric?.first_decision_at} />
+          <div className="mt-heading">
+            <PickPolicy firstDecision={metric?.first_decision_at} 
+              lead={<>The side, line, and odds recorded before kickoff, with each prediction&apos;s result.</>}
+            />
           </div>
         </div>
         <Link

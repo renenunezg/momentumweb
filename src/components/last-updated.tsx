@@ -55,9 +55,8 @@ export function LastUpdated({
   );
 
   return (
-    <div className="text-xs text-muted-foreground">
-      <div>{schedule}</div>
-      <div>Last updated: {age}</div>
-    </div>
+    <p className="type-meta text-muted-foreground" title={schedule}>
+      Updated {age}
+    </p>
   );
 }

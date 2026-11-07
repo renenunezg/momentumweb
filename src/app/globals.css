@@ -193,13 +193,13 @@ html.dark {
   }
 }
 @utility type-title {
-  font-size: 2rem;
-  line-height: 2.375rem;
+  font-size: 1.75rem;
+  line-height: 2.125rem;
   font-weight: 600;
   letter-spacing: -0.015em;
   @media (width >= 40rem) {
-    font-size: 2.5rem;
-    line-height: 2.75rem;
+    font-size: 2rem;
+    line-height: 2.375rem;
   }
 }
 @utility type-section {

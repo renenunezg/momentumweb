@@ -1,4 +1,4 @@
-import { PageDescription, PageHeader, PageShell, PageTitle } from "@/components/page-layout";
+import { PageHeader, PageShell, PageTitle } from "@/components/page-layout";
 import type { Metadata } from "next";
 import { Notice } from "@/components/notice";
 import { HowGraded } from "@/components/how-graded";
@@ -36,13 +36,12 @@ export default async function PredictionsPage() {
             {season != null ? `${season} · Week ${week}` : "Current week"}
           </p>
           <PageTitle>
-            College Football Predictions
+            CFB Predictions
           </PageTitle>
-          <PageDescription>
-            This week&apos;s predictions, organized by kickoff slate.
-          </PageDescription>
-          <div className="mt-2">
-            <HowGraded>
+          <div className="mt-heading">
+            <HowGraded
+              lead={<>This week&apos;s predictions, organized by kickoff slate.</>}
+            >
               <p>
                 Pregame predictions reflect the latest model and odds refresh.
                 Predictions that no longer qualify disappear from this list. Original predictions

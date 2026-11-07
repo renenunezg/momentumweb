@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import { PageDescription, PageHeader, PageShell, PageTitle } from "@/components/page-layout";
+import { PageDescription, PageHeader, PageShell, PageTitle, PageMeta } from "@/components/page-layout";
 import { LastUpdated } from "@/components/last-updated";
 import { MLB_SWING_SECTIONS, PlayerSectionTabs } from "@/components/player-section-tabs";
 import { SwingLab } from "@/components/mlb-swing-lab";
@@ -37,9 +37,11 @@ export default async function MlbSwingLabPage() {
       <PageHeader>
         <div>
           <PageTitle>Swing lab</PageTitle>
-          <PageDescription className="type-eyebrow">Through the {season} season</PageDescription>
+          <PageMeta>
+            <PageDescription className="type-eyebrow">Through the {season} season</PageDescription>
+            <LastUpdated timestamp={updatedAt} schedule="Updates each offseason" />
+          </PageMeta>
         </div>
-        <LastUpdated timestamp={updatedAt} schedule="Updates each offseason" />
       </PageHeader>
       <PlayerSectionTabs sections={MLB_SWING_SECTIONS} label="Swing lab pages" />
 

@@ -1,4 +1,4 @@
-import { PageDescription, PageHeader, PageShell, PageTitle } from "@/components/page-layout";
+import { PageDescription, PageHeader, PageShell, PageTitle, PageMeta } from "@/components/page-layout";
 import type { Metadata } from "next";
 import { supabaseCfb } from "@/lib/supabase";
 import { fetchLatestRatings, fetchTeams } from "@/lib/cfb";
@@ -137,7 +137,7 @@ export default async function SchedulePage() {
     return (
       <PageShell>
         <PageTitle>
-          College Football Schedule and Projections
+          CFB Schedule and Projections
         </PageTitle>
         <p className="text-muted-foreground">
           No projections published yet. Run the publish pipeline to load them.
@@ -286,48 +286,44 @@ export default async function SchedulePage() {
       <PageHeader>
         <div>
           <PageTitle>
-            College Football Schedule and Projections
+            CFB Schedule and Projections
           </PageTitle>
-          <PageDescription className="type-eyebrow">
-            {latest.season} · Week {latest.week} · {games.length} games
-          </PageDescription>
+          <PageMeta>
+            <PageDescription className="type-eyebrow">
+              {latest.season} · Week {latest.week} · {games.length} games
+            </PageDescription>
+            <LastUpdated timestamp={lastUpdated} schedule="Updates when a new forecast is published" />
+          </PageMeta>
+          <div className="mt-2">
+            <HowGraded label="How this works"
+              lead={<>Lines are quoted for the home team: negative means the model favors the home side.</>}
+            >
+              <p>
+                Pure is the model&apos;s own line. Model Line includes historical
+                market information and blends in the current market at a capped
+                weight when available.
+              </p>
+              <p>
+                Predictions show the line and odds frozen when predicted, not a live quote.
+                No Play means the market did not qualify.{" "}
+                <Link href="/cfb/history?view=picks" className="underline underline-offset-4">
+                  View recorded decisions and results
+                </Link>
+                .
+              </p>
+              <p>
+                Proj score is the published away&ndash;home expected points, which
+                agree with the Model Line and the published total. Diff is model line
+                minus market line. Market total is the consensus total when the total
+                prediction was decided. Predictions require qualifying probabilities,
+                prices, and input flags; a large point difference alone does not
+                qualify. A star marks a team whose rating inputs are incomplete; N
+                marks a neutral site.
+              </p>
+            </HowGraded>
+          </div>
         </div>
-        <LastUpdated
-          timestamp={lastUpdated}
-          schedule="Updates when a new forecast is published"
-        />
       </PageHeader>
-
-      <div className="space-y-2">
-        <p className="max-w-4xl text-sm text-muted-foreground">
-          Lines are quoted for the home team: negative means the model favors
-          the home side.
-        </p>
-        <HowGraded label="How this works">
-          <p>
-            Pure is the model&apos;s own line. Model Line includes historical
-            market information and blends in the current market at a capped
-            weight when available.
-          </p>
-          <p>
-            Predictions show the line and odds frozen when predicted, not a live quote.
-            No Play means the market did not qualify.{" "}
-            <Link href="/cfb/history?view=picks" className="underline underline-offset-4">
-              View recorded decisions and results
-            </Link>
-            .
-          </p>
-          <p>
-            Proj score is the published away&ndash;home expected points, which
-            agree with the Model Line and the published total. Diff is model line
-            minus market line. Market total is the consensus total when the total
-            prediction was decided. Predictions require qualifying probabilities,
-            prices, and input flags; a large point difference alone does not
-            qualify. A star marks a team whose rating inputs are incomplete; N
-            marks a neutral site.
-          </p>
-        </HowGraded>
-      </div>
 
       <ScheduleFilters
         league="cfb"

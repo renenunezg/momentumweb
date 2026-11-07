@@ -413,14 +413,16 @@ export function PickBreakdown({
 export function PickPolicy({
   firstDecision,
   sport = "cfb",
+  lead,
   children,
 }: {
   firstDecision?: string | null;
   sport?: PickSport;
+  lead?: ReactNode;
   children?: ReactNode;
 }) {
   return (
-    <HowGraded>
+    <HowGraded lead={lead}>
       {children}
       <p>
         One predicted side per game and market. A decision can be replaced

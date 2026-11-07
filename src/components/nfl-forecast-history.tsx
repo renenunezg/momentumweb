@@ -99,12 +99,9 @@ export default async function NflForecastHistory({
       <NflForecastSource source={source} />
 
       <div className="space-y-2">
-        <p className="max-w-4xl text-sm text-muted-foreground">
-          {source === "live"
-            ? "Published pregame forecasts against the closing line, quoted for the home team."
-            : "The pure model's walk-forward backtest against the closing spread, quoted for the home team."}
-        </p>
-        <HowGraded>
+        <HowGraded
+          lead={<>{source === "live" ? "Published pregame forecasts against the closing line, quoted for the home team." : "The pure model's walk-forward backtest against the closing spread, quoted for the home team."}</>}
+        >
           {source === "live" && (
             <p>
               The last forecast received before kickoff is preserved; missing

@@ -1,4 +1,4 @@
-import { PageDescription, PageHeader, PageShell, PageTitle } from "@/components/page-layout";
+import { PageDescription, PageHeader, PageShell, PageTitle, PageMeta } from "@/components/page-layout";
 import type { Metadata } from "next";
 import {
   fetchLatestRatings,
@@ -44,7 +44,7 @@ export default async function RatingsPage() {
   if (ratings.length === 0) {
     return (
       <PageShell>
-        <PageTitle>College Football Power Ratings</PageTitle>
+        <PageTitle>CFB Power Ratings</PageTitle>
         <p className="text-muted-foreground">
           No ratings published yet. Run the publish pipeline to load them.
         </p>
@@ -61,50 +61,46 @@ export default async function RatingsPage() {
       <PageHeader>
         <div>
           <PageTitle>
-            College Football Power Ratings
+            CFB Power Ratings
           </PageTitle>
-          {weekLabel && (
-            <PageDescription className="type-eyebrow">
-              {weekLabel}
-            </PageDescription>
-          )}
-        </div>
-        <LastUpdated
-          timestamp={lastUpdated}
-          schedule="Updates when a new forecast is published"
-        />
-      </PageHeader>
-
-      <div className="space-y-2">
-        <p className="max-w-4xl text-sm text-muted-foreground">
-          Model and market-implied strength, in points above an average FBS team
-          on a neutral field.
-        </p>
-        <HowGraded label="How this works">
-          <p>
-            Rankings follow the model. The published model ratings are the fitted
-            ratings moved part of the way toward each team&apos;s market-history
-            rating; they carry nothing from the coming week&apos;s matchups. Tap a
-            rating for its uncertainty and source.
-          </p>
-          <p>
-            Off and Def split the model rating into offense and defense.
-            Market is fitted to earlier closing spreads with a prior-season market
-            baseline; it does not include season win totals.
-            {prior.week != null && (
-              <>
-                {" "}Chg is the change in model rating since the week {prior.week}{" "}
-                ratings.
-              </>
+          <PageMeta>
+            {weekLabel && (
+              <PageDescription className="type-eyebrow">
+                {weekLabel}
+              </PageDescription>
             )}
-          </p>
-          <p>
-            Unit ratings are descriptive companions to the power ratings, not
-            model inputs or components of Off and Def. Pass and run blocking are
-            shared-outcome proxies, not isolated line grades.
-          </p>
-        </HowGraded>
-      </div>
+            <LastUpdated timestamp={lastUpdated} schedule="Updates when a new forecast is published" />
+          </PageMeta>
+          <div className="mt-2">
+            <HowGraded label="How this works"
+              lead={<>Model and market-implied strength, in points above an average FBS team on a neutral field.</>}
+            >
+              <p>
+                Rankings follow the model. The published model ratings are the fitted
+                ratings moved part of the way toward each team&apos;s market-history
+                rating; they carry nothing from the coming week&apos;s matchups. Tap a
+                rating for its uncertainty and source.
+              </p>
+              <p>
+                Off and Def split the model rating into offense and defense.
+                Market is fitted to earlier closing spreads with a prior-season market
+                baseline; it does not include season win totals.
+                {prior.week != null && (
+                  <>
+                    {" "}Chg is the change in model rating since the week {prior.week}{" "}
+                    ratings.
+                  </>
+                )}
+              </p>
+              <p>
+                Unit ratings are descriptive companions to the power ratings, not
+                model inputs or components of Off and Def. Pass and run blocking are
+                shared-outcome proxies, not isolated line grades.
+              </p>
+            </HowGraded>
+          </div>
+        </div>
+      </PageHeader>
 
       <CfbRatings
         ratings={ratings}

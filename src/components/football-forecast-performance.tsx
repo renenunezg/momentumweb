@@ -167,11 +167,9 @@ export function FootballForecastPerformance({
               <div>{copy.cadence}</div>
             </div>
           </div>
-          <p className="max-w-4xl text-sm text-muted-foreground">
-            Each game is graded on the forecast published before kickoff,
-            against the closing line and the final score.
-          </p>
-          <HowGraded>
+          <HowGraded
+            lead={<>Each game is graded on the forecast published before kickoff, against the closing line and the final score.</>}
+          >
             <p>
               Every row is a frozen record: the projection published before
               kickoff, {copy.closingLine}, and the final score. Nothing is re-fit

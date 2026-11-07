@@ -1,4 +1,4 @@
-import { PageDescription, PageHeader, PageShell, PageTitle } from "@/components/page-layout";
+import { PageDescription, PageHeader, PageShell, PageTitle, PageMeta } from "@/components/page-layout";
 import { PlayerSectionTabs } from "@/components/player-section-tabs";
 import type { Metadata } from "next";
 import { fetchHeismanTracker, fetchTeams } from "@/lib/cfb";
@@ -50,23 +50,20 @@ export default async function HeismanPage() {
       <PageHeader>
         <div>
           <PageTitle>Heisman Trophy Tracker</PageTitle>
-          <PageDescription className="type-eyebrow">
-            {season} · Through week {week}
-          </PageDescription>
+          <PageMeta>
+            <PageDescription className="type-eyebrow">
+              {season} · Through week {week}
+            </PageDescription>
+            <LastUpdated timestamp={tracker.asOf} schedule="Updates after each Monday refresh" />
+          </PageMeta>
         </div>
-        <LastUpdated
-          timestamp={tracker.asOf}
-          schedule="Updates after each Monday refresh"
-        />
       </PageHeader>
       <PlayerSectionTabs />
 
       <div className="space-y-2">
-        <p className="max-w-4xl text-sm text-muted-foreground">
-          Two boards meant to disagree: what each player&apos;s plays were worth,
-          and how the voters will rank him.
-        </p>
-        <HowGraded label="How this works">
+        <HowGraded label="How this works"
+          lead={<>Two boards meant to disagree: what each player&apos;s plays were worth, and how the voters will rank him.</>}
+        >
           <p>
             The value board measures what a player&apos;s plays were worth in
             points above a replacement at his position, adjusted for every

@@ -1,4 +1,4 @@
-import { PageDescription, PageHeader, PageShell, PageTitle } from "@/components/page-layout";
+import { PageDescription, PageHeader, PageShell, PageTitle, PageMeta } from "@/components/page-layout";
 import { NFL_PLAYER_SECTIONS, PlayerSectionTabs } from "@/components/player-section-tabs";
 import type { Metadata } from "next";
 import { fetchGradeTeams, fetchNflPositionGrades } from "@/lib/nfl";
@@ -51,11 +51,13 @@ export default async function NflPlayersPage() {
       <PageHeader>
         <div>
           <PageTitle>Player Grades</PageTitle>
-          <PageDescription className="type-eyebrow">
-            {season} · Through week {week}
-          </PageDescription>
+          <PageMeta>
+            <PageDescription className="type-eyebrow">
+              {season} · Through week {week}
+            </PageDescription>
+            <LastUpdated timestamp={grades.asOf} schedule="Updates after each Tuesday refresh" />
+          </PageMeta>
         </div>
-        <LastUpdated timestamp={grades.asOf} schedule="Updates after each Tuesday refresh" />
       </PageHeader>
       <PlayerSectionTabs sections={NFL_PLAYER_SECTIONS} />
 

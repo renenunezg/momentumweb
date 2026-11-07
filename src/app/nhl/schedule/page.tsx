@@ -1,4 +1,4 @@
-import { PageDescription, PageHeader, PageShell, PageTitle } from "@/components/page-layout";
+import { PageDescription, PageHeader, PageShell, PageTitle, PageMeta } from "@/components/page-layout";
 import type { Metadata } from "next";
 import { Fragment } from "react";
 import { Kickoff } from "@/components/kickoff-cells";
@@ -84,14 +84,13 @@ export default async function SchedulePage() {
       <PageHeader>
         <div>
           <PageTitle>NHL Schedule and Projections</PageTitle>
-          <PageDescription className="type-eyebrow">
-            Next {DAYS} days · {games.length} games
-          </PageDescription>
+          <PageMeta>
+            <PageDescription className="type-eyebrow">
+              Next {DAYS} days · {games.length} games
+            </PageDescription>
+            <LastUpdated timestamp={games[0]?.as_of ?? null} schedule="Updates every morning in season" />
+          </PageMeta>
         </div>
-        <LastUpdated
-          timestamp={games[0]?.as_of ?? null}
-          schedule="Updates every morning in season"
-        />
       </PageHeader>
       <p className="max-w-4xl text-sm text-muted-foreground">
         Book columns and predictions fill in on game day, when the partner

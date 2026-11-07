@@ -1,4 +1,4 @@
-import { PageDescription, PageHeader, PageShell, PageTitle } from "@/components/page-layout";
+import { PageDescription, PageHeader, PageShell, PageTitle, PageMeta } from "@/components/page-layout";
 import type { Metadata } from "next";
 import { LastUpdated } from "@/components/last-updated";
 import { HowGraded } from "@/components/how-graded";
@@ -42,32 +42,29 @@ export default async function RatingsPage() {
       <PageHeader>
         <div>
           <PageTitle>NHL Model Ratings</PageTitle>
-          <PageDescription className="type-eyebrow">
-            As of {formatDate(asOf)}
-          </PageDescription>
+          <PageMeta>
+            <PageDescription className="type-eyebrow">
+              As of {formatDate(asOf)}
+            </PageDescription>
+            <LastUpdated timestamp={ratings[0]?.published_at ?? null} schedule="Updates every morning in season" />
+          </PageMeta>
+          <div className="mt-2">
+            <HowGraded label="How this works"
+              lead={<>Strengths are ratios to the league average: 1.000 is average, and a defense below 1.000 allows fewer goals.</>}
+            >
+              <p>
+                Attack and defense strengths come from each team&apos;s last 50
+                games, home and road together: goals and expected goals, each padded
+                with ten games of league-average play. Expected goals for and against
+                are those strengths against an average opponent at the league&apos;s
+                home and road scoring rates. Rating is twice attack minus twice
+                defense. The window column counts the home and road games behind the
+                numbers.
+              </p>
+            </HowGraded>
+          </div>
         </div>
-        <LastUpdated
-          timestamp={ratings[0]?.published_at ?? null}
-          schedule="Updates every morning in season"
-        />
       </PageHeader>
-      <div className="space-y-2">
-        <p className="max-w-4xl text-sm text-muted-foreground">
-          Strengths are ratios to the league average: 1.000 is average, and a
-          defense below 1.000 allows fewer goals.
-        </p>
-        <HowGraded label="How this works">
-          <p>
-            Attack and defense strengths come from each team&apos;s last 50
-            games, home and road together: goals and expected goals, each padded
-            with ten games of league-average play. Expected goals for and against
-            are those strengths against an average opponent at the league&apos;s
-            home and road scoring rates. Rating is twice attack minus twice
-            defense. The window column counts the home and road games behind the
-            numbers.
-          </p>
-        </HowGraded>
-      </div>
       <NhlRatingsTable ratings={ratings} teams={teams} />
     </PageShell>
   );

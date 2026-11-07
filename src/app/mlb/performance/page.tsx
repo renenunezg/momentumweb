@@ -1,4 +1,4 @@
-import { PageHeader, PageShell, PageTitle } from "@/components/page-layout";
+import { PageHeader, PageShell, PageTitle, PageMeta } from "@/components/page-layout";
 import type { Metadata } from "next";
 import { supabase } from "@/lib/supabase";
 import type {
@@ -165,26 +165,23 @@ export default async function PerformancePage() {
   return (
     <PageShell>
       <PageHeader>
-        <PageTitle>
-          MLB Model Performance
-        </PageTitle>
-        <LastUpdated
-          timestamp={lastUpdated}
-          schedule="Updates nightly ~midnight PT"
-        />
+        <div>
+          <PageTitle>MLB Model Performance</PageTitle>
+          <PageMeta>
+            <LastUpdated timestamp={lastUpdated} schedule="Updates nightly ~midnight PT" />
+          </PageMeta>
+          <div className="mt-2">
+            <HowGraded
+              lead={<>How the win probabilities and run totals have held up across two model versions.</>}
+            >
+              <p>
+                Scored overnight after every game. v1, an XGBoost model, ran through
+                May 11, 2026, and v2, the Bayesian simulation, from May 12.
+              </p>
+            </HowGraded>
+          </div>
+        </div>
       </PageHeader>
-      <div className="space-y-2">
-        <p className="max-w-3xl type-body text-muted-foreground">
-          How the win probabilities and run totals have held up across two model
-          versions.
-        </p>
-        <HowGraded>
-          <p>
-            Scored overnight after every game. v1, an XGBoost model, ran through
-            May 11, 2026, and v2, the Bayesian simulation, from May 12.
-          </p>
-        </HowGraded>
-      </div>
       <PerformanceTabs
         evaluations={evaluations}
         calibration={calibration}

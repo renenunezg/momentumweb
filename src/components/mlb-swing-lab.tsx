@@ -211,10 +211,9 @@ export function SwingLab({ study, hitters }: { study: LabStudy; hitters: CarryHi
             Beyond ±{NATURAL_CHANGE}°: few hitters have changed this much in a year, so these numbers extend the observed pattern rather than measure it.
           </p>
         )}
-        <p className="text-xs text-muted-foreground">
-          What tended to follow a natural swing change, not what a change guarantees.
-        </p>
-        <HowGraded label="How this works">
+        <HowGraded label="How this works"
+          lead={<>What tended to follow a natural swing change, not what a change guarantees.</>}
+        >
           <p>
             Carry is per ball in the air, from rerunning the collision and flight physics on {hitter ? "his own" : "the league's"} {study.season} batted
             balls with every ball&apos;s exit velocity and launch angle held fixed, scaled by how much modeled spin translates into observed carry

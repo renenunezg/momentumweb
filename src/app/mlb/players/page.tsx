@@ -1,4 +1,4 @@
-import { PageDescription, PageHeader, PageShell, PageTitle } from "@/components/page-layout";
+import { PageDescription, PageHeader, PageShell, PageTitle, PageMeta } from "@/components/page-layout";
 import type { Metadata } from "next";
 import { fetchPlayerValues } from "@/lib/mlb-players";
 import { formatNumber } from "@/lib/utils";
@@ -43,11 +43,13 @@ export default async function MlbPlayersPage() {
       <PageHeader>
         <div>
           <PageTitle>Player Values</PageTitle>
-          <PageDescription className="type-eyebrow">
-            Projecting the {season} season
-          </PageDescription>
+          <PageMeta>
+            <PageDescription className="type-eyebrow">
+              Projecting the {season} season
+            </PageDescription>
+            <LastUpdated timestamp={updatedAt} schedule="Updates nightly" />
+          </PageMeta>
         </div>
-        <LastUpdated timestamp={updatedAt} schedule="Updates nightly" />
       </PageHeader>
 
       <p className="max-w-4xl text-sm text-muted-foreground leading-relaxed">

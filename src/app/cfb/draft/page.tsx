@@ -4,6 +4,7 @@ import {
   PageHeader,
   PageTitle,
   PageDescription,
+  PageMeta,
 } from "@/components/page-layout";
 import { PlayerSectionTabs } from "@/components/player-section-tabs";
 import { LastUpdated } from "@/components/last-updated";
@@ -38,16 +39,13 @@ export default async function DraftPage() {
       <PageHeader>
         <div>
           <PageTitle>{data?.board.season} NFL Draft</PageTitle>
-          <PageDescription>
-            Seven-round mock draft, scouting rankings, and team needs.
-          </PageDescription>
+          <PageMeta>
+            <PageDescription>
+              Seven-round mock draft, scouting rankings, and team needs.
+            </PageDescription>
+            {data && <LastUpdated timestamp={data.meta.published_at} schedule="Refreshes after the weekly college update" />}
+          </PageMeta>
         </div>
-        {data && (
-          <LastUpdated
-            timestamp={data.meta.published_at}
-            schedule="Refreshes after the weekly college update"
-          />
-        )}
       </PageHeader>
       <PlayerSectionTabs />
       {data ? (

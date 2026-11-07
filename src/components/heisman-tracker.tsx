@@ -152,10 +152,9 @@ function HeismanBoard({
   const shareDomain = Math.ceil(Math.max(...rows.map((r) => r.predicted_share ?? 0)) * 10) / 10 || 1;
   return (
     <div className="space-y-3">
-      <p className="max-w-4xl text-sm text-muted-foreground">
-        Predicted vote share through week {week}.
-      </p>
-      <HowGraded label="How this works">
+      <HowGraded label="How this works"
+        lead={<>Predicted vote share through week {week}.</>}
+      >
         <p>
           The gap column is the player&apos;s value rank minus his predicted
           finish: negative means the plays say he is better than the voters
@@ -363,10 +362,9 @@ function Trajectory({ rows }: { rows: CfbPlayerValue[] }) {
   }
   return (
     <div className="space-y-3">
-      <p className="max-w-4xl text-sm text-muted-foreground">
-        Cumulative points above replacement by week for the current top eight.
-      </p>
-      <HowGraded label="How this works">
+      <HowGraded label="How this works"
+        lead={<>Cumulative points above replacement by week for the current top eight.</>}
+      >
         <p>
           Each point is the snapshot published after that week, so the line is
           what the board said at the time, not a recomputation.
@@ -416,12 +414,9 @@ function History({ rows, meta, week }: { rows: CfbHeismanHistory[]; meta: CfbPla
   const weeklyEvaluation = meta?.heisman_model_version === "cfb_heisman_share_v2";
   return (
     <div className="space-y-3">
-      <p className="max-w-4xl text-sm text-muted-foreground">
-        {weeklyEvaluation
-          ? `Each season forecast through ${week != null ? `Week ${week}` : "the available weekly cutoff"} from earlier seasons only.`
-          : "Each season scored on full-season statistics, so this does not measure early-season forecast accuracy."}
-      </p>
-      <HowGraded>
+      <HowGraded
+        lead={<>{weeklyEvaluation ? `Each season forecast through ${week != null ? `Week ${week}` : "the available weekly cutoff"} from earlier seasons only.` : "Each season scored on full-season statistics, so this does not measure early-season forecast accuracy."}</>}
+      >
         <p>
           {weeklyEvaluation
             ? "Candidates are selected from that week's statistics, and winners outside the candidate pool count as misses. Value ranks use the same weekly cutoff, where available."

@@ -42,12 +42,9 @@ export function MlbPlayoffEditions({
             <h2 className="type-section">
               Before the {STAGE_NAMES[key]}
             </h2>
-            <p className="text-sm text-muted-foreground">
-              {key === latest
-                ? "The latest forecast; it stays fixed once the round begins."
-                : "Frozen before this round and not updated with later results."}
-            </p>
-            <HowGraded label="How this works">
+            <HowGraded label="How this works"
+              lead={<>{key === latest ? "The latest forecast; it stays fixed once the round begins." : "Frozen before this round and not updated with later results."}</>}
+            >
               <p>
                 {key === "WC"
                   ? "The original bracket, forecast before the first postseason game."

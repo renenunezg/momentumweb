@@ -1,4 +1,4 @@
-import { PageHeader, PageSection, PageShell, PageTitle } from "@/components/page-layout";
+import { PageHeader, PageSection, PageShell, PageTitle, PageMeta } from "@/components/page-layout";
 import { NavigationLink } from "@/components/navigation-link";
 import { NFL_PLAYER_SECTIONS, PlayerSectionTabs } from "@/components/player-section-tabs";
 import type { Metadata } from "next";
@@ -30,7 +30,8 @@ export default async function AwardsPage({ searchParams }: {
     <PageHeader><div>
       <p className="type-eyebrow mb-2 text-muted-foreground">The race, week by week</p>
       <PageTitle>NFL MVP and Awards Tracker</PageTitle>
-    </div>{meta && <LastUpdated timestamp={meta.as_of} schedule="Updates after completed weekly games" />}</PageHeader>
+      {meta && <PageMeta><LastUpdated timestamp={meta.as_of} schedule="Updates after completed weekly games" /></PageMeta>}
+    </div></PageHeader>
     <PlayerSectionTabs sections={NFL_PLAYER_SECTIONS} />
     <nav aria-label="NFL awards" className="type-eyebrow flex flex-wrap border-b border-rule-strong">
       {(Object.keys(AWARDS) as AwardKey[]).map((key) => <NavigationLink prefetch={true} scroll={false} key={key} href={query(key, season, week)} aria-current={award === key ? "page" : undefined}

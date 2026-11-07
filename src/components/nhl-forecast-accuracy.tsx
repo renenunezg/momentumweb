@@ -94,11 +94,9 @@ function MarketComparison({
     <section className="space-y-4">
       <div className="space-y-2">
         {heading}
-        <p className="max-w-4xl text-sm text-muted-foreground">
-          Model and market scored on the same games, those with a recorded
-          close, so these figures differ from the ones above. Lower is better.
-        </p>
-        <HowGraded>
+        <HowGraded
+          lead={<>Model and market scored on the same games, those with a recorded close, so these figures differ from the ones above. Lower is better.</>}
+        >
           <p>
             {source === "live"
               ? "The close is the last partner-book quote from the 15 minutes before puck drop."
@@ -229,12 +227,9 @@ export async function NhlForecastAccuracy({
   return (
     <div className="space-y-section">
       <SourceToggle source={source} page={page} />
-      <p className="max-w-4xl text-sm text-muted-foreground">
-        {source === "live"
-          ? "Each game is graded on the last forecast published before puck drop, against the final score."
-          : "The current pure model replayed through the 2022-23 to 2025-26 regular seasons, kept separate from live forecasts."}
-      </p>
-      <HowGraded>
+      <HowGraded
+        lead={<>{source === "live" ? "Each game is graded on the last forecast published before puck drop, against the final score." : "The current pure model replayed through the 2022-23 to 2025-26 regular seasons, kept separate from live forecasts."}</>}
+      >
         <p>
           {source === "live"
             ? "Published forecasts are archived before puck drop and graded against official final scores. Each game uses its last pregame revision."

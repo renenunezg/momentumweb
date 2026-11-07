@@ -230,10 +230,9 @@ async function MlbForward({ modelVersion, gradesFittedAt }: { modelVersion: stri
     <div className="space-y-5">
       <div className="space-y-2">
         <h3 className="text-lg">Against the public projection systems</h3>
-        <p className="text-sm text-muted-foreground">
-          Rest-of-season production against the public projection systems: a development result, not an untouched test.
-        </p>
-        <HowGraded>
+        <HowGraded
+          lead={<>Rest-of-season production against the public projection systems: a development result, not an untouched test.</>}
+        >
           <p>
             The grade is rebuilt at each checkpoint of {forward.seasons.join(", ")}{" "}from inputs dated before that
             morning (the Statcast fielding and baserunning boards are the season&apos;s, prorated, so that cutoff is
@@ -304,10 +303,9 @@ async function MlbResults() {
       <div className="space-y-5">
         <div className="space-y-2">
           <h3 className="text-lg">Predicting next-season production</h3>
-          <p className="text-sm text-muted-foreground">
-            Rank correlation with next-season production against simple baselines: a development result, not a holdout.
-          </p>
-          <HowGraded>
+          <HowGraded
+            lead={<>Rank correlation with next-season production against simple baselines: a development result, not a holdout.</>}
+          >
             <p>
               Development pairs {first} to {first + 1} through {last - 1} to {last}, each held out in
               turn: the grade fitted on the other pairs ranks the held-out season. Rank correlation
@@ -407,10 +405,9 @@ async function CfbResults() {
         <div className="space-y-5">
           <div className="space-y-2">
             <h3 className="text-lg">How the grade ranks later production</h3>
-            <p className="text-sm text-muted-foreground">
-              Whether each position&apos;s grade ranks players&apos; later production better than their EPA credit to date.
-            </p>
-            <HowGraded>
+            <HowGraded
+              lead={<>Whether each position&apos;s grade ranks players&apos; later production better than their EPA credit to date.</>}
+            >
               <p>
                 Served grade model {first.grade_model_version} (weights {first.model_sha.slice(0, 8)}) on{" "}
                 {first.input_value_model_version}&nbsp;credit. Rho is Spearman rank correlation on the same players; the
@@ -462,10 +459,9 @@ async function CfbResults() {
       <div className="space-y-5">
         <div className="space-y-2">
           <h3 className="text-lg">How consistently player value repeats</h3>
-          <p className="text-sm text-muted-foreground">
-            How much a player&apos;s credited production repeats from one half of their games to the other.
-          </p>
-          <HowGraded label="How this is measured">
+          <HowGraded label="How this is measured"
+            lead={<>How much a player&apos;s credited production repeats from one half of their games to the other.</>}
+          >
             <p>
               Odd-game against even-game correlation of opponent-adjusted EPA credit per
               game for the {data.season} player-value model ({data.value_model_version}).
@@ -574,10 +570,9 @@ function NflEvaluation({ rows }: { rows: NflGradeEvaluationRow[] }) {
     <div className="space-y-5">
       <div className="space-y-2">
         <h3 className="text-lg">How the grades rank later production</h3>
-        <p className="text-sm text-muted-foreground">
-          Whether each position&apos;s grade ranks players&apos; later production better than a simple baseline.
-        </p>
-        <HowGraded>
+        <HowGraded
+          lead={<>Whether each position&apos;s grade ranks players&apos; later production better than a simple baseline.</>}
+        >
           <p>
             Rho is Spearman rank correlation on the same players; the gap is grade minus baseline with a 95 percent
             player-level bootstrap interval. Next-season rows score the final-week grade against per-game EPA credit the
@@ -689,10 +684,9 @@ async function NflResults() {
       <div className="space-y-5">
         <div className="space-y-2">
           <h3 className="text-lg">How consistently graded traits repeat</h3>
-          <p className="text-sm text-muted-foreground">
-            How much each graded trait repeats from one half of a player&apos;s games to the other.
-          </p>
-          <HowGraded label="How this is measured">
+          <HowGraded label="How this is measured"
+            lead={<>How much each graded trait repeats from one half of a player&apos;s games to the other.</>}
+          >
             <p>
               Correlation between odd-game and even-game measurements for traits
               used in the grade. Strong repeatability can reflect a stable role as

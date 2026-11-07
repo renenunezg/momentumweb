@@ -1,4 +1,4 @@
-import { PageHeader, PageShell, PageTitle } from "@/components/page-layout";
+import { PageHeader, PageShell, PageTitle, PageMeta } from "@/components/page-layout";
 import type { Metadata } from "next";
 import { supabase } from "@/lib/supabase";
 import type { Tables } from "@/lib/database-schema";
@@ -221,11 +221,12 @@ export default async function HistoryPage({
   return (
     <PageShell>
       <PageHeader>
-        <PageTitle>MLB Prediction History</PageTitle>
-        <LastUpdated
-          timestamp={lastUpdated}
-          schedule="Predictions ~5 AM PT • Results scored overnight"
-        />
+        <div>
+          <PageTitle>MLB Prediction History</PageTitle>
+          <PageMeta>
+            <LastUpdated timestamp={lastUpdated} schedule="Predictions ~5 AM PT • Results scored overnight" />
+          </PageMeta>
+        </div>
       </PageHeader>
 
       <p className="max-w-4xl text-sm text-muted-foreground">

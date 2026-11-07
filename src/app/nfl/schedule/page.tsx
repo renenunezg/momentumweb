@@ -1,4 +1,4 @@
-import { PageDescription, PageHeader, PageShell, PageTitle } from "@/components/page-layout";
+import { PageDescription, PageHeader, PageShell, PageTitle, PageMeta } from "@/components/page-layout";
 import type { Metadata } from "next";
 import { supabaseNfl } from "@/lib/supabase";
 import { fetchLatestRatings, fetchTeams } from "@/lib/nfl";
@@ -193,35 +193,31 @@ export default async function SchedulePage() {
       <PageHeader>
         <div>
           <PageTitle>NFL Schedule and Projections</PageTitle>
-          <PageDescription className="type-eyebrow">
-            {latest.season} · Week {latest.week} · {games.length} games
-          </PageDescription>
+          <PageMeta>
+            <PageDescription className="type-eyebrow">
+              {latest.season} · Week {latest.week} · {games.length} games
+            </PageDescription>
+            <LastUpdated timestamp={lastUpdated} schedule="Updates when a new forecast is published" />
+          </PageMeta>
+          <div className="mt-2">
+            <HowGraded label="How this works"
+              lead={<>Lines are quoted for the home team: a negative line means the model favors the home side.</>}
+            >
+              <p>
+                The published line blends the pure model with the market at a capped
+                weight; Pure is the model&apos;s own opinion before that blend.
+              </p>
+              <p>
+                Proj score is away&ndash;home expected points. Diff is model line minus
+                market line. Market total is the consensus total when the total prediction
+                was decided, and nothing here is wagering advice. QB marks a projected
+                starter whose value differs meaningfully from the QB play baked into
+                the team&apos;s rating; N marks a neutral site.
+              </p>
+            </HowGraded>
+          </div>
         </div>
-        <LastUpdated
-          timestamp={lastUpdated}
-          schedule="Updates when a new forecast is published"
-        />
       </PageHeader>
-
-      <div className="space-y-2">
-        <p className="max-w-4xl text-sm text-muted-foreground">
-          Lines are quoted for the home team: a negative line means the model
-          favors the home side.
-        </p>
-        <HowGraded label="How this works">
-          <p>
-            The published line blends the pure model with the market at a capped
-            weight; Pure is the model&apos;s own opinion before that blend.
-          </p>
-          <p>
-            Proj score is away&ndash;home expected points. Diff is model line minus
-            market line. Market total is the consensus total when the total prediction
-            was decided, and nothing here is wagering advice. QB marks a projected
-            starter whose value differs meaningfully from the QB play baked into
-            the team&apos;s rating; N marks a neutral site.
-          </p>
-        </HowGraded>
-      </div>
 
       <ScheduleFilters
         league="nfl"

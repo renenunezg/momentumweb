@@ -41,7 +41,7 @@ export default async function PerformancePage({
   if (params.view === "players") {
     return (
       <PageShell>
-        <PageTitle>College Football Model Performance</PageTitle>
+        <PageTitle>CFB Model Performance</PageTitle>
         <CfbPerformanceTabs active="players" query={query}>
           <PlayerModelPerformance sport="cfb" />
         </CfbPerformanceTabs>
@@ -53,7 +53,7 @@ export default async function PerformancePage({
     return (
       <PageShell>
         <PageTitle>
-          College Football Model Performance
+          CFB Model Performance
         </PageTitle>
         <CfbPerformanceTabs active="accuracy" query={query}>
           <ForecastPerformance live={live} />
@@ -73,7 +73,7 @@ export default async function PerformancePage({
       <PageHeader>
         <div>
           <PageTitle>
-            College Football Model Performance
+            CFB Model Performance
           </PageTitle>
           <PageDescription className="max-w-2xl">
             Graded moneyline, spread and total predictions at the prices recorded

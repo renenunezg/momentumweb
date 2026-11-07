@@ -1,4 +1,4 @@
-import { PageDescription, PageHeader, PageSection, PageShell, PageTitle } from "@/components/page-layout";
+import { PageHeader, PageSection, PageShell, PageTitle } from "@/components/page-layout";
 import type { Metadata } from "next";
 import { AwardFavorites, AwardRace, AwardTrackRecord, GoldGloveField } from "@/components/mlb-awards";
 import { fetchAwards } from "@/lib/mlb-awards.server";
@@ -51,9 +51,10 @@ export default async function MlbAwardsPage() {
         <div>
           <p className="type-eyebrow mb-2 text-muted-foreground">{season} season · Frozen {FROZEN_DATE.format(new Date(models[0].as_of))}</p>
           <PageTitle>MLB Awards Forecast</PageTitle>
-          <PageDescription>Who the voters will pick, not who deserves it.</PageDescription>
-          <div className="mt-2">
-            <HowGraded label="How this works">
+          <div className="mt-heading">
+            <HowGraded label="How this works"
+              lead={<>Who the voters will pick, not who deserves it.</>}
+            >
               <p>
                 Each race is fitted on past ballots and winners using regular-season numbers only, then frozen and graded
                 against the result.
@@ -69,10 +70,9 @@ export default async function MlbAwardsPage() {
 
       <PageSection>
         <h2 className="type-section">Track record</h2>
-        <p className="max-w-3xl text-sm text-muted-foreground">
-          Winners called from earlier seasons only, against picking the leader in one stat.
-        </p>
-        <HowGraded>
+        <HowGraded
+          lead={<>Winners called from earlier seasons only, against picking the leader in one stat.</>}
+        >
           <p>Ballot awards cover 2016 to 2025, the others 2020 to 2025.</p>
         </HowGraded>
         <AwardTrackRecord rows={track} />
@@ -94,10 +94,9 @@ export default async function MlbAwardsPage() {
 
       <PageSection id="gold-gloves" className="scroll-mt-24 border-t border-rule-strong pt-section">
         <h2 className="type-section">Gold Gloves</h2>
-        <p className="max-w-3xl text-sm text-muted-foreground">
-          Picked from the three finalists at each position: a blind test published after the winners, not an advance call.
-        </p>
-        <HowGraded>
+        <HowGraded
+          lead={<>Picked from the three finalists at each position: a blind test published after the winners, not an advance call.</>}
+        >
           <p>
             This board was run without the {season} winners. Pitchers and utility players are ranked with no probability: the pitcher model called{" "}
             {pitchers?.hits} of {pitchers?.races}, and utility has too few seasons to test. The track record above picks from

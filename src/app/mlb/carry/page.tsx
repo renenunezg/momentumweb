@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import { cn, formatSigned as signed } from "@/lib/utils";
 import type { ReactNode } from "react";
-import { PageDescription, PageHeader, PageSection, PageShell, PageTitle } from "@/components/page-layout";
+import { PageDescription, PageHeader, PageSection, PageShell, PageTitle, PageMeta } from "@/components/page-layout";
 import { KpiCard } from "@/components/kpi-card";
 import { LastUpdated } from "@/components/last-updated";
 import { MLB_SWING_SECTIONS, PlayerSectionTabs } from "@/components/player-section-tabs";
@@ -170,9 +170,11 @@ export default async function MlbCarryPage() {
       <PageHeader>
         <div>
           <PageTitle>Carry</PageTitle>
-          <PageDescription className="type-eyebrow">Through the {season} season</PageDescription>
+          <PageMeta>
+            <PageDescription className="type-eyebrow">Through the {season} season</PageDescription>
+            <LastUpdated timestamp={updatedAt} schedule="Updates each offseason" />
+          </PageMeta>
         </div>
-        <LastUpdated timestamp={updatedAt} schedule="Updates each offseason" />
       </PageHeader>
       <PlayerSectionTabs sections={MLB_SWING_SECTIONS} label="Swing lab pages" />
 

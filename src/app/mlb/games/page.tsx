@@ -1,4 +1,4 @@
-import { PageDescription, PageHeader, PageShell, PageTitle } from "@/components/page-layout";
+import { PageDescription, PageHeader, PageShell, PageTitle, PageMeta } from "@/components/page-layout";
 import type { Metadata } from "next";
 import { supabase } from "@/lib/supabase";
 import type { Tables } from "@/lib/database-schema";
@@ -174,26 +174,23 @@ export default async function Page() {
           <PageTitle>
             Today&apos;s MLB Predictions
           </PageTitle>
-          <PageDescription>{displayDate}</PageDescription>
+          <PageMeta>
+            <PageDescription>{displayDate}</PageDescription>
+            <LastUpdated timestamp={lastUpdated} schedule="Predictions ~5 AM PT • Scores live" />
+          </PageMeta>
+          <div className="mt-2">
+            <HowGraded label="How this works"
+              lead={<>A Bayesian model simulates every plate appearance of today&apos;s games.</>}
+            >
+              <p>
+                A prediction can change until first pitch as lineups and prices move; the
+                last one before first pitch is the one graded, at the best pregame price
+                published. Each game shows when its prediction was last written.
+              </p>
+            </HowGraded>
+          </div>
         </div>
-        <LastUpdated
-          timestamp={lastUpdated}
-          schedule="Predictions ~5 AM PT • Scores live"
-        />
       </PageHeader>
-
-      <div className="space-y-2">
-        <p className="max-w-4xl text-sm text-muted-foreground">
-          A Bayesian model simulates every plate appearance of today&apos;s games.
-        </p>
-        <HowGraded label="How this works">
-          <p>
-            A prediction can change until first pitch as lineups and prices move; the
-            last one before first pitch is the one graded, at the best pregame price
-            published. Each game shows when its prediction was last written.
-          </p>
-        </HowGraded>
-      </div>
 
       {outputsError || gamesError ? (
         <Notice>Predictions are temporarily unavailable. Scores remain available.</Notice>

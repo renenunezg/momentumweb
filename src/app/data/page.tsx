@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { PageDescription, PageHeader, PageShell, PageTitle } from "@/components/page-layout";
+import { PageHeader, PageShell, PageTitle } from "@/components/page-layout";
 import { HowGraded } from "@/components/how-graded";
 
 export const metadata: Metadata = {
@@ -110,9 +110,10 @@ export default function DataPage() {
       <PageHeader>
         <div>
           <PageTitle>Data and Exports</PageTitle>
-          <PageDescription>Everything a performance page shows can be recomputed from these files.</PageDescription>
-          <div className="mt-2">
-            <HowGraded label="How this works">
+          <div className="mt-heading">
+            <HowGraded label="How this works"
+              lead={<>Everything a performance page shows can be recomputed from these files.</>}
+            >
               <p>
                 Each performance page is a formatted view of a public table. The downloads below are
                 those tables, streamed row by row through the same read-only connection the pages use,
@@ -147,10 +148,9 @@ export default function DataPage() {
 
       <section className="space-y-3">
         <h2 className="type-section">Reading the tables directly</h2>
-        <p className="text-sm text-muted-foreground">
-          The same tables answer PostgREST requests with the public read-only key the site ships.
-        </p>
-        <HowGraded label="How this works">
+        <HowGraded label="How this works"
+          lead={<>The same tables answer PostgREST requests with the public read-only key the site ships.</>}
+        >
           <p>
             Each sport is its own schema, selected with the <code className={code}>Accept-Profile</code>{" "}
             header on reads and <code className={code}>Content-Profile</code> on function calls. Responses

@@ -259,13 +259,16 @@ export function PerformanceTabs({
               />
             </div>
             <div className="space-y-1">
-              <p className="max-w-3xl type-meta text-muted-foreground">
-                {latest?.scored_games ?? latest?.total_predictions ?? 0} graded games
-                {latest?.scored_games == null && " with a favored side"}
-                {dailyEvals.length > 0 && <>, {current ? formatDate(V2_CUTOVER_DATE) : formatDate(dailyEvals[0].date)} to {formatDate(dailyEvals[dailyEvals.length - 1].date)}</>},
-                {" "}{headlineLabel}, regular season and postseason.
-              </p>
-              <HowGraded>
+              <HowGraded
+                lead={
+                  <>
+                    {latest?.scored_games ?? latest?.total_predictions ?? 0} graded games
+                    {latest?.scored_games == null && " with a favored side"}
+                    {dailyEvals.length > 0 && <>, {current ? formatDate(V2_CUTOVER_DATE) : formatDate(dailyEvals[0].date)} to {formatDate(dailyEvals[dailyEvals.length - 1].date)}</>},
+                    {" "}{headlineLabel}, regular season and postseason.
+                  </>
+                }
+              >
                 <p>
                   {latest?.excluded_games != null
                     ? `${latest.excluded_games} completed games have no gradable forecast and are excluded.`
@@ -378,12 +381,15 @@ export function PerformanceTabs({
             ) : (
               <>
                 <div className="space-y-1">
-                  <p className="max-w-3xl type-meta text-muted-foreground">
-                    {liveKpis.n_bets} staked predictions
-                    {liveKpis.first_date && liveKpis.last_date && <>, {formatDate(liveKpis.first_date)} to {formatDate(liveKpis.last_date)}</>},
-                    both model versions, regular season and postseason.
-                  </p>
-                  <HowGraded>
+                  <HowGraded
+                    lead={
+                      <>
+                        {liveKpis.n_bets} staked predictions
+                        {liveKpis.first_date && liveKpis.last_date && <>, {formatDate(liveKpis.first_date)} to {formatDate(liveKpis.last_date)}</>},
+                        both model versions, regular season and postseason.
+                      </>
+                    }
+                  >
                     <p>
                       v1 through May 11 and v2 from May 12, at quarter-Kelly stakes. The record applies
                       today&apos;s edge gate (4.5 percent on moneyline and run line, 6.5 percent on totals) to

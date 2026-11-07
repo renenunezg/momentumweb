@@ -134,12 +134,9 @@ async function HistoricalBacktest() {
         )}
       </div>
 
-      <p className="max-w-4xl text-sm text-muted-foreground">
-        The pure model, which sees no market, replayed week by week through past
-        seasons with only the data available at the time, against the closing
-        spread. It is not the same population as the live record above.
-      </p>
-      <HowGraded>
+      <HowGraded
+        lead={<>The pure model, which sees no market, replayed week by week through past seasons with only the data available at the time, against the closing spread. It is not the same population as the live record above.</>}
+      >
         <p>
           Every prediction below was made walking forward through each season with
           only the data available at the time. The table is regenerated from the

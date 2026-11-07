@@ -1,4 +1,4 @@
-import { PageDescription, PageHeader, PageShell, PageTitle } from "@/components/page-layout";
+import { PageDescription, PageHeader, PageShell, PageTitle, PageMeta } from "@/components/page-layout";
 import type { Metadata } from "next";
 import { LastUpdated } from "@/components/last-updated";
 import { NhlGamesLive } from "@/components/nhl-games-live";
@@ -126,12 +126,11 @@ export default async function Page({
       <PageHeader>
         <div>
           <PageTitle>Today&apos;s NHL Predictions</PageTitle>
-          <PageDescription>{displayDate}</PageDescription>
+          <PageMeta>
+            <PageDescription>{displayDate}</PageDescription>
+            <LastUpdated timestamp={lastUpdated} schedule="Predictions ~7 AM PT • Scores live" />
+          </PageMeta>
         </div>
-        <LastUpdated
-          timestamp={lastUpdated}
-          schedule="Predictions ~7 AM PT • Scores live"
-        />
       </PageHeader>
       <p className="max-w-4xl text-sm text-muted-foreground">
         Poisson model prices beside partner-book prices; predictions keep the

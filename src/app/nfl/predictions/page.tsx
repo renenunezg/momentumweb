@@ -1,4 +1,4 @@
-import { PageDescription, PageHeader, PageShell, PageTitle } from "@/components/page-layout";
+import { PageHeader, PageShell, PageTitle } from "@/components/page-layout";
 import type { Metadata } from "next";
 import { Notice } from "@/components/notice";
 import { HowGraded } from "@/components/how-graded";
@@ -75,11 +75,10 @@ export default async function PredictionsPage() {
           <PageTitle>
             NFL Predictions
           </PageTitle>
-          <PageDescription>
-            This week&apos;s predictions, organized by kickoff slate.
-          </PageDescription>
-          <div className="mt-2">
-            <HowGraded label="How this works">
+          <div className="mt-heading">
+            <HowGraded label="How this works"
+              lead={<>This week&apos;s predictions, organized by kickoff slate.</>}
+            >
               <p>
                 Lines, odds, and bookmakers stay fixed at publication. These are
                 recorded selections, not live prices. Each prediction is tracked at 1

@@ -1,4 +1,4 @@
-import { PageDescription, PageHeader, PageShell, PageTitle } from "@/components/page-layout";
+import { PageDescription, PageHeader, PageShell, PageTitle, PageMeta } from "@/components/page-layout";
 import type { Metadata } from "next";
 import { fetchProspectPage, fetchProspectSummary } from "@/lib/mlb-prospects";
 import { DEFAULT_PROSPECT_FILTERS, PEAK_GRADE_TIP, PROSPECT_TRADE_VALUE_TIP } from "@/lib/prospect-values";
@@ -45,13 +45,15 @@ export default async function MlbProspectsPage() {
       <PageHeader>
         <div>
           <PageTitle>Prospects</PageTitle>
-          {summary.season != null && (
-            <PageDescription className="type-eyebrow">
-              Through the {summary.season} season
-            </PageDescription>
-          )}
+          <PageMeta>
+            {summary.season != null && (
+              <PageDescription className="type-eyebrow">
+                Through the {summary.season} season
+              </PageDescription>
+            )}
+            <LastUpdated timestamp={summary.updatedAt} schedule="Updates weekly" />
+          </PageMeta>
         </div>
-        <LastUpdated timestamp={summary.updatedAt} schedule="Updates weekly" />
       </PageHeader>
 
       <p className="max-w-4xl text-sm text-muted-foreground leading-relaxed">

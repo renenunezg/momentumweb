@@ -1,6 +1,6 @@
 import { formatSiteTimestamp } from "@/lib/site-time";
 import { PlayerModelPerformance } from "@/components/player-model-performance";
-import { PageDescription, PageHeader, PageShell, PageTitle } from "@/components/page-layout";
+import { PageHeader, PageShell, PageTitle } from "@/components/page-layout";
 import type { Metadata } from "next";
 import { Notice } from "@/components/notice";
 import Link from "next/link";
@@ -78,12 +78,12 @@ export default async function PerformancePage({
           <PageTitle>
             NFL Model Performance
           </PageTitle>
-          <PageDescription className="max-w-2xl">
-            Moneyline, spread and total predictions, graded at the prices
-            recorded when they were made.
-          </PageDescription>
-          <div className="mt-2">
-            <PickPolicy sport="nfl" firstDecision={metric?.first_decision_at}>
+          <div className="mt-heading">
+            <PickPolicy
+              sport="nfl"
+              firstDecision={metric?.first_decision_at}
+              lead="Moneyline, spread and total predictions, graded at the prices recorded when they were made."
+            >
               <p>
                 Spread favorites give points (for example -3); underdogs receive
                 points (+3). Totals split by Over and Under. Moneyline favorites

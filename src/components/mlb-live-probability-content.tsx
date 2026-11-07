@@ -71,10 +71,9 @@ export default function LiveProbabilityContent({ gamePk, away, home }: { gamePk:
         </p>
       </>}
       <div className="space-y-2 border-t border-border pt-3">
-        <p className="text-xs text-muted-foreground">
-          Live probabilities assume league-average teams and ignore sportsbook odds.
-        </p>
-        <HowGraded label="How this works">
+        <HowGraded label="How this works"
+          lead={<>Live probabilities assume league-average teams and ignore sportsbook odds.</>}
+        >
           <p>
             Based on score, inning, runners, outs, and count. Pregame predictions stay fixed. Fair odds are derived from
             these probabilities without bookmaker margin.

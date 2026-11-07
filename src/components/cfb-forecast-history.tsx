@@ -151,12 +151,9 @@ export default async function ForecastHistory({
       </PageHeader>
 
       <div className="space-y-2">
-        <p className="max-w-4xl text-sm text-muted-foreground">
-          {isLive
-            ? "Every completed game graded live this season, with lines quoted for the home team."
-            : "Frozen walk-forward backtest, historical stand-ins rather than live results, with lines quoted for the home team."}
-        </p>
-        <HowGraded>
+        <HowGraded
+          lead={<>{isLive ? "Every completed game graded live this season, with lines quoted for the home team." : "Frozen walk-forward backtest, historical stand-ins rather than live results, with lines quoted for the home team."}</>}
+        >
           <p>
             {isLive
               ? "Each row is the projection published before kickoff, the CFBD closing spread, and the final margin. Nothing is re-fit after a result is known."

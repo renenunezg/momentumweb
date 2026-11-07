@@ -20,8 +20,9 @@ export function NflAwardsTrajectory({ points, leaders }: { points: AwardTrajecto
   return <section className="space-y-3" aria-label="Race trajectory">
     <h2 className="type-section">Race trajectory</h2>
     {data.length < 2 ? <p className="text-sm text-muted-foreground">The race chart needs at least two weekly snapshots.</p> : <>
-      <p className="max-w-3xl text-sm text-muted-foreground">Each point is the board as published after that week, not a recomputation.</p>
-      <HowGraded label="How this works"><p>Predicted rank by weekly snapshot for the current top {players.length}; weeks ranked below {RANK_FLOOR} run off the bottom.</p></HowGraded>
+      <HowGraded label="How this works"
+        lead={<>Each point is the board as published after that week, not a recomputation.</>}
+      ><p>Predicted rank by weekly snapshot for the current top {players.length}; weeks ranked below {RANK_FLOOR} run off the bottom.</p></HowGraded>
       <div role="img" aria-label="Predicted award rank by week for the current leaders">
         <ResponsiveContainer width="100%" height={340}>
           <LineChart data={data} margin={{ top: 8, right: 16, left: 8, bottom: 8 }}>

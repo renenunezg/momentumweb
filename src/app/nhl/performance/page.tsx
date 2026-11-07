@@ -1,5 +1,5 @@
 import { formatSiteTimestamp } from "@/lib/site-time";
-import { PageDescription, PageHeader, PageShell, PageTitle } from "@/components/page-layout";
+import { PageHeader, PageShell, PageTitle } from "@/components/page-layout";
 import type { Metadata } from "next";
 import Link from "next/link";
 import {
@@ -61,12 +61,12 @@ export default async function PerformancePage({
       <PageHeader>
         <div>
           <PageTitle>NHL Model Performance</PageTitle>
-          <PageDescription className="max-w-2xl">
-            Moneyline and total predictions, graded at the partner-book prices
-            recorded when they were made.
-          </PageDescription>
-          <div className="mt-2">
-            <PickPolicy sport="nhl" firstDecision={metric?.first_decision_at}>
+          <div className="mt-heading">
+            <PickPolicy
+              sport="nhl"
+              firstDecision={metric?.first_decision_at}
+              lead="Moneyline and total predictions, graded at the partner-book prices recorded when they were made."
+            >
               <p>
                 Moneyline favorites have odds below -100; odds of +100 or -100 are
                 shown as even money. Totals split by Over and Under. Each segment
