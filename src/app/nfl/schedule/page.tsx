@@ -7,6 +7,7 @@ import { groupFootballSlates } from "@/lib/football-slates";
 import type { NflGameProjection, NflMarketComparison } from "@/lib/types";
 import { formatNumber, formatSigned } from "@/lib/utils";
 import { LastUpdated } from "@/components/last-updated";
+import { HowGraded } from "@/components/how-graded";
 import { KickoffCell, SlateRow } from "@/components/kickoff-cells";
 import { liveKey } from "@/lib/football-live";
 import { ScheduleFilters } from "@/components/schedule-filters";
@@ -202,12 +203,25 @@ export default async function SchedulePage() {
         />
       </PageHeader>
 
-      <p className="max-w-4xl text-sm text-muted-foreground leading-relaxed">
-        Model lines are quoted for the home team: a negative line means the
-        model favors the home side. The published line blends the pure model
-        with the market at a capped weight; Pure is the model&apos;s own
-        opinion before that blend.
-      </p>
+      <div className="space-y-2">
+        <p className="max-w-4xl text-sm text-muted-foreground">
+          Lines are quoted for the home team: a negative line means the model
+          favors the home side.
+        </p>
+        <HowGraded label="How this works">
+          <p>
+            The published line blends the pure model with the market at a capped
+            weight; Pure is the model&apos;s own opinion before that blend.
+          </p>
+          <p>
+            Proj score is away&ndash;home expected points. Diff is model line minus
+            market line. Market total is the consensus total when the total prediction
+            was decided, and nothing here is wagering advice. QB marks a projected
+            starter whose value differs meaningfully from the QB play baked into
+            the team&apos;s rating; N marks a neutral site.
+          </p>
+        </HowGraded>
+      </div>
 
       <ScheduleFilters
         league="nfl"
@@ -285,14 +299,6 @@ export default async function SchedulePage() {
           ))}
         </Table>
       </ScheduleFilters>
-
-      <p className="max-w-4xl text-xs text-muted-foreground">
-        Proj score is away&ndash;home expected points. Diff is model line minus
-        market line. Market total is the consensus total when the total prediction
-        was decided, and nothing here is wagering advice. QB marks a projected
-        starter whose value differs meaningfully from the QB play baked into
-        the team&apos;s rating; N marks a neutral site.
-      </p>
     </PageShell>
   );
 }

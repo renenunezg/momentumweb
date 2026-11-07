@@ -62,10 +62,18 @@ export default async function PerformancePage({
         <div>
           <PageTitle>NHL Model Performance</PageTitle>
           <PageDescription className="max-w-2xl">
-            How the NHL model&apos;s moneyline and total predictions have done:
-            each prediction, the partner-book prices recorded at the time,
-            and graded results.
+            Moneyline and total predictions, graded at the partner-book prices
+            recorded when they were made.
           </PageDescription>
+          <div className="mt-2">
+            <PickPolicy sport="nhl" firstDecision={metric?.first_decision_at}>
+              <p>
+                Moneyline favorites have odds below -100; odds of +100 or -100 are
+                shown as even money. Totals split by Over and Under. Each segment
+                uses the frozen predicted side and price.
+              </p>
+            </PickPolicy>
+          </div>
         </div>
         <Link href={`/nhl/history?${query}&view=picks`} className="text-sm underline underline-offset-4">
           View prediction history
@@ -125,11 +133,6 @@ export default async function PerformancePage({
                 ]}
               />
             ))}
-          <p className="text-xs text-muted-foreground">
-            Moneyline favorites have odds below -100; odds of +100 or -100 are
-            shown as even money. Totals split by Over and Under. Each segment
-            uses the frozen predicted side and price.
-          </p>
           <PickBreakdown
             title="By month"
             rows={summary.metrics
@@ -142,7 +145,6 @@ export default async function PerformancePage({
               .filter((m) => m.segment_kind === "edge" && (m.picks ?? 0) > 0)
               .sort((a, b) => (a.segment ?? "").localeCompare(b.segment ?? "", undefined, { numeric: true }))}
           />
-          <PickPolicy sport="nhl" firstDecision={metric?.first_decision_at} />
         </div>
       </FootballPerformanceTabs>
     </PageShell>

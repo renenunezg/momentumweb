@@ -195,11 +195,9 @@ export function NflPlayoffViewer({
           </div>
           <div>
             <h2 className="type-section">The projected path</h2>
-            <p className="mt-1 max-w-3xl text-xs leading-relaxed text-muted-foreground">
-              One plausible field, with the favorite advancing in each matchup.
-              Higher seeds host; the lowest remaining seed visits No. 1 after
-              Wild Card weekend. Matchup percentages are conditional on these
-              opponents meeting.
+            <p className="mt-1 max-w-3xl text-xs text-muted-foreground">
+              One plausible field with each favorite advancing; matchup
+              percentages assume these opponents meet.
             </p>
           </div>
           <NflPlayoffBracket payload={payload} byId={byId} identities={identities} onTeam={setSelected} />
@@ -251,10 +249,6 @@ export function NflPlayoffViewer({
               : filter === "field" ? "The 14 teams in the projected bracket, one possible playoff field."
                 : "All 32 teams, including those with less than a 1% playoff chance."
           } />
-          <p className="text-xs text-muted-foreground">
-            Select a team for seed odds and its remaining schedule. Select a
-            column to sort.
-          </p>
           {table(
             teams.filter((t) =>
               (filter === "all" || (filter === "field" ? field.has(t.id) : t.playoff >= 0.01)) &&
@@ -273,10 +267,6 @@ export function NflPlayoffViewer({
               onChange={setConference}
             />
           </div>
-          <p className="text-xs text-muted-foreground">
-            Division winners take seeds 1-4. Three wild cards complete each
-            conference. Only the No. 1 seed earns a bye.
-          </p>
           <div className="grid gap-6 xl:grid-cols-2">
             {[
               ...new Set(
@@ -300,9 +290,8 @@ export function NflPlayoffViewer({
       </ViewTabs>
       <section className="space-y-3 border-t border-border pt-5" aria-label="QB availability">
         <h2 className="type-section">QB availability</h2>
-        <p className="max-w-3xl text-xs leading-relaxed text-muted-foreground">
-          Reported return windows adjust the quarterback assumption for each game and playoff round.
-          The forecast uses the midpoint of each reported range and updates when a newer report is supplied.
+        <p className="max-w-3xl text-xs text-muted-foreground">
+          Each game&apos;s quarterback follows the midpoint of the reported return window.
         </p>
         {payload.qb_availability?.length ? (
           <div className="grid min-w-0 gap-3 md:grid-cols-2">
@@ -360,7 +349,10 @@ export function NflPlayoffViewer({
             >
               NFL seeding rules
             </a>
-            , with reseeding after the Wild Card round.
+            , with reseeding after the Wild Card round. Division winners take
+            seeds 1&ndash;4, three wild cards complete each conference, and only
+            the No. 1 seed earns a bye. Higher seeds host; the lowest remaining
+            seed visits No. 1 after Wild Card weekend.
           </p>
           <ul className="list-disc space-y-2 pl-5">
             {payload.limitations.map((note) => (

@@ -79,7 +79,7 @@ export function NflPlayoffBracket({ payload, byId, identities, onTeam }: {
                 {matchup(championship)}
               </div>
             </div>
-            <p className="type-meta text-muted-foreground">Highlighted teams advance in this scenario. {conference} champion advances to the Super Bowl.</p>
+            <p className="type-meta text-muted-foreground">Highlighted teams advance in this scenario.</p>
           </section>
         );
       })}

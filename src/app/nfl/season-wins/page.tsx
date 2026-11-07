@@ -4,6 +4,7 @@ import { keepLastGood } from "@/lib/keep-last-good";
 import { fetchSeasonWinTotals, fetchTeams } from "@/lib/nfl";
 import { LastUpdated } from "@/components/last-updated";
 import { SeasonWinsTable } from "@/components/season-wins-table";
+import { HowGraded } from "@/components/how-graded";
 
 // Every read here is expired by the revalidation webhook when its table is
 // published, and nothing on the page depends on the clock, so the week is only
@@ -57,31 +58,25 @@ export default async function SeasonWinsPage() {
           schedule="Updates with each projection refresh"
         />
       </PageHeader>
-      <p className="max-w-3xl text-sm leading-relaxed text-muted-foreground">
-        Projected regular-season win totals for all 32 NFL teams, next to the
-        preseason sportsbook line. Expected wins cover the full 17-game schedule. The range shows the
-        middle 80% of simulated season outcomes, including uncertainty in team
-        strength and individual games.
-        {inSeason &&
-          " Completed results are locked in; projected wins include wins already earned plus expected remaining wins."}
-      </p>
-      <div className="border-y border-rule-strong py-4 text-sm leading-relaxed">
-        <span className="font-medium">Model output and sportsbook input.</span>{" "}
-        <span className="text-muted-foreground">
+      <div className="space-y-2">
+        <p className="max-w-3xl text-sm text-muted-foreground">
           Book is the frozen preseason line, which also informs the model&apos;s
-          initial ratings. These forecasts are therefore not independent of that
-          input. Each remaining game is simulated from its published margin:
-          games that already have a sportsbook line use the margin blended
-          with that line, and games without a line yet use the model&apos;s
-          own margin. Difference is projected wins minus Book.
-        </span>
-      </div>
-      <SeasonWinsTable rows={rows} teams={[...teams.values()]} />
-      <div className="grid gap-6 border-t border-rule-strong pt-5 text-xs leading-relaxed text-muted-foreground sm:grid-cols-2">
-        <div className="space-y-2">
-          <h2 className="type-eyebrow text-foreground">
-            Forecast assumptions
-          </h2>
+          initial ratings, so the two are not independent.
+        </p>
+        <HowGraded label="How this works">
+          <p>
+            Expected wins cover the full 17-game schedule. The range shows the
+            middle 80% of simulated season outcomes, including uncertainty in team
+            strength and individual games.
+            {inSeason &&
+              " Completed results are locked in; projected wins include wins already earned plus expected remaining wins."}
+          </p>
+          <p>
+            Each remaining game is simulated from its published margin: games that
+            already have a sportsbook line use the margin blended with that line,
+            and games without a line yet use the model&apos;s own margin.
+            Difference is projected wins minus Book.
+          </p>
           <p>
             Current team strengths and expected starting quarterbacks are held
             through the remaining schedule. Future injuries, lineup changes, and
@@ -93,11 +88,6 @@ export default async function SeasonWinsPage() {
             Their season-level coverage has not yet been calibrated against
             historical outcomes.
           </p>
-        </div>
-        <div className="space-y-2">
-          <h2 className="type-eyebrow text-foreground">
-            Sources and timing
-          </h2>
           <p>
             Ratings:{" "}
             {first.ratings_through_week === 0
@@ -123,8 +113,9 @@ export default async function SeasonWinsPage() {
             , {dateLabel(first.sportsbook_source_date)}. This is a frozen
             comparison, not a live quote.
           </p>
-        </div>
+        </HowGraded>
       </div>
+      <SeasonWinsTable rows={rows} teams={[...teams.values()]} />
     </PageShell>
   );
 }

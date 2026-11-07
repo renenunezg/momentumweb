@@ -1,6 +1,7 @@
 import { PageDescription, PageHeader, PageShell, PageTitle } from "@/components/page-layout";
 import type { Metadata } from "next";
 import { LastUpdated } from "@/components/last-updated";
+import { HowGraded } from "@/components/how-graded";
 import { NhlRatingsTable } from "@/components/nhl-ratings";
 import { fetchLatestRatings, fetchTeams } from "@/lib/nhl";
 import { formatDate } from "@/lib/utils";
@@ -50,16 +51,23 @@ export default async function RatingsPage() {
           schedule="Updates every morning in season"
         />
       </PageHeader>
-      <p className="max-w-4xl text-sm leading-relaxed text-muted-foreground">
-        Attack and defense strengths come from each team&apos;s last 50
-        games, home and road together: goals and expected goals, each padded
-        with ten games of league-average play, as ratios to the league
-        average (1.000 is average; a defense below 1.000 allows fewer goals).
-        Expected goals for and against are those strengths against an average
-        opponent at the league&apos;s home and road scoring rates. Rating is
-        twice attack minus twice defense. The window column counts the home
-        and road games behind the numbers.
-      </p>
+      <div className="space-y-2">
+        <p className="max-w-4xl text-sm text-muted-foreground">
+          Strengths are ratios to the league average: 1.000 is average, and a
+          defense below 1.000 allows fewer goals.
+        </p>
+        <HowGraded label="How this works">
+          <p>
+            Attack and defense strengths come from each team&apos;s last 50
+            games, home and road together: goals and expected goals, each padded
+            with ten games of league-average play. Expected goals for and against
+            are those strengths against an average opponent at the league&apos;s
+            home and road scoring rates. Rating is twice attack minus twice
+            defense. The window column counts the home and road games behind the
+            numbers.
+          </p>
+        </HowGraded>
+      </div>
       <NhlRatingsTable ratings={ratings} teams={teams} />
     </PageShell>
   );

@@ -1,6 +1,7 @@
 import { PageDescription, PageHeader, PageShell, PageTitle } from "@/components/page-layout";
 import type { Metadata } from "next";
 import { Notice } from "@/components/notice";
+import { HowGraded } from "@/components/how-graded";
 import Link from "next/link";
 import { LastUpdated } from "@/components/last-updated";
 import { WeeklyFootballPredictions } from "@/components/weekly-football-predictions";
@@ -77,6 +78,15 @@ export default async function PredictionsPage() {
           <PageDescription>
             This week&apos;s predictions, organized by kickoff slate.
           </PageDescription>
+          <div className="mt-2">
+            <HowGraded label="How this works">
+              <p>
+                Lines, odds, and bookmakers stay fixed at publication. These are
+                recorded selections, not live prices. Each prediction is tracked at 1
+                unit.
+              </p>
+            </HowGraded>
+          </div>
         </div>
         <div className="space-y-2 text-sm sm:text-right">
           <Link href="/nfl/history?view=picks" className="underline underline-offset-4">
@@ -105,12 +115,7 @@ export default async function PredictionsPage() {
           This week&apos;s predictions have not been published yet.
         </Notice>
       )}
-      <div className="flex flex-wrap justify-between gap-3 border-t border-border pt-4 text-xs leading-relaxed text-muted-foreground">
-        <p className="max-w-2xl">
-          Lines, odds, and bookmakers stay fixed at publication. These are
-          recorded selections, not live prices. Each prediction is tracked at 1
-          unit.
-        </p>
+      <div className="border-t border-border pt-4 text-xs text-muted-foreground">
         <Link href="/nfl/history?view=picks" className="underline underline-offset-4">
           Results and No Play decisions
         </Link>

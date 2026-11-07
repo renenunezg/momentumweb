@@ -79,10 +79,24 @@ export default async function PerformancePage({
             NFL Model Performance
           </PageTitle>
           <PageDescription className="max-w-2xl">
-            How the NFL model&apos;s moneyline, spread and total predictions have
-            done: each prediction, the prices recorded at the time, and graded
-            results.
+            Moneyline, spread and total predictions, graded at the prices
+            recorded when they were made.
           </PageDescription>
+          <div className="mt-2">
+            <PickPolicy sport="nfl" firstDecision={metric?.first_decision_at}>
+              <p>
+                Spread favorites give points (for example -3); underdogs receive
+                points (+3). Totals split by Over and Under. Moneyline favorites
+                have odds below -100; odds of +100 or -100 are shown as even money.
+                A zero spread is pick’em. Each segment uses the frozen predicted
+                side and price.
+              </p>
+              <p>
+                Results on this page pool every policy version; each prediction
+                keeps the rules and price it was recorded under.
+              </p>
+            </PickPolicy>
+          </div>
         </div>
         <Link
           href={historyUrl}
@@ -153,13 +167,6 @@ export default async function PerformancePage({
                 ]}
               />
             ))}
-          <p className="text-xs text-muted-foreground">
-            Spread favorites give points (for example -3); underdogs receive
-            points (+3). Totals split by Over and Under. Moneyline favorites
-            have odds below -100; odds of +100 or -100 are shown as even money.
-            A zero spread is pick’em. Each segment uses the frozen predicted
-            side and price.
-          </p>
           <>
             <PickBreakdown
               title="By week"
@@ -187,11 +194,6 @@ export default async function PerformancePage({
               .filter((m) => m.segment_kind === "policy")
               .sort((a, b) => (a.segment ?? "").localeCompare(b.segment ?? "", undefined, { numeric: true }))}
           />
-          <p className="text-xs text-muted-foreground">
-            Results on this page pool every policy version above; each prediction keeps the rules
-            and price it was recorded under.
-          </p>
-          <PickPolicy sport="nfl" firstDecision={metric?.first_decision_at} />
         </div>
       </FootballPerformanceTabs>
     </PageShell>

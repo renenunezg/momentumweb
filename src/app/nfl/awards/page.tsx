@@ -1,4 +1,4 @@
-import { PageDescription, PageHeader, PageSection, PageShell, PageTitle } from "@/components/page-layout";
+import { PageHeader, PageSection, PageShell, PageTitle } from "@/components/page-layout";
 import { NavigationLink } from "@/components/navigation-link";
 import { NFL_PLAYER_SECTIONS, PlayerSectionTabs } from "@/components/player-section-tabs";
 import type { Metadata } from "next";
@@ -30,7 +30,6 @@ export default async function AwardsPage({ searchParams }: {
     <PageHeader><div>
       <p className="type-eyebrow mb-2 text-muted-foreground">The race, week by week</p>
       <PageTitle>NFL MVP and Awards Tracker</PageTitle>
-      <PageDescription className="max-w-2xl">Award forecasts alongside on-field performance. Follow the leaders, see what drives their rankings, and revisit each weekly snapshot.</PageDescription>
     </div>{meta && <LastUpdated timestamp={meta.as_of} schedule="Updates after completed weekly games" />}</PageHeader>
     <PlayerSectionTabs sections={NFL_PLAYER_SECTIONS} />
     <nav aria-label="NFL awards" className="type-eyebrow flex flex-wrap border-b border-rule-strong">
@@ -43,7 +42,7 @@ export default async function AwardsPage({ searchParams }: {
       : <>
         <details className="text-sm"><summary className="cursor-pointer text-muted-foreground">Choose a historical snapshot</summary><div className="mt-3 flex max-h-48 flex-wrap gap-2 overflow-y-auto">{snapshots.map((s) => <NavigationLink prefetch={true} scroll={false} key={`${s.season}-${s.week}`} href={query(award, s.season, s.week)} className="rounded border px-2 py-1 font-mono text-xs hover:bg-muted" aria-current={s.season === meta.season && s.week === meta.week ? "page" : undefined}>{s.season} · W{s.week}</NavigationLink>)}</div></details>
         {meta.status === "watchlist" ? <PageSection>
-          <p className="text-sm leading-relaxed text-muted-foreground">Documented injury-return watchlist, in alphabetical order. These are candidates to follow, not a predicted finishing order. There is not enough comparable history under the revised criteria to publish a CPOY forecast.</p>
+          <p className="text-sm text-muted-foreground">Injury-return candidates in alphabetical order, not a predicted finishing order: there is too little comparable history under the revised criteria to forecast CPOY.</p>
           <div className="grid gap-3 sm:grid-cols-2">{[...board].sort((a, b) => a.candidate_name.localeCompare(b.candidate_name)).map((row) => <article className="rounded-lg border p-4" key={row.candidate_id}>
             <div className="flex items-center gap-3"><PlayerHeadshot name={row.candidate_name} src={row.headshot_url} /><div><h3 className="text-sm font-medium">{row.candidate_name}</h3><p className="mt-1 font-mono text-xs text-muted-foreground">{row.team} · {row.position}</p></div></div>
             <p className="mt-3 text-sm text-muted-foreground">{row.context_reason}</p>{row.context_source?.startsWith("https://") && <a className="mt-2 inline-block text-xs underline" href={row.context_source}>Source context</a>}

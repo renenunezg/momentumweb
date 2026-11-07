@@ -1,5 +1,6 @@
 import { PageHeader, PageShell, PageTitle } from "@/components/page-layout";
 import Link from "next/link";
+import { HowGraded } from "@/components/how-graded";
 import { NflForecastSource } from "@/components/nfl-forecast-source";
 import { supabaseNfl } from "@/lib/supabase";
 import type { NflBacktestPrediction } from "@/lib/types";
@@ -97,12 +98,26 @@ export default async function NflForecastHistory({
 
       <NflForecastSource source={source} />
 
-      <p className="max-w-4xl text-sm text-muted-foreground leading-relaxed">
-        {source === "live"
-          ? "Actual published pregame forecasts alongside final scores and nflverse closing lines. The last forecast received before kickoff is preserved; missing forecasts or closes stay blank."
-          : "Every graded prediction from the historical walk-forward backtest: the pure model's margin, next to the closing spread and final margin."}{" "}
-        Lines are quoted for the home team.
-      </p>
+      <div className="space-y-2">
+        <p className="max-w-4xl text-sm text-muted-foreground">
+          {source === "live"
+            ? "Published pregame forecasts against the closing line, quoted for the home team."
+            : "The pure model's walk-forward backtest against the closing spread, quoted for the home team."}
+        </p>
+        <HowGraded>
+          {source === "live" && (
+            <p>
+              The last forecast received before kickoff is preserved; missing
+              forecasts or closes stay blank. Closing lines come from nflverse.
+            </p>
+          )}
+          <p>
+            Model and Close are home lines; Result is the final margin on the same
+            axis. Model err is the absolute miss of the model&apos;s margin, shown
+            green when the model was closer than the closing line.
+          </p>
+        </HowGraded>
+      </div>
 
       <Link
         href="/nfl/history?view=picks"
@@ -147,12 +162,6 @@ export default async function NflForecastHistory({
         totalPages={totalPages}
         pageUrl={(p) => historyUrl({ source, season, team, page: p })}
       />
-
-      <p className="text-xs text-muted-foreground">
-        Model and Close are home lines; Result is the final margin on the same
-        axis. Model err is the absolute miss of the model&apos;s margin, shown
-        green when the model was closer than the closing line.
-      </p>
     </PageShell>
   );
 }

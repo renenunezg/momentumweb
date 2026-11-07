@@ -93,10 +93,9 @@ export default async function SchedulePage() {
           schedule="Updates every morning in season"
         />
       </PageHeader>
-      <p className="max-w-4xl text-sm leading-relaxed text-muted-foreground">
-        Projections use the ratings as of the morning run. The partner
-        sportsbooks post lines only for the current slate, so book columns fill
-        in on game day and predictions are decided then.
+      <p className="max-w-4xl text-sm text-muted-foreground">
+        Book columns and predictions fill in on game day, when the partner
+        sportsbooks post lines; projections use the morning ratings.
       </p>
       <LocalKickoffs>
         <Table>

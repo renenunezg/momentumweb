@@ -133,10 +133,9 @@ export default async function Page({
           schedule="Predictions ~7 AM PT • Scores live"
         />
       </PageHeader>
-      <p className="max-w-4xl text-sm leading-relaxed text-muted-foreground">
-        Win probabilities, expected goals, and predictions for every NHL game today,
-        from a Poisson model. Model and partner-book prices are shown side by
-        side. Predictions retain their frozen prices from publication.
+      <p className="max-w-4xl text-sm text-muted-foreground">
+        Poisson model prices beside partner-book prices; predictions keep the
+        prices frozen at publication.
       </p>
       <SlateSummary stats={[
         { label: "Games", value: matchups.length },

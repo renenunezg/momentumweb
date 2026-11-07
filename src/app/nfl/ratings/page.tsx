@@ -11,6 +11,7 @@ import { keepLastGood } from "@/lib/keep-last-good";
 import { fetchComparisonProjections } from "@/lib/football-comparison.server";
 import { LastUpdated } from "@/components/last-updated";
 import NflRatings from "@/components/nfl-ratings";
+import { HowGraded } from "@/components/how-graded";
 
 // Every read here is expired by the revalidation webhook when its table is
 // published, and nothing on the page depends on the clock, so the week is only
@@ -79,13 +80,36 @@ export default async function RatingsPage() {
         />
       </PageHeader>
 
-      <p className="max-w-4xl text-sm text-muted-foreground leading-relaxed">
-        Power ratings for all 32 NFL teams, refit each week from drive-level
-        EPA. A team&apos;s rating is its expected scoring margin against an
-        average opponent on a neutral field, split into offense and defense
-        points per game. Ratings are model output, not a poll, and carry
-        nothing from the coming week&apos;s matchups.
-      </p>
+      <div className="space-y-2">
+        <p className="max-w-4xl text-sm text-muted-foreground">
+          A team&apos;s rating is its expected scoring margin against an average
+          opponent on a neutral field.
+        </p>
+        <HowGraded label="How this works">
+          <p>
+            Ratings are refit each week from drive-level EPA and split into
+            offense and defense points per game. They are model output, not a
+            poll, and carry nothing from the coming week&apos;s matchups.
+          </p>
+          <p>
+            Off and Def are points per game above an average opponent; Rating is
+            their sum. Pure − market is the fitted model rating, before the market
+            blend, minus market-implied strength from earlier closing spreads.
+            {typicalSd != null && (
+              <>
+                {" "}A team&apos;s rating carries about {formatNumber(typicalSd)}{" "}
+                points of uncertainty (one standard deviation).
+              </>
+            )}
+            {prior.week != null && (
+              <>
+                {" "}Chg is the change in rating since the week {prior.week}{" "}
+                ratings.
+              </>
+            )}
+          </p>
+        </HowGraded>
+      </div>
 
       <NflRatings
         ratings={ratings}
@@ -94,24 +118,6 @@ export default async function RatingsPage() {
         teams={[...teams.values()]}
         prior={prior}
       />
-
-      <p className="text-xs text-muted-foreground">
-        Off and Def are points per game above an average opponent; Rating is
-        their sum. Pure − market is the fitted model rating, before the market
-        blend, minus market-implied strength from earlier closing spreads.
-        {typicalSd != null && (
-          <>
-            {" "}A team&apos;s rating carries about {formatNumber(typicalSd)}{" "}
-            points of uncertainty (one standard deviation).
-          </>
-        )}
-        {prior.week != null && (
-          <>
-            {" "}Chg is the change in rating since the week {prior.week}{" "}
-            ratings.
-          </>
-        )}
-      </p>
     </PageShell>
   );
 }

@@ -59,10 +59,6 @@ export default async function NflPlayersPage() {
       </PageHeader>
       <PlayerSectionTabs sections={NFL_PLAYER_SECTIONS} />
 
-      <p className="max-w-4xl text-sm text-muted-foreground leading-relaxed">
-        Position-specific grades, projected production, and wins above replacement. Explore each player&apos;s traits or compare two at the same position.
-      </p>
-
       <div className="grid grid-cols-3 gap-3 border-y border-rule-strong [&>div]:py-3 sm:gap-4">
         <KpiCard
           compact

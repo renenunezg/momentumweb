@@ -1,6 +1,7 @@
 "use client";
 
 import { useMemo, useState } from "react";
+import { HowGraded } from "@/components/how-graded";
 import { PlayerHeadshot } from "@/components/player-headshot";
 import type { AwardBoard, AwardKey } from "@/lib/nfl-awards-types";
 import { seasonLine } from "@/lib/nfl-awards-format";
@@ -82,6 +83,6 @@ export function NflAwardsBoard({ rows, award }: { rows: AwardBoard[]; award: Awa
       </TableRow>)}
       {!visible.length && <TableRow><TableCell colSpan={6} className="py-10 text-center text-muted-foreground">No candidates match your search.</TableCell></TableRow>}
     </TableBody></Table>
-    <p className="text-xs leading-relaxed text-muted-foreground">Performance ranks use {metric.toLowerCase()}. Offensive credit splits passing EPA between passer and receiver and excludes noncompetitive drives. It subtracts a positional 25th-percentile baseline and uses a 150-opportunity prior to reduce small-sample outliers. Defensive ranks use a descriptive box-stat index. These are separate measures and do not imply equal value across positions.</p>
+    <HowGraded label="How performance ranks work"><p>Performance ranks use {metric.toLowerCase()}. Offensive credit splits passing EPA between passer and receiver and excludes noncompetitive drives. It subtracts a positional 25th-percentile baseline and uses a 150-opportunity prior to reduce small-sample outliers. Defensive ranks use a descriptive box-stat index. These are separate measures and do not imply equal value across positions.</p></HowGraded>
   </section>;
 }

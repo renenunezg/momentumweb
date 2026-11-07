@@ -173,7 +173,7 @@ export default function NflRatings({
               logo={logo}
               powerRank={powerRank}
               caption="NFL unit ratings"
-              intro="Points per game above league average, opponent adjusted. Companions to the power ratings, not components: they do not sum to Off and Def, and the line ratings attribute outcomes without snap level film data. Click a column to sort."
+              intro="Points per game above league average, opponent adjusted. Companions to the power ratings, not components: they do not sum to Off and Def, and the line ratings attribute outcomes without snap level film data."
             />
           )
         ) : (
