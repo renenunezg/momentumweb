@@ -78,11 +78,11 @@ async function LeadStudy() {
           How the MLB grade compares with {listJoin(lead.rows.map((r) => r.system))}
         </h2>
         <p className="mt-4 type-body text-muted-foreground">
-          Before each season from {first} to {last}, the grade was rebuilt using only what was known before opening
-          day, then checked against what hitters went on to do at the plate, in the field and on the bases. It ranked
-          them better than all three projection systems, by more than sampling noise. The grade values the whole
-          player, so on hitting alone the systems still rank a little better; a version of the grade built for
-          hitting matches them. These seasons were used while building the grade, so 2027 is its first clean test.
+          Rebuilt before each season from {first} to {last} with only what was known before opening day, the grade
+          ranked hitters&apos; later value at the plate, in the field and on the bases better than all three projection
+          systems, by more than sampling noise. On hitting alone the systems still rank a little better; a
+          hitting-only grade matches them. These seasons were used while building the grade, so 2027 is its first
+          clean test.
         </p>
         <MoreLink href="/mlb/performance?view=players">The full evaluation</MoreLink>
       </div>
@@ -236,10 +236,8 @@ export default function Home() {
             <h2 className="type-section">Model comparisons</h2>
           </div>
           <p className="mt-1 mb-4 max-w-3xl type-label text-muted-foreground">
-            Each model next to the benchmark it is measured against. Where an evaluation publishes a 95% interval, a
-            difference counts only when the interval clears zero. Game forecasts are scored on every graded game and
-            carry no interval yet, so their rows report the sign only; the football lines shown are the published
-            market-informed lines, which blend the market they are compared with.
+            A difference counts only when its 95% interval clears zero; game forecasts have no interval yet, so they
+            report the sign only. The football lines blend in the market they are compared with.
           </p>
           <Suspense fallback={<Loading />}>
             <Comparisons />

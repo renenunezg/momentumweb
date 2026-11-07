@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { PageDescription, PageHeader, PageShell, PageTitle } from "@/components/page-layout";
+import { HowGraded } from "@/components/how-graded";
 
 export const metadata: Metadata = {
   title: "Data and Exports",
@@ -110,15 +111,18 @@ export default function DataPage() {
         <div>
           <PageTitle>Data and Exports</PageTitle>
           <PageDescription>Everything a performance page shows can be recomputed from these files.</PageDescription>
+          <div className="mt-2">
+            <HowGraded label="How this works">
+              <p>
+                Each performance page is a formatted view of a public table. The downloads below are
+                those tables, streamed row by row through the same read-only connection the pages use,
+                refreshed within an hour of a publish. Nothing is aggregated on the way out, so a reader
+                can rebuild every headline and check every freeze timestamp without trusting the page.
+              </p>
+            </HowGraded>
+          </div>
         </div>
       </PageHeader>
-
-      <p className="text-sm leading-relaxed text-muted-foreground">
-        Each performance page is a formatted view of a public table. The downloads below are
-        those tables, streamed row by row through the same read-only connection the pages use,
-        refreshed within an hour of a publish. Nothing is aggregated on the way out, so a reader
-        can rebuild every headline and check every freeze timestamp without trusting the page.
-      </p>
 
       {EXPORTS.map((group) => (
         <section key={group.sport} className="space-y-3">
@@ -143,13 +147,21 @@ export default function DataPage() {
 
       <section className="space-y-3">
         <h2 className="type-section">Reading the tables directly</h2>
-        <p className="text-sm leading-relaxed text-muted-foreground">
-          The same tables answer PostgREST requests with the public read-only key the site itself
-          ships. Each sport is its own schema, selected with the <code className={code}>Accept-Profile</code>{" "}
-          header on reads and <code className={code}>Content-Profile</code> on function calls. Responses
-          are capped at 1,000 rows, so page with <code className={code}>Range</code> or{" "}
-          <code className={code}>limit</code> and <code className={code}>offset</code>.
+        <p className="text-sm text-muted-foreground">
+          The same tables answer PostgREST requests with the public read-only key the site ships.
         </p>
+        <HowGraded label="How this works">
+          <p>
+            Each sport is its own schema, selected with the <code className={code}>Accept-Profile</code>{" "}
+            header on reads and <code className={code}>Content-Profile</code> on function calls. Responses
+            are capped at 1,000 rows, so page with <code className={code}>Range</code> or{" "}
+            <code className={code}>limit</code> and <code className={code}>offset</code>.
+          </p>
+          <p>
+            Row-level security limits this key to reading. The evaluation code that produces the
+            precomputed tables lives in each model repository; the exports are what it was run on.
+          </p>
+        </HowGraded>
         <pre className="overflow-x-auto rounded-sm border border-border bg-muted/40 p-3 text-xs leading-relaxed">
 {`curl "${SUPABASE_URL}/rest/v1/bet_ledger_v?select=*&order=date,game_pk&limit=1000" \\
   -H "apikey: ${ANON_KEY}" \\
@@ -170,10 +182,6 @@ curl -X POST "${SUPABASE_URL}/rest/v1/rpc/forecast_accuracy" \\
             </li>
           ))}
         </ul>
-        <p className="text-sm leading-relaxed text-muted-foreground">
-          Row-level security limits this key to reading. The evaluation code that produces the
-          precomputed tables lives in each model repository; the exports are what it was run on.
-        </p>
       </section>
     </PageShell>
   );
