@@ -1,6 +1,7 @@
 "use client";
 
 import { useMemo, useState } from "react";
+import { ChevronDown } from "lucide-react";
 import { formatNumber } from "@/lib/utils";
 import type { TeamLogoSource } from "@/components/team-logo";
 import {
@@ -92,57 +93,59 @@ export function GroupRatings<T extends PowerRatingRow>({
   }
 
   return (
-    <div className="space-y-section">
-      <label className="flex items-center gap-2 font-mono text-xs text-muted-foreground">
-        {label}
-        <select
-          value={selected.name}
-          onChange={(event) => select(event.target.value)}
-          className="min-w-0 rounded-md border border-input bg-background px-3 py-1.5 text-base text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring sm:text-xs"
-        >
-          {tiers.map((tier) => {
-            const inTier = groups
-              .filter((g) => g.tier === tier)
-              .sort((a, b) => a.name.localeCompare(b.name));
-            if (inTier.length === 0) return null;
-            return (
-              <optgroup key={tier} label={tier.toUpperCase()}>
-                {inTier.map((g) => (
-                  <option key={g.name} value={g.name}>
-                    {g.name}
-                  </option>
-                ))}
-              </optgroup>
-            );
-          })}
-        </select>
-      </label>
-
-      <section className="space-y-2">
-        <div className="flex items-baseline justify-between gap-4">
-          <h2 className="type-section">{selected.name}</h2>
-          <span className="type-eyebrow text-muted-foreground">
-            Avg {formatNumber(selected.avg)}
+    <section className="space-y-2">
+      <div className="flex items-center justify-between gap-4">
+        {/* The heading is the picker, so the group name is shown once and costs no extra row. */}
+        <h2 className="type-section -ml-1 min-w-0">
+          {/* The name and arrow size the control; the native menu sits invisibly over them so phones get their own picker. */}
+          <span className="relative inline-flex max-w-full items-center gap-1 rounded-md px-1 hover:bg-muted has-focus-visible:ring-2 has-focus-visible:ring-ring">
+            <span aria-hidden="true" className="truncate">{selected.name}</span>
+            <ChevronDown aria-hidden="true" className="size-5 shrink-0 text-muted-foreground" />
+            <select
+              aria-label={label}
+              value={selected.name}
+              onChange={(event) => select(event.target.value)}
+              className="absolute inset-0 size-full cursor-pointer appearance-none opacity-0 focus-visible:outline-none"
+            >
+              {tiers.map((tier) => {
+                const inTier = groups
+                  .filter((g) => g.tier === tier)
+                  .sort((a, b) => a.name.localeCompare(b.name));
+                if (inTier.length === 0) return null;
+                return (
+                  <optgroup key={tier} label={tier.toUpperCase()}>
+                    {inTier.map((g) => (
+                      <option key={g.name} value={g.name}>
+                        {g.name}
+                      </option>
+                    ))}
+                  </optgroup>
+                );
+              })}
+            </select>
           </span>
-        </div>
-        <PowerRatingsTable
-          rows={selected.teams}
-          heatmapRows={ratings}
-          rowKey={rowKey}
-          logo={logo}
-          shortName={shortName}
-          ratingTip={ratingTip}
-          caption={`${selected.name} power ratings`}
-          overallRank={{
-            label: overallRankLabel,
-            value: (row) => overallRank.get(rowKey(row)),
-          }}
-          limited={limited}
-          market={market}
-          gap={gap}
-          change={change}
-        />
-      </section>
-    </div>
+        </h2>
+        <span className="type-eyebrow text-muted-foreground">
+          Avg {formatNumber(selected.avg)}
+        </span>
+      </div>
+      <PowerRatingsTable
+        rows={selected.teams}
+        heatmapRows={ratings}
+        rowKey={rowKey}
+        logo={logo}
+        shortName={shortName}
+        ratingTip={ratingTip}
+        caption={`${selected.name} power ratings`}
+        overallRank={{
+          label: overallRankLabel,
+          value: (row) => overallRank.get(rowKey(row)),
+        }}
+        limited={limited}
+        market={market}
+        gap={gap}
+        change={change}
+      />
+    </section>
   );
 }
