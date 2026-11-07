@@ -2,6 +2,7 @@
 
 import { useMemo, useState } from "react";
 import { ComparisonGaps } from "@/components/comparison-gaps";
+import { HowGraded } from "@/components/how-graded";
 import {
   CartesianGrid,
   Legend,
@@ -151,12 +152,16 @@ function HeismanBoard({
   const shareDomain = Math.ceil(Math.max(...rows.map((r) => r.predicted_share ?? 0)) * 10) / 10 || 1;
   return (
     <div className="space-y-3">
-      <p className="max-w-4xl text-sm text-muted-foreground leading-relaxed">
-        Predicted vote share through week {week}. The gap column is the
-        player&apos;s value rank minus his predicted finish: negative means
-        the plays say he is better than the voters will, positive means the
-        narrative is carrying him.
+      <p className="max-w-4xl text-sm text-muted-foreground">
+        Predicted vote share through week {week}.
       </p>
+      <HowGraded label="How this works">
+        <p>
+          The gap column is the player&apos;s value rank minus his predicted
+          finish: negative means the plays say he is better than the voters
+          will, positive means the narrative is carrying him.
+        </p>
+      </HowGraded>
       <div className="overflow-x-auto">
         <Table density="compact">
           <TableCaption className="sr-only">Predicted Heisman vote shares</TableCaption>
@@ -262,11 +267,13 @@ function ValueBoard({
           variant="pill"
         />
       </div>
-      <p className="max-w-4xl text-sm text-muted-foreground leading-relaxed">
-        {metric === "epa"
-          ? "Points above replacement: opponent-adjusted EPA on competitive plays, per game shrunk toward the position mean, minus what a freely available player at the position produces per game, times games played."
-          : "Win probability added: the same play credit measured in the in-game model's win probability, which rewards leverage and ignores garbage time by construction. Unadjusted for opponent."}
-      </p>
+      <HowGraded label="How this works">
+        <p>
+          {metric === "epa"
+            ? "Points above replacement: opponent-adjusted EPA on competitive plays, per game shrunk toward the position mean, minus what a freely available player at the position produces per game, times games played."
+            : "Win probability added: the same play credit measured in the in-game model's win probability, which rewards leverage and ignores garbage time by construction. Unadjusted for opponent."}
+        </p>
+      </HowGraded>
       <div className="overflow-x-auto">
         <Table>
           <TableCaption className="sr-only">Player value leaderboard</TableCaption>
@@ -356,11 +363,15 @@ function Trajectory({ rows }: { rows: CfbPlayerValue[] }) {
   }
   return (
     <div className="space-y-3">
-      <p className="max-w-4xl text-sm text-muted-foreground leading-relaxed">
+      <p className="max-w-4xl text-sm text-muted-foreground">
         Cumulative points above replacement by week for the current top eight.
-        Each point is the snapshot published after that week, so the line is
-        what the board said at the time, not a recomputation.
       </p>
+      <HowGraded label="How this works">
+        <p>
+          Each point is the snapshot published after that week, so the line is
+          what the board said at the time, not a recomputation.
+        </p>
+      </HowGraded>
       <div role="img" aria-label="Points above replacement by week for the value leaders">
         <ResponsiveContainer width="100%" height={340}>
           <LineChart data={data} margin={{ top: 8, right: 16, left: 8, bottom: 8 }}>
@@ -405,18 +416,18 @@ function History({ rows, meta, week }: { rows: CfbHeismanHistory[]; meta: CfbPla
   const weeklyEvaluation = meta?.heisman_model_version === "cfb_heisman_share_v2";
   return (
     <div className="space-y-3">
-      <p className="max-w-4xl text-sm text-muted-foreground leading-relaxed">
-        {weeklyEvaluation ? (
-          <>Each season is evaluated through {week != null ? `Week ${week}` : "the available weekly cutoff"}, using a model trained
-          only on earlier seasons and candidates selected from that week&apos;s
-          statistics. Winners outside the candidate pool count as misses.
-          Value ranks use the same weekly cutoff, where available.</>
-        ) : (
-          <>Each season is scored using full-season statistics by a ballot model
-          fit on every other season. This does not measure early-season forecast
-          accuracy. Value ranks show the final season board where available.</>
-        )}
+      <p className="max-w-4xl text-sm text-muted-foreground">
+        {weeklyEvaluation
+          ? `Each season forecast through ${week != null ? `Week ${week}` : "the available weekly cutoff"} from earlier seasons only.`
+          : "Each season scored on full-season statistics, so this does not measure early-season forecast accuracy."}
       </p>
+      <HowGraded>
+        <p>
+          {weeklyEvaluation
+            ? "Candidates are selected from that week's statistics, and winners outside the candidate pool count as misses. Value ranks use the same weekly cutoff, where available."
+            : "The ballot model is fit on every other season. Value ranks show the final season board where available."}
+        </p>
+      </HowGraded>
       <div className="overflow-x-auto">
         <Table>
           <TableCaption className="sr-only">Heisman winners against the model</TableCaption>

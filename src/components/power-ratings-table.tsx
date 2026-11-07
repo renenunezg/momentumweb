@@ -151,7 +151,6 @@ export function PowerRatingsTable<T extends PowerRatingRow>({
         <RatingsHeatmapLegend centered />
       </div>
       {allLimited && <p className="type-meta text-accent-amber">{limited.allNote}</p>}
-      <p className="type-meta text-muted-foreground sm:hidden">Swipe the table for every column; the team stays in view.</p>
       <div className="overflow-hidden rounded-xl border border-border bg-card">
         <Table className="type-label">
           <TableCaption className="sr-only">

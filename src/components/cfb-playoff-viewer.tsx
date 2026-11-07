@@ -11,6 +11,7 @@ import {
 } from "@/components/ui/table";
 import { PlayoffMetric as Metric, PlayoffTeamFilter, type PlayoffFilter } from "./football-playoff-summary";
 import { TeamLogo } from "@/components/team-logo";
+import { HowGraded } from "@/components/how-graded";
 import {
   CfbPlayoffBracket,
   type PlayoffIdentities,
@@ -122,6 +123,41 @@ export function CfbPlayoffViewer({
           </span>
         )}
       </div>
+      <HowGraded label="How this works">
+        <p>
+          Momentum simulates the remaining schedule, conference championships,
+          and every playoff round. The fitted schedule-adjusted-record
+          selector chooses the field under the{" "}
+          <a
+            className="text-primary underline"
+            href="https://collegefootballplayoff.com/sports/2024/5/29/12-team-format"
+            target="_blank"
+            rel="noopener noreferrer"
+          >
+            2026 CFP rules
+          </a>
+          . The displayed bracket is one legal simulated field, not a
+          certainty.
+        </p>
+        <p>
+          On the 2024 and 2025 twelve-team fields the record-based selector and
+          a learned committee model scored about the same (Brier 0.034 against
+          0.035, each ahead in one season). That was a retrospective comparison
+          on the seasons used to choose the selector; championship odds have no
+          separate historical calibration claim.
+        </p>
+        <ul className="list-disc space-y-1 pl-5">
+          {payload.limitations.map((note) => (
+            <li key={note}>{note}</li>
+          ))}
+        </ul>
+        <p>
+          Probabilities below 0.1% include outcomes not observed in these
+          simulations; they do not imply impossibility. Conference standings are
+          ordered by conference win percentage, then overall win percentage;
+          ties are not shown in official tiebreak order.
+        </p>
+      </HowGraded>
       <ViewTabs
         label="Playoff views"
         options={VIEWS}
@@ -182,10 +218,6 @@ export function CfbPlayoffViewer({
                   ? "The 12 teams in the bracket above, one possible simulated field."
                   : "Every team in the forecast, including those with less than a 1% playoff chance."
             } />
-            <p className="text-xs text-muted-foreground">
-              AP ranks are shown beside team names. Select a team to explore its
-              remaining schedule.
-            </p>
             <Table density="compact">
               <TableHeader>
                 <TableRow>
@@ -347,51 +379,8 @@ export function CfbPlayoffViewer({
               ))}
             </TableBody>
           </Table>
-          <p className="text-xs leading-relaxed text-muted-foreground">
-            Ordered by conference win percentage, then overall win percentage.
-            Ties are not shown in official tiebreak order. Select a team to
-            explore its remaining schedule.
-          </p>
         </ViewTabPanel>
       </ViewTabs>
-      <details className="border-t border-border pt-5">
-        <summary className="cursor-pointer text-sm font-semibold">
-          How this forecast works
-        </summary>
-        <div className="mt-4 max-w-3xl space-y-3 text-xs leading-relaxed text-muted-foreground">
-          <p>
-            Momentum simulates the remaining schedule, conference championships,
-            and every playoff round. The fitted schedule-adjusted-record
-            selector chooses the field under the{" "}
-            <a
-              className="text-primary underline"
-              href="https://collegefootballplayoff.com/sports/2024/5/29/12-team-format"
-              target="_blank"
-              rel="noopener noreferrer"
-            >
-              2026 CFP rules
-            </a>
-            . The displayed bracket is one legal simulated field, not a
-            certainty.
-          </p>
-          <p>
-            On the 2024 and 2025 twelve-team fields the record-based selector and
-            a learned committee model scored about the same (Brier 0.034 against
-            0.035, each ahead in one season). That was a retrospective comparison
-            on the seasons used to choose the selector; championship odds have no
-            separate historical calibration claim.
-          </p>
-          <ul className="list-disc space-y-1 pl-5">
-            {payload.limitations.map((note) => (
-              <li key={note}>{note}</li>
-            ))}
-          </ul>
-          <p>
-            Probabilities below 0.1% include outcomes not observed in these
-            simulations; they do not imply impossibility.
-          </p>
-        </div>
-      </details>
       <CfbPlayoffTeamDialog
         team={selected === null ? null : (forecast.byId.get(selected) ?? null)}
         forecast={forecast}

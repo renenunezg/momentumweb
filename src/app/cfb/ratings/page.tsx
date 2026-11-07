@@ -10,6 +10,7 @@ import { keepLastGood } from "@/lib/keep-last-good";
 import { fetchComparisonProjections } from "@/lib/football-comparison.server";
 import { LastUpdated } from "@/components/last-updated";
 import CfbRatings from "@/components/cfb-ratings";
+import { HowGraded } from "@/components/how-graded";
 
 // Every read here is expired by the revalidation webhook when its table is
 // published, and nothing on the page depends on the clock, so the week is only
@@ -74,13 +75,36 @@ export default async function RatingsPage() {
         />
       </PageHeader>
 
-      <p className="max-w-4xl text-sm text-muted-foreground leading-relaxed">
-        Model and market-implied strength, in points above an average FBS team
-        on a neutral field. Rankings follow the model. The published model
-        ratings are the fitted ratings moved part of the way toward each
-        team&apos;s market-history rating; they carry nothing from the coming
-        week&apos;s matchups. Tap a rating for its uncertainty and source.
-      </p>
+      <div className="space-y-2">
+        <p className="max-w-4xl text-sm text-muted-foreground">
+          Model and market-implied strength, in points above an average FBS team
+          on a neutral field.
+        </p>
+        <HowGraded label="How this works">
+          <p>
+            Rankings follow the model. The published model ratings are the fitted
+            ratings moved part of the way toward each team&apos;s market-history
+            rating; they carry nothing from the coming week&apos;s matchups. Tap a
+            rating for its uncertainty and source.
+          </p>
+          <p>
+            Off and Def split the model rating into offense and defense.
+            Market is fitted to earlier closing spreads with a prior-season market
+            baseline; it does not include season win totals.
+            {prior.week != null && (
+              <>
+                {" "}Chg is the change in model rating since the week {prior.week}{" "}
+                ratings.
+              </>
+            )}
+          </p>
+          <p>
+            Unit ratings are descriptive companions to the power ratings, not
+            model inputs or components of Off and Def. Pass and run blocking are
+            shared-outcome proxies, not isolated line grades.
+          </p>
+        </HowGraded>
+      </div>
 
       <CfbRatings
         ratings={ratings}
@@ -89,18 +113,6 @@ export default async function RatingsPage() {
         teams={[...teams.values()]}
         prior={prior}
       />
-
-      <p className="text-xs text-muted-foreground">
-        Off and Def split the model rating into offense and defense.
-        Market is fitted to earlier closing spreads with a prior-season market
-        baseline; it does not include season win totals.
-        {prior.week != null && (
-          <>
-            {" "}Chg is the change in model rating since the week {prior.week}{" "}
-            ratings.
-          </>
-        )}
-      </p>
     </PageShell>
   );
 }

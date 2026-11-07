@@ -116,10 +116,8 @@ export function PickFilters({
       </div>
       <p className="w-full text-xs text-muted-foreground">
         {dateBasis === "kickoff"
-          ? "Date range uses kickoff dates (UTC). 7D and 14D include today and the preceding days, including pending games in that window. Future dates appear under All time."
-          : "Date range uses the date a decision was recorded (UTC), including pending games."}{" "}
-        Choosing a market lists
-        its predictions only; No Play decisions appear under All markets.
+          ? "Dates are kickoff dates (UTC), pending games included; future games appear only under All time."
+          : "Dates are when each decision was recorded (UTC), pending games included."}
       </p>
     </form>
   );

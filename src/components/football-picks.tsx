@@ -1,4 +1,6 @@
+import type { ReactNode } from "react";
 import { PageSection } from "@/components/page-layout";
+import { HowGraded } from "@/components/how-graded";
 import Link from "next/link";
 import { KpiCard } from "@/components/kpi-card";
 import {
@@ -406,15 +408,20 @@ export function PickBreakdown({
   );
 }
 
+// The policy renders its own closed toggle; a page passes its other grading
+// notes as children so each picks view has one toggle, not two.
 export function PickPolicy({
   firstDecision,
   sport = "cfb",
+  children,
 }: {
   firstDecision?: string | null;
   sport?: PickSport;
+  children?: ReactNode;
 }) {
   return (
-    <div className="space-y-2 text-xs leading-relaxed text-muted-foreground">
+    <HowGraded>
+      {children}
       <p>
         One predicted side per game and market. A decision can be replaced
         until the game starts by a newer model or policy, and the original stays
@@ -538,6 +545,6 @@ export function PickPolicy({
         </Link>
         {sport === "nhl" ? "." : <>, or download every recorded decision from the <Link href="/data" className="underline underline-offset-4">data page</Link>.</>}
       </p>
-    </div>
+    </HowGraded>
   );
 }

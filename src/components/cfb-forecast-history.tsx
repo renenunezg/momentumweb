@@ -1,5 +1,6 @@
 import { PageHeader, PageShell, PageTitle } from "@/components/page-layout";
 import Link from "next/link";
+import { HowGraded } from "@/components/how-graded";
 import { supabaseCfb } from "@/lib/supabase";
 import { fetchLiveGradedSeason } from "@/lib/cfb";
 import type { CfbBacktestPrediction, CfbGradedGame } from "@/lib/types";
@@ -149,11 +150,28 @@ export default async function ForecastHistory({
         </div>
       </PageHeader>
 
-      <p className="max-w-4xl text-sm text-muted-foreground leading-relaxed">
-        {isLive
-          ? "Every completed game graded live this season: the projection published before kickoff, the CFBD closing spread, and the final margin. Nothing is re-fit after a result is known. Lines are quoted for the home team."
-          : "Every graded prediction from the frozen walk-forward backtest, next to the closing spread and the final margin. Backtest seasons are historical stand-ins, not live results. Lines are quoted for the home team."}
-      </p>
+      <div className="space-y-2">
+        <p className="max-w-4xl text-sm text-muted-foreground">
+          {isLive
+            ? "Every completed game graded live this season, with lines quoted for the home team."
+            : "Frozen walk-forward backtest, historical stand-ins rather than live results, with lines quoted for the home team."}
+        </p>
+        <HowGraded>
+          <p>
+            {isLive
+              ? "Each row is the projection published before kickoff, the CFBD closing spread, and the final margin. Nothing is re-fit after a result is known."
+              : "Every graded prediction from the frozen walk-forward backtest, next to the closing spread and the final margin."}
+          </p>
+          <p>
+            Model and Close are home lines; Result is the final margin on the same
+            axis. Model err is the absolute miss of the model&apos;s margin, shown
+            green when the model was closer than the closing line.
+            {isLive
+              ? " Model is the published market-informed line, not the pure projection."
+              : ""}
+          </p>
+        </HowGraded>
+      </div>
 
       <Link
         href="/cfb/history?view=picks"
@@ -193,15 +211,6 @@ export default async function ForecastHistory({
         totalPages={totalPages}
         pageUrl={(p) => historyUrl({ season, team, page: p })}
       />
-
-      <p className="text-xs text-muted-foreground">
-        Model and Close are home lines; Result is the final margin on the same
-        axis. Model err is the absolute miss of the model&apos;s margin, shown
-        green when the model was closer than the closing line.
-        {isLive
-          ? " Model is the published market-informed line, not the pure projection."
-          : ""}
-      </p>
     </PageShell>
   );
 }

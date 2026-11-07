@@ -309,9 +309,6 @@ export default function DraftWorkspace({
                 Round {round}{" "}
                 <span className={styles.roundCount}>of {rounds.length}</span>
               </h2>
-              <p>
-                Select a player to edit a pick or a team to view its roster.
-              </p>
             </div>
             <span>{date(board.order_date)} projected order</span>
           </div>
@@ -570,8 +567,7 @@ export default function DraftWorkspace({
             ))}
           </div>
           <p className={styles.context}>
-            Team needs are ordered by priority. Select a position to view its
-            depth chart and mock selections.
+            Team needs are ordered by priority.
           </p>
           {!rosterSection.data && (
             <p role="status">Loading {board.teams[team].name} roster…</p>
@@ -680,9 +676,6 @@ export default function DraftWorkspace({
                     </li>
                   ))}
                 </ol>
-                <p className={styles.context}>
-                  Players are listed in depth-chart order.
-                </p>
                 <details>
                   <summary>Contract context</summary>
                   {selectedSlot.rows.map((r, i) => (
@@ -700,13 +693,16 @@ export default function DraftWorkspace({
               </aside>
             )}
           </div>
-          <p className={styles.context}>
-            Depth charts dated {date(meta.depth_as_of)} or later. Left and right
-            are the player&apos;s defensive or offensive side; these are
-            position groups, not a play diagram. In a 3-4, outside linebackers
-            map to edge and defensive ends to interior line. In a 4-3, defensive
-            ends map to edge. Actual snap-by-snap alignment can vary.
-          </p>
+          <details className={styles.disclosure}>
+            <summary>How this works</summary>
+            <p>
+              Depth charts dated {date(meta.depth_as_of)} or later. Left and right
+              are the player&apos;s defensive or offensive side; these are
+              position groups, not a play diagram. In a 3-4, outside linebackers
+              map to edge and defensive ends to interior line. In a 4-3, defensive
+              ends map to edge. Actual snap-by-snap alignment can vary.
+            </p>
+          </details>
         </ViewTabPanel>
         <ViewTabPanel value="players">
           <div className={styles.heading}>
@@ -749,9 +745,8 @@ export default function DraftWorkspace({
           {players && (
             <>
               <p className={styles.context}>
-                Bars show impact points above positional replacement. Mock pick
-                lists the current selection; scores do not assess NFL potential
-                or draft eligibility.
+                Impact points above positional replacement, not a read on NFL
+                potential or draft eligibility.
               </p>
               <DraftPlayerTable
                 players={filteredPlayers}
@@ -818,9 +813,8 @@ export default function DraftWorkspace({
             <div>
               <h2>Historical draft outcomes</h2>
               <p>
-                First three NFL seasons, regular-season offense and defense.
-                Playing time depends on opportunity and is not a complete
-                measure of player quality.
+                First three NFL seasons, regular-season offense and defense;
+                playing time reflects opportunity, not only player quality.
               </p>
             </div>
           </div>

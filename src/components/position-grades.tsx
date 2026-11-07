@@ -638,8 +638,7 @@ function ComparePanel({
         {headline(rows[1], players[1], "right")}
       </div>
       <p className="text-xs text-muted-foreground">
-        Green bars grow left for {rows[0].name}, blue bars grow right for {rows[1].name}; every bar is the
-        player&apos;s percentile among {copy.pool} at {rows[0].positionGroup} this week.
+        Each bar is the player&apos;s percentile among {copy.pool} at {rows[0].positionGroup} this week.
       </p>
       {players[0] && players[1] ? (
         <div className="space-y-2">
@@ -877,7 +876,7 @@ export default function PositionGrades({
             {renderPlayers(false)}
           </div>
           <div className="hidden md:block">
-            <p className="pb-2 text-xs text-muted-foreground">Select a row for the full player card. ± is grade uncertainty; Pct and trait columns are position percentiles.</p>
+            <p className="pb-2 text-xs text-muted-foreground">± is grade uncertainty; Pct and trait columns are position percentiles.</p>
             <Table className="table-fixed min-w-[1080px]">
               <colgroup>
                 <col className="w-8" />

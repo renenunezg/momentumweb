@@ -1,6 +1,7 @@
 import { PageDescription, PageHeader, PageShell, PageTitle } from "@/components/page-layout";
 import type { Metadata } from "next";
 import { Notice } from "@/components/notice";
+import { HowGraded } from "@/components/how-graded";
 import Link from "next/link";
 import { LastUpdated } from "@/components/last-updated";
 import { WeeklyFootballPredictions } from "@/components/weekly-football-predictions";
@@ -40,6 +41,15 @@ export default async function PredictionsPage() {
           <PageDescription>
             This week&apos;s predictions, organized by kickoff slate.
           </PageDescription>
+          <div className="mt-2">
+            <HowGraded>
+              <p>
+                Pregame predictions reflect the latest model and odds refresh.
+                Predictions that no longer qualify disappear from this list. Original predictions
+                and their recorded prices remain in history, tracked at 1 unit.
+              </p>
+            </HowGraded>
+          </div>
         </div>
         <div className="space-y-2 text-sm sm:text-right">
           <Link href="/cfb/history?view=picks" className="underline underline-offset-4">
@@ -75,11 +85,6 @@ export default async function PredictionsPage() {
         />
       )}
       <div className="flex flex-wrap justify-between gap-3 border-t border-border pt-4 text-xs leading-relaxed text-muted-foreground">
-        <p className="max-w-2xl">
-          Pregame predictions reflect the latest model and odds refresh.
-          Predictions that no longer qualify disappear from this list. Original predictions
-          and their recorded prices remain in history, tracked at 1 unit.
-        </p>
         <Link href="/cfb/history?view=picks" className="underline underline-offset-4">
           Results and No Play decisions
         </Link>

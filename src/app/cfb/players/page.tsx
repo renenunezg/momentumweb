@@ -58,9 +58,7 @@ export default async function PlayersPage() {
       <PlayerSectionTabs />
 
       <p className="max-w-4xl text-sm text-muted-foreground leading-relaxed">
-        Position-specific grades and wins above replacement. Explore the traits
-        behind each grade, see additional context, or compare two players at the
-        same position.
+        Position-specific grades and wins above replacement.
       </p>
 
       <div className="grid grid-cols-3 gap-3 border-y border-rule-strong [&>div]:py-3 sm:gap-4">

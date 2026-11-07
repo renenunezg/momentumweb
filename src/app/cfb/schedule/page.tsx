@@ -10,6 +10,7 @@ import { formatOdds, formatPct } from "@/lib/utils";
 import Link from "next/link";
 import { formatNumber } from "@/lib/utils";
 import { LastUpdated } from "@/components/last-updated";
+import { HowGraded } from "@/components/how-graded";
 import { KickoffCell, SlateRow } from "@/components/kickoff-cells";
 import { liveKey } from "@/lib/football-live";
 import { ScheduleFilters } from "@/components/schedule-filters";
@@ -297,21 +298,36 @@ export default async function SchedulePage() {
         />
       </PageHeader>
 
-      <p className="max-w-4xl text-sm text-muted-foreground leading-relaxed">
-        Model lines are quoted for the home team: a negative line means the
-        model favors the home side. Pure is the model&apos;s own line. Model Line
-        includes historical market information and blends in the current market
-        at a capped weight when available.
-      </p>
-
-      <p className="text-xs text-muted-foreground">
-        Predictions show the line and odds frozen when predicted, not a live quote.
-        No Play means the market did not qualify.{" "}
-        <Link href="/cfb/history?view=picks" className="underline underline-offset-4">
-          View recorded decisions and results
-        </Link>
-        .
-      </p>
+      <div className="space-y-2">
+        <p className="max-w-4xl text-sm text-muted-foreground">
+          Lines are quoted for the home team: negative means the model favors
+          the home side.
+        </p>
+        <HowGraded label="How this works">
+          <p>
+            Pure is the model&apos;s own line. Model Line includes historical
+            market information and blends in the current market at a capped
+            weight when available.
+          </p>
+          <p>
+            Predictions show the line and odds frozen when predicted, not a live quote.
+            No Play means the market did not qualify.{" "}
+            <Link href="/cfb/history?view=picks" className="underline underline-offset-4">
+              View recorded decisions and results
+            </Link>
+            .
+          </p>
+          <p>
+            Proj score is the published away&ndash;home expected points, which
+            agree with the Model Line and the published total. Diff is model line
+            minus market line. Market total is the consensus total when the total
+            prediction was decided. Predictions require qualifying probabilities,
+            prices, and input flags; a large point difference alone does not
+            qualify. A star marks a team whose rating inputs are incomplete; N
+            marks a neutral site.
+          </p>
+        </HowGraded>
+      </div>
 
       <ScheduleFilters
         league="cfb"
@@ -396,16 +412,6 @@ export default async function SchedulePage() {
           ))}
         </Table>
       </ScheduleFilters>
-
-      <p className="max-w-4xl text-xs text-muted-foreground">
-        Proj score is the published away&ndash;home expected points, which
-        agree with the Model Line and the published total. Diff is model line
-        minus
-        market line. Market total is the consensus total when the total prediction was
-        decided. Predictions require qualifying probabilities, prices, and input
-        flags; a large point difference alone does not qualify. A star marks a
-        team whose rating inputs are incomplete; N marks a neutral site.
-      </p>
     </PageShell>
   );
 }

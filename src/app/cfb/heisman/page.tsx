@@ -6,6 +6,7 @@ import { formatNumber, formatPct } from "@/lib/utils";
 import { KpiCard } from "@/components/kpi-card";
 import { LastUpdated } from "@/components/last-updated";
 import HeismanTracker from "@/components/heisman-tracker";
+import { HowGraded } from "@/components/how-graded";
 
 // Every read here is expired by the revalidation webhook when its table is
 // published, and nothing on the page depends on the clock, so the week is only
@@ -60,14 +61,21 @@ export default async function HeismanPage() {
       </PageHeader>
       <PlayerSectionTabs />
 
-      <p className="max-w-4xl text-sm text-muted-foreground leading-relaxed">
-        A weekly Heisman Trophy forecast in two boards that are meant to
-        disagree. The value board measures what
-        a player&apos;s plays were worth in points above a replacement at his
-        position, adjusted for every defense and offense he faced. The Heisman
-        board forecasts how the voters will actually rank the candidates, fit
-        on sixteen years of ballots. The gap between them is the story.
-      </p>
+      <div className="space-y-2">
+        <p className="max-w-4xl text-sm text-muted-foreground">
+          Two boards meant to disagree: what each player&apos;s plays were worth,
+          and how the voters will rank him.
+        </p>
+        <HowGraded label="How this works">
+          <p>
+            The value board measures what a player&apos;s plays were worth in
+            points above a replacement at his position, adjusted for every
+            defense and offense he faced. The Heisman board forecasts how the
+            voters will actually rank the candidates, fit on sixteen years of
+            ballots. The gap between them is the story.
+          </p>
+        </HowGraded>
+      </div>
 
       <div className="grid grid-cols-2 gap-4 border-y border-rule-strong py-4 sm:grid-cols-4">
         <KpiCard

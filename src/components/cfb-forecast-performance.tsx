@@ -14,7 +14,6 @@ const COPY = {
   closingLine:
     "the closing spread (the Odds API provider median captured before kickoff where the kickoff capture ran, otherwise the CFBD provider median recorded after the game, which is also the backtest's definition)",
   cadence: "Live grading runs after each Monday refresh",
-  seasonLabel: "live season",
   versions:
     "Weeks 1 and 2 were published by earlier model versions (joint_scoring_v3 and v8) and every week since by v14; each game is graded on the version published before its kickoff.",
   compositionKind: "opponent_classification",

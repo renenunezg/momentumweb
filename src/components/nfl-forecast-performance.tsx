@@ -20,7 +20,6 @@ const COPY = {
   closingLine:
     "the closing spread (the Odds API median or ESPN's DraftKings quote captured before kickoff where the live worker held one, otherwise the nflverse schedule value recorded after the game, which is also the backtest's definition)",
   cadence: "Live grading runs after each refresh",
-  seasonLabel: "first live season",
   versions:
     "Weeks 1 to 7 were published by five model versions, from nfl_preseason_v2_qb_v4 through nfl_joint_scoring_qb_v8_totals_v2; each game is graded on the version published before its kickoff.",
   segments: [

@@ -95,8 +95,6 @@ export interface FootballPerformanceCopy {
   // score".
   closingLine: string;
   cadence: string;
-  // Status of the live season, after "<season> season, graded as played".
-  seasonLabel: string;
   // Which model versions published the live record; the metrics table carries
   // no version column yet, so this is copy kept in step with the model repo.
   versions: string;

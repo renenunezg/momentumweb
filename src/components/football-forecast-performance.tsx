@@ -155,24 +155,18 @@ export function FootballForecastPerformance({
 
   return (
     <div className="space-y-8">
-      <div className="flex items-start justify-between gap-4">
-        <h2 className="type-section">
-          Forecast accuracy
-        </h2>
-        <div className="text-right text-xs text-muted-foreground">
-          <div>{copy.cadence}</div>
-          <div>
-            Last graded:{" "}
-            {live.lastGradedAt ? fmtDate(live.lastGradedAt) : "no games yet"}
-          </div>
-        </div>
-      </div>
-
       <section className="space-y-section">
         <div className="space-y-2">
-          <h2 className="type-section">
-            {live.season ?? "Live"} season, graded as played: {copy.seasonLabel}
-          </h2>
+          <div className="flex items-start justify-between gap-4">
+            <h2 className="type-section shrink-0">{live.season ?? "Live"} season</h2>
+            <div className="text-right type-meta text-muted-foreground">
+              <div>
+                Last graded:{" "}
+                {live.lastGradedAt ? fmtDate(live.lastGradedAt) : "no games yet"}
+              </div>
+              <div>{copy.cadence}</div>
+            </div>
+          </div>
           <p className="max-w-4xl text-sm text-muted-foreground">
             Each game is graded on the forecast published before kickoff,
             against the closing line and the final score.

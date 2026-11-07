@@ -237,9 +237,7 @@ function CfbUnitRatings({
       intro={
         <>
           Opponent-adjusted PPA per game above an average FBS team. Positive is
-          better in every column. These are descriptive companions to the power
-          ratings, not model inputs or components of Off and Def. Pass and run
-          blocking are shared-outcome proxies, not isolated line grades.
+          better in every column.
           {sourceSeasons.length === 1 &&
             (ratingsSeason != null && sourceSeasons[0] < ratingsSeason ? (
               <> Preseason unit ratings use {sourceSeasons[0]} game history.</>

@@ -71,6 +71,9 @@ export default async function HistoryPage({
             The side, line, and odds recorded before kickoff, with each
             prediction&apos;s result.
           </PageDescription>
+          <div className="mt-2">
+            <PickPolicy firstDecision={metric?.first_decision_at} />
+          </div>
         </div>
         <Link
           href="/cfb/history?view=accuracy"
@@ -106,7 +109,6 @@ export default async function HistoryPage({
             : "No predictions match this selection. No Play decisions are listed under All markets."}
         </Notice>
       )}
-      <PickPolicy firstDecision={metric?.first_decision_at} />
     </PageShell>
   );
 }

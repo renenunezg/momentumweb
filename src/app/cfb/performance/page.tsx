@@ -76,9 +76,8 @@ export default async function PerformancePage({
             College Football Model Performance
           </PageTitle>
           <PageDescription className="max-w-2xl">
-            How the college football model&apos;s moneyline, spread and total
-            predictions have done: each prediction, the prices recorded at the time,
-            and graded results.
+            Graded moneyline, spread and total predictions at the prices recorded
+            when they were made.
           </PageDescription>
         </div>
         <Link
@@ -126,14 +125,26 @@ export default async function PerformancePage({
               )}
             </p>
           )}
+          <PickPolicy firstDecision={metric?.first_decision_at}>
+            <p>
+              Overall results include every recorded prediction at one unit each.
+              Exploratory predictions fall below the standard edge threshold and contribute toward the weekly research target.
+            </p>
+            <p>
+              Spread favorites give points (for example -3); underdogs receive
+              points (+3). Totals split by Over and Under. Moneyline favorites
+              have negative odds; odds of +100 or -100 are shown as even money.
+              Each segment uses the frozen predicted side and price.
+            </p>
+            <p>
+              Results on this page pool every policy version below; each prediction keeps the rules
+              and price it was recorded under.
+            </p>
+          </PickPolicy>
           <PickBreakdown
             title="Edge-qualified and exploratory"
             rows={summary.metrics.filter((m) => m.segment_kind === "qualification")}
           />
-          <p className="text-xs text-muted-foreground">
-            Overall results include every recorded prediction at one unit each.
-            Exploratory predictions fall below the standard edge threshold and contribute toward the weekly research target.
-          </p>
           {(["h2h", "spreads", "totals"] as const)
             .filter((value) => market === "all" || value === market)
             .map((value) => (
@@ -156,12 +167,6 @@ export default async function PerformancePage({
                 ]}
               />
             ))}
-          <p className="text-xs text-muted-foreground">
-            Spread favorites give points (for example -3); underdogs receive
-            points (+3). Totals split by Over and Under. Moneyline favorites
-            have negative odds; odds of +100 or -100 are shown as even money.
-            Each segment uses the frozen predicted side and price.
-          </p>
           <>
             <PickBreakdown
               title="By week"
@@ -189,10 +194,6 @@ export default async function PerformancePage({
               .filter((m) => m.segment_kind === "policy")
               .sort((a, b) => (a.segment ?? "").localeCompare(b.segment ?? "", undefined, { numeric: true }))}
           />
-          <p className="text-xs text-muted-foreground">
-            Results on this page pool every policy version above; each prediction keeps the rules
-            and price it was recorded under.
-          </p>
           {metric?.clv_market_points_sample ? (
             <p className="text-xs text-muted-foreground">
               Closing line value from the decision-time median line, not the shopped price:{" "}
@@ -204,7 +205,6 @@ export default async function PerformancePage({
               . Positive means the market moved toward the prediction.
             </p>
           ) : null}
-          <PickPolicy firstDecision={metric?.first_decision_at} />
         </div>
       </CfbPerformanceTabs>
     </PageShell>
