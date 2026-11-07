@@ -3,7 +3,6 @@
 import { useMemo, useState } from "react";
 import { formatNumber } from "@/lib/utils";
 import type { TeamLogoSource } from "@/components/team-logo";
-import { ToggleGroup } from "@/components/toggle-group";
 import {
   PowerRatingsTable,
   type LimitedDataRule,
@@ -32,7 +31,7 @@ export function GroupRatings<T extends PowerRatingRow>({
   groupOf,
   tierOf,
   tiers,
-  noun,
+  label,
   overallRankLabel,
   initialGroup,
   onSelect,
@@ -49,7 +48,8 @@ export function GroupRatings<T extends PowerRatingRow>({
   groupOf: (row: T) => string;
   tierOf: (row: T) => string;
   tiers: readonly string[];
-  noun: string;
+  // The menu's name for one group: "Conference", "Division".
+  label: string;
   overallRankLabel: string;
   initialGroup?: string;
   onSelect: (name: string) => void;
@@ -93,31 +93,30 @@ export function GroupRatings<T extends PowerRatingRow>({
 
   return (
     <div className="space-y-section">
-      <div className="space-y-3">
-        {tiers.map((tier) => {
-          const inTier = groups
-            .filter((g) => g.tier === tier)
-            .sort((a, b) => a.name.localeCompare(b.name));
-          if (inTier.length === 0) return null;
-          return (
-            <div
-              key={tier}
-              className="flex flex-col gap-1 sm:flex-row sm:items-start sm:gap-3"
-            >
-              <span className="type-eyebrow text-muted-foreground sm:w-7 sm:shrink-0 sm:pt-1.5">
-                {tier}
-              </span>
-              <ToggleGroup
-                variant="chip"
-                label={`${tier.toUpperCase()} ${noun}`}
-                options={inTier.map((g) => ({ key: g.name, label: g.name }))}
-                value={selected.name}
-                onChange={select}
-              />
-            </div>
-          );
-        })}
-      </div>
+      <label className="flex items-center gap-2 font-mono text-xs text-muted-foreground">
+        {label}
+        <select
+          value={selected.name}
+          onChange={(event) => select(event.target.value)}
+          className="min-w-0 rounded-md border border-input bg-background px-3 py-1.5 text-base text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring sm:text-xs"
+        >
+          {tiers.map((tier) => {
+            const inTier = groups
+              .filter((g) => g.tier === tier)
+              .sort((a, b) => a.name.localeCompare(b.name));
+            if (inTier.length === 0) return null;
+            return (
+              <optgroup key={tier} label={tier.toUpperCase()}>
+                {inTier.map((g) => (
+                  <option key={g.name} value={g.name}>
+                    {g.name}
+                  </option>
+                ))}
+              </optgroup>
+            );
+          })}
+        </select>
+      </label>
 
       <section className="space-y-2">
         <div className="flex items-baseline justify-between gap-4">

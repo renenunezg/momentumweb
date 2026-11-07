@@ -154,7 +154,7 @@ export default function NflRatings({
             groupOf={(r) => r.division ?? "Unknown"}
             tierOf={(r) => r.conference ?? "AFC"}
             tiers={["AFC", "NFC"]}
-            noun="divisions"
+            label="Division"
             overallRankLabel="NFL Rk"
             initialGroup={initialDivision}
             onSelect={selectDivision}

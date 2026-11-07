@@ -152,7 +152,7 @@ export default function CfbRatings({
             groupOf={(r) => r.conference ?? "Independent"}
             tierOf={(r) => r.classification ?? "fbs"}
             tiers={["fbs", "fcs"]}
-            noun="conferences"
+            label="Conference"
             overallRankLabel="D1 Rk"
             initialGroup={initialConference}
             onSelect={selectConference}
