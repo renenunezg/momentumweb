@@ -1,7 +1,7 @@
 import { TeamLogo } from "@/components/team-logo";
 import { RatingsHeatmapLegend } from "@/components/ratings-heatmap-legend";
 import { ratingHeatmap } from "@/lib/rating-heatmap";
-import { HeatValue } from "@/components/heat-value";
+import { EVEN_HEAT_HEAD, HeatValue, evenHeatColumns } from "@/components/heat-value";
 import { LimitedDataBadge } from "@/components/power-ratings-table";
 import {
   Table,
@@ -12,7 +12,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { formatNumber, formatSigned } from "@/lib/utils";
+import { cn, formatNumber, formatSigned } from "@/lib/utils";
 import type { NhlTeamIdentity, NhlTeamRating } from "@/lib/types";
 
 const num = "text-right font-mono tabular-nums";
@@ -47,14 +47,18 @@ export function NhlRatingsTable({
     <div className="space-y-2">
       <RatingsHeatmapLegend />
       {/* Phones drop the window counts and show abbreviations so the ratings fit. */}
-      <Table density="compact" className="max-sm:[--table-cell-x:0.125rem] max-sm:[&_td]:text-xs">
+      <Table
+        density="compact"
+        className="max-sm:[--table-cell-x:0.125rem] max-sm:[&_td]:text-xs"
+        style={evenHeatColumns(COLUMNS.length)}
+      >
         <TableCaption className="sr-only">NHL model ratings</TableCaption>
         <TableHeader>
           <TableRow>
             <TableHead className="w-10 text-right max-sm:w-auto">Rk</TableHead>
             <TableHead>Team</TableHead>
             {columns.map((column) => (
-              <TableHead key={column.key} className="text-right max-sm:whitespace-normal max-sm:align-bottom">
+              <TableHead key={column.key} className={cn("text-right max-sm:whitespace-normal max-sm:align-bottom", EVEN_HEAT_HEAD)}>
                 {column.short ? (
                   <>
                     <abbr title={column.label} className="no-underline sm:hidden">{column.short}</abbr>

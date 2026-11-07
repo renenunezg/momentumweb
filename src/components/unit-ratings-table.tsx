@@ -3,7 +3,7 @@
 import { useMemo, useState, type ReactNode } from "react";
 import { ratingHeatmap } from "@/lib/rating-heatmap";
 import { RatingsHeatmapLegend } from "@/components/ratings-heatmap-legend";
-import { HeatValue } from "@/components/heat-value";
+import { EVEN_HEAT_HEAD, HeatValue, evenHeatColumns } from "@/components/heat-value";
 import { cn, formatSigned } from "@/lib/utils";
 import { RatingsSearch, useRatingsSearch } from "@/components/ratings-search";
 import { TeamLogo, type TeamLogoSource } from "@/components/team-logo";
@@ -79,8 +79,14 @@ export function UnitRatingsTable<
       />
       <RatingsHeatmapLegend centered />
       <div className="overflow-x-auto">
-        {/* Phones: tighter columns, wrapped headers and one-line teams so every unit fits. */}
-        <Table density="compact" className="max-sm:[--table-cell-x:0.125rem] max-sm:[&_td]:text-xs">
+        {/* Phones: tighter, even columns, wrapped headers and one-line teams so every
+            unit fits. The header buttons share one minimum, close to the widest label
+            word, so a narrow phone squeezes every unit column alike. */}
+        <Table
+          density="compact"
+          className="max-sm:[--table-cell-x:0.125rem] max-sm:[&_td]:text-xs"
+          style={evenHeatColumns(columns.length)}
+        >
           <TableCaption className="sr-only">{caption}</TableCaption>
           <TableHeader>
             <TableRow>
@@ -89,14 +95,14 @@ export function UnitRatingsTable<
               {columns.map((column) => (
                 <TableHead
                   key={column.key}
-                  className="text-right max-sm:whitespace-normal max-sm:align-bottom"
+                  className={cn("text-right max-sm:whitespace-normal max-sm:align-bottom", EVEN_HEAT_HEAD)}
                   aria-sort={sortKey === column.key ? "descending" : "none"}
                 >
                   <button
                     type="button"
                     onClick={() => setSortKey(column.key)}
                     className={cn(
-                      "type-eyebrow transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring",
+                      "type-eyebrow transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring max-sm:min-w-8",
                       sortKey === column.key
                         ? "text-foreground underline underline-offset-4"
                         : "text-muted-foreground hover:text-foreground"

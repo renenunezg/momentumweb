@@ -29,3 +29,11 @@ export function HeatValue({
     </span>
   );
 }
+
+// Compact fills span their column on phones, so columns sized by header length
+// read as uneven bars. Spread `evenHeatColumns` on the table and put
+// EVEN_HEAT_HEAD on each heat column's head to split the width evenly there.
+export function evenHeatColumns(count: number): CSSProperties {
+  return { "--heat-column": `${100 / count}%` } as CSSProperties;
+}
+export const EVEN_HEAT_HEAD = "max-sm:w-(--heat-column)";
