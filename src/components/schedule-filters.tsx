@@ -7,7 +7,7 @@ import {
   type LiveProbabilityGame,
 } from "@/components/football-live-probability-dialog";
 import { ToggleGroup } from "@/components/toggle-group";
-import { SITE_TIME_LABEL } from "@/lib/site-time";
+import { useVisitorKickoffs } from "@/components/use-visitor-timezone";
 import { useLiveScoreRows } from "@/components/use-football-live-scores";
 import type { FootballLeague } from "@/lib/football-slates";
 
@@ -51,6 +51,7 @@ export function ScheduleFilters<K extends string>({
   const [view, setView] = useState<K>(defaultView);
   const [query, setQuery] = useState("");
   const [shown, setShown] = useState(initialShown);
+  const clock = useVisitorKickoffs(container, children);
   useLiveScoreRows(container, league, children);
   // The game outlives `open` so the dialog keeps its title while it closes.
   const [probability, setProbability] = useState<LiveProbabilityGame | null>(null);
@@ -123,7 +124,7 @@ export function ScheduleFilters<K extends string>({
       </div>
 
       <p className="text-xs text-muted-foreground">
-        Times shown in {SITE_TIME_LABEL}.
+        Times shown in {clock.zone()}.
       </p>
 
       <div ref={container} onClick={openProbability}>{children}</div>

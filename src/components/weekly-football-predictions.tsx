@@ -9,9 +9,9 @@ import { Notice } from "@/components/notice";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { teamColor } from "@/lib/team-colors";
 import { ToggleGroup } from "@/components/toggle-group";
-import { siteKickoffClock as clock } from "@/lib/football";
-import { SITE_TIME_LABEL } from "@/lib/site-time";
+import { useVisitorClock } from "@/components/use-visitor-timezone";
 import {
+  footballSlateClock,
   groupFootballSlates,
   type FootballLeague,
 } from "@/lib/football-slates";
@@ -54,7 +54,7 @@ function marketNoun(market: PickMarket) {
 
 // `games` are the week's games with a recommended pick, each carrying only
 // its recommended rows; a game with nothing in the chosen market drops out,
-// and the slate chips offer only the slates the market and search still hit.
+// and the slate menu offers only the slates the market and search still hit.
 export function WeeklyFootballPredictions({
   league,
   games,
@@ -66,6 +66,7 @@ export function WeeklyFootballPredictions({
   const [slateId, setSlateId] = useState("all");
   const [query, setQuery] = useState("");
   const needle = query.trim().toLowerCase();
+  const clock = useVisitorClock();
   const liveRefs = useMemo(
     () =>
       games.map((game) => {
@@ -139,14 +140,9 @@ export function WeeklyFootballPredictions({
           total={games.length}
           noun="games"
         />
-        <div className="space-y-1 text-xs text-muted-foreground">
-          <p>Times shown in {SITE_TIME_LABEL}.</p>
-          <p>
-            {league === "cfb"
-              ? "Win probabilities follow each prediction's recorded pricing policy. Under v11, moneylines keep 20% model weight against the paired market, spreads blend 20% model and history with 80% market margin using football key numbers, and totals use the published 50/50 blend. Exploratory predictions are labeled. Pushes are listed separately."
-              : "Model probability is the model's chance that the selected side wins, with pushes listed separately. It is not a confidence score or a guarantee."}
-          </p>
-        </div>
+        <p className="text-xs text-muted-foreground">
+          Times shown in {clock.zone()}.
+        </p>
       </div>
       {slates.length === 0 ? (
         <Notice role="status" className="text-muted-foreground">
@@ -154,13 +150,20 @@ export function WeeklyFootballPredictions({
           {needle ? ` for a team matching "${query.trim()}"` : " this week"}.
         </Notice>
       ) : (
-        <ToggleGroup
-          label="Kickoff slate"
-          variant="chip"
-          options={slateOptions}
-          value={chosen.length ? slateId : "all"}
-          onChange={setSlateId}
-        />
+        <label className="flex items-center gap-2 font-mono text-xs text-muted-foreground">
+          Kickoff slate
+          <select
+            value={chosen.length ? slateId : "all"}
+            onChange={(event) => setSlateId(event.target.value)}
+            className="min-w-0 rounded-md border border-input bg-background px-3 py-1.5 text-base text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring sm:text-xs"
+          >
+            {slateOptions.map((option) => (
+              <option key={option.key} value={option.key}>
+                {option.label}
+              </option>
+            ))}
+          </select>
+        </label>
       )}
       {visible.map((slate) => (
         <PageSection
@@ -196,6 +199,7 @@ export function WeeklyFootballPredictions({
                 key={game.game_id}
                 game={game}
                 league={league}
+                clock={clock}
                 live={live.get(liveKey(league, game.game_id))}
               />
             ))}
@@ -209,10 +213,12 @@ export function WeeklyFootballPredictions({
 function GamePredictions({
   game,
   league,
+  clock,
   live,
 }: {
   game: WeeklyGame & { gamePickCount: number };
   league: FootballLeague;
+  clock: ReturnType<typeof footballSlateClock>;
   live: LiveGame | undefined;
 }) {
   const rows = game.rows;

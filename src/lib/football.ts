@@ -1,8 +1,9 @@
 import { footballSlateClock } from "@/lib/football-slates";
 import { SITE_TIME_ZONE } from "@/lib/site-time";
 
-// Schedule grouping uses league time; every displayed kickoff uses Pacific.
-export const siteKickoffClock = footballSlateClock(SITE_TIME_ZONE);
+// Schedule grouping uses league time; server-rendered kickoffs use Pacific
+// until the browser rewrites them into the visitor's zone.
+const siteKickoffClock = footballSlateClock(SITE_TIME_ZONE);
 
 export const formatKickoff = {
   day: siteKickoffClock.day,

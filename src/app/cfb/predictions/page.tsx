@@ -47,6 +47,14 @@ export default async function PredictionsPage() {
                 Predictions that no longer qualify disappear from this list. Original predictions
                 and their recorded prices remain in history, tracked at 1 unit.
               </p>
+              <p>
+                Win probabilities follow each prediction&apos;s recorded pricing
+                policy. Under v11, moneylines keep 20% model weight against the
+                paired market, spreads blend 20% model and history with 80% market
+                margin using football key numbers, and totals use the published
+                50/50 blend. Exploratory predictions are labeled. Pushes are listed
+                separately.
+              </p>
             </HowGraded>
           </div>
         </div>

@@ -1,7 +1,7 @@
-// Display times and the site's calendar day share Pacific time, including DST.
+// The site's calendar day and server-rendered times use Pacific, including
+// DST; kickoffs are rewritten into the visitor's zone in the browser.
 // Source timestamps and league-defined schedule boundaries stay unchanged.
 export const SITE_TIME_ZONE = "America/Los_Angeles";
-export const SITE_TIME_LABEL = "Pacific time (PT)";
 
 const timestamp = new Intl.DateTimeFormat("en-US", {
   timeZone: SITE_TIME_ZONE,

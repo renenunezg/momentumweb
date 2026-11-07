@@ -2,7 +2,9 @@ import { formatKickoff } from "@/lib/football";
 import type { FootballSlate, KickoffPart } from "@/lib/football-slates";
 import { TableCell, TableHead } from "@/components/ui/table";
 
-// Pacific on both the server and client, including dates around midnight.
+// Server-rendered in Pacific so the cached HTML reads correctly without
+// JavaScript; useVisitorKickoffs rewrites the text into the visitor's zone
+// once the enclosing client component hydrates.
 export function Kickoff({
   start,
   part,

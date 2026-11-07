@@ -115,7 +115,19 @@ export function footballSlateClock(timeZone: string) {
     minute: "2-digit",
     timeZoneName: "short",
   });
+  const zoneName = (style: "long" | "short", at: number) =>
+    new Intl.DateTimeFormat("en-US", { ...options, timeZoneName: style })
+      .formatToParts(at)
+      .find((part) => part.type === "timeZoneName")?.value;
   return {
+    // "Pacific Standard Time (PST)" rather than the raw IANA id. Zones whose
+    // short form is only a GMT offset, most of Europe in en-US, keep it since
+    // the offset is still the clearest disambiguator for a reader there.
+    zone: (at: number = Date.now()) => {
+      const long = zoneName("long", at) ?? timeZone.replaceAll("_", " ");
+      const short = zoneName("short", at);
+      return short && short !== long ? `${long} (${short})` : long;
+    },
     title: (slate: Pick<FootballSlate<unknown>, "start" | "broadcast">) => {
       if (slate.start == null) return "Kickoff TBD";
       if (slate.broadcast) return slate.broadcast;

@@ -84,6 +84,11 @@ export default async function PredictionsPage() {
                 recorded selections, not live prices. Each prediction is tracked at 1
                 unit.
               </p>
+              <p>
+                Model probability is the model&apos;s chance that the selected side
+                wins, with pushes listed separately. It is not a confidence score
+                or a guarantee.
+              </p>
             </HowGraded>
           </div>
         </div>
