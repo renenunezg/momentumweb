@@ -1,7 +1,7 @@
 import { supabase } from "@/lib/supabase";
 import type { Tables } from "@/lib/database-schema";
 import { seasonStatsLine, type SeasonStatsLine } from "@/lib/season-stats";
-import { PROSPECT_PAGE, prospectSearchRegex, type ProspectFilters, type ProspectSort } from "@/lib/prospect-values";
+import { PROSPECT_PAGE, prospectSearchRegex, rolePositions, type ProspectFilters, type ProspectSort } from "@/lib/prospect-values";
 
 // The prospect table, written weekly by mlbmodel: about 8,500 rows, so neither
 // the page nor the browser ever holds all of it. Every read is one filtered,
@@ -94,6 +94,7 @@ export async function fetchProspectPage(filters: ProspectFilters, offset: number
   let query = supabase
     .from("prospect_values")
     .select(COLUMNS, offset === 0 ? { count: "exact" } : undefined);
+  if (filters.role) query = query.in("position_group", rolePositions(filters.role));
   if (filters.org) query = query.eq("org", filters.org);
   if (filters.level) query = query.eq("level", filters.level);
   if (filters.position) query = query.eq("position_group", filters.position);

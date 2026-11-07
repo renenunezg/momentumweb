@@ -20,13 +20,14 @@ export const metadata: Metadata = {
 };
 
 export default async function MlbProspectsPage() {
-  // Three small reads per regeneration; a failure throws so ISR keeps the last
-  // good page.
-  const [first, summary] = await Promise.all([
-    fetchProspectPage(DEFAULT_PROSPECT_FILTERS, 0),
+  // Both tabs' first pages are read here so switching costs no request; a
+  // failure throws so ISR keeps the last good page.
+  const [hitters, pitchers, summary] = await Promise.all([
+    fetchProspectPage({ ...DEFAULT_PROSPECT_FILTERS, role: "hitter" }, 0),
+    fetchProspectPage({ ...DEFAULT_PROSPECT_FILTERS, role: "pitcher" }, 0),
     fetchProspectSummary(),
   ]);
-  const total = first.total ?? first.rows.length;
+  const total = (hitters.total ?? hitters.rows.length) + (pitchers.total ?? pitchers.rows.length);
 
   if (total === 0) {
     return (
@@ -37,7 +38,10 @@ export default async function MlbProspectsPage() {
     );
   }
 
-  const topValue = first.rows[0]?.trade_value_musd != null ? first.rows[0] : null;
+  const topValue =
+    [hitters.rows[0], pitchers.rows[0]]
+      .filter((row) => row?.trade_value_musd != null)
+      .sort((a, b) => (b.trade_value_musd ?? 0) - (a.trade_value_musd ?? 0))[0] ?? null;
   const top = summary.topGrade;
 
   return (
@@ -84,7 +88,7 @@ export default async function MlbProspectsPage() {
         />
       </div>
 
-      <MlbProspects initial={first} />
+      <MlbProspects initial={{ hitter: hitters, pitcher: pitchers }} />
     </PageShell>
   );
 }

@@ -30,7 +30,20 @@ export const PROSPECT_SORTS = [
 
 export type ProspectSort = (typeof PROSPECT_SORTS)[number]["key"];
 
+export const PROSPECT_ROLES = [
+  { key: "hitter", label: "Batters" },
+  { key: "pitcher", label: "Pitchers" },
+] as const;
+
+export type ProspectRole = (typeof PROSPECT_ROLES)[number]["key"];
+
+export function rolePositions(role: ProspectRole): readonly string[] {
+  return MLB_POSITION_ORDER.filter((position) => PITCHER_GROUPS.has(position) === (role === "pitcher"));
+}
+
 export interface ProspectFilters {
+  // The list always shows one role; null (both) is the comparison picker's name search.
+  role: ProspectRole | null;
   org: string | null;
   level: string | null;
   position: string | null;
@@ -40,7 +53,7 @@ export interface ProspectFilters {
   search: string | null;
 }
 
-export const DEFAULT_PROSPECT_FILTERS: ProspectFilters = { org: null, level: null, position: null, gradedOnly: false, sort: "value", search: null };
+export const DEFAULT_PROSPECT_FILTERS: ProspectFilters = { role: "hitter", org: null, level: null, position: null, gradedOnly: false, sort: "value", search: null };
 export const PROSPECT_PAGE = 40;
 // Past the last row of the largest pool; anything further is a malformed request.
 export const MAX_PROSPECT_OFFSET = 20_000;
@@ -49,6 +62,7 @@ const ORG_SET: ReadonlySet<string> = new Set(PROSPECT_ORGS);
 const LEVEL_SET: ReadonlySet<string> = new Set(PROSPECT_LEVELS.map((l) => l.key));
 const POSITION_SET: ReadonlySet<string> = new Set(MLB_POSITION_ORDER);
 const SORT_SET: ReadonlySet<string> = new Set(PROSPECT_SORTS.map((s) => s.key));
+const ROLE_SET: ReadonlySet<string> = new Set(PROSPECT_ROLES.map((r) => r.key));
 // Two to forty letters (any script), spaces, apostrophes, hyphens and periods:
 // everything a name holds, and nothing that is regex or PostgREST filter syntax
 // but the period.
@@ -78,6 +92,7 @@ export function prospectSearchRegex(search: string): string {
 // set is one URL and one CDN entry.
 export function prospectQuery(filters: ProspectFilters, offset = 0): string {
   const params = new URLSearchParams();
+  if (filters.role) params.set("role", filters.role);
   if (filters.org) params.set("org", filters.org);
   if (filters.level) params.set("level", filters.level);
   if (filters.position) params.set("pos", filters.position);
@@ -90,8 +105,9 @@ export function prospectQuery(filters: ProspectFilters, offset = 0): string {
 
 // Every value is checked against its whitelist; null means the request is malformed.
 export function parseProspectQuery(params: URLSearchParams): { filters: ProspectFilters; offset: number } | null {
-  const allowed = new Set(["org", "level", "pos", "graded", "sort", "q", "offset"]);
+  const allowed = new Set(["role", "org", "level", "pos", "graded", "sort", "q", "offset"]);
   for (const key of params.keys()) if (!allowed.has(key)) return null;
+  const role = params.get("role");
   const org = params.get("org");
   const level = params.get("level");
   const position = params.get("pos");
@@ -99,9 +115,11 @@ export function parseProspectQuery(params: URLSearchParams): { filters: Prospect
   const sort = params.get("sort") ?? "value";
   const search = params.get("q");
   const offsetText = params.get("offset") ?? "0";
+  if (role != null && !ROLE_SET.has(role)) return null;
   if (org != null && !ORG_SET.has(org)) return null;
   if (level != null && !LEVEL_SET.has(level)) return null;
   if (position != null && !POSITION_SET.has(position)) return null;
+  if (role != null && position != null && !rolePositions(role as ProspectRole).includes(position)) return null;
   if (graded != null && graded !== "1") return null;
   if (!SORT_SET.has(sort)) return null;
   // Only the canonical form, so one search is one CDN entry.
@@ -110,7 +128,7 @@ export function parseProspectQuery(params: URLSearchParams): { filters: Prospect
   const offset = Number(offsetText);
   if (offset % PROSPECT_PAGE !== 0 || offset > MAX_PROSPECT_OFFSET) return null;
   return {
-    filters: { org, level, position, gradedOnly: graded === "1", sort: sort as ProspectSort, search },
+    filters: { role: role as ProspectRole | null, org, level, position, gradedOnly: graded === "1", sort: sort as ProspectSort, search },
     offset,
   };
 }
