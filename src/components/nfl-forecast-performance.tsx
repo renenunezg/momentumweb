@@ -4,6 +4,7 @@ import type { FootballLivePerformance } from "@/lib/football-performance";
 import type { SliceMetrics } from "@/lib/backtest-metrics";
 import { FootballForecastPerformance } from "@/components/football-forecast-performance";
 import { KpiCard } from "@/components/kpi-card";
+import { HowGraded } from "@/components/how-graded";
 import {
   Table,
   TableBody,
@@ -134,22 +135,38 @@ async function HistoricalBacktest() {
         )}
       </div>
 
-      <p className="max-w-4xl text-sm text-muted-foreground leading-relaxed">
-        Every prediction below was made walking forward through each season with
-        only the data available at the time. The table is regenerated from the
-        current model whenever the backtest is republished and is stamped with
-        the version and date that produced it once the publish records them.
-        Seasons 2016 through 2021
-        chose the hyperparameters; 2022 through 2025 were not used for selection
-        but have been examined repeatedly, so they are retrospective evaluation,
-        not a clean holdout. The historical preseason prior uses each team&apos;s
-        actual week 1 starter as its quarterback for 2016 to 2024, a small
-        hindsight a live run would not have. The market benchmark is the closing
-        spread: the strongest public forecast of a game&apos;s margin. In this
-        backtest the published line blends the pure model half and half with that
-        closing spread, so its error is not a forecast result; the pure model,
-        which sees no market, is the headline here.
+      <p className="max-w-4xl text-sm text-muted-foreground">
+        The pure model, which sees no market, replayed week by week through past
+        seasons with only the data available at the time, against the closing
+        spread. It is not the same population as the live record above.
       </p>
+      <HowGraded>
+        <p>
+          Every prediction below was made walking forward through each season with
+          only the data available at the time. The table is regenerated from the
+          current model whenever the backtest is republished and is stamped with
+          the version and date that produced it once the publish records them.
+          Seasons 2016 through 2021
+          chose the hyperparameters; 2022 through 2025 were not used for selection
+          but have been examined repeatedly, so they are retrospective evaluation,
+          not a clean holdout. The historical preseason prior uses each team&apos;s
+          actual week 1 starter as its quarterback for 2016 to 2024, a small
+          hindsight a live run would not have. The market benchmark is the closing
+          spread: the strongest public forecast of a game&apos;s margin. In this
+          backtest the published line blends the pure model half and half with that
+          closing spread, so its error is not a forecast result; the pure model,
+          which sees no market, is the headline here.
+        </p>
+        <p>
+          Half-close blend is the backtest&apos;s published line, half pure model
+          and half closing spread; it is listed for reference and is not a
+          forecast. The live 2026 line blends toward the market as it stood when
+          the forecast was published, hours before kickoff, and is graded above.
+          The published line and the in-game projections lean on the market
+          because the closing line has been the better pregame forecast in every
+          season tested.
+        </p>
+      </HowGraded>
 
       {!overall || !evaluation ? (
         <p className="text-sm text-muted-foreground">
@@ -208,15 +225,6 @@ async function HistoricalBacktest() {
         </>
       )}
 
-      <p className="text-xs text-muted-foreground">
-        Half-close blend is the backtest&apos;s published line, half pure model
-        and half closing spread; it is listed for reference and is not a
-        forecast. The live 2026 line blends toward the market as it stood when
-        the forecast was published, hours before kickoff, and is graded above.
-        The published line and the in-game projections lean on the market
-        because the closing line has been the better pregame forecast in every
-        season tested.
-      </p>
     </section>
   );
 }

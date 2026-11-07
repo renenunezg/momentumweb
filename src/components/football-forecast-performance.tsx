@@ -12,6 +12,7 @@ import {
 import type { CfbPredictionSource } from "@/lib/types";
 import { describeGap, formatNumber, formatPct, formatSigned } from "@/lib/utils";
 import { KpiCard } from "@/components/kpi-card";
+import { HowGraded } from "@/components/how-graded";
 import { CoverageTargets } from "@/components/coverage-targets";
 import { WeeklyErrorChart } from "@/components/weekly-error-chart";
 import {
@@ -172,15 +173,51 @@ export function FootballForecastPerformance({
           <h2 className="type-section">
             {live.season ?? "Live"} season, graded as played: {copy.seasonLabel}
           </h2>
-          <p className="max-w-4xl text-sm text-muted-foreground leading-relaxed">
-            Every row is a frozen record: the projection published before
-            kickoff, {copy.closingLine}, and the final score. Nothing is re-fit
-            or re-priced after a result is known. The closing line is the bar
-            the model is measured against, not an input to it.{" "}
-            {versionRows.length > 0
-              ? "Each game is graded on the model version published before its kickoff; the by-version table lists them."
-              : copy.versions}
+          <p className="max-w-4xl text-sm text-muted-foreground">
+            Each game is graded on the forecast published before kickoff,
+            against the closing line and the final score.
           </p>
+          <HowGraded>
+            <p>
+              Every row is a frozen record: the projection published before
+              kickoff, {copy.closingLine}, and the final score. Nothing is re-fit
+              or re-priced after a result is known. The closing line is the bar
+              the model is measured against, not an input to it.{" "}
+              {versionRows.length > 0
+                ? "Each game is graded on the model version published before its kickoff; the by-version table lists them."
+                : copy.versions}
+            </p>
+            {!live.unavailable && livePure && (
+              <p>
+                {live.closingSources && Object.values(live.closingSources).some((games) => games > 0) ? (
+                  <>
+                    Closing-line feeds across the{" "}
+                    {Object.values(live.closingSources).reduce((sum, games) => sum + games, 0)} graded
+                    forecast and result pairs: {describeClosingSources(live.closingSources)}. A close captured
+                    before kickoff is one quote held in memory by the live worker
+                    and frozen when the game starts; a value recorded after the game
+                    is the provider&apos;s final number with no timestamp. Where both
+                    exist the captured close is used.
+                  </>
+                ) : (
+                  "Which closing-line feed stands behind each graded game is published with the next grading run."
+                )}
+              </p>
+            )}
+            {composition.length > 0 && (
+              <p>
+                The headline pools every graded game. By opponent classification:{" "}
+                {composition.map((m, i) => (
+                  <span key={m.segment}>
+                    {i > 0 && "; "}
+                    {m.segment} {m.games} games, gap {describeGap(m.model_minus_market_mae ?? 0, gapInterval(m)?.[0] ?? null, gapInterval(m)?.[1] ?? null).text}
+                  </span>
+                ))}
+                . An FCS closing line is usually a single sportsbook&apos;s number.
+                {composition.some((m) => gapInterval(m)) ? " Ranges are 95 percent paired bootstrap intervals." : " No interval is published for these gaps yet."}
+              </p>
+            )}
+          </HowGraded>
         </div>
 
         {live.unavailable ? (
@@ -263,36 +300,6 @@ export function FootballForecastPerformance({
               </div>
             )}
 
-            <p className="max-w-4xl text-xs text-muted-foreground">
-              {live.closingSources && Object.values(live.closingSources).some((games) => games > 0) ? (
-                <>
-                  Closing-line feeds across the{" "}
-                  {Object.values(live.closingSources).reduce((sum, games) => sum + games, 0)} graded
-                  forecast and result pairs: {describeClosingSources(live.closingSources)}. A close captured
-                  before kickoff is one quote held in memory by the live worker
-                  and frozen when the game starts; a value recorded after the game
-                  is the provider&apos;s final number with no timestamp. Where both
-                  exist the captured close is used.
-                </>
-              ) : (
-                "Which closing-line feed stands behind each graded game is published with the next grading run."
-              )}
-            </p>
-
-            {composition.length > 0 && (
-              <p className="max-w-4xl text-xs text-muted-foreground">
-                The headline pools every graded game. By opponent classification:{" "}
-                {composition.map((m, i) => (
-                  <span key={m.segment}>
-                    {i > 0 && "; "}
-                    {m.segment} {m.games} games, gap {describeGap(m.model_minus_market_mae ?? 0, gapInterval(m)?.[0] ?? null, gapInterval(m)?.[1] ?? null).text}
-                  </span>
-                ))}
-                . An FCS closing line is usually a single sportsbook&apos;s number.
-                {composition.some((m) => gapInterval(m)) ? " Ranges are 95 percent paired bootstrap intervals." : " No interval is published for these gaps yet."}
-              </p>
-            )}
-
             <div className="space-y-2">
               <h3 className="type-subsection">By prediction source</h3>
               <div className="overflow-x-auto">
@@ -356,31 +363,33 @@ export function FootballForecastPerformance({
                   </TableBody>
                 </Table>
               </div>
-              <p className="text-xs text-muted-foreground">
-                Published is the market-informed line, total and scores the
-                site shows: the pure margin mixed with the pregame market spread
-                the model saw when it published. Pure model is the independent
-                projection behind it. Closing line is the benchmark graded on
-                its own. Coverage is the share of results inside each
-                source&apos;s 50, 80, and 90 percent intervals: the pure
-                model&apos;s frozen ones, and for the published line the
-                dispersion predictions are priced with. The published total is graded
-                only for games published since it existed, so its Total MAE rests on
-                fewer games than the other two rows.
-                {livePublished?.probability_games ? (
-                  <>
-                    {" "}
-                    Home win probability from the published pregame line scores
-                    Brier {formatNumber(livePublished.brier_score, 3)} and log
-                    loss {formatNumber(livePublished.log_loss, 3)} over{" "}
-                    {livePublished.probability_games} games
-                    {liveClosing?.brier_score != null
-                      ? <>; the closing line, priced on the same scale over the same games, scores {formatNumber(liveClosing.brier_score, 3)} and {formatNumber(liveClosing.log_loss, 3)}.</>
-                      : "; the closing line's Brier on the same games is not published yet."}
-                  </>
-                ) : null}
-                {" "}Gap ranges, where shown, are 95 percent paired bootstrap intervals over games.
-              </p>
+              <HowGraded label="What the sources mean">
+                <p>
+                  Published is the market-informed line, total and scores the
+                  site shows: the pure margin mixed with the pregame market spread
+                  the model saw when it published. Pure model is the independent
+                  projection behind it. Closing line is the benchmark graded on
+                  its own. Coverage is the share of results inside each
+                  source&apos;s 50, 80, and 90 percent intervals: the pure
+                  model&apos;s frozen ones, and for the published line the
+                  dispersion predictions are priced with. The published total is graded
+                  only for games published since it existed, so its Total MAE rests on
+                  fewer games than the other two rows.
+                  {livePublished?.probability_games ? (
+                    <>
+                      {" "}
+                      Home win probability from the published pregame line scores
+                      Brier {formatNumber(livePublished.brier_score, 3)} and log
+                      loss {formatNumber(livePublished.log_loss, 3)} over{" "}
+                      {livePublished.probability_games} games
+                      {liveClosing?.brier_score != null
+                        ? <>; the closing line, priced on the same scale over the same games, scores {formatNumber(liveClosing.brier_score, 3)} and {formatNumber(liveClosing.log_loss, 3)}.</>
+                        : "; the closing line's Brier on the same games is not published yet."}
+                    </>
+                  ) : null}
+                  {" "}Gap ranges, where shown, are 95 percent paired bootstrap intervals over games.
+                </p>
+              </HowGraded>
             </div>
 
             <SegmentTable title="By model version" rows={versionRows} />
@@ -407,12 +416,14 @@ export function FootballForecastPerformance({
                 />
               ))}
             </details>
-            <p className="text-xs text-muted-foreground">
-              Segments grade the published line. Market columns use only the games in
-              that segment with a closing spread. A segment marked thin has
-              fewer than 30 games. The graded games behind this tab are on the{" "}
-              <a href="/data" className="underline underline-offset-4">data page</a> as CSV.
-            </p>
+            <HowGraded label="About these tables">
+              <p>
+                Segments grade the published line. Market columns use only the games in
+                that segment with a closing spread. A segment marked thin has
+                fewer than 30 games. The graded games behind this tab are on the{" "}
+                <a href="/data" className="underline underline-offset-4">data page</a> as CSV.
+              </p>
+            </HowGraded>
           </>
         )}
       </section>

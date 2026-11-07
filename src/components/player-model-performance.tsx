@@ -4,6 +4,7 @@ import { supabase, supabaseCfb, supabaseNfl } from "@/lib/supabase";
 import { traitLabel } from "@/lib/position-traits";
 import { formatNumber } from "@/lib/utils";
 import { RankComparisonChart, type RankComparisonRow } from "@/components/rank-comparison-chart";
+import { HowGraded } from "@/components/how-graded";
 import {
   FORWARD_SYSTEM_LABELS,
   NFL_BASELINE_LABELS,
@@ -398,11 +399,21 @@ async function CfbResults() {
           <div className="space-y-2">
             <h3 className="text-lg">How the grade ranks later production</h3>
             <p className="text-sm text-muted-foreground">
-              Served grade model {first.grade_model_version} (weights {first.model_sha.slice(0, 8)}) on{" "}
-              {first.input_value_model_version}&nbsp;credit. Rho is Spearman rank correlation on the same players; the
-              gap is grade minus EPA credit with a 95 percent paired bootstrap interval. Baselines: the player&apos;s
-              EPA credit to date, games played, and value above replacement. Holdout status: {first.holdout_status}.
+              Whether each position&apos;s grade ranks players&apos; later production better than their EPA credit to date.
             </p>
+            <HowGraded>
+              <p>
+                Served grade model {first.grade_model_version} (weights {first.model_sha.slice(0, 8)}) on{" "}
+                {first.input_value_model_version}&nbsp;credit. Rho is Spearman rank correlation on the same players; the
+                gap is grade minus EPA credit with a 95 percent paired bootstrap interval. Baselines: the player&apos;s
+                EPA credit to date, games played, and value above replacement. Holdout status: {first.holdout_status}.
+              </p>
+              <p>
+                Offensive grades are built mostly on EPA credit, so they rank players much as the credit does; the
+                defensive grades rest on tagged disruption plays and box-score counts. A first untouched test of this
+                model, the 2026 rest-of-season endpoint, is pre-registered and will be published here whatever it says.
+              </p>
+            </HowGraded>
           </div>
           {kinds.map(({ kind, title, detail }) => {
             const subset = validationRows.filter((row) => row.eval_kind === kind);
@@ -436,11 +447,6 @@ async function CfbResults() {
               </div>
             );
           })}
-          <p className="text-xs text-muted-foreground">
-            Offensive grades are built mostly on EPA credit, so they rank players much as the credit does; the
-            defensive grades rest on tagged disruption plays and box-score counts. A first untouched test of this
-            model, the 2026 rest-of-season endpoint, is pre-registered and will be published here whatever it says.
-          </p>
           <LastUpdated timestamp={first.computed_at} schedule="Published with each evaluation run" />
         </div>
       )}
@@ -448,11 +454,16 @@ async function CfbResults() {
         <div className="space-y-2">
           <h3 className="text-lg">How consistently player value repeats</h3>
           <p className="text-sm text-muted-foreground">
-            Odd-game against even-game correlation of opponent-adjusted EPA credit per
-            game for the {data.season} player-value model ({data.value_model_version}).
-            These are the value model&apos;s reliabilities, not the grade&apos;s, and they
-            measure repeatability of credited production, not next-season forecast accuracy.
+            How much a player&apos;s credited production repeats from one half of their games to the other.
           </p>
+          <HowGraded label="How this is measured">
+            <p>
+              Odd-game against even-game correlation of opponent-adjusted EPA credit per
+              game for the {data.season} player-value model ({data.value_model_version}).
+              These are the value model&apos;s reliabilities, not the grade&apos;s, and they
+              measure repeatability of credited production, not next-season forecast accuracy.
+            </p>
+          </HowGraded>
         </div>
         <div className="grid gap-4 sm:grid-cols-2">
           {rows.map((row) => (
@@ -555,11 +566,21 @@ function NflEvaluation({ rows }: { rows: NflGradeEvaluationRow[] }) {
       <div className="space-y-2">
         <h3 className="text-lg">How the grades rank later production</h3>
         <p className="text-sm text-muted-foreground">
-          Rho is Spearman rank correlation on the same players; the gap is grade minus baseline with a 95 percent
-          player-level bootstrap interval. Next-season rows score the final-week grade against per-game EPA credit the
-          following season among players who qualified at the same position in both. Rating rows score the QB and RB
-          ratings at each week against the rest of that season, averaged over weeks.
+          Whether each position&apos;s grade ranks players&apos; later production better than a simple baseline.
         </p>
+        <HowGraded>
+          <p>
+            Rho is Spearman rank correlation on the same players; the gap is grade minus baseline with a 95 percent
+            player-level bootstrap interval. Next-season rows score the final-week grade against per-game EPA credit the
+            following season among players who qualified at the same position in both. Rating rows score the QB and RB
+            ratings at each week against the rest of that season, averaged over weeks.
+          </p>
+          <p>
+            Defensive EPA credit counts only tagged disruption plays, so the defensive grades forecast repeatable
+            involvement rather than coverage quality, and much of their edge comes from smoothing counting stats.
+            {statuses.length > 0 && ` Validation seasons: ${statuses.map((s) => NFL_HOLDOUT_LABELS[s] ?? s).join("; ")}.`}
+          </p>
+        </HowGraded>
       </div>
       {validation.length > 0 && (
         <div className="space-y-4">
@@ -595,11 +616,6 @@ function NflEvaluation({ rows }: { rows: NflGradeEvaluationRow[] }) {
           rows={ratingPivot(rb)}
         />
       )}
-      <p className="text-xs text-muted-foreground">
-        Defensive EPA credit counts only tagged disruption plays, so the defensive grades forecast repeatable
-        involvement rather than coverage quality, and much of their edge comes from smoothing counting stats.
-        {statuses.length > 0 && ` Validation seasons: ${statuses.map((s) => NFL_HOLDOUT_LABELS[s] ?? s).join("; ")}.`}
-      </p>
       <LastUpdated timestamp={rows[0].computed_at} schedule="Published with each evaluation run" />
     </div>
   );
@@ -665,10 +681,18 @@ async function NflResults() {
         <div className="space-y-2">
           <h3 className="text-lg">How consistently graded traits repeat</h3>
           <p className="text-sm text-muted-foreground">
-            Correlation between odd-game and even-game measurements for traits
-            used in the grade. Strong repeatability can reflect a stable role as
-            well as skill.
+            How much each graded trait repeats from one half of a player&apos;s games to the other.
           </p>
+          <HowGraded label="How this is measured">
+            <p>
+              Correlation between odd-game and even-game measurements for traits
+              used in the grade. Strong repeatability can reflect a stable role as
+              well as skill.{" "}
+              {evaluation && evaluation.length > 0
+                ? "Reliability is repeatability, not forecast accuracy; the tables above carry the forecast results. Neither validates WAR."
+                : "The evaluation sample size, test seasons, and grade holdout scores are not published in this feed. These diagnostics do not establish forecast accuracy or validate WAR."}
+            </p>
+          </HowGraded>
         </div>
         <div className="grid items-start gap-4 md:grid-cols-2">
           {positions.map((position) => (
@@ -687,11 +711,6 @@ async function NflResults() {
             </article>
           ))}
         </div>
-        <p className="text-sm text-muted-foreground">
-          {evaluation && evaluation.length > 0
-            ? "Reliability is repeatability, not forecast accuracy; the tables above carry the forecast results. Neither validates WAR."
-            : "The evaluation sample size, test seasons, and grade holdout scores are not published in this feed. These diagnostics do not establish forecast accuracy or validate WAR."}
-        </p>
         <LastUpdated
           timestamp={publication.as_of}
           schedule={`${publication.season} · Week ${publication.week} · ${[...new Set([...measures.values()].map((row) => row.modelVersion))].join(" · ")}`}

@@ -8,6 +8,7 @@ import {
   BacktestSeasonTable,
 } from "@/components/backtest-summary";
 import { FootballForecastPerformance } from "@/components/football-forecast-performance";
+import { HowGraded } from "@/components/how-graded";
 
 const COPY = {
   closingLine:
@@ -84,19 +85,32 @@ async function HistoricalBacktest() {
         )}
       </div>
 
-      <p className="max-w-4xl text-sm text-muted-foreground leading-relaxed">
-        Every prediction below was made walking forward through each season with
-        only the data available at the time, then frozen with the model version
-        named above. They come from the pure model core with no market blend, so
-        they are historical stand-ins for the core&apos;s own skill, not for the
-        published line; regular season and postseason games are included. The
-        live 2026 record above is a different population: its forecasts come
-        from the versions named in its own section, which add a process margin
-        adjustment and a total offset on top of this core. The
-        market benchmark is the closing spread: the strongest public forecast of
-        a game&apos;s margin. Beating it consistently is rare, and the model is
-        measured against it, not against a naive baseline.
+      <p className="max-w-4xl text-sm text-muted-foreground">
+        The model core, with no market blend, replayed week by week through past
+        seasons with only the data available at the time, against the closing
+        spread. It is not the same population as the live record above.
       </p>
+      <HowGraded>
+        <p>
+          Every prediction below was made walking forward through each season with
+          only the data available at the time, then frozen with the model version
+          named above. They come from the pure model core with no market blend, so
+          they are historical stand-ins for the core&apos;s own skill, not for the
+          published line; regular season and postseason games are included. The
+          live 2026 record above is a different population: its forecasts come
+          from the versions named in its own section, which add a process margin
+          adjustment and a total offset on top of this core. The
+          market benchmark is the closing spread: the strongest public forecast of
+          a game&apos;s margin. Beating it consistently is rare, and the model is
+          measured against it, not against a naive baseline.
+        </p>
+        <p>
+          Bias is the mean signed error of the model&apos;s home margin: positive
+          means the model leans toward home teams. The published line and the
+          in-game projections lean on the market because the closing line has been
+          the better pregame forecast in every season tested.
+        </p>
+      </HowGraded>
 
       {!overall ? (
         <p className="text-sm text-muted-foreground">
@@ -112,12 +126,6 @@ async function HistoricalBacktest() {
         </>
       )}
 
-      <p className="text-xs text-muted-foreground">
-        Bias is the mean signed error of the model&apos;s home margin: positive
-        means the model leans toward home teams. The published line and the
-        in-game projections lean on the market because the closing line has been
-        the better pregame forecast in every season tested.
-      </p>
     </section>
   );
 }

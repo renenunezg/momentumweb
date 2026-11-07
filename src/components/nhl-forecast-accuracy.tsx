@@ -2,6 +2,7 @@ import { NavigationLink as Link } from "@/components/navigation-link";
 import { AccuracyChart, type AccuracySeries } from "@/components/accuracy-chart";
 import { CalibrationChart } from "@/components/calibration-chart";
 import { KpiCard } from "@/components/kpi-card";
+import { HowGraded } from "@/components/how-graded";
 import { Notice } from "@/components/notice";
 import {
   Table,
@@ -93,15 +94,27 @@ function MarketComparison({
     <section className="space-y-4">
       <div className="space-y-2">
         {heading}
-        <p className="max-w-4xl text-sm leading-relaxed text-muted-foreground">
-          {source === "live"
-            ? "The close is the last partner-book quote from the 15 minutes before puck drop."
-            : "Closing moneylines and totals come from ESPN's public odds data."}{" "}
-          The moneyline is converted to a home win probability with the vig
-          removed. Model and market are scored on the same games: only those
-          with a close, so these figures differ from the full-sample ones
-          above. Lower is better.
+        <p className="max-w-4xl text-sm text-muted-foreground">
+          Model and market scored on the same games, those with a recorded
+          close, so these figures differ from the ones above. Lower is better.
         </p>
+        <HowGraded>
+          <p>
+            {source === "live"
+              ? "The close is the last partner-book quote from the 15 minutes before puck drop."
+              : "Closing moneylines and totals come from ESPN's public odds data."}{" "}
+            The moneyline is converted to a home win probability with the vig
+            removed.
+            {blended && (
+              <>
+                {" "}On the same {overall.market_n} games the pure model scores a
+                log loss of {formatNumber(overall.pure_model_log_loss_on_market_games, 4)}.
+                The published forecast blends in the morning market price, so its
+                error and the close&apos;s are correlated.
+              </>
+            )}
+          </p>
+        </HowGraded>
       </div>
       <div className="grid grid-cols-2 gap-4 border-y border-rule-strong py-4 sm:grid-cols-3 lg:grid-cols-6">
         <KpiCard
@@ -147,17 +160,6 @@ function MarketComparison({
           tooltip="Model total error minus closing-total error. Positive means the market was closer to the goals scored."
         />
       </div>
-      {blended && (
-        <p className="text-sm text-muted-foreground">
-          Pure-model log loss:{" "}
-          <span className="font-mono text-foreground">
-            {formatNumber(overall.pure_model_log_loss_on_market_games, 4)}
-          </span>{" "}
-          on the same {overall.market_n} games. The published forecast blends
-          in the morning market price, so its error and the close&apos;s are
-          correlated.
-        </p>
-      )}
       {accuracy.by_season.length > 1 && (
         <Table>
           <TableCaption className="sr-only">Model against the closing line by season</TableCaption>
@@ -227,14 +229,21 @@ export async function NhlForecastAccuracy({
   return (
     <div className="space-y-section">
       <SourceToggle source={source} page={page} />
-      <p className="max-w-4xl text-sm leading-relaxed text-muted-foreground">
+      <p className="max-w-4xl text-sm text-muted-foreground">
         {source === "live"
-          ? "Published forecasts archived before puck drop and graded against official final scores. Each game uses its last pregame revision."
-          : "Walk-forward replay of the 2022-23 through 2025-26 regular seasons with the current pure model, kept separate from live forecasts."}{" "}
-        Log loss and Brier score judge the home win probability (a coin flip
-        scores 0.693 and 0.250); total MAE and bias judge the model total in
-        goals. The comparison with the closing line follows.
+          ? "Each game is graded on the last forecast published before puck drop, against the final score."
+          : "The current pure model replayed through the 2022-23 to 2025-26 regular seasons, kept separate from live forecasts."}
       </p>
+      <HowGraded>
+        <p>
+          {source === "live"
+            ? "Published forecasts are archived before puck drop and graded against official final scores. Each game uses its last pregame revision."
+            : "A walk-forward replay of the 2022-23 through 2025-26 regular seasons with the current pure model, using only data available before each game."}{" "}
+          Log loss and Brier score judge the home win probability (a coin flip
+          scores 0.693 and 0.250); total MAE and bias judge the model total in
+          goals. The comparison with the closing line follows.
+        </p>
+      </HowGraded>
       {!accuracy ? (
         <Notice role="status">Accuracy data is temporarily unavailable.</Notice>
       ) : !overall ? (
