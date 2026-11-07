@@ -1,19 +1,24 @@
 "use client";
 
 import { Popover } from "@base-ui/react/popover";
+import type { ReactNode } from "react";
 import { cn } from "@/lib/utils";
 
 // A small circled "i" that opens a one-paragraph explanation on click and
 // closes on an outside pointer or Escape. Shared by the KPI cards and the
 // player grade cards so every metric on the site explains itself the same way.
+// With children, the children are the trigger instead, as in a table column
+// header that explains itself when tapped.
 export function InfoTip({
   text,
   label,
   className,
+  children,
 }: {
   text: string;
   label?: string;
   className?: string;
+  children?: ReactNode;
 }) {
   return (
     <span className={cn("inline-flex", className)}>
@@ -21,9 +26,13 @@ export function InfoTip({
         <Popover.Trigger
           aria-label={label ?? text}
           onClick={(e) => e.stopPropagation()}
-          className="inline-flex h-3.5 w-3.5 items-center justify-center rounded-full border border-muted-foreground/40 font-serif text-[9px] italic leading-none text-muted-foreground/70 cursor-pointer select-none hover:border-foreground/60 hover:text-foreground focus:outline-none focus-visible:ring-1 focus-visible:ring-foreground/60"
+          className={
+            children
+              ? "cursor-pointer [text-transform:inherit] underline decoration-dotted decoration-muted-foreground/50 underline-offset-4 hover:text-foreground focus:outline-none focus-visible:ring-1 focus-visible:ring-foreground/60"
+              : "inline-flex h-3.5 w-3.5 items-center justify-center rounded-full border border-muted-foreground/40 font-serif text-[9px] italic leading-none text-muted-foreground/70 cursor-pointer select-none hover:border-foreground/60 hover:text-foreground focus:outline-none focus-visible:ring-1 focus-visible:ring-foreground/60"
+          }
         >
-          i
+          {children ?? "i"}
         </Popover.Trigger>
         <Popover.Portal>
           <Popover.Positioner
@@ -44,5 +53,20 @@ export function InfoTip({
         </Popover.Portal>
       </Popover.Root>
     </span>
+  );
+}
+
+// A column header that explains itself when tapped. Phones get the short label,
+// when there is one, so every column fits without sideways scrolling.
+export function HeaderTip({ full, short, tip }: { full: string; short?: string | null; tip: string }) {
+  return (
+    <InfoTip text={tip} label={`What is ${full}?`}>
+      {short ? (
+        <>
+          <span className="sm:hidden">{short}</span>
+          <span className="max-sm:hidden">{full}</span>
+        </>
+      ) : full}
+    </InfoTip>
   );
 }

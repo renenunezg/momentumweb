@@ -3,7 +3,7 @@
 import { useMemo, useState, type ReactNode } from "react";
 import { ratingHeatmap } from "@/lib/rating-heatmap";
 import { RatingsHeatmapLegend } from "@/components/ratings-heatmap-legend";
-import { EVEN_HEAT_HEAD, HeatValue, evenHeatColumns } from "@/components/heat-value";
+import { EVEN_COLUMN_HEAD, HeatValue, evenColumns } from "@/components/heat-value";
 import { cn, formatSigned } from "@/lib/utils";
 import { RatingsSearch, useRatingsSearch } from "@/components/ratings-search";
 import { TeamLogo, type TeamLogoSource } from "@/components/team-logo";
@@ -85,7 +85,7 @@ export function UnitRatingsTable<
         <Table
           density="compact"
           className="max-sm:[--table-cell-x:0.125rem] max-sm:[&_td]:text-xs"
-          style={evenHeatColumns(columns.length)}
+          style={evenColumns(columns.length)}
         >
           <TableCaption className="sr-only">{caption}</TableCaption>
           <TableHeader>
@@ -95,7 +95,7 @@ export function UnitRatingsTable<
               {columns.map((column) => (
                 <TableHead
                   key={column.key}
-                  className={cn("text-right max-sm:whitespace-normal max-sm:align-bottom", EVEN_HEAT_HEAD)}
+                  className={cn("text-right max-sm:whitespace-normal max-sm:align-bottom", EVEN_COLUMN_HEAD)}
                   aria-sort={sortKey === column.key ? "descending" : "none"}
                 >
                   <button

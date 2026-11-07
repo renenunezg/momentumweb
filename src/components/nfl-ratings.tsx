@@ -42,6 +42,8 @@ const LIMITED: LimitedDataRule = {
 };
 
 const rowKey = (r: { team_abbr: string }) => r.team_abbr;
+const RATING_TIP =
+  "Expected scoring margin against an average opponent on a neutral field, in points.";
 
 const PURE_MINUS_MARKET: RatingGap<NflTeamRating> = {
   label: "Pure − market",
@@ -148,6 +150,7 @@ export default function NflRatings({
             rowKey={rowKey}
             logo={logo}
             shortName={rowKey}
+            ratingTip={RATING_TIP}
             groupOf={(r) => r.division ?? "Unknown"}
             tierOf={(r) => r.conference ?? "AFC"}
             tiers={["AFC", "NFC"]}
@@ -185,6 +188,7 @@ export default function NflRatings({
             rowKey={rowKey}
             logo={logo}
             shortName={rowKey}
+            ratingTip={RATING_TIP}
             caption={`${VIEWS.find((v) => v.key === view)?.label} power ratings`}
             group={{ label: "Division", value: (r) => r.division }}
             limited={LIMITED}

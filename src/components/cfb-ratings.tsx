@@ -57,6 +57,8 @@ const LIMITED: LimitedDataRule = {
 };
 
 const rowKey = (r: { team_id: number }) => r.team_id;
+const RATING_TIP =
+  "Points above an average FBS team on a neutral field: the fitted rating moved part of the way toward the team's market-history rating.";
 
 export default function CfbRatings({
   ratings,
@@ -146,6 +148,7 @@ export default function CfbRatings({
             ratings={ratings}
             rowKey={rowKey}
             logo={logo}
+            ratingTip={RATING_TIP}
             groupOf={(r) => r.conference ?? "Independent"}
             tierOf={(r) => r.classification ?? "fbs"}
             tiers={["fbs", "fcs"]}
@@ -167,6 +170,7 @@ export default function CfbRatings({
             searchScope={view === "top25" ? "Search includes all D1 teams" : undefined}
             rowKey={rowKey}
             logo={logo}
+            ratingTip={RATING_TIP}
             caption={`${VIEWS.find((v) => v.key === view)?.label} power ratings`}
             group={{ label: "Conference", value: (r) => r.conference }}
             market={marketStrength}

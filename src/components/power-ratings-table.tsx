@@ -5,7 +5,8 @@ import { formatSiteTimestamp } from "@/lib/site-time";
 import { useMemo, useState, type ReactNode } from "react";
 import { ratingHeatmap, sharedExtent } from "@/lib/rating-heatmap";
 import { RatingsHeatmapLegend } from "@/components/ratings-heatmap-legend";
-import { HeatValue } from "@/components/heat-value";
+import { EVEN_COLUMN_HEAD, HeatValue, evenColumns } from "@/components/heat-value";
+import { HeaderTip } from "@/components/info-tip";
 import { SignedBar } from "@/components/signed-bar";
 import { Dialog, DialogContent, DialogDescription, DialogTitle } from "@/components/ui/dialog";
 import { RatingsSearch, useRatingsSearch } from "@/components/ratings-search";
@@ -79,6 +80,7 @@ export function PowerRatingsTable<T extends PowerRatingRow>({
   rowKey,
   logo,
   shortName,
+  ratingTip,
   caption,
   group,
   overallRank,
@@ -95,6 +97,8 @@ export function PowerRatingsTable<T extends PowerRatingRow>({
   rowKey: (row: T) => string | number;
   logo: (row: T) => TeamLogoSource | undefined;
   shortName?: (row: T) => string;
+  // What the rating column means in this sport, shown when its header is tapped.
+  ratingTip: string;
   caption: string;
   group?: { label: string; value: (row: T) => string | null };
   overallRank?: { label: string; value: (row: T) => number | undefined };
@@ -138,7 +142,8 @@ export function PowerRatingsTable<T extends PowerRatingRow>({
   // A badge on every row singles out nobody: whole tiers (all of FCS today)
   // run on reduced inputs, so say it once above the table instead.
   const allLimited = rows.length > 0 && rows.every(limited.isLimited);
-  const value = "text-center";
+  const value = cn("text-center", EVEN_COLUMN_HEAD);
+  const dataColumns = 3 + (market ? 1 : 0) + (change ? 1 : 0) + (gapColumn ? 1 : 0);
 
   return (
     <div className="space-y-3">
@@ -154,7 +159,14 @@ export function PowerRatingsTable<T extends PowerRatingRow>({
       </div>
       {allLimited && <p className="type-meta text-accent-amber">{limited.allNote}</p>}
       <div className="overflow-hidden rounded-xl border border-border bg-card">
-        <Table density="compact" className="type-label max-sm:[--table-cell-x:0.125rem] max-sm:[&_td]:text-xs">
+        {/* Phones: the data columns split the width evenly. Abbreviated team names
+            leave the team column only what it needs; full school names keep about
+            38%, enough for most to stay on one line on a large phone. */}
+        <Table
+          density="compact"
+          className="type-label max-sm:[--table-cell-x:0.125rem] max-sm:[&_td]:text-xs"
+          style={evenColumns(dataColumns, shortName ? 100 : 62)}
+        >
           <TableCaption className="sr-only">
             {query.trim() && searchRows ? "Team search power ratings" : caption}
           </TableCaption>
@@ -170,25 +182,27 @@ export function PowerRatingsTable<T extends PowerRatingRow>({
                 </TableHead>
               )}
               <TableHead className={value}>
-                {market ? <PhoneLabel full="Model" short="Mdl" /> : <PhoneLabel full="Rating" short="Rtg" />}
+                {market ? (
+                  <HeaderTip full="Model" short="Mdl" tip={`${ratingTip} Tap a rating for its uncertainty and source.`} />
+                ) : (
+                  <HeaderTip full="Rating" short="Rtg" tip={ratingTip} />
+                )}
               </TableHead>
-              {market && <TableHead className={value}><PhoneLabel full="Market" short="Mkt" /></TableHead>}
-              <TableHead className={value}><PhoneLabel full="Offense" short="Off" /></TableHead>
-              <TableHead className={value}><PhoneLabel full="Defense" short="Def" /></TableHead>
+              {market && (
+                <TableHead className={value}>
+                  <HeaderTip full="Market" short="Mkt" tip={MARKET_TIP} />
+                </TableHead>
+              )}
+              <TableHead className={value}><HeaderTip full="Offense" short="Off" tip={OFFENSE_TIP} /></TableHead>
+              <TableHead className={value}><HeaderTip full="Defense" short="Def" tip={DEFENSE_TIP} /></TableHead>
               {change && (
-                <TableHead className="text-right">
-                  <abbr title={change.label} className="no-underline">
-                    <span className="sm:hidden">Chg</span>
-                    <span className="max-sm:hidden">{change.short}</span>
-                  </abbr>
+                <TableHead className={cn("text-right", EVEN_COLUMN_HEAD)}>
+                  <HeaderTip full={change.short} short="Chg" tip={`${change.label}.`} />
                 </TableHead>
               )}
               {gapColumn && (
-                <TableHead className="pr-2 text-right sm:pr-3">
-                  <abbr title={gapColumn.title} className="no-underline">
-                    <span className="sm:hidden">Gap</span>
-                    <span className="max-sm:hidden">{gapColumn.label}</span>
-                  </abbr>
+                <TableHead className={cn("pr-2 text-right sm:pr-3", EVEN_COLUMN_HEAD)}>
+                  <HeaderTip full={gapColumn.label} short="Gap" tip={gapColumn.title} />
                 </TableHead>
               )}
             </TableRow>
@@ -272,15 +286,13 @@ export function PowerRatingsTable<T extends PowerRatingRow>({
   );
 }
 
-// Phones get the short header so every column fits without sideways scrolling.
-function PhoneLabel({ full, short }: { full: string; short: string }) {
-  return (
-    <>
-      <abbr title={full} className="no-underline sm:hidden">{short}</abbr>
-      <span className="max-sm:hidden">{full}</span>
-    </>
-  );
-}
+const MARKET_TIP =
+  "Market-implied strength, fitted to earlier closing spreads with a prior-season market baseline. Season win totals are not included. Tap a rating for its uncertainty and source.";
+const OFFENSE_TIP =
+  "The offense's part of the rating, in points per game above average. Off plus Def is the rating.";
+const DEFENSE_TIP =
+  "The defense's part of the rating, in points per game above average; higher is better. Off plus Def is the rating.";
+
 
 function RatingButton({ team, label, value, onClick }: {
   team: string;

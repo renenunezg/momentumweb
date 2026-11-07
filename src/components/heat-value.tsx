@@ -31,9 +31,11 @@ export function HeatValue({
 }
 
 // Compact fills span their column on phones, so columns sized by header length
-// read as uneven bars. Spread `evenHeatColumns` on the table and put
-// EVEN_HEAT_HEAD on each heat column's head to split the width evenly there.
-export function evenHeatColumns(count: number): CSSProperties {
-  return { "--heat-column": `${100 / count}%` } as CSSProperties;
+// read as uneven bars and the team column keeps whatever is left over. Spread
+// `evenColumns` on the table and put EVEN_COLUMN_HEAD on each data column's
+// head: on phones the data columns split `share` percent of the width evenly
+// and the team column gets the rest, down to its content.
+export function evenColumns(count: number, share = 100): CSSProperties {
+  return { "--data-column": `${share / count}%` } as CSSProperties;
 }
-export const EVEN_HEAT_HEAD = "max-sm:w-(--heat-column)";
+export const EVEN_COLUMN_HEAD = "max-sm:w-(--data-column)";

@@ -28,6 +28,7 @@ export function GroupRatings<T extends PowerRatingRow>({
   rowKey,
   logo,
   shortName,
+  ratingTip,
   groupOf,
   tierOf,
   tiers,
@@ -44,6 +45,7 @@ export function GroupRatings<T extends PowerRatingRow>({
   rowKey: (row: T) => string | number;
   logo: (row: T) => TeamLogoSource | undefined;
   shortName?: (row: T) => string;
+  ratingTip: string;
   groupOf: (row: T) => string;
   tierOf: (row: T) => string;
   tiers: readonly string[];
@@ -130,6 +132,7 @@ export function GroupRatings<T extends PowerRatingRow>({
           rowKey={rowKey}
           logo={logo}
           shortName={shortName}
+          ratingTip={ratingTip}
           caption={`${selected.name} power ratings`}
           overallRank={{
             label: overallRankLabel,
