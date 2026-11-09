@@ -16,6 +16,9 @@ export type NhlMatchup = {
   projection: NhlGameProjection;
   home: NhlTeamIdentity | undefined;
   away: NhlTeamIdentity | undefined;
+  // League rank in the latest model ratings; null when the team is unrated.
+  homeRank: number | null;
+  awayRank: number | null;
   homeBook: NhlBookPrice;
   awayBook: NhlBookPrice;
   bookTotal: number | null;
@@ -49,6 +52,7 @@ function TeamRow({
   const { projection, moneyline, total, live } = matchup;
   const team = side === "home" ? matchup.home : matchup.away;
   const name = side === "home" ? projection.home_team : projection.away_team;
+  const rank = side === "home" ? matchup.homeRank : matchup.awayRank;
   const lambda = side === "home" ? projection.home_lambda : projection.away_lambda;
   const win = side === "home" ? projection.home_win_prob : projection.away_win_prob;
   const fair = side === "home" ? projection.home_fair_price : projection.away_fair_price;
@@ -80,6 +84,11 @@ function TeamRow({
           <TeamLogo team={team} name={name} className="h-4 w-4 shrink-0" />
           <span className={cn("font-semibold tracking-wide", picked && "text-primary")}>
             {name}
+            {rank != null && (
+              <span className="ml-1 text-[10px] font-normal tabular-nums text-muted-foreground" title="Rank in the NHL model ratings">
+                {rank}
+              </span>
+            )}
           </span>
           <span aria-live="polite" className="contents">
             {score != null && (

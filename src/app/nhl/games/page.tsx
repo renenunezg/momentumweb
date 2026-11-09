@@ -9,6 +9,7 @@ import { SITE_TIME_ZONE, siteDate, zonedDayRange } from "@/lib/daily-picks";
 import {
   bestMoneyline,
   fetchForecastSnapshots,
+  fetchLatestRatings,
   fetchProjections,
   fetchTeams,
 } from "@/lib/nhl";
@@ -51,12 +52,15 @@ export default async function Page({
       ? (requested as string)
       : siteDate();
   const range = zonedDayRange(today, SITE_TIME_ZONE);
-  const [{ games, unavailable }, decisionsRes, teams, live] = await Promise.all([
+  const [{ games, unavailable }, decisionsRes, teams, live, { ratings }] = await Promise.all([
     fetchProjections(range.from, range.to),
     fetchNhlDecisions(range.from, range.to),
     fetchTeams(),
     fetchLiveScores(today),
+    fetchLatestRatings(),
   ]);
+  // Ratings arrive sorted by rating, so position is the rank shown on /nhl/ratings.
+  const ranks = new Map(ratings.map((r, index) => [r.team_abbr, index + 1]));
   const snapshots = await fetchForecastSnapshots(games);
   const displayDate = new Date(`${today}T12:00:00Z`).toLocaleDateString("en-US", {
     timeZone: SITE_TIME_ZONE,
@@ -93,6 +97,8 @@ export default async function Page({
       projection,
       home: teams.get(projection.home_team_abbr),
       away: teams.get(projection.away_team_abbr),
+      homeRank: ranks.get(projection.home_team_abbr) ?? null,
+      awayRank: ranks.get(projection.away_team_abbr) ?? null,
       homeBook: bestMoneyline(rows, "home"),
       awayBook: bestMoneyline(rows, "away"),
       bookTotal: withTotal?.total_line ?? null,
