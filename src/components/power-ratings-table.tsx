@@ -91,6 +91,7 @@ export function PowerRatingsTable<T extends PowerRatingRow>({
   searchRows,
   searchScope,
   change,
+  standing,
 }: {
   rows: T[];
   heatmapRows: T[];
@@ -109,6 +110,8 @@ export function PowerRatingsTable<T extends PowerRatingRow>({
   searchRows?: T[];
   searchScope?: string;
   change?: RatingChange<T>;
+  // Record and poll context under the team name, shown on phones too.
+  standing?: (row: T) => string | null;
 }) {
   const [detail, setDetail] = useState<T | null>(null);
   const { query, setQuery, matches, total } = useRatingsSearch(rows, searchRows);
@@ -237,8 +240,8 @@ export function PowerRatingsTable<T extends PowerRatingRow>({
                           />
                         )}
                       </span>
-                      {group && (
-                        <span className="block type-meta text-muted-foreground max-sm:hidden">{group.value(row) ?? "–"}</span>
+                      {(group || standing) && (
+                        <StandingLine group={group?.value(row) ?? (group ? "–" : null)} standing={standing?.(row) ?? null} />
                       )}
                     </span>
                   </span>
@@ -289,6 +292,20 @@ export function PowerRatingsTable<T extends PowerRatingRow>({
         </Dialog>
       )}
     </div>
+  );
+}
+
+function StandingLine({ group, standing }: { group: string | null; standing: string | null }) {
+  return (
+    <span className="block type-meta text-muted-foreground">
+      {group && (
+        <span className="max-sm:hidden">
+          {group}
+          {standing && " · "}
+        </span>
+      )}
+      {standing}
+    </span>
   );
 }
 

@@ -40,6 +40,7 @@ export function GroupRatings<T extends PowerRatingRow>({
   market,
   gap,
   change,
+  standing,
 }: {
   ratings: T[];
   rowKey: (row: T) => string | number;
@@ -58,6 +59,7 @@ export function GroupRatings<T extends PowerRatingRow>({
   market?: (row: T) => MarketStrength;
   gap?: RatingGap<T>;
   change?: RatingChange<T>;
+  standing?: (row: T) => string | null;
 }) {
   const { groups, overallRank } = useMemo(() => {
     const byName = new Map<string, T[]>();
@@ -145,6 +147,7 @@ export function GroupRatings<T extends PowerRatingRow>({
         market={market}
         gap={gap}
         change={change}
+        standing={standing}
       />
     </section>
   );

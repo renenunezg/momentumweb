@@ -8,6 +8,8 @@ import {
 } from "@/lib/cfb";
 import { keepLastGood } from "@/lib/keep-last-good";
 import { fetchComparisonProjections } from "@/lib/football-comparison.server";
+import { fetchCfbPlayoffForecast } from "@/lib/cfb-playoffs.server";
+import { decodeCfbPlayoffs, type CfbPlayoffPayload } from "@/lib/cfb-playoffs";
 import { LastUpdated } from "@/components/last-updated";
 import CfbRatings from "@/components/cfb-ratings";
 import { HowGraded } from "@/components/how-graded";
@@ -27,10 +29,12 @@ export async function generateMetadata(): Promise<Metadata> {
 }
 
 export default async function RatingsPage() {
-  const [{ ratings, season, week }, teams] = await Promise.all([
+  const [{ ratings, season, week }, teams, playoffs] = await Promise.all([
     fetchLatestRatings(),
     fetchTeams(),
+    fetchCfbPlayoffForecast(),
   ]);
+  const forecast = playoffs?.season === season ? playoffs : null;
   const [units, projections, prior] =
     season != null && week != null
       ? await Promise.all([
@@ -93,6 +97,12 @@ export default async function RatingsPage() {
                 )}
               </p>
               <p>
+                {forecast && (
+                  <>
+                    Record and AP rank under each FBS team are current through the
+                    week {forecast.ap_week} AP poll.{" "}
+                  </>
+                )}
                 Unit ratings are descriptive companions to the power ratings, not
                 model inputs or components of Off and Def. Pass and run blocking are
                 shared-outcome proxies, not isolated line grades.
@@ -108,7 +118,19 @@ export default async function RatingsPage() {
         projections={projections}
         teams={[...teams.values()]}
         prior={prior}
+        standings={forecast ? standings(forecast) : {}}
       />
     </PageShell>
+  );
+}
+
+// Record and AP rank ride on the playoff forecast, which carries them for
+// every FBS team; only the short label crosses to the client.
+function standings(payload: CfbPlayoffPayload): Record<number, string> {
+  return Object.fromEntries(
+    decodeCfbPlayoffs(payload).teams.map((t) => [
+      t.id,
+      `${t.wins}-${t.losses}${t.ap_rank != null ? ` · AP ${t.ap_rank}` : ""}`,
+    ]),
   );
 }

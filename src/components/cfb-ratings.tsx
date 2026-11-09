@@ -66,12 +66,14 @@ export default function CfbRatings({
   projections,
   teams,
   prior,
+  standings,
 }: {
   ratings: CfbTeamRating[];
   units: CfbTeamUnitRating[];
   projections: ComparisonProjections;
   teams: CfbTeamIdentity[];
   prior: { week: number | null; ratings: Record<number, number> };
+  standings: Record<number, string>;
 }) {
   // Search params are read in the browser without opting the server page into
   // dynamic rendering. The server snapshot uses the default view, then deep
@@ -88,6 +90,7 @@ export default function CfbRatings({
     [teams]
   );
   const logo = (r: { team_id: number }) => teamById.get(r.team_id);
+  const standing = (r: { team_id: number }) => standings[r.team_id] ?? null;
 
   const change = useMemo<RatingChange<CfbTeamRating> | undefined>(
     () =>
@@ -159,6 +162,7 @@ export default function CfbRatings({
             market={marketStrength}
             limited={LIMITED}
             change={change}
+            standing={standing}
           />
         ) : view === "units" ? (
           <CfbUnitRatings units={units} ratings={ratings} logo={logo} />
@@ -183,6 +187,7 @@ export default function CfbRatings({
             }
             limited={LIMITED}
             change={change}
+            standing={standing}
           />
         )}
       </ViewTabPanel>
