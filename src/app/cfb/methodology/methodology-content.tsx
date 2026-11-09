@@ -888,6 +888,21 @@ export function MethodologyContent({ example, backtestVersion }: { example: Pick
             count half, and a 30th-percentile replacement baseline is subtracted.
           </p>
           <p>
+            The position grades on the players page weight each position&apos;s
+            traits by how well they predicted the next season&apos;s credit from
+            2020 through 2024. Quarterback, running back and defensive back grades
+            also include the talent composite of the player&apos;s program, which
+            carries about a quarter to a third of the grade there: it is a level
+            for the roster around him, not a measurement of the player, and it
+            did not improve the one 2025 check at defensive back. Service
+            academy players take no talent term, because the composite does not
+            rate their rosters. Early in the
+            season a grade leans on the player&apos;s final grade from the season
+            before, with a weight that falls each week and reaches zero by week
+            13, so late-season and final grades read the current season alone.
+            Defensive back, offensive line and punter grades take no such prior.
+          </p>
+          <p>
             The Heisman board is a conditional logit trained on 2010 through 2025
             ballots: predicted vote share is a softmax across each season&apos;s
             candidate pool, which sums to one the way a ballot does. Pools are

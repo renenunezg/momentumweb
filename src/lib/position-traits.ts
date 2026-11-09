@@ -9,7 +9,7 @@ export const POSITION_ORDER = ["QB", "RB", "WR", "TE", "OL", "DL", "LB", "DB", "
 export type PositionGroup = (typeof POSITION_ORDER)[number];
 
 export const GRADE_TIP =
-  "Projected talent on a 20 to 80 scale among qualified FBS players at the position this week. 50 is average; 10 points is one standard deviation. ± shows uncertainty.";
+  "Projected talent on a 20 to 80 scale among qualified FBS players at the position this week. 50 is average; 10 points is one standard deviation. Quarterback, running back and defensive back grades include the talent level of the player's program. Early in the season, grades at every position except defensive back, offensive line and punter lean on last season's final grade, with a weight that fades to zero by week 13. ± shows uncertainty.";
 
 export const WAR_TIP =
   "Estimated wins above a replacement-level player at the position: points above replacement from opponent-adjusted play credit, at the league rate of about 50 points per win. Defensive value is understated because only tagged disruptions count.";
@@ -126,6 +126,10 @@ export const TRAIT_LABELS: Record<string, { label: string; tip: string }> = {
   "rec.room": {
     label: "Receiver room",
     tip: "Adjusted receiving EPA per game of his wide receiver and tight end teammates. Inferred; a target share earned beside strong receivers counts for more.",
+  },
+  "team.talent": {
+    label: "Program talent",
+    tip: "The roster talent composite of his program this season. Inferred; it describes the team, not the player. At quarterback, running back and defensive back, players on more talented rosters did better the next season than their production alone predicted.",
   },
   "def.havoc": {
     label: "Havoc",
