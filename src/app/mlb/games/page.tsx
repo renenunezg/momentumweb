@@ -6,6 +6,7 @@ import type { ModelOutput, GameMatchup, GameInfo } from "@/lib/types";
 import { GamesLive } from "@/components/games-live";
 import { SummaryStats } from "@/components/summary-stats";
 import { Notice } from "@/components/notice";
+import { MlbOffseason } from "@/components/mlb-offseason";
 import { HowGraded } from "@/components/how-graded";
 import { LastUpdated } from "@/components/last-updated";
 import { latestStamp } from "@/lib/mlb-picks-version";
@@ -42,6 +43,46 @@ async function fetchLiveScores(): Promise<Map<number, LiveScore>> {
   } catch {
     return new Map();
   }
+}
+
+type MlbSeason = { regularSeasonStartDate: string; postSeasonEndDate: string };
+
+async function fetchSeason(year: number): Promise<MlbSeason | null> {
+  try {
+    const res = await fetch(`https://statsapi.mlb.com/api/v1/seasons/${year}?sportId=1`, {
+      next: { revalidate: 86400 },
+      headers: { "User-Agent": "mlb-model-dashboard" },
+      signal: AbortSignal.timeout(2000),
+    });
+    if (!res.ok) return null;
+    const data = await res.json();
+    return data?.seasons?.[0] ?? null;
+  } catch {
+    return null;
+  }
+}
+
+// Between the World Series and Opening Day an empty slate means the season is
+// over, not an outage. Null when MLB's calendar is unreachable or it is in season.
+async function fetchOffseason(
+  today: string,
+): Promise<{ season: number; seasonEnded: string; openingDay: string } | null> {
+  const year = Number(today.slice(0, 4));
+  const current = await fetchSeason(year);
+  if (!current) return null;
+  if (today > current.postSeasonEndDate) {
+    const next = await fetchSeason(year + 1);
+    return next
+      ? { season: year, seasonEnded: current.postSeasonEndDate, openingDay: next.regularSeasonStartDate }
+      : null;
+  }
+  if (today < current.regularSeasonStartDate) {
+    const previous = await fetchSeason(year - 1);
+    return previous
+      ? { season: year - 1, seasonEnded: previous.postSeasonEndDate, openingDay: current.regularSeasonStartDate }
+      : null;
+  }
+  return null;
 }
 
 type ModelOutputRow = Tables<"mlb", "model_outputs">;
@@ -92,6 +133,17 @@ export default async function Page() {
   // Python scorer, not here.
 
   if (predictions.length === 0 && (!allGames || allGames.length === 0)) {
+    const offseason = outputsError || gamesError ? null : await fetchOffseason(today);
+    if (offseason) {
+      return (
+        <PageShell>
+          <PageTitle>
+            Today&apos;s MLB Predictions
+          </PageTitle>
+          <MlbOffseason {...offseason} today={today} />
+        </PageShell>
+      );
+    }
     return (
       <PageShell>
         <PageTitle>
