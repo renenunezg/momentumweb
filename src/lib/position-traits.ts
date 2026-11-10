@@ -324,12 +324,12 @@ export const RATING_LABELS: Record<string, { label: string; unit: string; tip: s
   QB: {
     label: "Forecast",
     unit: "EPA per dropback",
-    tip: "Projected EPA per dropback for the rest of the season. The grade places that forecast among qualified QBs, pulled toward 50 by the share of it that is still sample noise. Grade ± is that uncertainty; the range is how far the rest-of-season result typically lands from the forecast.",
+    tip: "Projected EPA per dropback for the rest of the season. The grade places that forecast among qualified QBs, bunched by the share of it that is still sample noise, with 50 set at the 32nd best: the fringe of a starting job. Grade ± is that uncertainty; the range is how far the rest-of-season result typically lands from the forecast.",
   },
   RB: {
     label: "Forecast",
-    unit: "EPA over average per game",
-    tip: "Projected EPA over an average back per game for the rest of the season: forecast efficiency per touch times his touches per game, each pulled toward the league average until his sample supports it. Efficiency repeats poorly, so grades stay near 50 and the range is wide.",
+    unit: "EPA over replacement per game",
+    tip: "Projected EPA over a replacement back per game for the rest of the season: forecast efficiency per touch times his touches per game. Each efficiency measure pools his three previous seasons, weighted down steeply by age, and is pulled toward the league average until his sample supports it. The grade sets 50 at the 32nd best back. Efficiency repeats poorly, so the range is wide.",
   },
 };
 
@@ -373,7 +373,9 @@ const RATED_MEASURE_LABELS: Record<string, { label: string; tip: string }> = {
   explosive_rate: { label: "Explosive completions", tip: "Completions of 20 or more yards per dropback." },
   scramble_epa: { label: "Scramble EPA", tip: "EPA per scramble." },
   // Running back
+  // Weeks scored before the RB rating counted value over replacement.
   epa_oe_game: { label: "EPA over average per game", tip: "His rushing EPA plus half the EPA of his targets, less what an average back would add on the same touches, per game." },
+  epa_or_game: { label: "EPA over replacement per game", tip: "His rushing EPA plus half the EPA of his targets, less what a replacement back (a team's third option or lower) would add on the same touches, per game." },
   epa_game: { label: "EPA per game", tip: "His rushing EPA plus half the EPA of his targets, per game." },
   epa_touch: { label: "EPA per touch", tip: "Rushing EPA plus half the EPA on targets, divided by carries plus targets." },
   first_down_rate: { label: "First-down rate", tip: "Share of carries that gain a first down." },
