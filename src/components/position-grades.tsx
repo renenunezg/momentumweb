@@ -202,6 +202,13 @@ function formatPay(value: number | null, signed = false): string {
   return signed ? `+${text}` : text;
 }
 
+// A surplus reads green when the player is worth more than he costs and red
+// when he costs more than he is worth.
+function surplusTone(value: number | null | undefined): string | undefined {
+  if (value == null || value === 0) return undefined;
+  return value > 0 ? "text-positive" : "text-destructive";
+}
+
 // The price card's sub line: its range and what set it.
 function paySub(player: GradedPlayer): string {
   const source = player.nilPriceSource === "portal" ? "portal rating" : "est. from production";
@@ -224,21 +231,21 @@ function Headline({
   tipLabel,
   value,
   sub,
-  positive,
+  tone,
 }: {
   label: string;
   tip: string;
   tipLabel: string;
   value: string;
   sub: string;
-  positive?: boolean;
+  tone?: string;
 }) {
   return (
     <div className="flex min-w-0 flex-col items-center gap-1 text-center">
       <span className="type-eyebrow inline-flex items-center gap-1 text-muted-foreground">
         {label} <InfoTip text={tip} label={tipLabel} />
       </span>
-      <span className={cn("font-mono text-xl font-bold tabular-nums leading-tight", positive && "text-positive")}>{value}</span>
+      <span className={cn("font-mono text-xl font-bold tabular-nums leading-tight", tone)}>{value}</span>
       <span className="font-mono text-[11px] tabular-nums text-muted-foreground">{sub}</span>
     </div>
   );
@@ -302,7 +309,7 @@ function GradeCard({
                 tipLabel="What is the forecast?"
                 value={formatSigned(player.rating, 2)}
                 sub={`${rating.unit}${player.ratingRange != null ? ` · range ±${formatNumber(player.ratingRange, 2)}` : ""}`}
-                positive={player.rating != null && player.rating > 0}
+                tone={player.rating != null && player.rating > 0 ? "text-positive" : undefined}
               />
             )}
             <Headline
@@ -317,7 +324,7 @@ function GradeCard({
                     ? "no credited plays"
                     : `${formatSigned(player.pointsAboveReplacement, 0)} season pts`
               }
-              positive={player?.war != null && player.war > 0}
+              tone={player?.war != null && player.war > 0 ? "text-positive" : undefined}
             />
             {priced && (
               <Headline
@@ -345,7 +352,7 @@ function GradeCard({
               tipLabel="What is contract surplus?"
               value={formatMillions(player.contractSurplus, true)}
               sub={rangeSub(player.contractSurplusRange)}
-              positive={player.contractSurplus != null && player.contractSurplus > 0}
+              tone={surplusTone(player.contractSurplus)}
             />
           </div>
         )}
@@ -373,7 +380,7 @@ function GradeCard({
                   tipLabel="What is surplus?"
                   value={formatPay(player.nilSurplus, true)}
                   sub="worth minus price"
-                  positive={player.nilSurplus != null && player.nilSurplus > 0}
+                  tone={surplusTone(player.nilSurplus)}
                 />
               </>
             )}
@@ -460,14 +467,14 @@ function GradeCard({
           })}
           {showForecast && (
             <TableCell className="text-center">
-              {rated ? <><div>{formatSigned(player.rating, 2)}</div><div className="text-[11px] text-muted-foreground">{rating.unit}</div></> : EMPTY}
+              {rated ? <><div>{formatSigned(player.rating, 2)}</div><div className="whitespace-normal text-[11px] leading-tight text-muted-foreground">{rating.unit}</div></> : EMPTY}
             </TableCell>
           )}
           <TableCell className="text-center">{player?.war == null ? EMPTY : formatSigned(player.war, 2)}</TableCell>
           <TableCell className="text-center">{player?.pointsAboveReplacement == null ? EMPTY : formatSigned(player.pointsAboveReplacement, 1)}</TableCell>
           {showSpread && <TableCell className="text-center">{player?.spreadValue == null ? EMPTY : formatPsr(player.spreadValue)}</TableCell>}
           {showValue && <TableCell className="text-center">{formatMillions(player?.playerValue ?? null)}</TableCell>}
-          {showValue && <TableCell className="text-center">{formatMillions(player?.contractSurplus ?? null, true)}</TableCell>}
+          {showValue && <TableCell className={cn("text-center", surplusTone(player?.contractSurplus))}>{formatMillions(player?.contractSurplus ?? null, true)}</TableCell>}
           {showNil && (
             <TableCell className="text-center">
               <div className={cn(player?.nilPriceSource === "production" && "text-muted-foreground")}>{formatPay(player?.nilPrice ?? null)}</div>
@@ -476,7 +483,7 @@ function GradeCard({
               )}
             </TableCell>
           )}
-          {showNilSurplus && <TableCell className="text-center">{formatPay(player?.nilSurplus ?? null, true)}</TableCell>}
+          {showNilSurplus && <TableCell className={cn("text-center", surplusTone(player?.nilSurplus))}>{formatPay(player?.nilSurplus ?? null, true)}</TableCell>}
           <TableCell><ChevronDown aria-hidden="true" className={cn("size-4 text-muted-foreground transition-transform", open && "rotate-180")} /></TableCell>
         </TableRow>
         <TableRow hidden={!open} className="hover:bg-transparent">
@@ -588,7 +595,7 @@ function ComparePanel({
       ...(sport === "nfl" && player?.playerValue != null
         ? [
             { label: "Value", value: formatMillions(player.playerValue), sub: rangeSub(player.playerValueRange) },
-            { label: "Surplus", value: formatMillions(player.contractSurplus, true), sub: rangeSub(player.contractSurplusRange) },
+            { label: "Surplus", value: formatMillions(player.contractSurplus, true), sub: rangeSub(player.contractSurplusRange), tone: surplusTone(player.contractSurplus) },
           ]
         : []),
       ...(sport === "cfb" && player?.nilPrice != null
@@ -597,7 +604,7 @@ function ComparePanel({
       ...(sport === "cfb" && player?.nilWorth != null
         ? [
             { label: "Worth", value: formatPay(player.nilWorth), sub: "projected wins" },
-            { label: "NIL surplus", value: formatPay(player.nilSurplus, true), sub: "worth minus price" },
+            { label: "NIL surplus", value: formatPay(player.nilSurplus, true), sub: "worth minus price", tone: surplusTone(player.nilSurplus) },
           ]
         : []),
     ];
@@ -606,7 +613,7 @@ function ComparePanel({
         {items.map((item) => (
           <div key={item.label} className={cn("flex flex-col", align === "right" ? "items-end" : "items-start")}>
             <span className="type-eyebrow text-muted-foreground">{item.label}</span>
-            <span className="font-mono text-lg font-bold tabular-nums leading-tight">{item.value}</span>
+            <span className={cn("font-mono text-lg font-bold tabular-nums leading-tight", "tone" in item && item.tone)}>{item.value}</span>
             <span className="font-mono text-[11px] tabular-nums text-muted-foreground">{item.sub}</span>
           </div>
         ))}
@@ -887,7 +894,7 @@ export default function PositionGrades({
                 <col className="w-12" />
                 <col className="w-12" />
                 {desktopTraits.map((name) => <col key={name} className="w-34" />)}
-                {showForecast && <col className="w-28" />}
+                {showForecast && <col className="w-32" />}
                 <col className="w-16" />
                 <col className="w-30" />
                 {showSpread && <col className="w-18" />}
