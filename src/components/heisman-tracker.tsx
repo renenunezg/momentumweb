@@ -64,6 +64,8 @@ const METRICS = [
 type Metric = (typeof METRICS)[number]["key"];
 
 const VALUE_ROWS = 50;
+// Evaluation kind the backend publishes for weekly expanding-window scoring.
+const WEEKLY_EVALUATION = "expanding_window_model_weekly";
 const FCS_HEAVY_SHARE = 0.3;
 const LINE_TOKENS = ["chart-1", "chart-2", "chart-3", "chart-4", "chart-5"] as const;
 
@@ -411,7 +413,7 @@ function Trajectory({ rows }: { rows: CfbPlayerValue[] }) {
 }
 
 function History({ rows, meta, week }: { rows: CfbHeismanHistory[]; meta: CfbPlayerModelMeta | null; week: number | null }) {
-  const weeklyEvaluation = meta?.heisman_model_version === "cfb_heisman_share_v2";
+  const weeklyEvaluation = meta?.heisman_evaluation_kind === WEEKLY_EVALUATION;
   return (
     <div className="space-y-3">
       <HowGraded
@@ -612,7 +614,7 @@ function Method({ meta }: { meta: CfbPlayerModelMeta | null }) {
           on the top-ten finishers from
           {meta ? ` ${JSON.parse(meta.heisman_training_seasons).length}` : ""} past
           seasons with every other candidate at zero.
-          {meta?.heisman_model_version === "cfb_heisman_share_v2"
+          {meta?.heisman_evaluation_kind === WEEKLY_EVALUATION
             ? " Evaluation uses historical snapshots at the current board week, training only on earlier seasons and counting winners outside the candidate pool as misses"
             : " Historical evaluation holds out one season at a time using full-season statistics, which does not establish early-season forecasting accuracy"}
           {meta
