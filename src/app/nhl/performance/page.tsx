@@ -56,6 +56,8 @@ export default async function PerformancePage({
   const market = filters.market;
   const metric = selectedPickMetric(summary.metrics, market);
   const settled = (metric?.wins ?? 0) + (metric?.losses ?? 0) + (metric?.pushes ?? 0);
+  // Oldest rule first, so the last row is the rule now making predictions.
+  const rules = summary.byRule.filter((row) => row.market === market);
 
   return (
     <PageShell>
@@ -94,6 +96,7 @@ export default async function PerformancePage({
             metric={metric}
             unavailable={summary.unavailable}
             roiError={summary.roiError.find((row) => row.market === market)?.roi_se}
+            ruleEv={rules.at(-1)}
           />
           {summary.unavailable ? (
             <Notice role="status">
@@ -120,7 +123,7 @@ export default async function PerformancePage({
               )}
             </p>
           )}
-          <NhlPickTrends byDay={summary.byDay} closing={summary.closing} market={market} />
+          <NhlPickTrends byDay={summary.byDay} closing={summary.closing} rules={rules} market={market} />
           {(["h2h", "totals"] as const)
             .filter((value) => market === "all" || value === market)
             .map((value) => (

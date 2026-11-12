@@ -15,12 +15,14 @@ import {
   MARKET_LABELS,
   type NhlClosingRecord,
   type NhlPickDay,
+  type NhlPickRule,
   type PickMarket,
 } from "@/lib/nhl-picks";
-import { formatDate, formatPct, formatSigned } from "@/lib/utils";
+import { cn, formatDate, formatPct, formatSigned } from "@/lib/utils";
 
 const num = "text-right font-mono tabular-nums";
 const THIN_SAMPLE = 30;
+const TONES = { positive: "text-positive", negative: "text-negative" } as const;
 
 type Day = {
   date: string;
@@ -61,7 +63,7 @@ function days(byDay: NhlPickDay[]): Day[] {
 }
 
 // Units to the cent, green above zero and red below it.
-function units(value: number): PagedCell {
+function units(value: number): Exclude<PagedCell, string> {
   const cents = Math.round(value * 100);
   return {
     text: `${formatSigned(value, 2)}u`,
@@ -143,15 +145,81 @@ function ClosingRecord({ closing }: { closing: NhlClosingRecord[] }) {
   );
 }
 
-// The settled record over time: running units, the record by game date, and
-// how the recorded prices compare with the close.
+// One row per pick rule, oldest first; the last is the rule in force.
+function RuleRecord({ rules }: { rules: NhlPickRule[] }) {
+  return (
+    <PageSection>
+      <div className="space-y-2">
+        <h2 className="type-section">Record by pick rule</h2>
+        <p className="text-sm text-muted-foreground">
+          The rule that turns a forecast into a prediction has changed during
+          the record. Each row counts only the predictions that rule made.
+          Average EV is what the rule expected per unit when it published, so
+          read it against the ROI beside it.
+        </p>
+      </div>
+      <Table>
+        <TableCaption className="sr-only">Prediction record by pick rule</TableCaption>
+        <TableHeader>
+          <TableRow>
+            <TableHead>Rule</TableHead>
+            <TableHead className="text-right">Predictions</TableHead>
+            <TableHead className="text-right">W-L-P</TableHead>
+            <TableHead className="text-right">Pending</TableHead>
+            <TableHead className="text-right">Profit</TableHead>
+            <TableHead className="text-right">ROI</TableHead>
+            <TableHead className="text-right">Average EV</TableHead>
+          </TableRow>
+        </TableHeader>
+        <TableBody>
+          {rules.map((row, i) => {
+            const current = i === rules.length - 1;
+            const settled = row.wins + row.losses + row.pushes;
+            const profit = units(row.profit_units);
+            return (
+              <TableRow key={row.rule}>
+                <TableCell className="font-mono font-semibold">
+                  {row.rule}
+                  {(current || settled < THIN_SAMPLE) && (
+                    <span className="ml-2 font-sans text-xs font-normal text-muted-foreground">
+                      {[current && "Current", settled < THIN_SAMPLE && "Small sample"].filter(Boolean).join(" · ")}
+                    </span>
+                  )}
+                  <span className="block font-sans text-xs font-normal text-muted-foreground">
+                    {formatDate(row.first_decision_at)} to {current ? "now" : formatDate(row.last_decision_at)}
+                  </span>
+                </TableCell>
+                <TableCell className={num}>{row.picks}</TableCell>
+                <TableCell className={num}>
+                  {row.wins}-{row.losses}-{row.pushes}
+                </TableCell>
+                <TableCell className={num}>{row.pending}</TableCell>
+                <TableCell className={cn(num, settled > 0 && profit.tone && TONES[profit.tone])}>
+                  {settled ? profit.text : "–"}
+                </TableCell>
+                <TableCell className={num}>{formatPct(row.roi)}</TableCell>
+                <TableCell className={num}>{formatPct(row.average_ev)}</TableCell>
+              </TableRow>
+            );
+          })}
+        </TableBody>
+      </Table>
+    </PageSection>
+  );
+}
+
+// The settled record over time: running units, the record by game date, how
+// the recorded prices compare with the close, and the record by pick rule.
 export function NhlPickTrends({
   byDay,
   closing,
+  rules,
   market,
 }: {
   byDay: NhlPickDay[];
   closing: NhlClosingRecord[];
+  // The selected market's rows, oldest rule first.
+  rules: NhlPickRule[];
   market: PickMarket;
 }) {
   const record = days(byDay);
@@ -193,6 +261,7 @@ export function NhlPickTrends({
         />
       </PageSection>
       {closing.length > 0 && <ClosingRecord closing={closing} />}
+      {rules.length > 1 && <RuleRecord rules={rules} />}
     </>
   );
 }

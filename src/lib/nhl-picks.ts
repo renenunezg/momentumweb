@@ -30,12 +30,31 @@ export type NhlClosingRecord = {
   average_line_move: number | null;
 };
 
+// Every recommended prediction under one pick rule, pending included; "all"
+// pools the markets. Rows arrive oldest rule first.
+export type NhlPickRule = {
+  rule: string;
+  market: "all" | "h2h" | "totals";
+  picks: number;
+  wins: number;
+  losses: number;
+  pushes: number;
+  pending: number;
+  staked_units: number;
+  profit_units: number;
+  roi: number | null;
+  average_ev: number | null;
+  first_decision_at: string;
+  last_decision_at: string;
+};
+
 type Summary = {
   metrics: NhlPickMetric[];
   seasons: number[];
   by_day?: NhlPickDay[];
   roi_error?: NhlRoiError[];
   closing?: NhlClosingRecord[];
+  by_rule?: NhlPickRule[];
 };
 type NhlPickHistoryRow = Omit<NhlPick, "pricing_weights">;
 // The history table never reads pricing_weights, so it stays behind.
@@ -95,6 +114,7 @@ export async function fetchNhlPickSummary(filters: PickFiltersValue) {
     byDay: result?.by_day ?? [],
     roiError: result?.roi_error ?? [],
     closing: result?.closing ?? [],
+    byRule: result?.by_rule ?? [],
     latestSeason: result?.seasons?.[0] ?? new Date().getUTCFullYear(),
     unavailable: Boolean(error),
   };

@@ -14,6 +14,7 @@ import {
 } from "@/components/ui/table";
 import {
   cn,
+  formatDate,
   formatNumber,
   formatOdds,
   formatPct,
@@ -69,11 +70,15 @@ export function PickKpis({
   metric,
   unavailable = false,
   roiError,
+  ruleEv,
 }: {
   metric?: FootballPickMetric;
   unavailable?: boolean;
   // One standard error of the ROI, where the sport publishes it.
   roiError?: number | null;
+  // Where the pick rule has changed, the newest rule's expectation: rules
+  // price expected value differently, so one average across them misleads.
+  ruleEv?: { average_ev: number | null; picks: number; first_decision_at: string };
 }) {
   const settled =
     (metric?.wins ?? 0) + (metric?.losses ?? 0) + (metric?.pushes ?? 0);
@@ -116,8 +121,13 @@ export function PickKpis({
       />
       <KpiCard
         label="Average EV"
-        value={unavailable ? missing : formatPct(metric?.average_ev)}
-        tooltip="Average expected profit per unit when published, including pending predictions. A forecast, not realized profit."
+        value={unavailable ? missing : formatPct(ruleEv ? ruleEv.average_ev : metric?.average_ev)}
+        sub={unavailable || !ruleEv ? undefined : `Current rule · ${ruleEv.picks} predictions`}
+        tooltip={
+          ruleEv
+            ? `Average expected profit per unit when published, on the predictions made under the current pick rule (since ${formatDate(ruleEv.first_decision_at)}), including pending ones. Earlier rules priced expected value differently and are listed under Record by pick rule. A forecast, not realized profit.`
+            : "Average expected profit per unit when published, including pending predictions. A forecast, not realized profit."
+        }
       />
     </div>
   );
