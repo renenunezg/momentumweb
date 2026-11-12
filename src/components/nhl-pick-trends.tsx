@@ -1,7 +1,7 @@
 import { CumulativeUnitsChart, type UnitsSeries } from "@/components/cumulative-units-chart";
 import { HowGraded } from "@/components/how-graded";
 import { PageSection } from "@/components/page-layout";
-import { PagedTable } from "@/components/paged-table";
+import { PagedTable, type PagedCell } from "@/components/paged-table";
 import {
   Table,
   TableBody,
@@ -58,6 +58,15 @@ function days(byDay: NhlPickDay[]): Day[] {
     byDate.set(row.date, { ...day, ...running });
   }
   return [...byDate.values()];
+}
+
+// Units to the cent, green above zero and red below it.
+function units(value: number): PagedCell {
+  const cents = Math.round(value * 100);
+  return {
+    text: `${formatSigned(value, 2)}u`,
+    tone: cents > 0 ? "positive" : cents < 0 ? "negative" : null,
+  };
 }
 
 function ClosingRecord({ closing }: { closing: NhlClosingRecord[] }) {
@@ -177,8 +186,8 @@ export function NhlPickTrends({
               formatDate(day.date),
               String(day.picks),
               `${day.wins}-${day.losses}-${day.pushes}`,
-              `${formatSigned(day.profit, 2)}u`,
-              `${formatSigned(day.all, 2)}u`,
+              units(day.profit),
+              units(day.all),
             ],
           }))}
         />

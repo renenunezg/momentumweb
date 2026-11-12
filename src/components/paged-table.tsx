@@ -20,6 +20,11 @@ const SIZES = [
 ] as const;
 type SizeKey = (typeof SIZES)[number]["key"];
 
+// A figure colored by its sign, such as a profit; plain strings stay neutral.
+export type PagedCell = string | { text: string; tone: "positive" | "negative" | null };
+
+const TONES = { positive: "text-positive", negative: "text-negative" } as const;
+
 // A table of rows a server component has already formatted, newest first.
 // With `paged`, it shows the latest 7 rows and offers 14 or 30 a page, with
 // previous and next controls; without it, every row.
@@ -32,7 +37,7 @@ export function PagedTable({
   caption: string;
   // The first column is the row label; the rest are right-aligned figures.
   columns: string[];
-  rows: { key: string; cells: string[] }[];
+  rows: { key: string; cells: PagedCell[] }[];
   paged?: boolean;
 }) {
   const [sizeKey, setSizeKey] = useState<SizeKey>("7");
@@ -72,11 +77,17 @@ export function PagedTable({
         <TableBody>
           {shown.map((row) => (
             <TableRow key={row.key}>
-              {row.cells.map((cell, i) => (
-                <TableCell key={columns[i]} className={i === 0 ? "font-mono" : "text-right font-mono tabular-nums"}>
-                  {cell}
-                </TableCell>
-              ))}
+              {row.cells.map((cell, i) => {
+                const tone = typeof cell === "string" || cell.tone == null ? "" : ` ${TONES[cell.tone]}`;
+                return (
+                  <TableCell
+                    key={columns[i]}
+                    className={(i === 0 ? "font-mono" : "text-right font-mono tabular-nums") + tone}
+                  >
+                    {typeof cell === "string" ? cell : cell.text}
+                  </TableCell>
+                );
+              })}
             </TableRow>
           ))}
         </TableBody>
