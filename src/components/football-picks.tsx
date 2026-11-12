@@ -68,9 +68,12 @@ export function PickCountNote({
 export function PickKpis({
   metric,
   unavailable = false,
+  roiError,
 }: {
   metric?: FootballPickMetric;
   unavailable?: boolean;
+  // One standard error of the ROI, where the sport publishes it.
+  roiError?: number | null;
 }) {
   const settled =
     (metric?.wins ?? 0) + (metric?.losses ?? 0) + (metric?.pushes ?? 0);
@@ -99,7 +102,8 @@ export function PickKpis({
       <KpiCard
         label="ROI"
         value={unavailable ? missing : formatPct(metric?.roi)}
-        tooltip="Profit divided by settled stakes at recorded odds. Includes pushes; excludes pending and void predictions."
+        sub={unavailable || roiError == null ? undefined : `± ${formatPct(roiError)} standard error`}
+        tooltip={`Profit divided by settled stakes at recorded odds. Includes pushes; excludes pending and void predictions.${roiError == null ? "" : " The standard error is how far the ROI would typically land from its long-run value by chance alone at this sample size."}`}
       />
       <KpiCard
         label="Predictions settled"

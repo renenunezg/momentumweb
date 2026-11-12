@@ -8,7 +8,35 @@ import {
 export * from "@/lib/football-picks";
 export type { NhlPick, NhlPickMetric };
 
-type Summary = { metrics: NhlPickMetric[]; seasons: number[] };
+// Settled predictions on one game date in one market.
+export type NhlPickDay = {
+  date: string;
+  market: "h2h" | "totals";
+  picks: number;
+  wins: number;
+  losses: number;
+  pushes: number;
+  staked_units: number;
+  profit_units: number;
+};
+// One standard error of the return per unit staked; "all" pools the markets.
+export type NhlRoiError = { market: "all" | "h2h" | "totals"; settled: number; roi_se: number | null };
+// Settled predictions whose game has a two-sided close on the same market.
+export type NhlClosingRecord = {
+  market: "h2h" | "totals";
+  picks: number;
+  beat: number;
+  average_value: number | null;
+  average_line_move: number | null;
+};
+
+type Summary = {
+  metrics: NhlPickMetric[];
+  seasons: number[];
+  by_day?: NhlPickDay[];
+  roi_error?: NhlRoiError[];
+  closing?: NhlClosingRecord[];
+};
 type NhlPickHistoryRow = Omit<NhlPick, "pricing_weights">;
 // The history table never reads pricing_weights, so it stays behind.
 const NHL_HISTORY_COLUMNS =
@@ -64,6 +92,9 @@ export async function fetchNhlPickSummary(filters: PickFiltersValue) {
   return {
     metrics: result?.metrics ?? [],
     seasons: result?.seasons ?? [],
+    byDay: result?.by_day ?? [],
+    roiError: result?.roi_error ?? [],
+    closing: result?.closing ?? [],
     latestSeason: result?.seasons?.[0] ?? new Date().getUTCFullYear(),
     unavailable: Boolean(error),
   };

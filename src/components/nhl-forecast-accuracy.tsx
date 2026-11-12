@@ -1,9 +1,11 @@
 import { NavigationLink as Link } from "@/components/navigation-link";
-import { AccuracyChart, type AccuracySeries } from "@/components/accuracy-chart";
 import { CalibrationChart } from "@/components/calibration-chart";
+import { ResidualsChart } from "@/components/residuals-chart";
+import { TrendPanels, type TrendPanel } from "@/components/trend-panels";
 import { KpiCard } from "@/components/kpi-card";
 import { HowGraded } from "@/components/how-graded";
 import { Notice } from "@/components/notice";
+import { PagedTable } from "@/components/paged-table";
 import {
   Table,
   TableBody,
@@ -16,16 +18,63 @@ import {
 import {
   fetchForecastAccuracy,
   type NhlAccuracy,
-  type NhlAccuracyDay,
+  type NhlAccuracyPeriod,
   type NhlAccuracySlice,
 } from "@/lib/nhl";
-import { cn, formatNumber, formatPct, formatSigned } from "@/lib/utils";
+import { cn, formatDate, formatNumber, formatPct, formatSigned } from "@/lib/utils";
 
 const num = "text-right font-mono tabular-nums";
+const COIN_FLIP_LOG_LOSS = Math.LN2;
 
-const NHL_ACCURACY_SERIES: AccuracySeries<NhlAccuracyDay>[] = [
-  { key: "winner", name: "Picked the winner", correct: "correct", predictions: "n" },
+const TREND_PANELS: TrendPanel[] = [
+  {
+    key: "accuracy",
+    title: "Picked the winner",
+    series: [
+      { name: "Model", sum: "correct", count: "n" },
+      { name: "Market", sum: "market_correct", count: "market_n", comparison: true },
+    ],
+    format: "percent",
+    decimals: 1,
+    baseline: 0.5,
+  },
+  {
+    key: "log_loss",
+    title: "Winner log loss",
+    series: [
+      { name: "Model", sum: "log_loss_sum", count: "n" },
+      { name: "Market", sum: "market_log_loss_sum", count: "market_n", comparison: true },
+    ],
+    format: "number",
+    decimals: 3,
+    baseline: COIN_FLIP_LOG_LOSS,
+  },
+  {
+    key: "total_mae",
+    title: "Total MAE (goals)",
+    series: [
+      { name: "Model", sum: "total_abs_error_sum", count: "n" },
+      { name: "Market", sum: "market_total_abs_error_sum", count: "market_total_n", comparison: true },
+    ],
+    format: "number",
+    decimals: 2,
+  },
+  {
+    key: "total_bias",
+    title: "Total bias (goals)",
+    series: [
+      { name: "Model", sum: "total_error_sum", count: "n" },
+      { name: "Market", sum: "market_total_error_sum", count: "market_total_n", comparison: true },
+    ],
+    format: "number",
+    decimals: 2,
+    baseline: 0,
+  },
 ];
+
+function seasonLabel(season: number | undefined) {
+  return `${season}-${String((season ?? 0) + 1).slice(2)}`;
+}
 
 function SourceToggle({ source, page }: { source: "live" | "backtest"; page: string }) {
   return (
@@ -67,6 +116,72 @@ function MarketCells({ m }: { m: NhlAccuracySlice }) {
   );
 }
 
+function OverUnder({ accuracy, overall }: { accuracy: NhlAccuracy; overall: NhlAccuracySlice }) {
+  if (!overall.over_under_n) return null;
+  // With closing prices the model is rescored on the priced games, so the two
+  // figures share a population; without them it stands against a coin flip.
+  const priced = (overall.market_over_under_n ?? 0) > 0;
+  const model = priced ? overall.model_over_under_log_loss_on_market_games : overall.over_under_log_loss;
+  const market = priced ? overall.market_over_under_log_loss : null;
+  const games = priced ? overall.market_over_under_n : overall.over_under_n;
+  return (
+    <div className="space-y-4">
+      <h3 className="type-label font-semibold">Over or under the closing total</h3>
+      <div className="grid grid-cols-2 gap-4 border-y border-rule-strong py-4 sm:grid-cols-4">
+        <KpiCard
+          label="Model log loss"
+          value={formatNumber(model, 4)}
+          sub={`${games} games · coin flip 0.693`}
+          tooltip="The model's probability that the game goes over the closing total, scored against what happened. A push is left out. Lower is better."
+        />
+        <KpiCard
+          label="Market log loss"
+          value={formatNumber(market, 4)}
+          sub={priced ? "closing over and under prices" : "no closing prices recorded"}
+          tooltip="The closing over price with the vig removed, scored on the same games."
+        />
+        <KpiCard
+          label="Gap to market"
+          value={formatSigned(model != null && market != null ? model - market : null, 4)}
+          sub="lower is better"
+          tooltip="Model log loss minus market log loss. Positive means the closing price called over and under better."
+        />
+        <KpiCard
+          label="Went over"
+          value={formatPct(overall.over_rate)}
+          sub={`${overall.over_under_n} games`}
+          tooltip="Share of games that finished over the closing total, pushes left out."
+        />
+      </div>
+      {accuracy.by_season.length > 1 && (
+        <Table>
+          <TableCaption className="sr-only">Over and under the closing total by season</TableCaption>
+          <TableHeader>
+            <TableRow>
+              <TableHead>Season</TableHead>
+              <TableHead className="text-right">Games</TableHead>
+              <TableHead className="text-right">Went over</TableHead>
+              <TableHead className="text-right">Model log loss</TableHead>
+            </TableRow>
+          </TableHeader>
+          <TableBody>
+            {[...accuracy.by_season, overall].map((m) => (
+              <TableRow key={m.season ?? "all"} className={m.season == null ? "font-semibold" : undefined}>
+                <TableCell className={m.season == null ? undefined : "font-mono"}>
+                  {m.season == null ? "All" : seasonLabel(m.season)}
+                </TableCell>
+                <TableCell className={num}>{m.over_under_n ?? 0}</TableCell>
+                <TableCell className={num}>{formatPct(m.over_rate)}</TableCell>
+                <TableCell className={num}>{formatNumber(m.over_under_log_loss, 4)}</TableCell>
+              </TableRow>
+            ))}
+          </TableBody>
+        </Table>
+      )}
+    </div>
+  );
+}
+
 function MarketComparison({
   accuracy,
   overall,
@@ -102,7 +217,9 @@ function MarketComparison({
               ? "The close is the last partner-book quote from the 15 minutes before puck drop."
               : "Closing moneylines and totals come from ESPN's public odds data."}{" "}
             The moneyline is converted to a home win probability with the vig
-            removed.
+            removed. The over and under figures score the probability of
+            going over the closing total, the model&apos;s from its total and
+            the market&apos;s from the closing prices.
             {blended && (
               <>
                 {" "}On the same {overall.market_n} games the pure model scores a
@@ -111,6 +228,13 @@ function MarketComparison({
                 error and the close&apos;s are correlated.
               </>
             )}
+          </p>
+          <p>
+            A lower error than the market does not by itself make the
+            predictions profitable: a bet has to beat the price including the
+            vig, on the games where model and market disagree. The
+            Predictions tab has the return and how the recorded prices
+            compare with the close.
           </p>
         </HowGraded>
       </div>
@@ -176,9 +300,7 @@ function MarketComparison({
           <TableBody>
             {accuracy.by_season.map((m) => (
               <TableRow key={m.season}>
-                <TableCell className="font-mono">
-                  {m.season}-{String((m.season ?? 0) + 1).slice(2)}
-                </TableCell>
+                <TableCell className="font-mono">{seasonLabel(m.season)}</TableCell>
                 <MarketCells m={m} />
               </TableRow>
             ))}
@@ -189,6 +311,35 @@ function MarketComparison({
           </TableBody>
         </Table>
       )}
+      <OverUnder accuracy={accuracy} overall={overall} />
+    </section>
+  );
+}
+
+function PeriodTable({ rows, period }: { rows: NhlAccuracyPeriod[]; period: "day" | "month" }) {
+  const title = period === "day" ? "By day" : "By month";
+  return (
+    <section className="space-y-2">
+      <h2 className="type-section">{title}</h2>
+      <PagedTable
+        caption={`Forecast accuracy ${title.toLowerCase()}`}
+        columns={[period === "day" ? "Date" : "Month", "Games", "Winners", "Accuracy", "Log loss", "Total MAE", "Total bias"]}
+        paged={period === "day"}
+        rows={rows.map((row) => ({
+          key: row.date,
+          cells: [
+            period === "day"
+              ? formatDate(row.date)
+              : new Date(row.date + "T12:00:00").toLocaleDateString("en-US", { month: "short", year: "numeric" }),
+            String(row.n),
+            `${row.correct}/${row.n}`,
+            formatPct(row.correct / row.n),
+            formatNumber(row.log_loss_sum / row.n, 3),
+            formatNumber(row.total_abs_error_sum / row.n, 2),
+            formatSigned(row.total_error_sum / row.n, 2),
+          ],
+        }))}
+      />
     </section>
   );
 }
@@ -221,9 +372,13 @@ export async function NhlForecastAccuracy({
     accuracy = null;
   }
   const overall = accuracy?.overall ?? null;
-  // A cached response from before the function published by_day lacks it
-  // until the next NHL data write expires the read.
-  const byDay = accuracy?.by_day ?? [];
+  // A response cached before the function published a series lacks it, or
+  // its sums, until the next NHL data write expires the read.
+  const period = source === "live" ? "day" : "month";
+  const periods = ((period === "day" ? accuracy?.by_day : accuracy?.by_month) ?? []).filter(
+    (row) => row.log_loss_sum != null,
+  );
+  const detail = page === "performance";
   return (
     <div className="space-y-section">
       <SourceToggle source={source} page={page} />
@@ -235,8 +390,8 @@ export async function NhlForecastAccuracy({
             ? "Published forecasts are archived before puck drop and graded against official final scores. Each game uses its last pregame revision."
             : "A walk-forward replay of the 2022-23 through 2025-26 regular seasons with the current pure model, using only data available before each game."}{" "}
           Log loss and Brier score judge the home win probability (a coin flip
-          scores 0.693 and 0.250); total MAE and bias judge the model total in
-          goals. The comparison with the closing line follows.
+          scores 0.693 and 0.250); total MAE, RMSE, and bias judge the model
+          total in goals. The comparison with the closing line follows.
         </p>
       </HowGraded>
       {!accuracy ? (
@@ -254,7 +409,7 @@ export async function NhlForecastAccuracy({
         </Notice>
       ) : (
         <>
-          <div className="grid grid-cols-2 gap-4 border-y border-rule-strong py-4 sm:grid-cols-3 lg:grid-cols-6">
+          <div className="grid grid-cols-2 gap-4 border-y border-rule-strong py-4 sm:grid-cols-4 lg:grid-cols-7">
             <KpiCard label="Games" value={String(overall.n)} />
             <KpiCard
               label="Log loss"
@@ -280,16 +435,22 @@ export async function NhlForecastAccuracy({
               tooltip="Average total-goal error, including overtime and the shootout goal. Lower is better."
             />
             <KpiCard
+              label="Total RMSE"
+              value={formatNumber(overall.total_rmse, 2)}
+              sub="goals"
+              tooltip="Root mean squared total-goal error, which weighs large misses more than MAE does. Lower is better."
+            />
+            <KpiCard
               label="Total bias"
               value={formatSigned(overall.total_bias, 2)}
               sub="goals"
               tooltip="Average predicted minus actual goals. Negative means the model predicts too few."
             />
           </div>
-          {byDay.length > 0 && (
+          {periods.length > 0 && (
             <section className="space-y-2">
-              <h2 className="type-section">Accuracy over time</h2>
-              <AccuracyChart data={byDay} series={NHL_ACCURACY_SERIES} />
+              <h2 className="type-section">Over time</h2>
+              <TrendPanels data={periods} panels={TREND_PANELS} period={period} />
             </section>
           )}
           {accuracy.by_season.length > 1 && (
@@ -310,9 +471,7 @@ export async function NhlForecastAccuracy({
               <TableBody>
                 {accuracy.by_season.map((m) => (
                   <TableRow key={m.season}>
-                    <TableCell className="font-mono">
-                      {m.season}-{String((m.season ?? 0) + 1).slice(2)}
-                    </TableCell>
+                    <TableCell className="font-mono">{seasonLabel(m.season)}</TableCell>
                     <Cells m={m} />
                   </TableRow>
                 ))}
@@ -324,6 +483,22 @@ export async function NhlForecastAccuracy({
             </Table>
           )}
           <MarketComparison accuracy={accuracy} overall={overall} source={source} />
+          {detail && (accuracy.total_errors?.length ?? 0) > 0 && (
+            <section className="space-y-2">
+              <h2 className="type-section">Total error distribution</h2>
+              <p className="text-sm text-muted-foreground">
+                Predicted minus actual goals per game, in one-goal bins. Bars
+                left of zero are games that outscored the forecast.
+              </p>
+              <ResidualsChart
+                bins={accuracy.total_errors ?? []}
+                mean={overall.total_bias}
+                unit="goals"
+                subject="graded games"
+                difference="Predicted − Actual"
+              />
+            </section>
+          )}
           {accuracy.calibration.length > 0 && (
             <section className="space-y-2">
               <h2 className="type-section">Calibration</h2>
@@ -342,6 +517,12 @@ export async function NhlForecastAccuracy({
                   }))}
               />
             </section>
+          )}
+          {detail && periods.length > 0 && (
+            <PeriodTable
+              rows={[...periods].reverse()}
+              period={period}
+            />
           )}
         </>
       )}

@@ -132,16 +132,44 @@ export type NhlAccuracySlice = {
   market_total_mae: number | null;
   model_total_mae_on_market_games: number | null;
   pure_model_total_mae_on_market_games: number | null;
+  // Absent from a response cached before the function published them.
+  total_rmse?: number;
+  // Over or under the closing total, a push excluded. The market's figure
+  // needs closing over and under prices, which the backtest does not carry.
+  over_under_n?: number;
+  over_rate?: number | null;
+  over_under_log_loss?: number | null;
+  market_over_under_n?: number;
+  market_over_under_log_loss?: number | null;
+  model_over_under_log_loss_on_market_games?: number | null;
 };
 
-// Graded games and correct winner calls per game date; the backtest's is empty.
-export type NhlAccuracyDay = { date: string; n: number; correct: number };
+// One game date or month, as sums so a window pools its games. The live
+// record has both series; the backtest only months.
+export type NhlAccuracyPeriod = {
+  date: string;
+  n: number;
+  correct: number;
+  log_loss_sum: number;
+  total_abs_error_sum: number;
+  total_error_sum: number;
+  // The market's sums cover only the games with a recorded close.
+  market_n: number;
+  market_correct: number;
+  market_log_loss_sum: number;
+  market_total_n: number;
+  market_total_abs_error_sum: number;
+  market_total_error_sum: number;
+};
 
 export type NhlAccuracy = {
   overall: NhlAccuracySlice | null;
   by_season: NhlAccuracySlice[];
   calibration: { bin: number; n: number; predicted: number; observed: number }[];
-  by_day?: NhlAccuracyDay[];
+  by_day?: NhlAccuracyPeriod[];
+  by_month?: NhlAccuracyPeriod[];
+  // Predicted minus actual goals; bin b holds errors from b up to b + 1.
+  total_errors?: { bin: number; n: number }[];
   missing_forecast: number;
 };
 

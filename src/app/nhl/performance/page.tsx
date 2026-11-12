@@ -10,6 +10,7 @@ import {
 import { PickFilters } from "@/components/football-pick-filters";
 import { FootballPerformanceTabs } from "@/components/football-performance-tabs";
 import { NhlForecastAccuracy } from "@/components/nhl-forecast-accuracy";
+import { NhlPickTrends } from "@/components/nhl-pick-trends";
 import { Notice } from "@/components/notice";
 import {
   fetchNhlPickSummary,
@@ -23,7 +24,7 @@ export const revalidate = 3600;
 export const metadata: Metadata = {
   title: "NHL Model Performance",
   description:
-    "Win-probability accuracy and calibration of the NHL model on the live season and the backtest, plus the record, ROI, and frozen-price results of its moneyline and total predictions.",
+    "Win-probability and total-goals accuracy of the NHL model against the closing line, on the live season and the backtest, plus the record, units over time, ROI, and closing-line value of its moneyline and total predictions.",
 };
 
 export default async function PerformancePage({
@@ -89,7 +90,11 @@ export default async function PerformancePage({
             period={filters.period}
             view="picks"
           />
-          <PickKpis metric={metric} unavailable={summary.unavailable} />
+          <PickKpis
+            metric={metric}
+            unavailable={summary.unavailable}
+            roiError={summary.roiError.find((row) => row.market === market)?.roi_se}
+          />
           {summary.unavailable ? (
             <Notice role="status">
               Prediction results are currently unavailable. Forecast
@@ -115,6 +120,7 @@ export default async function PerformancePage({
               )}
             </p>
           )}
+          <NhlPickTrends byDay={summary.byDay} closing={summary.closing} market={market} />
           {(["h2h", "totals"] as const)
             .filter((value) => market === "all" || value === market)
             .map((value) => (

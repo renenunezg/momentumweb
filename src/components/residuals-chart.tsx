@@ -17,20 +17,27 @@ import {
   useChartTheme,
 } from "@/lib/chart-theme";
 
-export interface ResidualsChartProps {
-  residuals: number[];
-}
+type Bin = { bucket: string; count: number };
 
-function buildBins(values: number[]) {
+// Raw residuals are binned here by whole unit. A source that already
+// aggregates passes its bins (bin b holds values from b up to b + 1) with the
+// mean, so a large sample never ships every value to the browser.
+export type ResidualsChartProps = (
+  | { residuals: number[] }
+  | { bins: { bin: number; n: number }[]; mean: number }
+) & {
+  unit?: string;
+  subject?: string;
+  // Which way the difference runs, for the axis and the accessible name.
+  difference?: string;
+};
+
+function buildBins(values: number[]): Bin[] {
   if (values.length === 0) return [];
-  const min = Math.min(...values);
-  const max = Math.max(...values);
-  const lo = Math.floor(min);
-  const hi = Math.ceil(max);
-  const bins: { bucket: string; mid: number; count: number }[] = [];
-  for (let b = lo; b < hi; b++) {
-    bins.push({ bucket: `${b}`, mid: b + 0.5, count: 0 });
-  }
+  const lo = Math.floor(Math.min(...values));
+  const hi = Math.ceil(Math.max(...values));
+  const bins: Bin[] = [];
+  for (let b = lo; b < hi; b++) bins.push({ bucket: `${b}`, count: 0 });
   for (const v of values) {
     const idx = Math.min(Math.floor(v) - lo, bins.length - 1);
     if (idx >= 0) bins[idx].count += 1;
@@ -38,24 +45,43 @@ function buildBins(values: number[]) {
   return bins;
 }
 
-export function ResidualsChart({ residuals }: ResidualsChartProps) {
+// Fills the empty bins between the extremes so the axis stays continuous.
+function fillBins(counted: { bin: number; n: number }[]): Bin[] {
+  if (counted.length === 0) return [];
+  const counts = new Map(counted.map((one) => [one.bin, one.n]));
+  const lo = Math.min(...counts.keys());
+  const hi = Math.max(...counts.keys());
+  const bins: Bin[] = [];
+  for (let b = lo; b <= hi; b++) bins.push({ bucket: `${b}`, count: counts.get(b) ?? 0 });
+  return bins;
+}
+
+export function ResidualsChart({
+  unit = "runs",
+  subject = "graded team-games",
+  difference = "Actual − Predicted",
+  ...source
+}: ResidualsChartProps) {
   const theme = useChartTheme();
   const axis = chartAxisProps(theme);
-  const bins = buildBins(residuals);
+  const bins = "bins" in source ? fillBins(source.bins) : buildBins(source.residuals);
+  const total = bins.reduce((sum, bin) => sum + bin.count, 0);
   const mean =
-    residuals.length > 0
-      ? residuals.reduce((a, b) => a + b, 0) / residuals.length
-      : 0;
+    "bins" in source
+      ? source.mean
+      : source.residuals.length > 0
+        ? source.residuals.reduce((a, b) => a + b, 0) / source.residuals.length
+        : 0;
 
   return (
     <div>
       <p className="text-xs text-muted-foreground mb-2">
-        {residuals.length} graded team-games · mean bias{" "}
-        {formatSigned(mean, 2)} runs
+        {total} {subject} · mean bias{" "}
+        {formatSigned(mean, 2)} {unit}
       </p>
       <div
         role="img"
-        aria-label={`Histogram of actual minus predicted runs across ${residuals.length} graded team-games, mean bias ${formatSigned(mean, 2)} runs`}
+        aria-label={`Histogram of ${difference.replace(" − ", " minus ").toLowerCase()} ${unit} across ${total} ${subject}, mean bias ${formatSigned(mean, 2)} ${unit}`}
       >
       <ResponsiveContainer width="100%" height={300}>
         <BarChart
@@ -66,7 +92,7 @@ export function ResidualsChart({ residuals }: ResidualsChartProps) {
           <XAxis
             dataKey="bucket"
             label={{
-              value: "Actual − Predicted (runs)",
+              value: `${difference} (${unit})`,
               position: "insideBottom",
               offset: -4,
               style: { fill: theme["muted-foreground"], fontSize: 11 },
