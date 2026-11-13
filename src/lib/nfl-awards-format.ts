@@ -6,7 +6,7 @@ const count = (value: number, digits = 0) => value.toLocaleString("en-US", { max
 /** Season-to-date line for the board, in the same shape as the Heisman tracker's. */
 export function seasonLine(row: Pick<AwardBoard, "position" | "games" | "season_stats">): string {
   const stats = row.season_stats;
-  if (!stats) return EMPTY;
+  if (!stats || Object.keys(stats).length === 0) return EMPTY;
   const n = (key: string) => stats[key] ?? 0;
   if (row.position === "HC") {
     if (!row.games) return EMPTY;

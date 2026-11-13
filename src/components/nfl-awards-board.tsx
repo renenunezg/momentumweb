@@ -34,6 +34,11 @@ function projections(row: AwardBoard) {
   ).join(" · ");
 }
 
+// sql/003_nfl_award_board_retention.sql empties these on past weeks outside the top 25.
+function slim(row: AwardBoard) {
+  return row.drivers.length === 0 && Object.keys(row.projected_stats).length === 0;
+}
+
 export function NflAwardsBoard({ rows, award }: { rows: AwardBoard[]; award: AwardKey }) {
   const [search, setSearch] = useState("");
   const [sort, setSort] = useState<"award" | "performance">("award");
@@ -69,11 +74,17 @@ export function NflAwardsBoard({ rows, award }: { rows: AwardBoard[]; award: Awa
         <TableCell className="min-w-56 whitespace-normal"><details>
           <summary className="cursor-pointer font-medium"><span className="ml-1 inline-flex items-center gap-3 align-middle"><PlayerHeadshot name={row.candidate_name} src={row.headshot_url} /><span>{row.candidate_name}<span className="mt-1 block text-xs font-normal text-muted-foreground">{row.team} · {row.position}</span></span></span></summary>
           <div className="mt-3 max-w-md space-y-2 text-xs text-muted-foreground">
-            <p>{row.games} games played. Projected finish: {projections(row)}.</p>
-            <p>{metric}: {row.performance_score == null ? "unavailable" : row.performance_score.toFixed(2)}.</p>
-            <p className="font-medium text-foreground">Main forecast factors</p>
-            <ul className="space-y-1">{row.drivers.map((driver) => <li key={driver.feature}>{label(driver.feature)}: {driver.contribution >= 0 ? "raises" : "lowers"} the model score</li>)}</ul>
-            <p>Factors describe the fitted model, not a causal explanation of voters.</p>
+            {slim(row) ? <>
+              <p>{row.games} games played.</p>
+              <p>{metric}: {row.performance_score == null ? "unavailable" : row.performance_score.toFixed(2)}.</p>
+              <p>Past weeks keep stats, projections, and forecast factors for the top 25 only.</p>
+            </> : <>
+              <p>{row.games} games played. Projected finish: {projections(row)}.</p>
+              <p>{metric}: {row.performance_score == null ? "unavailable" : row.performance_score.toFixed(2)}.</p>
+              <p className="font-medium text-foreground">Main forecast factors</p>
+              <ul className="space-y-1">{row.drivers.map((driver) => <li key={driver.feature}>{label(driver.feature)}: {driver.contribution >= 0 ? "raises" : "lowers"} the model score</li>)}</ul>
+              <p>Factors describe the fitted model, not a causal explanation of voters.</p>
+            </>}
           </div>
         </details></TableCell>
         <TableCell className="min-w-44 whitespace-normal align-top text-xs text-muted-foreground">{seasonLine(row)}</TableCell>
