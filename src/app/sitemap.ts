@@ -6,6 +6,7 @@ import { posts } from "./blog/posts";
 const DATA_ROUTES = [
   "/mlb/games",
   "/mlb/players",
+  "/mlb/pitch-value",
   "/mlb/prospects",
   "/mlb/awards",
   "/mlb/history",

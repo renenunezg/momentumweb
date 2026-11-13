@@ -3532,6 +3532,101 @@ export type Database = {
         }
         Relationships: []
       }
+      pitch_type_values: {
+        Row: {
+          pitch_type: string
+          pitches: number
+          player_id: number
+          runs: number
+          season: number
+          updated_at: string
+          usage: number
+        }
+        Insert: {
+          pitch_type: string
+          pitches: number
+          player_id: number
+          runs: number
+          season: number
+          updated_at?: string
+          usage: number
+        }
+        Update: {
+          pitch_type?: string
+          pitches?: number
+          player_id?: number
+          runs?: number
+          season?: number
+          updated_at?: string
+          usage?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "pitch_type_values_player_id_season_fkey"
+            columns: ["player_id", "season"]
+            isOneToOne: false
+            referencedRelation: "pitch_values"
+            referencedColumns: ["player_id", "season"]
+          },
+        ]
+      }
+      pitch_value_study: {
+        Row: {
+          model_version: string
+          payload: Json
+          season: number
+          updated_at: string
+        }
+        Insert: {
+          model_version: string
+          payload: Json
+          season: number
+          updated_at?: string
+        }
+        Update: {
+          model_version?: string
+          payload?: Json
+          season?: number
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      pitch_values: {
+        Row: {
+          context_runs: number
+          pitches: number
+          player_id: number
+          player_name: string
+          raw_runs: number
+          runs: number
+          season: number
+          team: string
+          updated_at: string
+        }
+        Insert: {
+          context_runs: number
+          pitches: number
+          player_id: number
+          player_name: string
+          raw_runs: number
+          runs: number
+          season: number
+          team: string
+          updated_at?: string
+        }
+        Update: {
+          context_runs?: number
+          pitches?: number
+          player_id?: number
+          player_name?: string
+          raw_runs?: number
+          runs?: number
+          season?: number
+          team?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       pitcher_stats: {
         Row: {
           avg_ip_per_start: number | null

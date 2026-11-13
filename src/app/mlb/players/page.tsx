@@ -5,6 +5,7 @@ import { formatNumber } from "@/lib/utils";
 import { KpiCard } from "@/components/kpi-card";
 import { LastUpdated } from "@/components/last-updated";
 import MlbPlayerValues from "@/components/mlb-player-values";
+import { MLB_PLAYER_SECTIONS, PlayerSectionTabs } from "@/components/player-section-tabs";
 import { GRADE_TIP, TRADE_VALUE_TIP, formatMillions } from "@/lib/player-values";
 
 // Every read here is expired by the revalidation webhook when its table is
@@ -51,6 +52,7 @@ export default async function MlbPlayersPage() {
           </PageMeta>
         </div>
       </PageHeader>
+      <PlayerSectionTabs sections={MLB_PLAYER_SECTIONS} label="Player pages" />
 
       <p className="max-w-4xl text-sm text-muted-foreground leading-relaxed">
         Projected talent, trade value, and on-field impact.
