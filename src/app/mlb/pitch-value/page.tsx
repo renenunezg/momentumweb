@@ -55,7 +55,7 @@ export default async function MlbPitchValuePage() {
           <PageTitle>Pitch Run Value</PageTitle>
           <PageMeta>
             <PageDescription className="type-eyebrow">Through the {season} season</PageDescription>
-            <LastUpdated timestamp={updatedAt} schedule="Updates each offseason" />
+            <LastUpdated timestamp={updatedAt} schedule="Refreshed by hand after each season" />
           </PageMeta>
         </div>
       </PageHeader>
@@ -72,21 +72,21 @@ export default async function MlbPitchValuePage() {
           compact
           label="Most runs saved"
           value={top.player_name}
-          sub={`${top.team} · ${formatSigned(top.runs, 1)} runs`}
+          sub={`${top.team} · ${formatSigned(top.runs, 0)} runs`}
           tooltip="The lowest total against the league average this season."
         />
         <KpiCard
           compact
           label="Best per 100"
           value={sharpest.player_name}
-          sub={`${sharpest.team} · ${formatSigned(per100(sharpest), 2)} per 100`}
+          sub={`${sharpest.team} · ${formatSigned(per100(sharpest), 1)} per 100`}
           tooltip={`The lowest runs per 100 pitches among pitchers with ${formatNumber(rateFloor, 0)} or more pitches.`}
         />
         <KpiCard
           compact
           label="Best pitch"
           value={bestPitch && bestPitchOwner ? `${bestPitchOwner.player_name}` : "–"}
-          sub={bestPitch && bestPitchOwner ? `${pitchName(bestPitch.pitch_type)} · ${formatSigned(bestPitch.runs, 1)} runs` : "no pitch types"}
+          sub={bestPitch && bestPitchOwner ? `${pitchName(bestPitch.pitch_type)} · ${formatSigned(bestPitch.runs, 0)} runs` : "no pitch types"}
           tooltip="The single pitch type that saved the most runs this season."
         />
       </div>
@@ -137,7 +137,10 @@ export default async function MlbPitchValuePage() {
         <p className="max-w-3xl text-xs leading-relaxed text-muted-foreground">
           Correlation of each first-season number with runs allowed per nine innings the next season, {study.seasons[0]} to{" "}
           {study.seasons[study.seasons.length - 1]}.
-          <span className="hidden sm:inline"> The lead is pitch value minus FIP with a 95% interval from resampling pitchers.</span>
+          <span className="hidden sm:inline"> The lead is pitch value minus FIP with a 95% interval from resampling pitchers.</span>{" "}
+          The method was designed on the earlier pairs. On the latest pairs, kept back to check it, the lead over FIP
+          was {study.held_back.map((cut) => formatSigned(cut.lead.fip[0], 2)).join(", ")} at{" "}
+          {study.held_back.map((cut) => cut.innings).join(", ")} innings: a tie.
         </p>
       </PageSection>
 

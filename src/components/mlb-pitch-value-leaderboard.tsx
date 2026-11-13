@@ -35,19 +35,22 @@ interface Column {
 }
 
 const count = (v: number) => v.toLocaleString("en-US");
+// A season total carries several runs of sampling noise and a rate several tenths, so neither shows more.
+const runs = (v: number) => formatSigned(v, 0);
+const rate = (v: number) => formatSigned(v, 1);
 const RUNS: Column = {
-  key: "runs", label: "Runs", lowerIsBetter: true, phone: true, format: (v) => formatSigned(v, 1),
+  key: "runs", label: "Runs", lowerIsBetter: true, phone: true, format: runs,
   tip: "Runs against the league average, with each pitch valued at its average over bases and outs, contact valued by how it was hit, and park, hitter and season removed. Negative is better for the pitcher.",
 };
 const PER_100: Column = {
-  key: "per_100", label: "Per 100", lowerIsBetter: true, phone: true, format: (v) => formatSigned(v, 2),
+  key: "per_100", label: "Per 100", lowerIsBetter: true, phone: true, format: rate,
   tip: "Runs per 100 pitches.",
 };
 const COLUMNS: Record<View, Column[]> = {
   pitchers: [
     { key: "pitches", label: "Pitches", tip: "Pitches thrown this season.", format: count },
-    { key: "raw_runs", label: "Raw", lowerIsBetter: true, format: (v) => formatSigned(v, 1), tip: "Runs as they happened: actual results on contact, in the bases and outs each pitch was thrown in, with no adjustments." },
-    { key: "context_runs", label: "In context", lowerIsBetter: true, format: (v) => formatSigned(v, 1), tip: "Adjusted runs with each pitch valued in the bases and outs it was actually thrown in." },
+    { key: "raw_runs", label: "Raw", lowerIsBetter: true, format: runs, tip: "Runs as they happened: actual results on contact, in the bases and outs each pitch was thrown in, with no adjustments." },
+    { key: "context_runs", label: "In context", lowerIsBetter: true, format: runs, tip: "Adjusted runs with each pitch valued in the bases and outs it was actually thrown in." },
     RUNS,
     PER_100,
   ],

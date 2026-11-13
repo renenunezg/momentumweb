@@ -25,7 +25,9 @@ export interface PitchValueStudy {
   pitches: number;
   min_pitches: number;
   min_type_pitches: number;
+  // Every season pair, then only the pairs kept back while the method was designed.
   validation: PitchValueCut[];
+  held_back: PitchValueCut[];
 }
 
 export interface PitchValueData {
