@@ -2013,6 +2013,116 @@ export type Database = {
   }
   mlb: {
     Tables: {
+      batting_split_values: {
+        Row: {
+          contact_runs: number
+          decision_runs: number
+          pitches: number
+          player_id: number
+          quality_runs: number
+          season: number
+          split: string
+          updated_at: string
+        }
+        Insert: {
+          contact_runs: number
+          decision_runs: number
+          pitches: number
+          player_id: number
+          quality_runs: number
+          season: number
+          split: string
+          updated_at?: string
+        }
+        Update: {
+          contact_runs?: number
+          decision_runs?: number
+          pitches?: number
+          player_id?: number
+          quality_runs?: number
+          season?: number
+          split?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "batting_split_values_player_id_season_fkey"
+            columns: ["player_id", "season"]
+            isOneToOne: false
+            referencedRelation: "batting_values"
+            referencedColumns: ["player_id", "season"]
+          },
+        ]
+      }
+      batting_value_study: {
+        Row: {
+          model_version: string
+          payload: Json
+          season: number
+          updated_at: string
+        }
+        Insert: {
+          model_version: string
+          payload: Json
+          season: number
+          updated_at?: string
+        }
+        Update: {
+          model_version?: string
+          payload?: Json
+          season?: number
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      batting_values: {
+        Row: {
+          call_runs: number
+          contact_runs: number
+          decision_runs: number
+          faced_runs: number
+          pa: number
+          pitches: number
+          player_id: number
+          player_name: string
+          quality_runs: number
+          raw_runs: number
+          season: number
+          team: string
+          updated_at: string
+        }
+        Insert: {
+          call_runs: number
+          contact_runs: number
+          decision_runs: number
+          faced_runs: number
+          pa: number
+          pitches: number
+          player_id: number
+          player_name: string
+          quality_runs: number
+          raw_runs: number
+          season: number
+          team: string
+          updated_at?: string
+        }
+        Update: {
+          call_runs?: number
+          contact_runs?: number
+          decision_runs?: number
+          faced_runs?: number
+          pa?: number
+          pitches?: number
+          player_id?: number
+          player_name?: string
+          quality_runs?: number
+          raw_runs?: number
+          season?: number
+          team?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       bullpen_daily: {
         Row: {
           game_date: string

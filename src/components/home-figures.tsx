@@ -21,7 +21,7 @@ function scale(values: number[], pad: number, minStep: number) {
   return { at: (v: number) => ((v - lo) / (hi - lo)) * 100, ticks };
 }
 
-function Gridlines({ ticks, at, zero }: { ticks: number[]; at: (v: number) => number; zero?: boolean }) {
+export function Gridlines({ ticks, at, zero }: { ticks: number[]; at: (v: number) => number; zero?: boolean }) {
   return ticks.map((t) => (
     <span
       key={t}
@@ -32,7 +32,7 @@ function Gridlines({ ticks, at, zero }: { ticks: number[]; at: (v: number) => nu
   ));
 }
 
-function Axis({ ticks, at, format }: { ticks: number[]; at: (v: number) => number; format: (v: number) => string }) {
+export function Axis({ ticks, at, format }: { ticks: number[]; at: (v: number) => number; format: (v: number) => string }) {
   return (
     <span aria-hidden="true" className="relative block h-5">
       {ticks.map((t, i) => (
@@ -59,7 +59,7 @@ const Square = ({ left }: { left: number }) => (
   />
 );
 
-const Dot = ({ left, filled = true }: { left: number; filled?: boolean }) => (
+export const Dot = ({ left, filled = true }: { left: number; filled?: boolean }) => (
   <span
     aria-hidden="true"
     className={cn(

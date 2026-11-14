@@ -5,7 +5,7 @@ import { usePathname } from "next/navigation";
 import { SiteHeader } from "@/components/site-header";
 
 const mlbLinks = [
-  { href: "/mlb/players", label: "Players", match: ["/mlb/players", "/mlb/pitch-value"] },
+  { href: "/mlb/players", label: "Players", match: ["/mlb/players", "/mlb/pitch-value", "/mlb/batting-value"] },
   { href: "/mlb/prospects", label: "Prospects" },
   { href: "/mlb/swing-lab", label: "Swing Lab", match: ["/mlb/swing-lab", "/mlb/carry"] },
   { href: "/mlb/games", label: "Games" },

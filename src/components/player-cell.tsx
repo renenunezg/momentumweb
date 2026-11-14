@@ -14,6 +14,7 @@ export function PlayerCell({
   position,
   logo,
   headshotFallback,
+  wrapName = false,
 }: {
   athleteId: string;
   headshotUrl?: string | null;
@@ -22,12 +23,14 @@ export function PlayerCell({
   position: string | null;
   logo: TeamLogoSource | undefined;
   headshotFallback?: ReactNode;
+  // Wrap a name too long for its cell instead of cutting it short.
+  wrapName?: boolean;
 }) {
   return (
     <div className="flex items-center gap-2.5">
       <PlayerHeadshot name={name} src={headshotUrl ?? cfbPlayerHeadshotUrl(athleteId)} className="h-9 w-9" fallback={headshotFallback} />
       <div className="min-w-0">
-        <div className="truncate font-medium">{name}</div>
+        <div className={wrapName ? "font-medium whitespace-normal [overflow-wrap:anywhere]" : "truncate font-medium"}>{name}</div>
         <div className="flex items-center gap-1 truncate text-xs text-muted-foreground">
           <TeamLogo team={logo} name={team} className="h-3.5 w-3.5" />
           <span className="truncate">

@@ -29,6 +29,9 @@ const MLB_PATHS: Record<string, string[]> = {
   pitch_value_study: ["/mlb/pitch-value"],
   pitch_values: ["/mlb/pitch-value"],
   pitch_type_values: ["/mlb/pitch-value"],
+  batting_value_study: ["/mlb/batting-value"],
+  batting_values: ["/mlb/batting-value"],
+  batting_split_values: ["/mlb/batting-value"],
   award_boards: ["/mlb/awards"],
   award_models: ["/mlb/awards"],
 };
