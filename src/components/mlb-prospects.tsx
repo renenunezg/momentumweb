@@ -73,7 +73,7 @@ function identity(row: ProspectRow) {
       athleteId={String(row.player_id)}
       headshotUrl={row.headshot_url}
       name={name}
-      team={[row.org, levelLabel(row.level), row.team].filter(Boolean).join(" · ") || "Unassigned"}
+      team={[row.org, levelLabel(row.level)].filter(Boolean).join(" · ") || "Unassigned"}
       position={row.position_group}
       logo={mlbTeamIdentity(row.org)}
       headshotFallback={<TeamLogo team={mlbTeamIdentity(row.org)} name={row.org ?? name} className="h-6 w-6" />}
@@ -480,7 +480,7 @@ function ProspectList({ rows, sort, empty }: { rows: ProspectRow[]; sort: Prospe
 }
 
 const PROSPECT_VIEWS = [
-  { key: "players", label: "All prospects" },
+  { key: "players", label: "Grades" },
   { key: "top", label: "Top 100" },
   { key: "farms", label: "Farm systems" },
 ] as const;
