@@ -6,6 +6,7 @@ import { InfoTip } from "@/components/info-tip";
 import { Pager } from "@/components/pager";
 import { PositionLeaderTabs, surname, type PositionLeader } from "@/components/position-leader-tabs";
 import { PlayerCell } from "@/components/player-cell";
+import { RankBadge } from "@/components/rank-badge";
 import { ToggleGroup } from "@/components/toggle-group";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { pitchName, runsSaved as saved, savedPer100, type PitchTypeValueRow, type PitchValueRow } from "@/lib/mlb-pitch-value";
@@ -95,7 +96,20 @@ function Swatch({ color }: { color: string }) {
 }
 
 // Everything the page knows about one pitcher: each pitch he throws, and how the adjustments move his total.
-function PitcherBreakdown({ pitcher, arsenal, scale }: { pitcher: PitchValueRow; arsenal: PitchTypeValueRow[]; scale: number }) {
+function PitcherBreakdown({
+  pitcher,
+  arsenal,
+  scale,
+  ranks,
+  floor,
+}: {
+  pitcher: PitchValueRow;
+  arsenal: PitchTypeValueRow[];
+  scale: number;
+  ranks: Map<string, { place: number; of: number }>;
+  // The fewest pitches of a type that are listed, and so ranked.
+  floor: number;
+}) {
   const listed = arsenal.reduce((sum, t) => sum + t.usage, 0);
   const steps: [string, string, number][] = [
     ["As it happened", "Actual results, in the bases and outs each pitch was thrown in.", saved({ runs: pitcher.raw_runs })],
@@ -115,10 +129,13 @@ function PitcherBreakdown({ pitcher, arsenal, scale }: { pitcher: PitchValueRow;
               <th className="hidden py-1 text-right font-normal sm:table-cell">Pitches</th>
               <th className="py-1 text-right font-normal">Saved</th>
               <th className="py-1 text-right font-normal">Per 100</th>
+              <th className="py-1 pl-3 text-right font-normal">Rank</th>
             </tr>
           </thead>
           <tbody className="tabular-nums">
-            {arsenal.map((t) => (
+            {arsenal.map((t) => {
+              const rank = ranks.get(`${t.player_id}-${t.pitch_type}`);
+              return (
               <tr key={t.pitch_type} className="border-t border-border/60">
                 <td className="py-1">
                   <span className="inline-flex items-center gap-2">
@@ -130,8 +147,12 @@ function PitcherBreakdown({ pitcher, arsenal, scale }: { pitcher: PitchValueRow;
                 <td className="hidden py-1 text-right text-muted-foreground sm:table-cell">{count(t.pitches)}</td>
                 <td className={cn("py-1 text-right", tone(saved(t), 0))}>{runs(saved(t))}</td>
                 <td className={cn("py-1 text-right", tone(savedPer100(t), 1))}>{rate(savedPer100(t))}</td>
+                <td className="py-1 pl-3 text-right">
+                  {rank ? <RankBadge place={rank.place} of={rank.of} /> : <span className="text-xs text-muted-foreground">–</span>}
+                </td>
               </tr>
-            ))}
+              );
+            })}
             {listed < 0.995 && (
               <tr className="border-t border-border/60 text-muted-foreground">
                 <td className="py-1">
@@ -144,10 +165,14 @@ function PitcherBreakdown({ pitcher, arsenal, scale }: { pitcher: PitchValueRow;
                 <td className="hidden sm:table-cell" />
                 <td />
                 <td />
+                <td />
               </tr>
             )}
           </tbody>
         </table>
+        <p className="text-xs text-muted-foreground">
+          Rank is by runs saved among every pitcher&apos;s pitch of the same type thrown {count(floor)}+ times.
+        </p>
       </section>
       <section className="min-w-0 space-y-2">
         <p className="type-eyebrow text-muted-foreground">From what happened to Runs saved</p>
@@ -236,6 +261,19 @@ export function PitchValueLeaderboard({
       return { key: code, label: pitchName(code), leader };
     });
   }, [types, who, leaderFloor]);
+
+  // Where each pitcher's pitch stands among every listed pitch of the same type, by runs saved. A total, not a rate,
+  // so a pitch thrown a few hundred times cannot reach the top on noise alone, and every listed pitch is ranked.
+  const pitchRanks = useMemo(() => {
+    const byType = new Map<string, PitchTypeValueRow[]>();
+    for (const t of types) byType.set(t.pitch_type, [...(byType.get(t.pitch_type) ?? []), t]);
+    const ranks = new Map<string, { place: number; of: number }>();
+    for (const list of byType.values()) {
+      list.sort((a, b) => saved(b) - saved(a));
+      list.forEach((t, i) => ranks.set(`${t.player_id}-${t.pitch_type}`, { place: i + 1, of: list.length }));
+    }
+    return ranks;
+  }, [types]);
 
   const all = useMemo<Record<View, Row[]>>(() => ({
     pitchers: pitchers.map((p) => ({
@@ -415,7 +453,7 @@ export function PitchValueLeaderboard({
                 {expanded && pitcher && (
                   <TableRow className="hover:bg-transparent">
                     <TableCell id={panelId} colSpan={span} className="whitespace-normal bg-muted/20">
-                      <PitcherBreakdown pitcher={pitcher} arsenal={arsenals.get(r.player_id) ?? []} scale={scale} />
+                      <PitcherBreakdown pitcher={pitcher} arsenal={arsenals.get(r.player_id) ?? []} scale={scale} ranks={pitchRanks} floor={minimums.types} />
                     </TableCell>
                   </TableRow>
                 )}

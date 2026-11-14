@@ -6,6 +6,7 @@ import { InfoTip } from "@/components/info-tip";
 import { BattingZoneMini, BattingZonePicker, type BattingZone } from "@/components/mlb-batting-zone-map";
 import { Pager } from "@/components/pager";
 import { PlayerCell } from "@/components/player-cell";
+import { RankBadge } from "@/components/rank-badge";
 import { ToggleGroup } from "@/components/toggle-group";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import {
@@ -165,12 +166,8 @@ interface SplitRanks {
   rank: Map<number, number>;
   of: number;
 }
-const SPLIT_LINE = "grid grid-cols-[minmax(0,1fr)_auto_2.75rem] items-baseline gap-x-3 whitespace-nowrap";
-const ordinal = (n: number) => {
-  const tens = n % 100;
-  const suffix = tens >= 11 && tens <= 13 ? "th" : ({ 1: "st", 2: "nd", 3: "rd" } as Record<number, string>)[n % 10] ?? "th";
-  return `${n}${suffix}`;
-};
+// Fixed widths, because each line is its own grid and the columns must still line up down the list.
+const SPLIT_LINE = "grid grid-cols-[minmax(0,1fr)_3.75rem_3.5rem_2.5rem] items-baseline gap-x-2 whitespace-nowrap";
 
 // Every split of one hitter at once, so finding him once shows where his runs came from without visiting each view.
 function HitterBreakdown({
@@ -226,6 +223,7 @@ function HitterBreakdown({
         <section key={title} className="min-w-0 space-y-2">
           <p className={cn(SPLIT_LINE, "type-eyebrow text-muted-foreground")}>
             <span>{title}</span>
+            <span className="text-right">Pitches</span>
             <span className="text-right">Per 100</span>
             <span className="text-right">Rank</span>
           </p>
@@ -243,19 +241,10 @@ function HitterBreakdown({
                   const of = ranks[code]?.of ?? 0;
                   return (
                     <li key={code} className={SPLIT_LINE}>
-                      <span className="min-w-0 truncate">
-                        {battingSplitLabel(code)} <span className="text-[11px] text-muted-foreground tabular-nums">{count(pitches)}</span>
-                      </span>
+                      <span className="min-w-0 truncate">{battingSplitLabel(code)}</span>
+                      <span className="text-right text-xs text-muted-foreground tabular-nums">{count(pitches)}</span>
                       <span className={cn("text-right font-mono tabular-nums", tone(v, 1))}>{rate(v)}</span>
-                      {place == null ? <span /> : (
-                        <span
-                          title={`${ordinal(place)} of ${count(of)}`}
-                          aria-label={`Ranked ${ordinal(place)} of ${count(of)}`}
-                          className={cn("text-right font-mono text-xs tabular-nums", place <= 10 ? "font-semibold text-foreground" : "text-muted-foreground")}
-                        >
-                          #{place}
-                        </span>
-                      )}
+                      {place == null ? <span /> : <RankBadge place={place} of={of} />}
                     </li>
                   );
                 })}
@@ -265,7 +254,7 @@ function HitterBreakdown({
         </section>
       ))}
       <p className="text-xs text-muted-foreground sm:col-span-2 xl:col-span-4">
-        Runs per 100 pitches against the league average, beside the pitches he saw. His overall rate is {rate(overall)}; small samples swing widely.
+        Runs per 100 pitches against the league average. His overall rate is {rate(overall)}; small samples swing widely.
         Rank is by runs per 100 among hitters with {minimum}+ PA listed for that split; a pitch type lists a hitter once he
         has seen enough of it.
       </p>
