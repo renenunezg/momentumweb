@@ -15,7 +15,7 @@ This repository renders them.
 ## Architecture
 
 The models live in separate repositories and write their outputs to Supabase.
-Supabase is the only interface between this site and those repositories: the site never imports model code and never calls a model repo.
+Supabase is the only interface between this site and those repositories, and the site imports no model code.
 
 ```
 model repos  ──write──▶  Supabase (one schema per sport)  ──read──▶  this site
@@ -28,11 +28,11 @@ Routes follow `src/app/<sport>/<page>`, with each sport's methodology page expla
 Sport-scoped API routes under `src/app/<sport>/api/` proxy live score feeds behind a short CDN cache, serve in-game win probabilities, page large player lists on demand, and export the graded records as CSV.
 
 The MLB live-score route is the one place the site writes: after responding, it grades any game the MLB feed shows as final and writes the score and provisional evaluation counts.
-Which game gets graded comes from the feed, never from the request, and the model's nightly reconciliation remains the source of truth.
+The route chooses games to grade from the feed and ignores the request, and the model's nightly reconciliation remains the source of truth.
 
 ## Caching
 
-Pages are statically cached (ISR) and refreshed on demand rather than on short timers.
+Pages are statically cached (ISR) and refreshed when their data changes.
 A statement trigger, `public.site_revalidate()`, sits on every table the site reads and posts to `/api/revalidate`, which expires the cached reads of that table.
 Page timers are only a backstop sized to staleness risk, and every page rebuild re-reads the database, so prefer the webhook over a shorter timer.
 The site holds no Supabase Realtime subscriptions.
@@ -46,7 +46,7 @@ When adding a read:
 ## Rules that must hold
 
 - The pick shown for a started game must be the frozen pick that gets graded, so `src/app/mlb/games/page.tsx` renders per request and is never cached.
-- A failed read on a cached page throws (`keepLastGood`), so ISR keeps the last good page instead of caching an error. During `next build` it fails the deploy, and the previous deploy keeps serving.
+- A failed read on a cached page throws (`keepLastGood`), so ISR keeps serving the last good page. During `next build` it fails the deploy, and the previous deploy keeps serving.
 - `SUPABASE_SERVICE_ROLE_KEY` is read only by the MLB live-score route, server-side. Everything else uses the anon key.
 
 ## Running locally
@@ -82,7 +82,8 @@ When a model repo changes a table, regenerate the types and let the compiler fin
 npx supabase gen types typescript --project-id <project-ref> --schema mlb,cfb,nfl,nhl > src/lib/database.types.ts
 ```
 
-`database.types.ts` is generated and never hand-edited; the explicit-schema `Tables<Schema, Name>` helper lives in `database-schema.ts`.
+`database.types.ts` is generated, so don't edit it by hand.
+The explicit-schema `Tables<Schema, Name>` helper lives in `database-schema.ts`.
 The versioned payloads in `contracts/` are copied unchanged into the model repositories' tests, and both sides must pass when a contract changes.
 
 ## Shared SQL
