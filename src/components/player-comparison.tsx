@@ -6,6 +6,12 @@ import { cn, formatNumber } from "@/lib/utils";
 export interface ComparisonMetric {
   label: string;
   values: [string, string];
+  // A league rank for each value, set small on the inner side so the figure reads first.
+  ranks?: [number | null | undefined, number | null | undefined];
+}
+
+function Rank({ place }: { place: number | null | undefined }) {
+  return place == null ? null : <span className="text-[11px] font-normal text-muted-foreground">#{place}</span>;
 }
 
 export function ComparisonMetrics({ metrics }: { metrics: ComparisonMetric[] }) {
@@ -13,9 +19,15 @@ export function ComparisonMetrics({ metrics }: { metrics: ComparisonMetric[] }) 
     <div className="divide-y divide-border border-y border-rule-strong">
       {metrics.map((metric) => (
         <div key={metric.label} className="grid grid-cols-[1fr_1.4fr_1fr] items-center gap-2 py-2 text-sm">
-          <span className="font-mono font-semibold text-primary">{metric.values[0]}</span>
+          <span className="flex items-baseline gap-2 font-mono font-semibold text-primary">
+            {metric.values[0]}
+            <Rank place={metric.ranks?.[0]} />
+          </span>
           <span className="text-center text-xs text-muted-foreground">{metric.label}</span>
-          <span className="text-right font-mono font-semibold text-accent-blue">{metric.values[1]}</span>
+          <span className="flex items-baseline justify-end gap-2 font-mono font-semibold text-accent-blue">
+            <Rank place={metric.ranks?.[1]} />
+            {metric.values[1]}
+          </span>
         </div>
       ))}
     </div>

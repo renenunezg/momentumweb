@@ -5,6 +5,8 @@ import { ChevronDown } from "lucide-react";
 import { InfoTip } from "@/components/info-tip";
 import { Pager } from "@/components/pager";
 import { PositionLeaderTabs, surname, type PositionLeader } from "@/components/position-leader-tabs";
+import { ComparisonMetrics, type ComparisonMetric } from "@/components/player-comparison";
+import { PlayerComparisonPicker } from "@/components/player-comparison-picker";
 import { PlayerCell } from "@/components/player-cell";
 import { RankBadge } from "@/components/rank-badge";
 import { ToggleGroup } from "@/components/toggle-group";
@@ -12,7 +14,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { pitchName, runsSaved as saved, savedPer100, type PitchTypeValueRow, type PitchValueRow } from "@/lib/mlb-pitch-value";
 import { mlbTeamIdentity } from "@/lib/mlb-teams";
 import { mlbPlayerHeadshotUrl } from "@/lib/player-headshots";
-import { cn, foldSearch, formatSigned } from "@/lib/utils";
+import { EMPTY, cn, foldSearch, formatSigned } from "@/lib/utils";
 
 type View = "pitchers" | "types";
 type SortKey = "pitches" | "usage" | "saved" | "per_100";
@@ -192,6 +194,73 @@ function PitcherBreakdown({
   );
 }
 
+// Two pitchers side by side: season totals, their pitch mixes, and each pitch's runs saved with its league rank, the
+// pitches both throw first.
+function PitcherComparison({
+  pitchers,
+  arsenals,
+  ranks,
+  seasonRanks,
+  scale,
+}: {
+  pitchers: [PitchValueRow, PitchValueRow];
+  arsenals: [PitchTypeValueRow[], PitchTypeValueRow[]];
+  ranks: Map<string, { place: number; of: number }>;
+  seasonRanks: Record<"saved" | "per100", Map<number, number>>;
+  scale: number;
+}) {
+  const pair = <T,>(value: (p: PitchValueRow, i: 0 | 1) => T): [T, T] => [value(pitchers[0], 0), value(pitchers[1], 1)];
+  const thrown = (i: 0 | 1, code: string) => arsenals[i].find((x) => x.pitch_type === code);
+  const usage = new Map<string, number>();
+  for (const list of arsenals) for (const t of list) usage.set(t.pitch_type, (usage.get(t.pitch_type) ?? 0) + t.usage);
+  const codes = [...usage.keys()].sort((a, b) => (usage.get(b) ?? 0) - (usage.get(a) ?? 0));
+  const throws = (i: 0 | 1, code: string) => arsenals[i].some((t) => t.pitch_type === code);
+  const rows = (list: string[]): ComparisonMetric[] =>
+    list.map((code) => ({
+      label: pitchName(code),
+      values: pair((_, i) => {
+        const t = thrown(i, code);
+        return t ? runs(saved(t)) : EMPTY;
+      }),
+      ranks: pair((_, i) => {
+        const t = thrown(i, code);
+        return t ? ranks.get(`${t.player_id}-${t.pitch_type}`)?.place : null;
+      }),
+    }));
+  const groups: [string, ComparisonMetric[]][] = [
+    ["Season", [
+      { label: "Runs saved", values: pair((p) => runs(saved(p))), ranks: pair((p) => seasonRanks.saved.get(p.player_id)) },
+      { label: "Per 100", values: pair((p) => rate(savedPer100(p))), ranks: pair((p) => seasonRanks.per100.get(p.player_id)) },
+      { label: "Pitches", values: pair((p) => count(p.pitches)) },
+    ]],
+    ["Pitches both throw", rows(codes.filter((c) => throws(0, c) && throws(1, c)))],
+    ["Pitches only one throws", rows(codes.filter((c) => throws(0, c) !== throws(1, c)))],
+  ];
+  return (
+    <section aria-label="Pitcher comparison" className="space-y-4 rounded-lg border border-rule-strong p-4">
+      <div className="grid grid-cols-2 gap-4">
+        {pitchers.map((p, i) => (
+          <div key={p.player_id} className="min-w-0 space-y-2">
+            <PlayerCell athleteId={String(p.player_id)} headshotUrl={mlbPlayerHeadshotUrl(p.player_id)} name={p.player_name}
+              team={p.team} position={null} logo={mlbTeamIdentity(p.team)} />
+            <ArsenalBar arsenal={arsenals[i]} scale={scale} />
+          </div>
+        ))}
+      </div>
+      {groups.map(([title, metrics]) => metrics.length > 0 && (
+        <div key={title} className="space-y-1.5">
+          <h3 className="text-sm font-semibold text-foreground">{title}</h3>
+          <ComparisonMetrics metrics={metrics} />
+        </div>
+      ))}
+      <p className="text-xs text-muted-foreground">
+        Season ranks are among every listed pitcher. Each pitch shows its runs saved and its rank among every pitcher&apos;s
+        pitch of the same type.
+      </p>
+    </section>
+  );
+}
+
 export function PitchValueLeaderboard({
   pitchers,
   types,
@@ -204,7 +273,8 @@ export function PitchValueLeaderboard({
   // The smallest sample published for each view.
   minimums: Record<View, number>;
 }) {
-  // A pitch type's value over a few hundred pitches is mostly sampling noise, so that view opens on a larger sample.
+  // Both views open on everything listed: they rank by total runs saved, which already holds small samples back, and a
+  // higher floor left most secondary pitches with a handful of pitchers and most relievers off the board.
   const choices = useMemo<Record<View, number[]>>(
     () => ({
       pitchers: [minimums.pitchers, 2 * minimums.pitchers, 4 * minimums.pitchers],
@@ -212,7 +282,7 @@ export function PitchValueLeaderboard({
     }),
     [minimums],
   );
-  const openingMinimum = (view: View) => choices[view][view === "types" ? 2 : 1];
+  const openingMinimum = (view: View) => choices[view][0];
 
   const [view, setView] = useState<View>("pitchers");
   const [sortKey, setSortKey] = useState<SortKey>("saved");
@@ -222,9 +292,16 @@ export function PitchValueLeaderboard({
   const [page, setPage] = useState(0);
   const [pitchType, setPitchType] = useState<string | null>(null);
   const [open, setOpen] = useState<string | null>(null);
+  const [compare, setCompare] = useState<string[]>([]);
+  const [compareOpen, setCompareOpen] = useState(false);
   const search = useDeferredValue(foldSearch(query.trim()));
 
   const who = useMemo(() => new Map(pitchers.map((p) => [p.player_id, p])), [pitchers]);
+  const comparisonPlayers = useMemo(
+    () => pitchers.map((p) => ({ id: String(p.player_id), label: `${p.player_name} · ${p.team}`, group: "pitcher" })),
+    [pitchers],
+  );
+  const compared = compare.flatMap((id) => who.get(Number(id)) ?? []);
   // Each pitcher's listed pitch types, most used first, and the shade scale: the 90th percentile of every listed
   // pitch type's runs per 100, so a few extremes do not wash out the rest.
   const { arsenals, scale } = useMemo(() => {
@@ -272,6 +349,12 @@ export function PitchValueLeaderboard({
     }
     return ranks;
   }, [types]);
+  // Each listed pitcher's place on runs saved and its rate, for the comparison.
+  const seasonRanks = useMemo(() => {
+    const place = (value: (p: PitchValueRow) => number) =>
+      new Map([...pitchers].sort((a, b) => value(b) - value(a)).map((p, i) => [p.player_id, i + 1]));
+    return { saved: place(saved), per100: place(savedPer100) };
+  }, [pitchers]);
 
   const all = useMemo<Record<View, Row[]>>(() => ({
     pitchers: pitchers.map((p) => ({
@@ -370,6 +453,23 @@ export function PitchValueLeaderboard({
         </span>
         <Pager page={current} totalPages={totalPages} onPage={setPage} />
       </div>
+      <PlayerComparisonPicker
+        players={comparisonPlayers}
+        selected={compare}
+        onChange={setCompare}
+        noun="pitcher"
+        description="Pick two pitchers to see their runs saved and every pitch side by side."
+        disclosure={{ open: compareOpen, onOpenChange: setCompareOpen }}
+      />
+      {compared.length === 2 && (
+        <PitcherComparison
+          pitchers={[compared[0], compared[1]]}
+          arsenals={[arsenals.get(compared[0].player_id) ?? [], arsenals.get(compared[1].player_id) ?? []]}
+          ranks={pitchRanks}
+          seasonRanks={seasonRanks}
+          scale={scale}
+        />
+      )}
       <p className="flex flex-wrap items-center gap-x-4 gap-y-1 text-xs text-muted-foreground">
         <span className="inline-flex items-center gap-1.5"><Swatch color={runShade(1, 1)} /> Saved runs</span>
         <span className="inline-flex items-center gap-1.5"><Swatch color={runShade(-1, 1)} /> Cost runs</span>

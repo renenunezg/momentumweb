@@ -5,18 +5,20 @@ import { ChevronDown } from "lucide-react";
 import { InfoTip } from "@/components/info-tip";
 import { BattingZoneMini, BattingZonePicker, type BattingZone } from "@/components/mlb-batting-zone-map";
 import { Pager } from "@/components/pager";
+import { ComparisonMetrics, type ComparisonMetric } from "@/components/player-comparison";
+import { PlayerComparisonPicker } from "@/components/player-comparison-picker";
 import { PlayerCell } from "@/components/player-cell";
 import { RankBadge } from "@/components/rank-badge";
 import { ToggleGroup } from "@/components/toggle-group";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import {
-  BATTING_OPENING_PA, BATTING_PARTS, BATTING_PART_LABELS, COUNT_SPLITS, DIRECTION_SPLITS, PITCH_GROUP_SPLITS, ZONE_SPLITS,
+  BATTING_PARTS, BATTING_PART_LABELS, COUNT_SPLITS, DIRECTION_SPLITS, PITCH_GROUP_SPLITS, ZONE_SPLITS,
   battingSplitLabel, battingTotal, formatCorrelation,
   type BattingHitter, type BattingPart, type BattingSplit, type BattingSplitRepeat, type Interval,
 } from "@/lib/mlb-batting-value";
 import { mlbTeamIdentity } from "@/lib/mlb-teams";
 import { mlbPlayerHeadshotUrl } from "@/lib/player-headshots";
-import { cn, foldSearch, formatSigned } from "@/lib/utils";
+import { EMPTY, cn, foldSearch, formatSigned } from "@/lib/utils";
 
 type View = "hitters" | "counts" | "pitches" | "zones";
 type SplitView = Exclude<View, "hitters">;
@@ -273,6 +275,80 @@ function HitterBreakdown({
   );
 }
 
+// Two hitters side by side on the figures the table and the breakdown use, splits with their ranks.
+function HitterComparison({
+  hitters,
+  bySplit,
+  ranks,
+  seasonRanks,
+  minimum,
+  pitchTypes,
+}: {
+  hitters: [BattingHitter, BattingHitter];
+  bySplit: Record<string, Map<number, BattingSplit>>;
+  ranks: Record<string, SplitRanks>;
+  seasonRanks: Record<"runs" | "per600" | BattingPart, Map<number, number>>;
+  minimum: number;
+  pitchTypes: string[];
+}) {
+  const unranked = hitters.filter((h) => h.pa < minimum).map((h) => h.player_name);
+  const pair = <T,>(value: (h: BattingHitter) => T): [T, T] => [value(hitters[0]), value(hitters[1])];
+  const ranked = (label: string, key: keyof typeof seasonRanks, value: (h: BattingHitter) => string): ComparisonMetric => ({
+    label,
+    values: pair(value),
+    ranks: pair((h) => seasonRanks[key].get(h.player_id)),
+  });
+  const rateIn = (h: BattingHitter, code: string) => {
+    const s = bySplit[code]?.get(h.player_id);
+    return !s || s[1] === 0 ? EMPTY : rate((100 * (s[2] + s[3] + s[4])) / s[1]);
+  };
+  const splitRows = (codes: readonly string[]): ComparisonMetric[] =>
+    codes
+      .map((code) => ({
+        label: battingSplitLabel(code),
+        values: pair((h) => rateIn(h, code)),
+        ranks: pair((h) => ranks[code]?.rank.get(h.player_id)),
+      }))
+      .filter((m) => m.values.some((v) => v !== EMPTY));
+  const groups: [string, ComparisonMetric[]][] = [
+    ["Season", [
+      ranked("Runs", "runs", (h) => runs(battingTotal(h))),
+      ranked("Per 600 PA", "per600", (h) => runs((600 * battingTotal(h)) / h.pa)),
+      ...BATTING_PARTS.map((part) => ranked(BATTING_PART_LABELS[part], part, (h) => runs(h[part]))),
+      { label: "PA", values: pair((h) => count(h.pa)) },
+    ]],
+    ["By count", splitRows(COUNT_SPLITS)],
+    ["By pitch", splitRows([...PITCH_GROUP_SPLITS, ...pitchTypes])],
+    ["By zone", splitRows([...ZONE_SPLITS, ...DIRECTION_SPLITS])],
+  ];
+  return (
+    <section aria-label="Hitter comparison" className="space-y-4 rounded-lg border border-rule-strong p-4">
+      <div className="grid grid-cols-2 gap-4">
+        {hitters.map((h) => (
+          <PlayerCell key={h.player_id} athleteId={String(h.player_id)} headshotUrl={mlbPlayerHeadshotUrl(h.player_id)} name={h.player_name}
+            team={h.team} position={null} logo={mlbTeamIdentity(h.team)} wrapName />
+        ))}
+      </div>
+      {unranked.length > 0 && (
+        <p className="text-xs text-muted-foreground">
+          {unranked.join(" and ")} {unranked.length > 1 ? "are" : "is"} under the {minimum} PA minimum, so{" "}
+          {unranked.length > 1 ? "their" : "his"} figures are shown without a rank. Lower the minimum to rank them.
+        </p>
+      )}
+      {groups.map(([title, metrics]) => metrics.length > 0 && (
+        <div key={title} className="space-y-1.5">
+          <h3 className={PANEL_TITLE}>{title}</h3>
+          <ComparisonMetrics metrics={metrics} />
+        </div>
+      ))}
+      <p className="text-xs text-muted-foreground">
+        Season figures are runs against the league average; splits are runs per 100 pitches. Each rank is among hitters at
+        the chosen minimum PA.
+      </p>
+    </section>
+  );
+}
+
 export function BattingValueLeaderboard({
   hitters,
   splits,
@@ -313,9 +389,12 @@ export function BattingValueLeaderboard({
   const [sortKey, setSortKey] = useState<SortKey>("runs");
   const [ascending, setAscending] = useState(false);
   const [query, setQuery] = useState("");
-  const [minimum, setMinimum] = useState(() => (minimums.includes(BATTING_OPENING_PA) ? BATTING_OPENING_PA : minimums[0]));
+  // Opens on every listed hitter, so a rank covers everyone the study publishes and the table order matches it.
+  const [minimum, setMinimum] = useState(minimumPa);
   const [page, setPage] = useState(0);
   const [open, setOpen] = useState<number | null>(null);
+  const [compare, setCompare] = useState<string[]>([]);
+  const [compareOpen, setCompareOpen] = useState(false);
   const search = useDeferredValue(foldSearch(query.trim()));
 
   const split = view === "hitters" ? null : (chosen[view] ?? options[view][0].options[0]?.key ?? null);
@@ -343,6 +422,11 @@ export function BattingValueLeaderboard({
   }, [hitters, splits]);
 
   const who = useMemo(() => new Map(hitters.map((h) => [h.player_id, h])), [hitters]);
+  const comparisonPlayers = useMemo(
+    () => hitters.map((h) => ({ id: String(h.player_id), label: `${h.player_name} · ${h.team}`, group: "hitter" })),
+    [hitters],
+  );
+  const compared = compare.flatMap((id) => who.get(Number(id)) ?? []);
   const all = useMemo<Row[]>(() => {
     if (split == null) {
       return hitters.map((h) => {
@@ -382,6 +466,19 @@ export function BattingValueLeaderboard({
     }
     return out;
   }, [splits, who, minimum]);
+  // Each qualified hitter's place on the season figures, for the comparison.
+  const seasonRanks = useMemo(() => {
+    const pool = hitters.filter((h) => h.pa >= minimum);
+    const place = (value: (h: BattingHitter) => number) =>
+      new Map([...pool].sort((a, b) => value(b) - value(a)).map((h, i) => [h.player_id, i + 1]));
+    return {
+      runs: place(battingTotal),
+      per600: place((h) => battingTotal(h) / h.pa),
+      decision: place((h) => h.decision),
+      contact: place((h) => h.contact),
+      quality: place((h) => h.quality),
+    };
+  }, [hitters, minimum]);
   // The three parts share one scale, set by the largest part of anyone who clears the minimum, so a bar means the
   // same number of runs in every column and on every page.
   const reach = useMemo(() => {
@@ -430,9 +527,11 @@ export function BattingValueLeaderboard({
     }
     setPage(0);
   };
+  // A split opens on runs per 100, the hitter's rate there: the study validates that rate's repeat, and a split total
+  // mostly tracks playing time. The whole season opens on its total, the figure checked against next season's runs.
   const show = (next: View) => {
     setView(next);
-    setSortKey("runs");
+    setSortKey(next === "hitters" ? "runs" : "rate");
     setAscending(false);
     setPage(0);
   };
@@ -513,6 +612,15 @@ export function BattingValueLeaderboard({
         </span>
         <Pager page={current} totalPages={totalPages} onPage={setPage} />
       </div>
+      <PlayerComparisonPicker
+        players={comparisonPlayers}
+        selected={compare}
+        onChange={setCompare}
+        noun="hitter"
+        description="Pick two hitters to see their runs, parts and every split side by side."
+        disclosure={{ open: compareOpen, onOpenChange: setCompareOpen }}
+      />
+      {compared.length === 2 && <HitterComparison hitters={[compared[0], compared[1]]} bySplit={bySplit} ranks={ranks} seasonRanks={seasonRanks} minimum={minimum} pitchTypes={pitchTypes} />}
       <p className="flex flex-wrap gap-x-4 gap-y-1 text-xs text-muted-foreground">
         {BATTING_PARTS.map((part) => (
           <span key={part}>

@@ -124,8 +124,8 @@ export default async function MlbPitchValuePage() {
           and the season&apos;s scoring level are removed.
         </p>
         <p>
-          A pitch type&apos;s value depends on the counts it is thrown in, and over a few hundred pitches it is mostly noise, so the
-          pitch-type view opens on larger samples. Listed: pitchers with {formatNumber(study.min_pitches, 0)} or more pitches and
+          A pitch type&apos;s value depends on the counts it is thrown in, and over a few hundred pitches it is mostly noise, so
+          read a pitch thrown a few hundred times as a rough guide. Listed: pitchers with {formatNumber(study.min_pitches, 0)} or more pitches and
           pitch types with {formatNumber(study.min_type_pitches, 0)} or more.
         </p>
       </HowGraded>

@@ -25,9 +25,6 @@ export interface BattingHitter extends BattingParts {
 // One hitter's parts on the pitches of one split. A tuple, because the page ships about 5,000 of them to the browser.
 export type BattingSplit = readonly [playerId: number, pitches: number, decision: number, contact: number, quality: number];
 
-// The leaderboard opens on hitters with this many plate appearances.
-export const BATTING_OPENING_PA = 350;
-
 export const COUNT_SPLITS = ["two_strikes", "ahead", "first_pitch"] as const;
 export const PITCH_GROUP_SPLITS = ["fastball", "breaking", "offspeed"] as const;
 export const ZONE_SPLITS = ["heart", "shadow", "chase", "waste"] as const;
