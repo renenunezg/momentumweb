@@ -3,6 +3,8 @@
 import { Fragment, useDeferredValue, useMemo, useState } from "react";
 import { ChevronDown } from "lucide-react";
 import { InfoTip } from "@/components/info-tip";
+import { NavigationLink as Link } from "@/components/navigation-link";
+import { useLinkedPlayerId } from "@/components/use-linked-player";
 import { Pager } from "@/components/pager";
 import { PositionLeaderTabs, surname, type PositionLeader } from "@/components/position-leader-tabs";
 import { ComparisonMetrics, type ComparisonMetric } from "@/components/player-comparison";
@@ -175,6 +177,9 @@ function PitcherBreakdown({
         <p className="text-xs text-muted-foreground">
           Rank is by runs saved among every pitcher&apos;s pitch of the same type thrown {count(floor)}+ times.
         </p>
+        <Link href={`/mlb/players?player=${pitcher.player_id}`} className="inline-block text-xs text-primary underline underline-offset-4">
+          Grade and trade value
+        </Link>
       </section>
       <section className="min-w-0 space-y-2">
         <h3 className="text-sm font-semibold text-foreground">From what happened to Runs saved</h3>
@@ -290,16 +295,27 @@ export function PitchValueLeaderboard({
   const [view, setView] = useState<View>("pitchers");
   const [sortKey, setSortKey] = useState<SortKey>("saved");
   const [ascending, setAscending] = useState(false);
-  const [query, setQuery] = useState("");
+  const [typed, setTyped] = useState("");
   const [minimum, setMinimum] = useState(() => openingMinimum("pitchers"));
   const [page, setPage] = useState(0);
   const [pitchType, setPitchType] = useState<string | null>(null);
-  const [open, setOpen] = useState<string | null>(null);
   const [compare, setCompare] = useState<string[]>([]);
   const [compareOpen, setCompareOpen] = useState(false);
-  const search = useDeferredValue(foldSearch(query.trim()));
 
   const who = useMemo(() => new Map(pitchers.map((p) => [p.player_id, p])), [pitchers]);
+  // A link from the Grades page names a pitcher: he is shown through the search
+  // with his breakdown open until the visitor searches or changes the board.
+  const linkedId = useLinkedPlayerId();
+  const [linkDone, setLinkDone] = useState(false);
+  const linked = linkedId != null && !linkDone ? who.get(linkedId) ?? null : null;
+  const query = linked ? linked.player_name : typed;
+  const setQuery = (value: string) => {
+    setLinkDone(true);
+    setTyped(value);
+  };
+  const search = useDeferredValue(foldSearch(query.trim()));
+  const [chosenOpen, setOpen] = useState<string | null | undefined>(undefined);
+  const open = chosenOpen === undefined ? (linked ? String(linked.player_id) : null) : chosenOpen;
   const comparisonPlayers = useMemo(
     () => pitchers.map((p) => ({ id: String(p.player_id), label: `${p.player_name} · ${p.team}`, group: "pitcher" })),
     [pitchers],
@@ -400,6 +416,7 @@ export function PitchValueLeaderboard({
     setPage(0);
   };
   const show = (next: View) => {
+    setLinkDone(true);
     setView(next);
     setPitchType(null);
     setMinimum(openingMinimum(next));
@@ -434,7 +451,7 @@ export function PitchValueLeaderboard({
               setQuery(e.target.value);
               setPage(0);
             }}
-            placeholder="Tarik Skubal"
+            placeholder="Pitcher name"
             className="w-44 rounded-md border border-border bg-background px-2 py-1.5 text-sm sm:w-56"
           />
         </label>
@@ -476,7 +493,7 @@ export function PitchValueLeaderboard({
       <p className="flex flex-wrap items-center gap-x-4 gap-y-1 text-xs text-muted-foreground">
         <span className="inline-flex items-center gap-1.5"><Swatch color={runShade(1, 1)} /> Saved runs</span>
         <span className="inline-flex items-center gap-1.5"><Swatch color={runShade(-1, 1)} /> Cost runs</span>
-        <span>Tap a pitcher for each of his pitches.</span>
+        <span>Select a pitcher to see each of his pitches.</span>
       </p>
       <Table density="compact">
         <TableHeader>
@@ -520,7 +537,7 @@ export function PitchValueLeaderboard({
                   <TableCell className="hidden text-muted-foreground sm:table-cell">{current * PAGE_SIZE + i + 1}</TableCell>
                   <TableCell className="w-full max-w-0">
                     <PlayerCell athleteId={String(r.player_id)} headshotUrl={mlbPlayerHeadshotUrl(r.player_id)} name={r.player_name}
-                      team={r.team} position={r.pitch_type ? pitchName(r.pitch_type) : null} logo={mlbTeamIdentity(r.team)} />
+                      team={r.team} position={r.pitch_type ? pitchName(r.pitch_type) : null} logo={mlbTeamIdentity(r.team)} wrapName />
                   </TableCell>
                   {columns.map((c) => {
                     const v = r.values[c.key];

@@ -2,16 +2,20 @@ import { cache } from "react";
 import { supabase } from "@/lib/supabase";
 import type { Tables } from "@/lib/database-schema";
 import { seasonStatsLine, type SeasonStatsLine } from "@/lib/season-stats";
+import { PITCHER_GROUPS, skillColumns, type GradedTrait } from "@/lib/player-values";
 
 // The player valuation tables, written nightly by mlbmodel. The page reads the
-// index once per hour and the detail (outlook, tip, traits) for the players a
-// visitor actually opens. The two jsonb blobs live in player_details so the
-// ordered index read stays within the anon role's statement timeout.
+// index and every player's in-grade trait grades when it is built, and the
+// detail (outlook, tip, traits with inputs) for the players a visitor opens.
+// The two jsonb blobs live in player_details so the ordered index read stays
+// within the anon role's statement timeout.
 
 export type PlayerValueRow = Tables<"mlb", "player_values">;
 export type PlayerTraitRow = Tables<"mlb", "player_traits">;
 
-export type PlayerValueIndex = Omit<PlayerValueRow, "outlook" | "tip">;
+// bat and fld are the table's two skill columns, from skillColumns, so every
+// player sorts on them without his detail loaded.
+export type PlayerValueIndex = Omit<PlayerValueRow, "outlook" | "tip"> & { bat: number | null; fld: number | null };
 
 export interface OutlookYear {
   season: number;
@@ -48,8 +52,33 @@ const INDEX_COLUMNS =
 const PAGE = 1000;
 export const DETAIL_IDS = 40;
 
-export const fetchPlayerValues = cache(async (): Promise<PlayerValues> => {
-  const index: PlayerValueIndex[] = [];
+// Only the traits the skill columns average: in-grade, graded, and in a panel they read.
+async function fetchSkillTraits(): Promise<Map<number, GradedTrait[]>> {
+  const byPlayer = new Map<number, GradedTrait[]>();
+  for (let from = 0; ; from += PAGE) {
+    const res = await supabase
+      .from("player_traits")
+      .select("player_id, panel, trait, grade, in_grade")
+      .eq("in_grade", true)
+      .not("grade", "is", null)
+      .in("panel", ["batting", "fielding", "arsenal"])
+      .order("player_id", { ascending: true })
+      .order("trait", { ascending: true })
+      .range(from, from + PAGE - 1)
+      .abortSignal(AbortSignal.timeout(10_000));
+    if (res.error) throw new Error(`Player traits read failed: ${res.error.message}`);
+    for (const row of res.data ?? []) {
+      const list = byPlayer.get(row.player_id) ?? [];
+      list.push(row);
+      byPlayer.set(row.player_id, list);
+    }
+    if ((res.data?.length ?? 0) < PAGE) break;
+  }
+  return byPlayer;
+}
+
+async function fetchIndexRows(): Promise<Omit<PlayerValueIndex, "bat" | "fld">[]> {
+  const rows: Omit<PlayerValueIndex, "bat" | "fld">[] = [];
   for (let from = 0; ; from += PAGE) {
     const res = await supabase
       .from("player_values")
@@ -62,9 +91,18 @@ export const fetchPlayerValues = cache(async (): Promise<PlayerValues> => {
       // Reject incomplete snapshots so ISR keeps the last successful page.
       throw new Error(`Player values read failed: ${res.error.message}`);
     }
-    index.push(...((res.data ?? []) as PlayerValueIndex[]));
+    rows.push(...((res.data ?? []) as Omit<PlayerValueIndex, "bat" | "fld">[]));
     if ((res.data?.length ?? 0) < PAGE) break;
   }
+  return rows;
+}
+
+export const fetchPlayerValues = cache(async (): Promise<PlayerValues> => {
+  const [rows, byPlayer] = await Promise.all([fetchIndexRows(), fetchSkillTraits()]);
+  const index: PlayerValueIndex[] = rows.map((row) => ({
+    ...row,
+    ...skillColumns(byPlayer.get(row.player_id) ?? [], PITCHER_GROUPS.has(row.position_group)),
+  }));
   const first = index[0];
   return {
     updatedAt: first?.updated_at ?? null,

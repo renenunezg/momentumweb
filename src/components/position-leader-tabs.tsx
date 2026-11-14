@@ -1,6 +1,6 @@
 "use client";
 
-import type { ReactNode } from "react";
+import { useEffect, useRef, useState, type CSSProperties, type ReactNode } from "react";
 import { PlayerHeadshot } from "@/components/player-headshot";
 import { EMPTY, cn } from "@/lib/utils";
 
@@ -46,11 +46,32 @@ export function PositionLeaderTabs<K extends string>({
   value: K | null;
   onChange: (value: K) => void;
 }) {
+  // On a phone the strip scrolls sideways with no scrollbar, so a faded edge
+  // shows there are more options past it.
+  const strip = useRef<HTMLDivElement>(null);
+  const [more, setMore] = useState({ before: false, after: false });
+  useEffect(() => {
+    const el = strip.current;
+    if (!el) return;
+    const update = () =>
+      setMore({ before: el.scrollLeft > 4, after: el.scrollLeft + el.clientWidth < el.scrollWidth - 4 });
+    el.addEventListener("scroll", update, { passive: true });
+    const observer = new ResizeObserver(update);
+    observer.observe(el);
+    return () => {
+      el.removeEventListener("scroll", update);
+      observer.disconnect();
+    };
+  }, []);
+  const fade = `linear-gradient(to right, ${more.before ? "transparent" : "black"}, black 2rem, black calc(100% - 2rem), ${more.after ? "transparent" : "black"})`;
+  const mask: CSSProperties | undefined = more.before || more.after ? { maskImage: fade, WebkitMaskImage: fade } : undefined;
   return (
     <div
+      ref={strip}
       role="group"
       aria-label={label}
-      className="-mx-page-gutter grid auto-cols-[minmax(5.25rem,1fr)] grid-flow-col gap-1 overflow-x-auto px-page-gutter [scrollbar-width:none] md:mx-0 md:px-0"
+      style={mask}
+      className="-mx-page-gutter grid auto-cols-[4.75rem] grid-flow-col md:auto-cols-[minmax(5.25rem,1fr)] gap-1 overflow-x-auto px-page-gutter [scrollbar-width:none] md:mx-0 md:px-0"
     >
       {options.map(({ key, label: title = key, leader }) => {
         const active = key === value;

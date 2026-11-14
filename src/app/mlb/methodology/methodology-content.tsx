@@ -703,8 +703,8 @@ export function MethodologyContent({
 
       <SectionCard
         id="players"
-        title="Player Values"
-        subtitle="A projected grade, a trade value in dollars, and this season's impact for every 40-man player"
+        title="Player Grades"
+        subtitle="A projected grade, a trade value in dollars, and last season's impact for every 40-man player"
       >
         <div className="space-y-4 text-sm leading-relaxed">
           <p>

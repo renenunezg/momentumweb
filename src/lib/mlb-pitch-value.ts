@@ -45,6 +45,29 @@ const TYPE_COLUMNS = "player_id, season, pitch_type, pitches, usage, runs";
 // Each request gets its own limit: a build's first read waits seconds on a cold API.
 const timeout = () => AbortSignal.timeout(10_000);
 
+// Who the page lists, and for which season, for links from the Grades page:
+// the table holds only listed players, so its ids are the listing.
+export const fetchPitchValueListing = cache(async (): Promise<{ season: number | null; ids: number[] }> => {
+  const studyRes = await supabase.from("pitch_value_study").select("season").order("season", { ascending: false }).limit(1).abortSignal(timeout());
+  if (studyRes.error) throw new Error(`pitch_value_study: ${studyRes.error.message}`);
+  const season = studyRes.data[0]?.season ?? null;
+  if (season == null) return { season: null, ids: [] };
+  const ids: number[] = [];
+  for (let from = 0; ; from += PAGE) {
+    const res = await supabase
+      .from("pitch_values")
+      .select("player_id")
+      .eq("season", season)
+      .order("player_id", { ascending: true })
+      .range(from, from + PAGE - 1)
+      .abortSignal(timeout());
+    if (res.error) throw new Error(`pitch_values: ${res.error.message}`);
+    ids.push(...res.data.map((r) => r.player_id));
+    if (res.data.length < PAGE) break;
+  }
+  return { season, ids };
+});
+
 export const fetchPitchValue = cache(async (): Promise<PitchValueData> => {
   const studyRes = await supabase
     .from("pitch_value_study")

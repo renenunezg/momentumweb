@@ -38,7 +38,8 @@ export function ToggleGroup<K extends string>({
 }: {
   label: string;
   options: readonly { key: K; label: string }[];
-  value: K;
+  // Null when none of the options describes the current state.
+  value: K | null;
   onChange: (value: K) => void;
   variant?: keyof typeof VARIANTS;
   className?: string;

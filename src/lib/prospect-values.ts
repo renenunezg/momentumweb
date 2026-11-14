@@ -149,7 +149,7 @@ export const P_REGULAR_TIP = "Chance of at least one 2.0-WAR season within seven
 export const P_MLB_TIP = "Chance of a season of 100 plate appearances or 40 innings within seven years.";
 
 export const PROSPECT_TRADE_VALUE_TIP =
-  "Expected surplus over six control years starting at his ETA, priced at the player model's price of a win and discounted 8 percent a year. Same dollar scale as the player values.";
+  "Expected surplus over six control years starting at his ETA, priced at the player model's price of a win and discounted 8 percent a year. Same dollar scale as the trade values on the Grades page.";
 
 export const FARM_TOP30_TIP =
   "Trade value of the organization's 30 most valuable prospects, added up. It sets the order: past thirty, prospects rarely reach the majors.";

@@ -96,6 +96,29 @@ const timeout = () => AbortSignal.timeout(10_000);
 // Hundredths of a run are far below what the page shows and keep the split rows small.
 const cents = (v: number) => Math.round(100 * v) / 100;
 
+// Who the page lists, and for which season, for links from the Grades page:
+// the table holds only listed players, so its ids are the listing.
+export const fetchBattingValueListing = cache(async (): Promise<{ season: number | null; ids: number[] }> => {
+  const studyRes = await supabase.from("batting_value_study").select("season").order("season", { ascending: false }).limit(1).abortSignal(timeout());
+  if (studyRes.error) throw new Error(`batting_value_study: ${studyRes.error.message}`);
+  const season = studyRes.data[0]?.season ?? null;
+  if (season == null) return { season: null, ids: [] };
+  const ids: number[] = [];
+  for (let from = 0; ; from += PAGE) {
+    const res = await supabase
+      .from("batting_values")
+      .select("player_id")
+      .eq("season", season)
+      .order("player_id", { ascending: true })
+      .range(from, from + PAGE - 1)
+      .abortSignal(timeout());
+    if (res.error) throw new Error(`batting_values: ${res.error.message}`);
+    ids.push(...res.data.map((r) => r.player_id));
+    if (res.data.length < PAGE) break;
+  }
+  return { season, ids };
+});
+
 export const fetchBattingValue = cache(async (): Promise<BattingValueData> => {
   const studyRes = await supabase
     .from("batting_value_study")

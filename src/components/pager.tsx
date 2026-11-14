@@ -4,9 +4,10 @@
 export function Pager({ page, totalPages, onPage }: { page: number; totalPages: number; onPage: (next: number) => void }) {
   if (totalPages <= 1) return null;
   const button =
-    "px-2 py-1 text-muted-foreground hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:opacity-30";
+    // Phones get a full-size touch target; the pager is the only way through a long list.
+    "inline-flex size-10 items-center justify-center rounded-md text-muted-foreground hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:opacity-30 sm:size-8";
   return (
-    <nav aria-label="Pagination" className="flex items-center gap-2 font-mono text-xs">
+    <nav aria-label="Pagination" className="flex items-center gap-1 font-mono text-xs">
       <button type="button" aria-label="Previous page" onClick={() => onPage(Math.max(0, page - 1))} disabled={page === 0} className={button}>
         {"<"}
       </button>

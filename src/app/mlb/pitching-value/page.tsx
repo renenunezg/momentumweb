@@ -4,6 +4,7 @@ import { HowGraded } from "@/components/how-graded";
 import { LastUpdated } from "@/components/last-updated";
 import { PitchValueLeaderboard } from "@/components/mlb-pitch-value-leaderboard";
 import { MLB_PLAYER_SECTIONS, PlayerSectionTabs } from "@/components/player-section-tabs";
+import { NavigationLink as Link } from "@/components/navigation-link";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { fetchPitchValue, type PitchValueBaseline } from "@/lib/mlb-pitch-value";
 import { formatNumber, formatSigned } from "@/lib/utils";
@@ -112,8 +113,8 @@ export default async function MlbPitchValuePage() {
       <HowGraded label="How this works">
         <p>
           Every pitch moves the inning&apos;s expected runs up or down, and these are those moves added up, per pitcher and per
-          pitch type. They describe where a season&apos;s runs came from; the projection of what comes next is the grade on the
-          Grades tab.
+          pitch type. They describe where a season&apos;s runs came from; the projection of what comes next is the grade on the{" "}
+          <Link href="/mlb/players" className="text-primary underline underline-offset-4">Grades</Link> page.
         </p>
         <p>
           Method: regular-season Statcast, {study.seasons[0]} to {study.seasons[study.seasons.length - 1]}, {formatNumber(study.pitches, 0)} pitches.

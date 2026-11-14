@@ -3,6 +3,8 @@
 import { Fragment, useDeferredValue, useMemo, useState } from "react";
 import { ChevronDown } from "lucide-react";
 import { InfoTip } from "@/components/info-tip";
+import { NavigationLink as Link } from "@/components/navigation-link";
+import { useLinkedPlayerId } from "@/components/use-linked-player";
 import { BattingZoneMini, BattingZonePicker, type BattingZone } from "@/components/mlb-batting-zone-map";
 import { Pager } from "@/components/pager";
 import { ComparisonMetrics, type ComparisonMetric } from "@/components/player-comparison";
@@ -271,6 +273,9 @@ function HitterBreakdown({
           </p>
         </div>
       </div>
+      <Link href={`/mlb/players?player=${hitter.player_id}`} className="inline-block text-xs text-primary underline underline-offset-4">
+        Grade and trade value
+      </Link>
     </div>
   );
 }
@@ -388,14 +393,12 @@ export function BattingValueLeaderboard({
   const [chosen, setChosen] = useState<Partial<Record<SplitView, string>>>({});
   const [sortKey, setSortKey] = useState<SortKey>("runs");
   const [ascending, setAscending] = useState(false);
-  const [query, setQuery] = useState("");
+  const [typed, setTyped] = useState("");
   // Opens on every listed hitter, so a rank covers everyone the study publishes and the table order matches it.
   const [minimum, setMinimum] = useState(minimumPa);
   const [page, setPage] = useState(0);
-  const [open, setOpen] = useState<number | null>(null);
   const [compare, setCompare] = useState<string[]>([]);
   const [compareOpen, setCompareOpen] = useState(false);
-  const search = useDeferredValue(foldSearch(query.trim()));
 
   const split = view === "hitters" ? null : (chosen[view] ?? options[view][0].options[0]?.key ?? null);
   const columns = COLUMNS[view];
@@ -422,6 +425,19 @@ export function BattingValueLeaderboard({
   }, [hitters, splits]);
 
   const who = useMemo(() => new Map(hitters.map((h) => [h.player_id, h])), [hitters]);
+  // A link from the Grades page names a hitter: he is shown through the search
+  // with his breakdown open until the visitor searches or changes the board.
+  const linkedId = useLinkedPlayerId();
+  const [linkDone, setLinkDone] = useState(false);
+  const linked = linkedId != null && !linkDone ? who.get(linkedId) ?? null : null;
+  const query = linked ? linked.player_name : typed;
+  const setQuery = (value: string) => {
+    setLinkDone(true);
+    setTyped(value);
+  };
+  const search = useDeferredValue(foldSearch(query.trim()));
+  const [chosenOpen, setOpen] = useState<number | null | undefined>(undefined);
+  const open = chosenOpen === undefined ? (linked?.player_id ?? null) : chosenOpen;
   const comparisonPlayers = useMemo(
     () => hitters.map((h) => ({ id: String(h.player_id), label: `${h.player_name} · ${h.team}`, group: "hitter" })),
     [hitters],
@@ -530,6 +546,7 @@ export function BattingValueLeaderboard({
   // A split opens on runs per 100, the hitter's rate there: the study validates that rate's repeat, and a split total
   // mostly tracks playing time. The whole season opens on its total, the figure checked against next season's runs.
   const show = (next: View) => {
+    setLinkDone(true);
     setView(next);
     setSortKey(next === "hitters" ? "runs" : "rate");
     setAscending(false);
@@ -565,7 +582,7 @@ export function BattingValueLeaderboard({
                 className="max-w-56 max-sm:mx-auto max-sm:max-w-52"
               />
               <div className="space-y-2">
-                <p className="text-xs text-muted-foreground">Tap a zone on the plate, or pick a side of it:</p>
+                <p className="text-xs text-muted-foreground">Choose a zone on the plate, or a side of it:</p>
                 {chips(options.zones.slice(1))}
               </div>
             </div>
@@ -590,7 +607,7 @@ export function BattingValueLeaderboard({
               setQuery(e.target.value);
               setPage(0);
             }}
-            placeholder="Juan Soto"
+            placeholder="Hitter name"
             className="w-40 rounded-md border border-border bg-background px-2 py-1.5 text-sm sm:w-56"
           />
         </label>
@@ -622,13 +639,15 @@ export function BattingValueLeaderboard({
       />
       {compared.length === 2 && <HitterComparison hitters={[compared[0], compared[1]]} bySplit={bySplit} ranks={ranks} seasonRanks={seasonRanks} minimum={minimum} pitchTypes={pitchTypes} />}
       <p className="flex flex-wrap gap-x-4 gap-y-1 text-xs text-muted-foreground">
+        {/* The part columns appear from the small breakpoint on the full board and the wide one on a split, so the
+            legend waits for them; a phone reads the parts in the breakdown, which describes them. */}
         {BATTING_PARTS.map((part) => (
-          <span key={part}>
+          <span key={part} className={cn("hidden", view === "hitters" ? "sm:inline" : "lg:inline")}>
             <span className="font-medium text-foreground">{BATTING_PART_LABELS[part]}</span>: {PART_PLAIN[part]}
           </span>
         ))}
         {zone && <span>Map: his runs per 100 in each zone, green above the league and red below.</span>}
-        <span>Tap a hitter for every split.</span>
+        <span>Select a hitter to see every split.</span>
       </p>
       <Table density="compact">
         <TableHeader>
