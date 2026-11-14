@@ -51,9 +51,9 @@ const marketStrength = (row: CfbTeamRating) => ({
 const LIMITED: LimitedDataRule = {
   isLimited: (r) => r.missing_input_count != null && r.missing_input_count >= 4,
   rowNote:
-    "Several rating inputs are unavailable for this team; treat the rating as degraded.",
+    "Several rating inputs are unavailable for this team, so treat the rating as degraded.",
   allNote:
-    "Several rating inputs are unavailable for every team here; treat these ratings as degraded.",
+    "Several rating inputs are unavailable for every team here, so treat these ratings as degraded.",
 };
 
 const rowKey = (r: { team_id: number }) => r.team_id;
@@ -268,7 +268,7 @@ function CfbUnitRatings({
         u.unit_history_missing
           ? {
               label: "No history",
-              note: "No prior-season unit history is available; all unit values use the neutral fallback.",
+              note: "No prior-season unit history is available, so all unit values use the neutral fallback.",
             }
           : null
       }

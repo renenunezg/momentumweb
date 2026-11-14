@@ -78,8 +78,8 @@ export function CfbPlayoffTeamDialog({
           <p className="rounded-lg bg-muted p-3 text-xs leading-relaxed text-muted-foreground">
             Playoff estimates range from {playoffPercent(Math.min(...range))} to{" "}
             {playoffPercent(Math.max(...range))} across the tested selection and
-            season-dependence assumptions. This is a sensitivity range, not a
-            confidence interval.
+            season-dependence assumptions. It is a sensitivity range and carries no
+            confidence level.
           </p>
           <h3 className="type-subsection mt-6">
             Remaining regular season

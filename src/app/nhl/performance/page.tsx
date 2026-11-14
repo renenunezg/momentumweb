@@ -71,7 +71,7 @@ export default async function PerformancePage({
               lead="Moneyline and total predictions, graded at the partner-book prices recorded when they were made."
             >
               <p>
-                Moneyline favorites have odds below -100; odds of +100 or -100 are
+                Moneyline favorites have odds below -100. Odds of +100 or -100 are
                 shown as even money. Totals split by Over and Under. Each segment
                 uses the frozen predicted side and price.
               </p>
@@ -115,7 +115,7 @@ export default async function PerformancePage({
               games · {metric.no_plays} No Play decisions · {settled} settled.{" "}
               {settled < 30
                 ? "The sample is too small to establish a reliable edge."
-                : "These are observed results, not a guarantee of future returns."}
+                : "Past results do not guarantee future returns."}
               {metric.last_graded_at && (
                 <span className="block mt-1 text-xs">
                   Last graded: {formatSiteTimestamp(metric.last_graded_at)}

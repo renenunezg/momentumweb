@@ -87,12 +87,12 @@ export default async function PerformancePage({
               <p>
                 Spread favorites give points (for example -3); underdogs receive
                 points (+3). Totals split by Over and Under. Moneyline favorites
-                have odds below -100; odds of +100 or -100 are shown as even money.
-                A zero spread is pick’em. Each segment uses the frozen predicted
+                have odds below -100, and odds of +100 or -100 are shown as even money.
+                A zero spread is pick&apos;em. Each segment uses the frozen predicted
                 side and price.
               </p>
               <p>
-                Results on this page pool every policy version; each prediction
+                Results on this page pool every policy version, and each prediction
                 keeps the rules and price it was recorded under.
               </p>
             </PickPolicy>
@@ -136,7 +136,7 @@ export default async function PerformancePage({
               settled.{" "}
               {settled < 30
                 ? "The sample is too small to establish a reliable edge."
-                : "These are observed results, not a guarantee of future returns."}
+                : "Past results do not guarantee future returns."}
               {metric.last_graded_at && (
                 <span className="block mt-1 text-xs">
                   Last graded:{" "}

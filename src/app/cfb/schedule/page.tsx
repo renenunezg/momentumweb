@@ -67,7 +67,7 @@ const MARKETS = ["h2h", "spreads", "totals"] as const;
 
 const DEGRADED: ScheduleMarker = {
   label: "*",
-  note: "Several rating inputs are unavailable for this team; treat the line as degraded.",
+  note: "Several rating inputs are unavailable for this team, so treat the line as degraded.",
 };
 const NEUTRAL: ScheduleMarker = {
   label: "N",
@@ -140,7 +140,7 @@ export default async function SchedulePage() {
           CFB Schedule and Projections
         </PageTitle>
         <p className="text-muted-foreground">
-          No projections published yet. Run the publish pipeline to load them.
+          No projections published yet.
         </p>
       </PageShell>
     );
@@ -304,7 +304,7 @@ export default async function SchedulePage() {
                 weight when available.
               </p>
               <p>
-                Predictions show the line and odds frozen when predicted, not a live quote.
+                Predictions show the line and odds frozen when each prediction was made.
                 No Play means the market did not qualify.{" "}
                 <Link href="/cfb/history?view=picks" className="underline underline-offset-4">
                   View recorded decisions and results
@@ -316,9 +316,9 @@ export default async function SchedulePage() {
                 agree with the Model Line and the published total. Diff is model line
                 minus market line. Market total is the consensus total when the total
                 prediction was decided. Predictions require qualifying probabilities,
-                prices, and input flags; a large point difference alone does not
-                qualify. A star marks a team whose rating inputs are incomplete; N
-                marks a neutral site.
+                prices, and input flags, so a large point difference alone does
+                not qualify. A star marks a team whose rating inputs are
+                incomplete, and N marks a neutral site.
               </p>
             </HowGraded>
           </div>

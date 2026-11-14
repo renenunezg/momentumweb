@@ -234,7 +234,7 @@ export function FootballPickExample({ example }: { example: PickExample }) {
         <Stat
           label="Edge"
           value={formatPct(example.probabilityEdge)}
-          sub={`${formatPct(conditionalWin)} no-push cover minus break-even; the gate is 2.0 points of line`}
+          sub={`${formatPct(conditionalWin)} no-push cover minus break-even${example.sport === "cfb" ? ", against a 2.0-point line gate" : ""}`}
         />
         <Stat label="EV per unit" value={formatSigned(example.expectedValuePerUnit, 3)} sub={`stake ${example.stakeUnits.toFixed(0)}u, flat`} />
       </div>
@@ -242,13 +242,12 @@ export function FootballPickExample({ example }: { example: PickExample }) {
       <Notice className="text-xs leading-relaxed text-muted-foreground">
         <p>
           Every number above is read from the frozen prediction row and the projection it was
-          priced from; the bars are recomputed from the stored mean, standard deviation
+          priced from. The bars are recomputed from the stored mean, standard deviation
           {example.weights ? ", degrees of freedom and key-number multipliers" : " and degrees of freedom"}{" "}
-          with the same arithmetic the policy uses. The prediction clears when the priced line sits at
-          least 2.0 points beyond the price&apos;s break-even line and EV is positive; when too few
-          predictions clear in a week, the highest-edge positive-EV offers fill the slate. Spread predictions
-          are priced from the published line, totals from the published total, and moneylines from the market margin moved 0.2 of the
-          way toward the pure model.
+          with the same arithmetic the policy uses.{" "}
+          {example.sport === "cfb"
+            ? "The prediction clears when the priced line sits at least 2.0 points beyond the price's break-even line and EV is positive. When too few predictions clear in a week, the highest-edge positive-EV spreads and totals fill the slate."
+            : "The prediction clears when EV is positive at its price. When fewer than five games have one, the best-priced remaining sides fill the slate as ranked leans."}
         </p>
       </Notice>
     </div>

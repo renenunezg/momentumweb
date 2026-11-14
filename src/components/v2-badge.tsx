@@ -1,5 +1,5 @@
 const NOTE =
-  "v2 model went live 2026-05-12. Earlier predictions are v1 XGBoost; later predictions are v2 Bayesian + Monte Carlo.";
+  "v2 model went live 2026-05-12. Earlier predictions are v1 XGBoost, and later predictions are v2 Bayesian + Monte Carlo.";
 
 export function V2Badge({ className = "" }: { className?: string }) {
   return (

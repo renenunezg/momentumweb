@@ -343,7 +343,7 @@ function RandomScenarioExplorer({
             One random postseason scenario
           </DialogTitle>
           <DialogDescription className="max-w-2xl text-sm leading-relaxed text-muted-foreground">
-            A possible outcome drawn from the model’s probabilities. Underdogs can
+            A possible outcome drawn from the model&apos;s probabilities. Underdogs can
             win here. Your projected bracket and championship chances stay unchanged.
           </DialogDescription>
         </div>
@@ -421,7 +421,7 @@ export function MlbPlayoffBracket({
       </section>
       <div className="mb-4 flex flex-wrap items-baseline justify-between gap-2">
         <h2 className="type-section">
-          The model’s projected path
+          The model&apos;s projected path
         </h2>
         <p className="text-[11px] text-muted-foreground">
           Series favorite + its most likely winning score.
@@ -521,8 +521,8 @@ export function MlbPlayoffBracket({
           ))}
         </ul>
         <p className="mt-3">
-          The displayed bracket is one path, not a guarantee or the most
-          probable complete bracket. A team can lead the title odds without
+          The displayed bracket is one path through the forecast, and it may
+          not be the most probable complete bracket. A team can lead the title odds without
           winning every conditional matchup. These postseason forecasts have not
           been validated as calibrated championship probabilities.
         </p>

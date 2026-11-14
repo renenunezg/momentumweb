@@ -15,7 +15,7 @@ export async function generateMetadata(): Promise<Metadata> {
   const year = values.season ?? new Date().getFullYear();
   return {
     title: `MLB Player Values ${year}`,
-    description: `A projected 20 to 80 grade, a trade value in dollars over control years, and this season's wins above replacement for every MLB 40-man player, built from skill measurements rather than box score totals.`,
+    description: `A projected 20 to 80 grade, a trade value in dollars over control years, and this season's wins above replacement for every MLB 40-man player, built from skill measurements.`,
   };
 }
 

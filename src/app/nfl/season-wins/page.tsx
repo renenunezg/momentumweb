@@ -64,7 +64,7 @@ export default async function SeasonWinsPage() {
                 middle 80% of simulated season outcomes, including uncertainty in team
                 strength and individual games.
                 {inSeason &&
-                  " Completed results are locked in; projected wins include wins already earned plus expected remaining wins."}
+                  " Completed results are locked in, and projected wins add expected remaining wins to wins already earned."}
               </p>
               <p>
                 Each remaining game is simulated from its published margin: games that
@@ -105,8 +105,7 @@ export default async function SeasonWinsPage() {
                 ) : (
                   (first.sportsbook_source_name ?? "Source unavailable")
                 )}
-                , {dateLabel(first.sportsbook_source_date)}. This is a frozen
-                comparison, not a live quote.
+                , {dateLabel(first.sportsbook_source_date)}, frozen for the season.
               </p>
             </HowGraded>
           </div>

@@ -15,7 +15,7 @@ export async function generateMetadata(): Promise<Metadata> {
   const year = season ?? new Date().getFullYear();
   return {
     title: `NFL Player Grades ${year}`,
-    description: `Per-position scouting grades and wins above replacement for every qualified NFL player in ${year}${week != null ? ` through week ${week}` : ""}, built from opponent-adjusted traits rather than raw box score totals.`,
+    description: `Per-position scouting grades and wins above replacement for every qualified NFL player in ${year}${week != null ? ` through week ${week}` : ""}, built from opponent-adjusted traits.`,
   };
 }
 

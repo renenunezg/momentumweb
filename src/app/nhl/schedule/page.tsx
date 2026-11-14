@@ -94,7 +94,7 @@ export default async function SchedulePage() {
       </PageHeader>
       <p className="max-w-4xl text-sm text-muted-foreground">
         Book columns and predictions fill in on game day, when the partner
-        sportsbooks post lines; projections use the morning ratings.
+        sportsbooks post lines. Projections use the morning ratings.
       </p>
       <LocalKickoffs>
         <Table>

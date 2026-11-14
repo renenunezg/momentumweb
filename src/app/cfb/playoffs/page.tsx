@@ -44,10 +44,10 @@ export default async function CfbPlayoffsPage() {
           <p className="type-eyebrow mb-2 text-muted-foreground">
             CFB / Playoff forecast
           </p>
-          <PageTitle>The road to twelve</PageTitle>
+          <PageTitle>CFB Playoff Forecast</PageTitle>
           <PageDescription>
-            Every remaining game. The playoff picture and the conference races
-            that shape it.
+            The playoff picture and conference races, simulated from every
+            remaining game.
           </PageDescription>
         </div>
         <Trophy

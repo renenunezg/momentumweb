@@ -21,14 +21,14 @@ const COPY = {
     "the closing spread (the Odds API median or ESPN's DraftKings quote captured before kickoff where the live worker held one, otherwise the nflverse schedule value recorded after the game, which is also the backtest's definition)",
   cadence: "Live grading runs after each refresh",
   versions:
-    "Weeks 1 to 7 were published by five model versions, from nfl_preseason_v2_qb_v4 through nfl_joint_scoring_qb_v8_totals_v2; each game is graded on the version published before its kickoff.",
+    "Weeks 1 to 7 were published by five model versions, from nfl_preseason_v2_qb_v4 through nfl_joint_scoring_qb_v8_totals_v2, and each game is graded on the version published before its kickoff.",
   segments: [
     { kind: "week", title: "By week" },
     { kind: "division_game", title: "By divisional game" },
   ],
   diagnostics: {
     note:
-      "These explain forecast error, not prediction results. QB adjustment is the larger of the two teams' expected-starter adjustments the model applied before kickoff, so it separates games where the model priced a quarterback change from games where it did not. Projected winning margin is the absolute model margin: under 3 means the model expects either team to win by fewer than 3 points, regardless of the sportsbook line. Favorite, underdog, over and under prediction records are in the Predictions tab.",
+      "These segments explain forecast error. QB adjustment is the larger of the two teams' expected-starter adjustments the model applied before kickoff, so it separates games where the model priced a quarterback change from games where it did not. Projected winning margin is the absolute model margin: under 3 means the model expects either team to win by fewer than 3 points, regardless of the sportsbook line. Favorite, underdog, over and under prediction records are in the Predictions tab.",
     segments: [
       { kind: "qb_adjustment", title: "By QB adjustment (points)" },
       {
@@ -135,7 +135,7 @@ async function HistoricalBacktest() {
       </div>
 
       <HowGraded
-        lead={<>The pure model, which sees no market, replayed week by week through past seasons with only the data available at the time, against the closing spread. It is not the same population as the live record above.</>}
+        lead={<>The pure model, which sees no market, replayed week by week through past seasons with only the data available at the time, against the closing spread. It covers a different population from the live record above.</>}
       >
         <p>
           Every prediction below was made walking forward through each season with
@@ -143,20 +143,18 @@ async function HistoricalBacktest() {
           current model whenever the backtest is republished and is stamped with
           the version and date that produced it once the publish records them.
           Seasons 2016 through 2021
-          chose the hyperparameters; 2022 through 2025 were not used for selection
-          but have been examined repeatedly, so they are retrospective evaluation,
-          not a clean holdout. The historical preseason prior uses each team&apos;s
+          chose the hyperparameters. Seasons 2022 through 2025 were not used for
+          selection but have been examined repeatedly, so they count as
+          retrospective evaluation. The historical preseason prior uses each team&apos;s
           actual week 1 starter as its quarterback for 2016 to 2024, a small
           hindsight a live run would not have. The market benchmark is the closing
-          spread: the strongest public forecast of a game&apos;s margin. In this
+          spread, the strongest public forecast of a game&apos;s margin. In this
           backtest the published line blends the pure model half and half with that
-          closing spread, so its error is not a forecast result; the pure model,
-          which sees no market, is the headline here.
+          closing spread, so the headline is the pure model, which sees no market.
         </p>
         <p>
           Half-close blend is the backtest&apos;s published line, half pure model
-          and half closing spread; it is listed for reference and is not a
-          forecast. The live 2026 line blends toward the market as it stood when
+          and half closing spread, listed for reference only. The live 2026 line blends toward the market as it stood when
           the forecast was published, hours before kickoff, and is graded above.
           The published line and the in-game projections lean on the market
           because the closing line has been the better pregame forecast in every

@@ -80,7 +80,7 @@ async function LeadStudy() {
         <p className="mt-4 type-body text-muted-foreground">
           Rebuilt before each season from {first} to {last} with only what was known before opening day, the grade
           ranked hitters&apos; later value at the plate, in the field and on the bases better than all three projection
-          systems, by more than sampling noise. On hitting alone the systems still rank a little better; a
+          systems, by more than sampling noise. On hitting alone the systems still rank a little better, and a
           hitting-only grade matches them. These seasons were used while building the grade, so 2027 is its first
           clean test.
         </p>
@@ -236,7 +236,7 @@ export default function Home() {
             <h2 className="type-section">Model comparisons</h2>
           </div>
           <p className="mt-1 mb-4 max-w-3xl type-label text-muted-foreground">
-            A difference counts only when its 95% interval clears zero; game forecasts have no interval yet, so they
+            A difference counts only when its 95% interval clears zero. Game forecasts have no interval yet, so they
             report the sign only. The football lines blend in the market they are compared with.
           </p>
           <Suspense fallback={<Loading />}>

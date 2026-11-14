@@ -85,7 +85,7 @@ function ClosingRecord({ closing }: { closing: NhlClosingRecord[] }) {
             A moneyline prediction beats the close when its recorded price
             pays more than the closing price on the same side. Its value is
             the return that recorded price would earn if the closing price
-            with the vig removed were the true probability: zero is a fair
+            with the vig removed were the true probability. Zero is a fair
             bet, and a prediction with no edge sits below zero by the
             book&apos;s margin.
           </p>
@@ -97,7 +97,7 @@ function ClosingRecord({ closing }: { closing: NhlClosingRecord[] }) {
           <p>
             Prices that keep beating the close are an earlier sign of an edge
             than the win-loss record, which needs far more games to settle.
-            The close grades nothing: results still use the recorded price.
+            Results are still graded at the recorded price.
           </p>
         </HowGraded>
       </div>

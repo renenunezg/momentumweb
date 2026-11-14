@@ -80,7 +80,7 @@ export default async function OpenGraphImage() {
     footer: (
       <div style={{ display: "flex", flexDirection: "column", fontSize: 18, color: C.gray, width: 780, lineHeight: 1.3 }}>
         <div>{`Carry: flight physics rerun on his own ${study.season} batted balls.`}</div>
-        <div>Season line: what followed when hitters really changed; unshaded is within noise.</div>
+        <div>Season line: what followed when hitters changed their swing. Unshaded is within noise.</div>
       </div>
     ),
   });

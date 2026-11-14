@@ -169,7 +169,7 @@ export function SwingLab({ study, hitters }: { study: LabStudy; hitters: CarryHi
           <p className="type-eyebrow text-muted-foreground">Carry change</p>
           <p className="font-mono text-2xl tabular-nums">{signed(carry)} ft</p>
           <p className="text-xs text-muted-foreground">
-            Per ball in the air: the same contact with the new swing&apos;s spin, not a forecast of new contact.
+            Per ball in the air, with his current contact and the new swing&apos;s spin.
           </p>
         </div>
         <table className="w-full text-sm">
@@ -208,23 +208,23 @@ export function SwingLab({ study, hitters }: { study: LabStudy; hitters: CarryHi
         </table>
         {extrapolating && (
           <p className="text-xs text-negative">
-            Beyond ±{NATURAL_CHANGE}°: few hitters have changed this much in a year, so these numbers extend the observed pattern rather than measure it.
+            Beyond ±{NATURAL_CHANGE}°: few hitters have changed this much in a year, so these numbers extend the observed pattern past the data.
           </p>
         )}
         <HowGraded label="How this works"
-          lead={<>What tended to follow a natural swing change, not what a change guarantees.</>}
+          lead={<>What tended to follow a natural swing change, on average.</>}
         >
           <p>
             Carry is per ball in the air, from rerunning the collision and flight physics on {hitter ? "his own" : "the league's"} {study.season} batted
             balls with every ball&apos;s exit velocity and launch angle held fixed, scaled by how much modeled spin translates into observed carry
-            across hitters. It is what the same contact would carry with the spin the new swing puts on it, not a forecast of the contact a new
-            swing would make; the season line is the observed version.
+            across hitters. It is what the same contact would carry with the spin the new swing puts on it. The contact a new swing would make
+            is not forecast, and the season line shows what hitters did.
           </p>
           <p>
             Season-line changes come from {coefs.n} season-to-season changes by {coefs.n_hitters} hitters, holding bat speed and the prior
             season&apos;s line constant so a rebound from an unusual year is not credited to the swing, shown with a one-standard-error range
             that carries the fitted coefficients&apos; correlation and treats each hitter&apos;s seasons as one cluster. Those swings changed
-            naturally, so the numbers describe what tended to follow a change, not what a change guarantees.
+            naturally, so the numbers describe what tended to follow a change.
           </p>
         </HowGraded>
       </div>

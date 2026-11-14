@@ -159,8 +159,8 @@ function HeismanBoard({
       >
         <p>
           The gap column is the player&apos;s value rank minus his predicted
-          finish: negative means the plays say he is better than the voters
-          will, positive means the narrative is carrying him.
+          finish. Negative means his value ranks him above the voter forecast,
+          and positive means the voters rank him above his value.
         </p>
       </HowGraded>
       <div className="overflow-x-auto">
@@ -213,7 +213,7 @@ function HeismanBoard({
       </div>
       <ComparisonGaps
         title="Where the voters and the value disagree"
-        description={`The six leading voter forecasts, through week ${week}: value rank minus predicted Heisman finish. These are forecast ranks, not actual votes. Value ranks cover the full player pool; voter ranks cover ballot candidates.`}
+        description={`The six leading voter forecasts, through week ${week}: value rank minus predicted Heisman finish. Both ranks are forecasts. Value ranks cover the full player pool; voter ranks cover ballot candidates.`}
         negativeLabel="Value ranks higher"
         positiveLabel="Voter forecast ranks higher"
         unit="places"
@@ -368,8 +368,8 @@ function Trajectory({ rows }: { rows: CfbPlayerValue[] }) {
         lead={<>Cumulative points above replacement by week for the current top eight.</>}
       >
         <p>
-          Each point is the snapshot published after that week, so the line is
-          what the board said at the time, not a recomputation.
+          Each point is the snapshot published after that week, so the line shows
+          what the board said at the time.
         </p>
       </HowGraded>
       <div role="img" aria-label="Points above replacement by week for the value leaders">
@@ -497,9 +497,9 @@ function Method({ meta }: { meta: CfbPlayerModelMeta | null }) {
         <h3 className="type-subsection">Play credit</h3>
         <p className="text-muted-foreground">
           Every play&apos;s expected points added is split among the players
-          the stat feed credits on it with fixed shares; the remainder belongs
-          to the unit. Nothing in the data says who was responsible for a
-          play, so the shares are conventions checked two ways: whether the
+          the stat feed credits on it with fixed shares, and the remainder belongs
+          to the unit. The data does not say who was responsible for a
+          play, so the shares are conventions, checked by whether the
           resulting per-game rates repeat from one half of a season to the
           other and from one season to the next, and whether they agree with
           the next NFL draft. The passer takes the same share of every pass
@@ -537,9 +537,8 @@ function Method({ meta }: { meta: CfbPlayerModelMeta | null }) {
           feed tags them on: sacks, interceptions, pass breakups, forced and
           recovered fumbles. The feed never tags tacklers, so non-sack tackles
           for loss and untagged passes defended come from the box score at
-          that season&apos;s average EPA for the event, and plain tackles earn
-          nothing. Defensive value is disruption value, not full
-          accountability.
+          that season&apos;s average EPA for the event. Plain tackles earn no
+          credit, so defensive value measures disruption.
         </p>
       </section>
 
@@ -563,7 +562,7 @@ function Method({ meta }: { meta: CfbPlayerModelMeta | null }) {
         </p>
         <p className="text-muted-foreground">
           Games are the opportunity unit, because a defender&apos;s credited
-          plays are disruption events rather than snaps. Per-game production
+          plays are disruption events that do not map to snaps. Per-game production
           shrinks toward the position-group mean with a prior sized to how
           noisy that group&apos;s per-game credit is next to the spread of real
           ability, {priorText}, then
@@ -572,8 +571,7 @@ function Method({ meta }: { meta: CfbPlayerModelMeta | null }) {
           {meta ? ` ${meta.qualifying_games}` : " 6"} games (half the weeks played
           so far, early in the season) is the replacement level for that
           group. Value is games times the shrunk per-game production above
-          replacement, which is what puts a linebacker and a quarterback on
-          one scale.
+          replacement, which puts a linebacker and a quarterback on one scale.
         </p>
         {reliability.length > 0 && (
           <div className="overflow-x-auto">
@@ -624,9 +622,9 @@ function Method({ meta }: { meta: CfbPlayerModelMeta | null }) {
           on the selected candidate pool and are not probabilities of winning.
         </p>
         <p className="text-muted-foreground">
-          What the tracker does not do: infer injuries or availability, read
-          play text for anything the feed does not tag, or tune shares on the
-          season being reported.
+          The tracker does not infer injuries or availability, read play text
+          for anything the feed does not tag, or tune shares on the season
+          being reported.
         </p>
       </section>
     </div>

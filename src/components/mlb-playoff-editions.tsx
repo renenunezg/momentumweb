@@ -43,7 +43,7 @@ export function MlbPlayoffEditions({
               Before the {STAGE_NAMES[key]}
             </h2>
             <HowGraded label="How this works"
-              lead={<>{key === latest ? "The latest forecast; it stays fixed once the round begins." : "Frozen before this round and not updated with later results."}</>}
+              lead={<>{key === latest ? "The latest forecast. It stays fixed once the round begins." : "Frozen before this round and not updated with later results."}</>}
             >
               <p>
                 {key === "WC"

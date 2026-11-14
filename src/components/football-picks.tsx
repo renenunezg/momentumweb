@@ -108,7 +108,7 @@ export function PickKpis({
         label="ROI"
         value={unavailable ? missing : formatPct(metric?.roi)}
         sub={unavailable || roiError == null ? undefined : `± ${formatPct(roiError)} standard error`}
-        tooltip={`Profit divided by settled stakes at recorded odds. Includes pushes; excludes pending and void predictions.${roiError == null ? "" : " The standard error is how far the ROI would typically land from its long-run value by chance alone at this sample size."}`}
+        tooltip={`Profit divided by settled stakes at recorded odds. Includes pushes and excludes pending and void predictions.${roiError == null ? "" : " The standard error is how far the ROI would typically land from its long-run value by chance alone at this sample size."}`}
       />
       <KpiCard
         label="Predictions settled"
@@ -125,8 +125,8 @@ export function PickKpis({
         sub={unavailable || !ruleEv ? undefined : `Current rule · ${ruleEv.picks} predictions`}
         tooltip={
           ruleEv
-            ? `Average expected profit per unit when published, on the predictions made under the current pick rule (since ${formatDate(ruleEv.first_decision_at)}), including pending ones. Earlier rules priced expected value differently and are listed under Record by pick rule. A forecast, not realized profit.`
-            : "Average expected profit per unit when published, including pending predictions. A forecast, not realized profit."
+            ? `Average expected profit per unit when published, on the predictions made under the current pick rule (since ${formatDate(ruleEv.first_decision_at)}), including pending ones. Earlier rules priced expected value differently and are listed under Record by pick rule. Expected profit is a forecast.`
+            : "Average expected profit per unit when published, including pending predictions. Expected profit is a forecast."
         }
       />
     </div>
@@ -441,7 +441,7 @@ export function PickPolicy({
       <p>
         One predicted side per game and market. A decision can be replaced
         until the game starts by a newer model or policy, and the original stays
-        archived; line movement alone never changes one. Once a game starts, the
+        archived. Line movement alone never changes one. Once a game starts, the
         recorded side, line and price cannot change, and that record is what is
         graded. A changed kickoff voids the original prediction.
       </p>
@@ -449,8 +449,8 @@ export function PickPolicy({
         <p>
           NHL prediction policy v3, from November 2, 2026, prices moneylines
           from the vig-free market consensus, moved only when a team played the
-          day before: on 2023&ndash;2025 games the opening line under-priced
-          that fatigue. A moneyline qualifies with positive estimated EV at its
+          day before, because on 2023&ndash;2025 games the opening line
+          under-priced that fatigue. A moneyline qualifies with positive estimated EV at its
           price. Totals price the published forecast, which blends the model
           halfway with the market, and need the published total to differ from
           the posted line by at least half a goal with positive estimated EV at
@@ -461,90 +461,92 @@ export function PickPolicy({
           alone with the spreadsheet&apos;s thresholds of 13 percentage points
           and one goal. Prices come from the NHL&apos;s partner sportsbook
           feed (DraftKings and FanDuel), the better of the two, and must be
-          dated within 24 hours of publication. Each prediction risks 1 unit; the
-          fractional Kelly stake the sheet computed is shown for reference
-          only. A moved, postponed or cancelled game voids its prediction; totals
-          push on the line; there are no moneyline ties. Estimated EV does not
-          establish a real advantage over the market.
+          dated within 24 hours of publication, or for DraftKings, found
+          unchanged on its public betting listing within 15 minutes. Each
+          prediction risks 1 unit. The fractional Kelly stake the sheet computed
+          is shown for reference. A moved, postponed or cancelled game voids its
+          prediction. Totals push on the line, and there are no moneyline ties.
+          Estimated EV does not establish a real advantage over the market.
         </p>
       ) : sport === "nfl" ? (
         <p>
-          NFL prediction policy v6, from November 2, 2026, prices every market
-          from the median line across books at decision time with the vig
-          removed. Spreads and moneylines move that line 4.5% of the way toward
-          the pure model margin, the weight the model earned against 2016&ndash;2021
-          closing lines; totals use the market alone. Any offer with positive
-          estimated EV at its price is a prediction. When fewer than five games
-          have one, the highest-EV model sides on spreads and moneylines fill a
-          five-game weekly slate as ranked leans: close to a coin flip, with
-          estimated EV near zero or negative, and staked and counted like every
-          other prediction. Dispersions are fixed at 12.82 points for margins
-          and 13.28 for totals. Through November 1 (v5) the priced line had to
-          sit at least 2.0 points beyond break-even against the published
-          blended numbers, and the highest-edge positive-EV offers were promoted
-          as volume-floor predictions when fewer than five qualified. Each
-          prediction risks 1 unit.
-          Prices require an opposing quote, an exact kickoff, a verified game
-          match, an explicitly configured available bookmaker, and an update
-          within one hour. Schedule receipts must be within 24 hours,
-          expected-QB depth charts within 48 hours, and the forecast within
-          seven days. The underlying QB identity must also be dated within 48
-          hours. Missing source receipts or expected QBs block a prediction. Non-QB
-          injuries are not modeled and remain flagged; this is not comprehensive
-          injury clearance. Confirmed cancellations, postponements, and changed
-          kickoffs void the original contract. Unconfirmed missing games stay
-          pending. Moneyline ties are void; spread and total pushes return the
-          stake. Margin probabilities use discrete key-number margins and
-          total probabilities use integer scores. Historical calibration is
-          diagnostic, not a publication gate. Estimated EV does not establish a
-          real advantage over the market. There are no additional exposure caps.
-          Through week 8 of 2026, 33 of the 59 predictions were volume-floor
-          promotions; each row in the history and the export records its reason.
-          Each prediction also records its price source: The Odds API (a
-          timestamped quote, best of DraftKings, FanDuel and BetMGM) through
-          October 6, 2026, and ESPN&apos;s scoreboard (DraftKings&apos; line, no
-          book timestamp) from October 11. When The Odds API is the source,
-          the configured books from November 2 are DraftKings, FanDuel, BetMGM
-          and Pinnacle.
+          NFL prediction policy v7 prices every market from the median line
+          across books at decision time, with the vig removed. The model&apos;s
+          forecast gets no weight in that price, so an offer becomes a
+          prediction when its price beats the consensus, which happens when one
+          book is out of line with the others. When fewer than five games have
+          such an offer, the best-priced remaining spread or moneyline sides
+          fill a five-game weekly slate as ranked leans. A lean is close to a
+          coin flip, with estimated EV near zero or negative, and is staked and
+          counted like any other prediction. Dispersions are fixed at 12.82
+          points for margins and 13.28 for totals. Margin probabilities use
+          discrete key-number margins and total probabilities use integer
+          scores. Each prediction risks 1 unit, with no exposure cap.
+          Through November 1 (v5) the priced line had to sit at least 2.0
+          points beyond break-even against the published blended numbers, and
+          the highest-edge positive-EV offers were promoted as volume-floor
+          predictions when fewer than five qualified. Through week 8 of 2026,
+          33 of the 59 predictions were volume-floor promotions, and each row in
+          the history and the export records its reason. From November 2 to 6
+          (v6) the market line moved 4.5% of the way toward the pure model and
+          the model&apos;s sides filled the slate.
+          A price needs an opposing quote, an exact kickoff, a verified game
+          match, a configured bookmaker and an update within one hour.
+          Schedule receipts must be within 24 hours, the expected-QB depth
+          chart and QB identity within 48 hours, and the forecast within seven
+          days. Missing source receipts or an unidentified expected QB block a
+          prediction. Confirmed cancellations, postponements and changed
+          kickoffs void the original contract, and unconfirmed missing games
+          stay pending. Moneyline ties are void, and spread and total pushes
+          return the stake. Historical calibration is a diagnostic and does not
+          gate publication. Estimated EV does not establish a real advantage
+          over the market.
+          Each prediction records its price source: The Odds API, a
+          timestamped quote from the configured books (DraftKings, FanDuel,
+          BetMGM and Pinnacle since November 2), or ESPN&apos;s scoreboard,
+          DraftKings&apos; line with no book timestamp, used when The Odds API
+          credits run short.
         </p>
       ) : (
         <p>
-          CFB research prediction policy v13 uses fresh paired bookmaker moneylines, removes
-          each book&apos;s vig, and takes the median market probability. Its
-          equivalent margin receives 80% weight and the pure model margin 20%;
-          the blended margin determines win probability. Moneylines need positive
-          estimated EV and at least 2.0 probability-equivalent points of edge;
-          they cannot be promoted to fill the weekly quota. Spreads (since v12)
-          are priced from the market spread moved 0.75% of the way toward the
-          model/history margin, the weight fitted against closing lines;
-          development-fitted football key-number weights set only the push
-          chance, with 15.35-point dispersion. Totals (since v13) move the
-          decision-time median total 21% of the way toward the model side of the
-          published total, with 15.93-point dispersion. Through v11, spreads
-          blended 20% model/history with 80% market margin and totals priced the
-          published 50/50 blend. The 15-prediction research target
-          can promote positive-EV spreads and totals only. Each market is capped
-          at half the available exploratory slots, rounded up, after shortlisting.
-          Capped slots stay empty; qualified predictions are unchanged. These exploratory predictions
-          are labeled and evaluated separately from edge-qualified predictions. Each prediction records
-          its policy and probability source; earlier predictions retain their original
-          rules and prices. Prices need a fresh opposing quote, matching
-          kickoff, and verified game identity. Incomplete inputs remain No Play.
-          Each prediction uses one research unit. Multiple predictions on the same game
-          have correlated outcomes and their shared exposure is flagged.
-          Pushes return the stake and moneyline ties are void. Predictions
-          remain active for research; estimated edges are not validated profits.
-          Prices are the best available among the bookmakers in The Odds API
-          feed (nine through November 1, ten with Pinnacle from November 2),
-          several of them offshore, so the record assumes access to all of
-          them. A prediction stays in the graded record unless a
-          newer model version replaces it before kickoff; a later price move that
-          turns the open decision into a No Play does not remove it. On October
-          12, 2026 the week 7 slate published under v8 was replaced by v11
-          decisions before any game started; the 15 original predictions are
-          archived in the model repository&apos;s pick ledger as superseded
-          before kickoff and would have scored +1.96u against the +1.23u of their
-          replacements.
+          CFB research prediction policy v14 removes each book&apos;s vig from
+          fresh paired quotes and prices from the median. Moneylines put 80%
+          weight on the market&apos;s equivalent margin and 20% on the pure
+          model margin, and need positive estimated EV and at least 2.0
+          probability-equivalent points of edge. Spreads move the market spread
+          0.75% of the way toward the model and history margin, the weight
+          fitted against closing lines, with 15.35-point dispersion. Football
+          key-number weights set only the push chance. Totals move the
+          decision-time median total 21% of the way toward the model side of
+          the published total, with 15.93-point dispersion. In a listed rivalry
+          where the home team is the underdog on its own field, the road
+          favorite is priced 1.37 points better than the market and qualifies
+          at any positive edge.
+          When fewer than 15 predictions qualify in a week, positive-EV spreads
+          and totals fill the research target, each market capped at half the
+          open slots, rounded up. Moneylines never fill it, and a capped slot
+          stays empty. These exploratory predictions are labeled and evaluated
+          apart from edge-qualified ones. Each prediction records its policy
+          and probability source, and earlier predictions keep their original
+          rules and prices. Through v11, spreads blended 20% model and history
+          with 80% market, and totals priced the published 50/50 blend.
+          Prices need a fresh opposing quote, a matching kickoff and a verified
+          game identity, and incomplete inputs are No Play. Each prediction
+          uses one research unit. Predictions on the same game have correlated
+          outcomes, and their shared exposure is flagged. Pushes return the
+          stake and moneyline ties are void. Estimated edges are not validated
+          profits.
+          Prices are the best available among the books in The Odds API feed
+          (nine through November 1, ten with Pinnacle from November 2), several
+          of them offshore, so the record assumes access to all of them. When
+          the ESPN feed is in use, the price is DraftKings&apos; line alone. A
+          prediction stays in the graded record unless a newer model version
+          replaces it before kickoff. A later price move that turns the open
+          decision into a No Play does not remove it. On October 12, 2026 the
+          week 7 slate published under v8 was replaced by v11 decisions before
+          any game started. The 15 original predictions are archived in the
+          model repository&apos;s pick ledger as superseded and would have
+          scored +1.96u against the +1.23u of their replacements.
         </p>
       )}
       <p>

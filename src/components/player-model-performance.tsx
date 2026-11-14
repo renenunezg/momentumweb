@@ -231,7 +231,7 @@ async function MlbForward({ modelVersion, gradesFittedAt }: { modelVersion: stri
       <div className="space-y-2">
         <h3 className="text-lg">Against the public projection systems</h3>
         <HowGraded
-          lead={<>Rest-of-season production against the public projection systems: a development result, not an untouched test.</>}
+          lead={<>Rest-of-season production against the public projection systems. This is a development result with no untouched test yet.</>}
         >
           <p>
             The grade is rebuilt at each checkpoint of {forward.seasons.join(", ")}{" "}from inputs dated before that
@@ -304,7 +304,7 @@ async function MlbResults() {
         <div className="space-y-2">
           <h3 className="text-lg">Predicting next-season production</h3>
           <HowGraded
-            lead={<>Rank correlation with next-season production against simple baselines: a development result, not a holdout.</>}
+            lead={<>Rank correlation with next-season production against simple baselines. This is a development result with no holdout.</>}
           >
             <p>
               Development pairs {first} to {first + 1} through {last - 1} to {last}, each held out in
@@ -465,8 +465,8 @@ async function CfbResults() {
             <p>
               Odd-game against even-game correlation of opponent-adjusted EPA credit per
               game for the {data.season} player-value model ({data.value_model_version}).
-              These are the value model&apos;s reliabilities, not the grade&apos;s, and they
-              measure repeatability of credited production, not next-season forecast accuracy.
+              These are the value model&apos;s reliabilities. They measure how well credited
+              production repeats and say nothing about the grade or next-season forecast accuracy.
             </p>
           </HowGraded>
         </div>
@@ -581,7 +581,7 @@ function NflEvaluation({ rows }: { rows: NflGradeEvaluationRow[] }) {
           </p>
           <p>
             Defensive EPA credit counts only tagged disruption plays, so the defensive grades forecast repeatable
-            involvement rather than coverage quality, and much of their edge comes from smoothing counting stats.
+            involvement in those plays. They do not measure coverage, and much of their edge comes from smoothing counting stats.
             {statuses.length > 0 && ` Validation seasons: ${statuses.map((s) => NFL_HOLDOUT_LABELS[s] ?? s).join("; ")}.`}
           </p>
         </HowGraded>
@@ -692,7 +692,7 @@ async function NflResults() {
               used in the grade. Strong repeatability can reflect a stable role as
               well as skill.{" "}
               {evaluation && evaluation.length > 0
-                ? "Reliability is repeatability, not forecast accuracy; the tables above carry the forecast results. Neither validates WAR."
+                ? "Reliability measures repeatability. The forecast results are in the tables above, and neither validates WAR."
                 : "The evaluation sample size, test seasons, and grade holdout scores are not published in this feed. These diagnostics do not establish forecast accuracy or validate WAR."}
             </p>
           </HowGraded>

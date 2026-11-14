@@ -15,7 +15,7 @@ const COPY = {
     "the closing spread (the Odds API provider median captured before kickoff where the kickoff capture ran, otherwise the CFBD provider median recorded after the game, which is also the backtest's definition)",
   cadence: "Live grading runs after each Monday refresh",
   versions:
-    "Weeks 1 and 2 were published by earlier model versions (joint_scoring_v3 and v8) and every week since by v14; each game is graded on the version published before its kickoff.",
+    "Weeks 1 and 2 were published by earlier model versions (joint_scoring_v3 and v8) and every week since by v14. Each game is graded on the version published before its kickoff.",
   compositionKind: "opponent_classification",
   segments: [
     { kind: "week", title: "By week" },
@@ -23,7 +23,7 @@ const COPY = {
   ],
   diagnostics: {
     note:
-      "These explain forecast error, not prediction results. Missing-input counts include unavailable injury data and other gaps in preseason sources. Projected winning margin is the absolute model margin: under 7 means the model expects either team to win by fewer than 7 points, regardless of the sportsbook line. Favorite, underdog, over and under prediction records are in the Predictions tab.",
+      "These segments explain forecast error. Missing-input counts include unavailable injury data and other gaps in preseason sources. Projected winning margin is the absolute model margin: under 7 means the model expects either team to win by fewer than 7 points, regardless of the sportsbook line. Favorite, underdog, over and under prediction records are in the Predictions tab.",
     segments: [
       { kind: "missing_inputs", title: "By input completeness" },
       {
@@ -85,20 +85,19 @@ async function HistoricalBacktest() {
       </div>
 
       <HowGraded
-        lead={<>The model core, with no market blend, replayed week by week through past seasons with only the data available at the time, against the closing spread. It is not the same population as the live record above.</>}
+        lead={<>The model core, with no market blend, replayed week by week through past seasons with only the data available at the time, against the closing spread. The live record above covers a different population.</>}
       >
         <p>
           Every prediction below was made walking forward through each season with
           only the data available at the time, then frozen with the model version
           named above. They come from the pure model core with no market blend, so
-          they are historical stand-ins for the core&apos;s own skill, not for the
-          published line; regular season and postseason games are included. The
-          live 2026 record above is a different population: its forecasts come
-          from the versions named in its own section, which add a process margin
-          adjustment and a total offset on top of this core. The
-          market benchmark is the closing spread: the strongest public forecast of
-          a game&apos;s margin. Beating it consistently is rare, and the model is
-          measured against it, not against a naive baseline.
+          they measure the core&apos;s own skill. Regular season and postseason
+          games are included. The live 2026 record above is a different
+          population. Its forecasts come from the versions named in its own
+          section, which add a process margin adjustment and a total offset on
+          top of this core. The market benchmark is the closing spread, the
+          strongest public forecast of a game&apos;s margin. Beating it
+          consistently is rare.
         </p>
         <p>
           Bias is the mean signed error of the model&apos;s home margin: positive

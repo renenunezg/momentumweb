@@ -231,7 +231,7 @@ function MarketComparison({
           </p>
           <p>
             A lower error than the market does not by itself make the
-            predictions profitable: a bet has to beat the price including the
+            predictions profitable. A bet has to beat the price including the
             vig, on the games where model and market disagree. The
             Predictions tab has the return and how the recorded prices
             compare with the close.
@@ -390,7 +390,7 @@ export async function NhlForecastAccuracy({
             ? "Published forecasts are archived before puck drop and graded against official final scores. Each game uses its last pregame revision."
             : "A walk-forward replay of the 2022-23 through 2025-26 regular seasons with the current pure model, using only data available before each game."}{" "}
           Log loss and Brier score judge the home win probability (a coin flip
-          scores 0.693 and 0.250); total MAE, RMSE, and bias judge the model
+          scores 0.693 and 0.250). Total MAE, RMSE, and bias judge the model
           total in goals. The comparison with the closing line follows.
         </p>
       </HowGraded>
@@ -421,12 +421,12 @@ export async function NhlForecastAccuracy({
               label="Brier"
               value={formatNumber(overall.brier, 4)}
               sub="coin flip 0.250"
-              tooltip="Average squared error of home-win probabilities. Lower is better; a coin flip scores 0.25."
+              tooltip="Average squared error of home-win probabilities. Lower is better, and a coin flip scores 0.25."
             />
             <KpiCard
               label="Accuracy"
               value={formatPct(overall.accuracy)}
-              tooltip="Share of games won by the model’s favorite."
+              tooltip="Share of games won by the model's favorite."
             />
             <KpiCard
               label="Total MAE"

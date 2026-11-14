@@ -47,7 +47,7 @@ export default async function RatingsPage() {
       <PageShell>
         <PageTitle>NFL Power Ratings</PageTitle>
         <p className="text-muted-foreground">
-          No ratings published yet. Run the publish pipeline to load them.
+          No ratings published yet.
         </p>
       </PageShell>
     );
@@ -83,12 +83,12 @@ export default async function RatingsPage() {
             >
               <p>
                 Ratings are refit each week from drive-level EPA and split into
-                offense and defense points per game. They are model output, not a
-                poll, and carry nothing from the coming week&apos;s matchups.
+                offense and defense points per game. The coming week&apos;s
+                matchups have no effect on them.
               </p>
               <p>
-                Off and Def are points per game above an average opponent; Rating is
-                their sum. Pure − market is the fitted model rating, before the market
+                Off and Def are points per game above an average opponent, and Rating
+                is their sum. Pure − market is the fitted model rating, before the market
                 blend, minus market-implied strength from earlier closing spreads.
                 {typicalSd != null && (
                   <>

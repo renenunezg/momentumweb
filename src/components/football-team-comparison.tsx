@@ -761,7 +761,7 @@ export function FootballTeamComparison<T extends RatingRow, U extends UnitRow>({
                 ? "Opponent-adjusted PPA per game above an average FBS team."
                 : "Opponent-adjusted points per game above league average."}{" "}
               Positive is better for every unit. Ranks exclude missing history.
-              These describe past performance, not projected matchup points.
+              These describe past performance and do not project matchup points.
             </p>
             {[
               { rating: left, source: leftUnit },
@@ -781,7 +781,7 @@ export function FootballTeamComparison<T extends RatingRow, U extends UnitRow>({
                   {!source ? (
                     "unit ratings unavailable for this snapshot."
                   ) : source.unit_history_missing ? (
-                    "no unit history; neutral fallback values are excluded from this comparison."
+                    "no unit history, so neutral fallback values are excluded from this comparison."
                   ) : (
                     <>
                       {source.source_season != null &&
@@ -794,8 +794,8 @@ export function FootballTeamComparison<T extends RatingRow, U extends UnitRow>({
             })}
             <p className="text-xs leading-relaxed text-muted-foreground">
               Unit ratings are descriptive companions to power ratings and do
-              not add up to Offense or Defense. Blocking ratings reflect shared
-              outcomes, not isolated line grades.{" "}
+              not add up to Offense or Defense. Blocking ratings come from shared
+              team outcomes.{" "}
               <a
                 href={`/${sport}/methodology#units`}
                 className="underline underline-offset-4 hover:text-foreground"

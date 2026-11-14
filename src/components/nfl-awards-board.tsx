@@ -83,7 +83,7 @@ export function NflAwardsBoard({ rows, award }: { rows: AwardBoard[]; award: Awa
               <p>{metric}: {row.performance_score == null ? "unavailable" : row.performance_score.toFixed(2)}.</p>
               <p className="font-medium text-foreground">Main forecast factors</p>
               <ul className="space-y-1">{row.drivers.map((driver) => <li key={driver.feature}>{label(driver.feature)}: {driver.contribution >= 0 ? "raises" : "lowers"} the model score</li>)}</ul>
-              <p>Factors describe the fitted model, not a causal explanation of voters.</p>
+              <p>Factors describe the fitted model and do not explain why voters choose a winner.</p>
             </>}
           </div>
         </details></TableCell>

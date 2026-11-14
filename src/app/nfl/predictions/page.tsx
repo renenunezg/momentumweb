@@ -80,14 +80,12 @@ export default async function PredictionsPage() {
               lead={<>This week&apos;s predictions, organized by kickoff slate.</>}
             >
               <p>
-                Lines, odds, and bookmakers stay fixed at publication. These are
-                recorded selections, not live prices. Each prediction is tracked at 1
-                unit.
+                Lines, odds, and bookmakers stay fixed at publication. Each
+                prediction is tracked at 1 unit.
               </p>
               <p>
                 Model probability is the model&apos;s chance that the selected side
-                wins, with pushes listed separately. It is not a confidence score
-                or a guarantee.
+                wins, with pushes listed separately.
               </p>
             </HowGraded>
           </div>

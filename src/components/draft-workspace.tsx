@@ -476,7 +476,7 @@ export default function DraftWorkspace({
             <p>
               The order includes currently reported pick trades. Slots 19-32
               depend on projected playoff results. Dallas keeps the later of its
-              own and Green Bay&apos;s firsts; the Jets receive the earlier one.
+              own and Green Bay&apos;s firsts, and the Jets receive the earlier one.
               Future trades are not simulated, and prospects have not all
               declared for the draft.
             </p>
@@ -641,7 +641,7 @@ export default function DraftWorkspace({
                 <p>
                   {selectedSlot.first.draft_position
                     ? positionNames[selectedSlot.first.draft_position]
-                    : "Special teams - outside the scouting board's position groups"}
+                    : "Special teams: outside the scouting board's position groups"}
                 </p>
                 <h4>Mock selections</h4>
                 {teamPicks
@@ -697,8 +697,8 @@ export default function DraftWorkspace({
             <summary>How this works</summary>
             <p>
               Depth charts dated {date(meta.depth_as_of)} or later. Left and right
-              are the player&apos;s defensive or offensive side; these are
-              position groups, not a play diagram. In a 3-4, outside linebackers
+              are the player&apos;s defensive or offensive side, grouped by
+              position. In a 3-4, outside linebackers
               map to edge and defensive ends to interior line. In a 4-3, defensive
               ends map to edge. Actual snap-by-snap alignment can vary.
             </p>
@@ -745,8 +745,8 @@ export default function DraftWorkspace({
           {players && (
             <>
               <p className={styles.context}>
-                Impact points above positional replacement, not a read on NFL
-                potential or draft eligibility.
+                Impact points above positional replacement. They do not measure
+                NFL potential or draft eligibility.
               </p>
               <DraftPlayerTable
                 players={filteredPlayers}
@@ -814,7 +814,7 @@ export default function DraftWorkspace({
               <h2>Historical draft outcomes</h2>
               <p>
                 First three NFL seasons, regular-season offense and defense;
-                playing time reflects opportunity, not only player quality.
+                playing time reflects opportunity as well as player quality.
               </p>
             </div>
           </div>
@@ -965,7 +965,7 @@ export default function DraftWorkspace({
           <Source href="https://fightingirish.com/sports/football/roster/player/tae-johnson">
             Notre Dame confirms Tae Johnson&apos;s identity
           </Source>
-          ; his Brauntae Johnson scouting entry is matched to the same player.
+          , and his Brauntae Johnson scouting entry is matched to the same player.
         </p>
         <button
           className={styles.link}
@@ -1075,7 +1075,7 @@ export default function DraftWorkspace({
                   </p>
                   <p>
                     {selectedPick.compensatory ? (
-                      "This additional selection is projected, not yet awarded by the league. Its owner and overall number may change."
+                      "This additional selection is projected and has not been awarded by the league yet. Its owner and overall number may change."
                     ) : (
                       <>
                         Originally {board.teams[selectedPick.original].name};

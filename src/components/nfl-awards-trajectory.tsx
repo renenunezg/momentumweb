@@ -21,7 +21,7 @@ export function NflAwardsTrajectory({ points, leaders }: { points: AwardTrajecto
     <h2 className="type-section">Race trajectory</h2>
     {data.length < 2 ? <p className="text-sm text-muted-foreground">The race chart needs at least two weekly snapshots.</p> : <>
       <HowGraded label="How this works"
-        lead={<>Each point is the board as published after that week, not a recomputation.</>}
+        lead={<>Each point is the board as it was published after that week.</>}
       ><p>Predicted rank by weekly snapshot for the current top {players.length}; weeks ranked below {RANK_FLOOR} run off the bottom.</p></HowGraded>
       <div role="img" aria-label="Predicted award rank by week for the current leaders">
         <ResponsiveContainer width="100%" height={340}>

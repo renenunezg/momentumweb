@@ -196,7 +196,7 @@ export function NflPlayoffViewer({
           <div>
             <h2 className="type-section">The projected path</h2>
             <p className="mt-1 max-w-3xl text-xs text-muted-foreground">
-              One plausible field with each favorite advancing; matchup
+              One plausible field with each favorite advancing. Matchup
               percentages assume these opponents meet.
             </p>
           </div>
@@ -351,7 +351,7 @@ export function NflPlayoffViewer({
             </a>
             , with reseeding after the Wild Card round. Division winners take
             seeds 1&ndash;4, three wild cards complete each conference, and only
-            the No. 1 seed earns a bye. Higher seeds host; the lowest remaining
+            the No. 1 seed earns a bye. Higher seeds host, and the lowest remaining
             seed visits No. 1 after Wild Card weekend.
           </p>
           <ul className="list-disc space-y-2 pl-5">
@@ -419,8 +419,7 @@ export function NflPlayoffViewer({
             </div>
             <p className="type-meta text-muted-foreground">
               Unconditional seed odds. A deep tiebreaker involved this team in{" "}
-              {playoffPercent(chosen.deep_tiebreak_rate)} of simulated seasons;
-              this is not a confidence interval.
+              {playoffPercent(chosen.deep_tiebreak_rate)} of simulated seasons.
             </p>
             <h3 className="type-subsection mt-4">
               Remaining regular season

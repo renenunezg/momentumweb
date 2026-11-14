@@ -115,7 +115,7 @@ function PitcherBreakdown({
   const listed = arsenal.reduce((sum, t) => sum + t.usage, 0);
   const steps: [string, string, number][] = [
     ["As it happened", "Actual results, in the bases and outs each pitch was thrown in.", saved({ runs: pitcher.raw_runs })],
-    ["Contact by how it was hit", "Balls in play valued by exit velocity and launch angle, not by the fielders; park, hitter and season taken out.", saved({ runs: pitcher.context_runs })],
+    ["Contact by how it was hit", "Balls in play valued by exit velocity and launch angle, with fielding, park, hitter and season taken out.", saved({ runs: pitcher.context_runs })],
     ["Bases and outs taken out", "Each pitch valued at its average over bases and outs. This is his Runs saved.", saved(pitcher)],
   ];
   return (

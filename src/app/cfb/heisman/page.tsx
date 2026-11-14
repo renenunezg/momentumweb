@@ -62,14 +62,13 @@ export default async function HeismanPage() {
 
       <div className="space-y-2">
         <HowGraded label="How this works"
-          lead={<>Two boards meant to disagree: what each player&apos;s plays were worth, and how the voters will rank him.</>}
+          lead={<>One board measures what each player&apos;s plays were worth, and the other forecasts how the voters will rank him.</>}
         >
           <p>
             The value board measures what a player&apos;s plays were worth in
             points above a replacement at his position, adjusted for every
             defense and offense he faced. The Heisman board forecasts how the
-            voters will actually rank the candidates, fit on sixteen years of
-            ballots. The gap between them is the story.
+            voters will rank the candidates, fit on sixteen years of ballots.
           </p>
         </HowGraded>
       </div>
@@ -95,7 +94,7 @@ export default async function HeismanPage() {
           label="Favorite's value rank"
           value={favoriteValueRank != null ? `#${favoriteValueRank}` : "–"}
           sub="on the value board"
-          tooltip="The predicted voter favorite’s rank by player value. Rank 1 means both models agree."
+          tooltip="The predicted voter favorite's rank by player value. Rank 1 means both models agree."
         />
         <KpiCard
           label="Ballot model backtest"

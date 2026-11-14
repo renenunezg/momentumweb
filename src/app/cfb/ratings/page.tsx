@@ -50,7 +50,7 @@ export default async function RatingsPage() {
       <PageShell>
         <PageTitle>CFB Power Ratings</PageTitle>
         <p className="text-muted-foreground">
-          No ratings published yet. Run the publish pipeline to load them.
+          No ratings published yet.
         </p>
       </PageShell>
     );
@@ -82,13 +82,13 @@ export default async function RatingsPage() {
               <p>
                 Rankings follow the model. The published model ratings are the fitted
                 ratings moved part of the way toward each team&apos;s market-history
-                rating; they carry nothing from the coming week&apos;s matchups. Tap a
+                rating, with no input from the coming week&apos;s matchups. Tap a
                 rating for its uncertainty and source.
               </p>
               <p>
                 Off and Def split the model rating into offense and defense.
                 Market is fitted to earlier closing spreads with a prior-season market
-                baseline; it does not include season win totals.
+                baseline and leaves out season win totals.
                 {prior.week != null && (
                   <>
                     {" "}Chg is the change in model rating since the week {prior.week}{" "}
@@ -103,9 +103,9 @@ export default async function RatingsPage() {
                     week {forecast.ap_week} AP poll.{" "}
                   </>
                 )}
-                Unit ratings are descriptive companions to the power ratings, not
-                model inputs or components of Off and Def. Pass and run blocking are
-                shared-outcome proxies, not isolated line grades.
+                Unit ratings describe each team and do not feed the model or the
+                Off and Def split. Pass and run blocking come from shared team
+                outcomes and do not isolate the line.
               </p>
             </HowGraded>
           </div>

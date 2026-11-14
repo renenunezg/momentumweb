@@ -136,15 +136,14 @@ export function CfbPlayoffViewer({
           >
             2026 CFP rules
           </a>
-          . The displayed bracket is one legal simulated field, not a
-          certainty.
+          . The displayed bracket is one legal simulated field.
         </p>
         <p>
           On the 2024 and 2025 twelve-team fields the record-based selector and
           a learned committee model scored about the same (Brier 0.034 against
           0.035, each ahead in one season). That was a retrospective comparison
-          on the seasons used to choose the selector; championship odds have no
-          separate historical calibration claim.
+          on the seasons used to choose the selector. Championship odds have no
+          separate historical calibration check.
         </p>
         <ul className="list-disc space-y-1 pl-5">
           {payload.limitations.map((note) => (
@@ -153,9 +152,9 @@ export function CfbPlayoffViewer({
         </ul>
         <p>
           Probabilities below 0.1% include outcomes not observed in these
-          simulations; they do not imply impossibility. Conference standings are
-          ordered by conference win percentage, then overall win percentage;
-          ties are not shown in official tiebreak order.
+          simulations, so they do not mean impossible. Conference standings are
+          ordered by conference win percentage, then overall win percentage.
+          Ties are not shown in official tiebreak order.
         </p>
       </HowGraded>
       <ViewTabs

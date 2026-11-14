@@ -22,7 +22,7 @@ const EXPORTS: { sport: string; items: { href: string; table: string; schema: st
         table: "bet_ledger_v",
         schema: "mlb",
         recomputes:
-          "Prediction results: ROI, P&L, records by market and by model version. One row per graded prediction at quarter-Kelly stake and the best pregame price published; the view applies the 4.5 percent (6.5 percent on totals) edge gate to every past prediction.",
+          "Prediction results: ROI, P&L, records by market and by model version. One row per graded prediction at the best pregame price published. Picks from November 2, 2026 on are staked at a flat 1 unit. Earlier rows keep the quarter-Kelly stake and the 4.5 percent (6.5 percent on totals) edge gate they were flagged under.",
       },
       {
         href: "/mlb/api/export/predictions.csv",
@@ -84,7 +84,7 @@ const EXPORTS: { sport: string; items: { href: string; table: string; schema: st
 // Precomputed tables and functions the pages also read; they are public but
 // cannot be rebuilt from the exports above, so they are listed for reference.
 const ALSO_PUBLIC = [
-  { schema: "mlb", name: "closing_lines", kind: "table", note: "one closing quote per game, captured before first pitch, written once and frozen; same shape in cfb, nfl and nhl" },
+  { schema: "mlb", name: "closing_lines", kind: "table", note: "one closing quote per game, captured before first pitch, written once and frozen, with the same shape in cfb, nfl and nhl" },
   { schema: "cfb", name: "closing_lines", kind: "table", note: "the kickoff capture's provider median per game, frozen once written" },
   { schema: "nfl", name: "closing_lines", kind: "table", note: "the live worker's pre-kickoff close per game, frozen once written" },
   { schema: "nhl", name: "closing_lines", kind: "table", note: "the last partner-book quote before puck drop per game, frozen once written" },
@@ -117,8 +117,8 @@ export default function DataPage() {
               <p>
                 Each performance page is a formatted view of a public table. The downloads below are
                 those tables, streamed row by row through the same read-only connection the pages use,
-                refreshed within an hour of a publish. Nothing is aggregated on the way out, so a reader
-                can rebuild every headline and check every freeze timestamp without trusting the page.
+                refreshed within an hour of a publish. The rows are exported unaggregated, so a reader
+                can rebuild the headline numbers and check the freeze timestamps.
               </p>
             </HowGraded>
           </div>
@@ -159,7 +159,7 @@ export default function DataPage() {
           </p>
           <p>
             Row-level security limits this key to reading. The evaluation code that produces the
-            precomputed tables lives in each model repository; the exports are what it was run on.
+            precomputed tables lives in each model repository, and it runs on the rows these exports contain.
           </p>
         </HowGraded>
         <pre className="overflow-x-auto rounded-sm border border-border bg-muted/40 p-3 text-xs leading-relaxed">

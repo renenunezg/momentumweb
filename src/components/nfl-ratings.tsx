@@ -36,9 +36,9 @@ type View = (typeof VIEWS)[number]["key"];
 const LIMITED: LimitedDataRule = {
   isLimited: (r) => r.missing_input_count != null && r.missing_input_count >= 1,
   rowNote:
-    "A preseason rating input is unavailable for this team; treat the rating as degraded.",
+    "A preseason rating input is unavailable for this team, so treat the rating as degraded.",
   allNote:
-    "A preseason rating input is unavailable for every team here; treat these ratings as degraded.",
+    "A preseason rating input is unavailable for every team here, so treat these ratings as degraded.",
 };
 
 const rowKey = (r: { team_abbr: string }) => r.team_abbr;
@@ -48,7 +48,7 @@ const RATING_TIP =
 const PURE_MINUS_MARKET: RatingGap<NflTeamRating> = {
   label: "Pure − market",
   title:
-    "Fitted model rating, before the market blend, minus market-implied strength from earlier closing spreads, in points. A disagreement, not a game edge.",
+    "Fitted model rating, before the market blend, minus market-implied strength from earlier closing spreads, in points. It shows where the model and market disagree about a team and is not a betting edge on a game.",
   value: (r) =>
     r.market_rating == null
       ? null
@@ -165,7 +165,7 @@ export default function NflRatings({
         ) : view === "units" ? (
           units.length === 0 ? (
             <p className="text-sm text-muted-foreground">
-              Unit ratings appear once the season has played games; the
+              Unit ratings appear once the season has played games. The
               preseason forecast publishes team ratings only.
             </p>
           ) : (
@@ -178,7 +178,7 @@ export default function NflRatings({
               shortName={rowKey}
               powerRank={powerRank}
               caption="NFL unit ratings"
-              intro="Points per game above league average, opponent adjusted. Companions to the power ratings, not components: they do not sum to Off and Def, and the line ratings attribute outcomes without snap level film data."
+              intro="Points per game above league average, opponent adjusted. They sit beside the power ratings and do not sum to Off and Def. The line ratings attribute outcomes without snap-level film data."
             />
           )
         ) : (

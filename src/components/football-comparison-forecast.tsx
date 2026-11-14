@@ -77,7 +77,7 @@ export function FootballComparisonForecast({
         <p className="mt-2">
           Pure model home line: {formatHomeLine(game.pureSpread)}. The published
           forecast and projected score may include market adjustments. Market
-          lines are recorded with the forecast, not live odds.
+          lines are the ones recorded with the forecast.
         </p>
       </details>
     </section>
@@ -132,8 +132,8 @@ export function FootballComparisonLine({
         </summary>
         <p className="mt-2 leading-relaxed">
           Ratings from {formatDate(asOf)}. Away rating minus home rating
-          {neutralSite ? "." : " minus home-field advantage."} Negative favors {homeTeam};
-          positive favors {awayTeam}. This comparison uses team strength only.
+          {neutralSite ? "." : " minus home-field advantage."} Negative favors {homeTeam},
+          and positive favors {awayTeam}. This comparison uses team strength only.
           Game-specific quarterback, rest, pace, and market adjustments appear
           in published game forecasts when available.
         </p>

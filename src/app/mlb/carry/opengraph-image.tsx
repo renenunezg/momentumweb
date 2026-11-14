@@ -8,7 +8,7 @@ export default function OpenGraphImage() {
   return renderShareCard({
     eyebrow: "MLB",
     title: "Batted-Ball Carry",
-    subtitle: "Why some hitters' fly balls travel farther than others hit just as hard: the air, the spin, and the swing.",
+    subtitle: "Why some hitters' fly balls travel farther than others hit just as hard, traced through the air and the spin to the swing.",
     chips: ["Carry leaderboard", "Spin and swing path", "Swing lab"],
   });
 }

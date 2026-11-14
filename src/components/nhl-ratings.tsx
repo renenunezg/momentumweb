@@ -18,19 +18,19 @@ import type { NhlTeamIdentity, NhlTeamRating } from "@/lib/types";
 
 const num = "text-right font-mono tabular-nums";
 const WINDOW_NOTE =
-  "Fewer than ten games in the window; this team's games are projected but not priced.";
+  "Fewer than ten games in the window. This team's games are projected but not priced.";
 
 const COLUMNS = [
   { key: "rating", label: "Rating", short: "Rtg", digits: 3, lowerIsBetter: false,
-    tip: "Twice attack minus twice defense. Zero is league average; higher is better." },
+    tip: "Twice attack minus twice defense. Zero is league average, and higher is better." },
   { key: "home_xgf", label: "Home xGF", short: null, digits: 2, lowerIsBetter: false,
     tip: "Expected goals for per game at home against an average opponent." },
   { key: "home_xga", label: "Home xGA", short: null, digits: 2, lowerIsBetter: true,
-    tip: "Expected goals against per game at home against an average opponent; lower is better." },
+    tip: "Expected goals against per game at home against an average opponent. Lower is better." },
   { key: "away_xgf", label: "Away xGF", short: null, digits: 2, lowerIsBetter: false,
     tip: "Expected goals for per game on the road against an average opponent." },
   { key: "away_xga", label: "Away xGA", short: null, digits: 2, lowerIsBetter: true,
-    tip: "Expected goals against per game on the road against an average opponent; lower is better." },
+    tip: "Expected goals against per game on the road against an average opponent. Lower is better." },
   // Since nhl-poisson-v2.0 strengths pool both venues, so the away columns
   // repeat the home ones.
   { key: "home_attack", label: "Attack", short: "Att", digits: 3, lowerIsBetter: false,

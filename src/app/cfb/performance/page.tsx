@@ -116,7 +116,7 @@ export default async function PerformancePage({
               decisions · {settled} settled.{" "}
               {settled < 30
                 ? "The sample is too small to establish a reliable edge."
-                : "These are observed results, not a guarantee of future returns."}
+                : "Past results do not guarantee future returns."}
               {metric.last_graded_at && (
                 <span className="block mt-1 text-xs">
                   Last graded:{" "}
@@ -131,13 +131,13 @@ export default async function PerformancePage({
               Exploratory predictions fall below the standard edge threshold and contribute toward the weekly research target.
             </p>
             <p>
-              Spread favorites give points (for example -3); underdogs receive
+              Spread favorites give points (for example -3), and underdogs receive
               points (+3). Totals split by Over and Under. Moneyline favorites
-              have negative odds; odds of +100 or -100 are shown as even money.
+              have negative odds. Odds of +100 or -100 are shown as even money.
               Each segment uses the frozen predicted side and price.
             </p>
             <p>
-              Results on this page pool every policy version below; each prediction keeps the rules
+              Results on this page pool every policy version below. Each prediction keeps the rules
               and price it was recorded under.
             </p>
           </PickPolicy>
@@ -196,7 +196,7 @@ export default async function PerformancePage({
           />
           {metric?.clv_market_points_sample ? (
             <p className="text-xs text-muted-foreground">
-              Closing line value from the decision-time median line, not the shopped price:{" "}
+              Closing line value, measured from the decision-time median line:{" "}
               {formatSigned(metric.average_clv_market_points, 2)} points over {metric.clv_market_points_sample} spread and total
               predictions, {formatPct(metric.clv_market_points_positive_share)} positive
               {metric.clv_market_probability_sample

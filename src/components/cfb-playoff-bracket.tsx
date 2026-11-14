@@ -141,7 +141,7 @@ export function CfbPlayoffBracket({
         </div>
       </div>
       <p className="type-meta text-muted-foreground lg:hidden">
-        Semifinals: the 1 and 4 paths meet; the 2 and 3 paths meet. Winners
+        In the semifinals the 1 and 4 paths meet, as do the 2 and 3 paths. Winners
         advance to the national championship.
       </p>
     </section>

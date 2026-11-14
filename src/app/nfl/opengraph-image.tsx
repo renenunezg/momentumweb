@@ -12,7 +12,7 @@ export default async function OpenGraphImage() {
     eyebrow: "NFL",
     title: "NFL Ratings & Grades",
     subtitle:
-      "Team strength, player grades, projected production, and position-specific comparisons for deeper football analysis.",
+      "Team strength, player grades, projected production, and position-specific comparisons.",
     chips: ["Team ratings", "Player grades", "Projected production"],
     league: { name: "NFL", ratings: await fetchNflHomeRatings() },
   });

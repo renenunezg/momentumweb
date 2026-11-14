@@ -31,7 +31,7 @@ export default async function RatingsPage() {
       <PageShell>
         <PageTitle>NHL Model Ratings</PageTitle>
         <p className="text-muted-foreground">
-          No ratings published yet. Run the daily pipeline to load them.
+          No ratings published yet.
         </p>
       </PageShell>
     );

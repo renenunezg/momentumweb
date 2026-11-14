@@ -171,12 +171,12 @@ export function FootballForecastPerformance({
             lead={<>Each game is graded on the forecast published before kickoff, against the closing line and the final score.</>}
           >
             <p>
-              Every row is a frozen record: the projection published before
-              kickoff, {copy.closingLine}, and the final score. Nothing is re-fit
-              or re-priced after a result is known. The closing line is the bar
-              the model is measured against, not an input to it.{" "}
+              Each row is a frozen record of the projection published before
+              kickoff, {copy.closingLine}, and the final score. Results are
+              graded without re-fitting or re-pricing. The closing line is the
+              benchmark, and the model never reads it.{" "}
               {versionRows.length > 0
-                ? "Each game is graded on the model version published before its kickoff; the by-version table lists them."
+                ? "Each game is graded on the model version published before its kickoff, and the by-version table lists them."
                 : copy.versions}
             </p>
             {!live.unavailable && livePure && (
@@ -187,7 +187,7 @@ export function FootballForecastPerformance({
                     {Object.values(live.closingSources).reduce((sum, games) => sum + games, 0)} graded
                     forecast and result pairs: {describeClosingSources(live.closingSources)}. A close captured
                     before kickoff is one quote held in memory by the live worker
-                    and frozen when the game starts; a value recorded after the game
+                    and frozen when the game starts. A value recorded after the game
                     is the provider&apos;s final number with no timestamp. Where both
                     exist the captured close is used.
                   </>
@@ -225,8 +225,7 @@ export function FootballForecastPerformance({
               <Notice className="bg-muted/40 text-xs text-muted-foreground">
                 {livePure.games} games graded through{" "}
                 {fmtDate(live.latestKickoff)}. Fewer than 30 games describe the
-                season so far, not model skill. Read these as status, not
-                evidence.
+                season so far and are too few to measure model skill.
               </Notice>
             )}
 
@@ -264,7 +263,7 @@ export function FootballForecastPerformance({
                 label="80% coverage"
                 value={formatPct(livePublished?.coverage_80, 0)}
                 sub="target 80%"
-                tooltip="Share of results inside the published 80% range. Target: 80%. Much higher suggests overly wide ranges; much lower suggests overly narrow ranges."
+                tooltip="Share of results inside the published 80% range. Target: 80%. Much higher suggests the ranges are too wide, and much lower that they are too narrow."
               />
             </div>
 
@@ -358,12 +357,12 @@ export function FootballForecastPerformance({
               <HowGraded label="What the sources mean">
                 <p>
                   Published is the market-informed line, total and scores the
-                  site shows: the pure margin mixed with the pregame market spread
+                  site shows, the pure margin mixed with the pregame market spread
                   the model saw when it published. Pure model is the independent
                   projection behind it. Closing line is the benchmark graded on
                   its own. Coverage is the share of results inside each
-                  source&apos;s 50, 80, and 90 percent intervals: the pure
-                  model&apos;s frozen ones, and for the published line the
+                  source&apos;s 50, 80, and 90 percent intervals, using the pure
+                  model&apos;s frozen intervals and, for the published line, the
                   dispersion predictions are priced with. The published total is graded
                   only for games published since it existed, so its Total MAE rests on
                   fewer games than the other two rows.
@@ -375,8 +374,8 @@ export function FootballForecastPerformance({
                       loss {formatNumber(livePublished.log_loss, 3)} over{" "}
                       {livePublished.probability_games} games
                       {liveClosing?.brier_score != null
-                        ? <>; the closing line, priced on the same scale over the same games, scores {formatNumber(liveClosing.brier_score, 3)} and {formatNumber(liveClosing.log_loss, 3)}.</>
-                        : "; the closing line's Brier on the same games is not published yet."}
+                        ? <>. The closing line, priced on the same scale over the same games, scores {formatNumber(liveClosing.brier_score, 3)} and {formatNumber(liveClosing.log_loss, 3)}.</>
+                        : ". The closing line's Brier on the same games is not published yet."}
                     </>
                   ) : null}
                   {" "}Gap ranges, where shown, are 95 percent paired bootstrap intervals over games.

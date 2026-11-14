@@ -119,7 +119,7 @@ export default async function MlbPitchValuePage() {
           Method: regular-season Statcast, {study.seasons[0]} to {study.seasons[study.seasons.length - 1]}, {formatNumber(study.pitches, 0)} pitches.
           Run expectancy is measured for all 288 combinations of count, bases and outs. A pitch is worth the expectancy after it,
           minus the expectancy before it, plus any runs that scored. A ball in play is charged what its exit velocity and launch
-          angle were worth across the league, not what the fielders made of it. Each pitch is then valued at its average over
+          angle were worth across the league, whatever the fielders made of it. Each pitch is then valued at its average over
           bases and outs, so a strikeout counts the same with the bases loaded as with them empty, and the park, the hitter faced
           and the season&apos;s scoring level are removed.
         </p>

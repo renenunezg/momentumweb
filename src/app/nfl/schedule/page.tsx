@@ -113,7 +113,7 @@ export default async function SchedulePage() {
       <PageShell>
         <PageTitle>NFL Schedule and Projections</PageTitle>
         <p className="text-muted-foreground">
-          No projections published yet. Run the publish pipeline to load them.
+          No projections published yet.
         </p>
       </PageShell>
     );
@@ -205,14 +205,14 @@ export default async function SchedulePage() {
             >
               <p>
                 The published line blends the pure model with the market at a capped
-                weight; Pure is the model&apos;s own opinion before that blend.
+                weight. Pure is the model&apos;s own line before that blend.
               </p>
               <p>
                 Proj score is away&ndash;home expected points. Diff is model line minus
                 market line. Market total is the consensus total when the total prediction
-                was decided, and nothing here is wagering advice. QB marks a projected
-                starter whose value differs meaningfully from the QB play baked into
-                the team&apos;s rating; N marks a neutral site.
+                was decided. QB marks a projected starter whose value differs
+                meaningfully from the QB play in the team&apos;s rating, and N marks
+                a neutral site. None of this is wagering advice.
               </p>
             </HowGraded>
           </div>

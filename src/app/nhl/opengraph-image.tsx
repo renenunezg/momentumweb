@@ -12,7 +12,7 @@ export default async function OpenGraphImage() {
     eyebrow: "NHL",
     title: "NHL Team Analysis",
     subtitle:
-      "Explore team strength through goals, expected goals, and attack and defense ratings, with daily game projections.",
+      "Team strength from goals, expected goals, and attack and defense ratings, with daily game projections.",
     chips: ["Team ratings", "Expected goals", "Projections"],
     league: { name: "NHL", ratings: await fetchNhlHomeRatings() },
   });

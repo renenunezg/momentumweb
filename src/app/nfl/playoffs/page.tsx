@@ -39,9 +39,10 @@ export default async function NflPlayoffsPage() {
           <p className="type-eyebrow mb-2 text-muted-foreground">
             NFL / Playoff forecast
           </p>
-          <PageTitle>The road to the Super Bowl</PageTitle>
+          <PageTitle>Playoff and Super Bowl Forecast</PageTitle>
           <PageDescription>
-            Two conferences. Fourteen teams. One champion.
+            The projected bracket, division races, and each team&apos;s chance to
+            reach and win the Super Bowl.
           </PageDescription>
         </div>
       </PageHeader>

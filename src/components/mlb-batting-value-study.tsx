@@ -199,7 +199,7 @@ export function BattingValueStudySection({ study, pitchTypes }: { study: Batting
         <p className="max-w-3xl text-sm leading-relaxed">
           Each part repeats from one season to the next at least as well as the total, but only Quality says much about the
           season ahead. Making more contact than the pitch calls for has no positive link to next season&apos;s runs, because
-          contact hitters tend to hit the ball less hard: Contact reads as a style, not an edge on its own.
+          contact hitters tend to hit the ball less hard, so Contact reads as a hitting style.
         </p>
         <div className="grid gap-x-10 gap-y-6 pt-2 lg:grid-cols-2">
           <IntervalPlot title="Repeats the next season" rows={measure("repeat")} />

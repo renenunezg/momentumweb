@@ -118,7 +118,7 @@ export function PowerRatingsTable<T extends PowerRatingRow>({
   const gapColumn = useMemo<RatingGap<T> | undefined>(
     () => gap ?? (market && {
       label: "Model − market",
-      title: "Model rating minus market-implied strength, in points. A disagreement, not a game edge.",
+      title: "Model rating minus market-implied strength, in points. It shows where the two disagree about a team and is not a game edge.",
       value: (row) => {
         const strength = market(row).rating;
         return strength == null ? null : row.power_rating - strength;
@@ -314,7 +314,7 @@ const MARKET_TIP =
 const OFFENSE_TIP =
   "The offense's part of the rating, in points per game above average. Off plus Def is the rating.";
 const DEFENSE_TIP =
-  "The defense's part of the rating, in points per game above average; higher is better. Off plus Def is the rating.";
+  "The defense's part of the rating, in points per game above average. Higher is better. Off plus Def is the rating.";
 
 
 function RatingButton({ team, label, value, onClick }: {
@@ -371,7 +371,7 @@ function RatingDetails({ row, market }: { row: PowerRatingRow; market: MarketStr
             </p>
             <p>
               {market.games === 0
-                ? "No current-season lines for this team; this estimate relies on its prior."
+                ? "No current-season lines for this team. This estimate relies on its prior."
                 : `${market.games ?? "Unknown"} earlier games with closing lines this season.`}{" "}
               Season win totals and moneylines are not included.
             </p>
@@ -379,7 +379,7 @@ function RatingDetails({ row, market }: { row: PowerRatingRow; market: MarketStr
           </>
         )}
         <p className="text-xs">
-          SD measures uncertainty in team strength, not the range of a game&apos;s score.
+          SD measures uncertainty in team strength. It does not describe the range of a game&apos;s score.
           Market SD is conditional on the fitted model and its prior assumptions.
         </p>
       </div>

@@ -14,7 +14,7 @@ export const revalidate = 604800;
 export const metadata: Metadata = {
   title: "MLB Swing Lab",
   description:
-    "Change any MLB hitter's swing plane and see how far his fly balls would carry and how his season line would move, from batted-ball physics and the hitters who really changed.",
+    "Change any MLB hitter's swing plane and see how far his fly balls would carry and how his season line would move, from batted-ball physics and hitters who changed their swing.",
 };
 
 export default async function MlbSwingLabPage() {

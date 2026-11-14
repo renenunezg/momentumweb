@@ -68,7 +68,7 @@ const PARTS: Column[] = [
   },
   {
     key: "contact", label: BATTING_PART_LABELS.contact, part: true, signed: 0, format: runs,
-    tip: "On swings: a miss, a foul or a ball in play against an average swing at the same pitch. Making more contact than the pitch calls for has no positive link to next season's runs, because contact hitters tend to hit the ball less hard. Read it as a style, not an edge on its own.",
+    tip: "On swings: a miss, a foul or a ball in play against an average swing at the same pitch. Making more contact than the pitch calls for has no positive link to next season's runs, because contact hitters tend to hit the ball less hard. Read it as a hitting style.",
   },
   {
     key: "quality", label: BATTING_PART_LABELS.quality, part: true, signed: 0, format: runs,
@@ -133,7 +133,7 @@ function repeatNote(found: BattingSplitRepeat) {
   const steady = r >= 0.5 ? "holds up well" : r >= 0.3 ? "partly holds up" : "mostly does not hold up";
   const own = found.vs_rest[1] > 0
     ? "and how he does here against his other pitches carries over too, so it marks a real strength or weakness"
-    : "but mostly reflects how good he is overall, not a special strength or weakness";
+    : "but mostly reflects how good he is overall";
   return {
     text: `From one season to the next this split ${steady}, ${own}.`,
     tip: `A hitter's runs per 100 here repeat the next season at r = ${interval(found.repeat)}, and his gap to his other pitches at ${interval(found.vs_rest)}, over ${count(found.pairs)} season pairs.`,
@@ -247,9 +247,9 @@ function HitterBreakdown({
           ))}
         </ul>
         <p className="text-xs text-muted-foreground">
-          Umpire calls on his takes, not counted: <span className="font-mono tabular-nums">{runs(hitter.calls)}</span>
+          Umpire calls on his takes (left out of his runs): <span className="font-mono tabular-nums">{runs(hitter.calls)}</span>
           <InfoTip
-            text="Called strikes and hit batters on his takes against what the league model expected. Shown, but left out of his runs: How this works below gives the reason."
+            text="Called strikes and hit batters on his takes against what the league model expected. They are shown and left out of his runs, for the reason given in How this works."
             label="Why are calls not counted?"
             className="ml-1 align-middle"
           />

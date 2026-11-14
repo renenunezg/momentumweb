@@ -114,7 +114,7 @@ export function WeeklyFootballPredictions({
   if (games.length === 0)
     return (
       <Notice role="status">
-        No qualifying predictions this week: every decision was a No Play.
+        No qualifying predictions this week. Every decision was a No Play.
       </Notice>
     );
 

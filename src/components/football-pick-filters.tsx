@@ -116,7 +116,7 @@ export function PickFilters({
       </div>
       <p className="w-full text-xs text-muted-foreground">
         {dateBasis === "kickoff"
-          ? "Dates are kickoff dates (UTC), pending games included; future games appear only under All time."
+          ? "Dates are kickoff dates (UTC), pending games included. Future games appear only under All time."
           : "Dates are when each decision was recorded (UTC), pending games included."}
       </p>
     </form>

@@ -130,11 +130,10 @@ export default function AboutPage() {
           <p className="mt-2 text-sm text-muted-foreground leading-relaxed">
             Data &amp; AI Engineer in the San Diego&ndash;Tijuana area, with a
             background in behavioral neuroscience research, municipal government, and
-            production statistical systems. I build Momentum to explore player
-            talent, team strength, and the numbers behind performance across MLB,
-            college football, the NFL, and the NHL. Player grades, team ratings, and
-            comparisons support sports analysis, fantasy, and DFS research. Game
-            forecasts and public evaluation show how the models perform over time.
+            production statistical systems. I build Momentum, a set of player grades,
+            team ratings, and game forecasts for MLB, college football, the NFL, and
+            the NHL, for sports analysis, fantasy, and DFS research. Each model&apos;s
+            record is graded in public.
           </p>
 
           <div className="mt-5 flex flex-col gap-1.5">
@@ -161,8 +160,8 @@ export default function AboutPage() {
         <SectionLabel>Looking for</SectionLabel>
         <p className="text-sm text-muted-foreground leading-relaxed">
           Data scientist, analytics engineer, and applied statistics or forecasting
-          roles where calibrated probabilities and honest evaluation matter more than a
-          point estimate. San Diego, Tijuana, or remote.
+          roles that work with calibrated probabilities and out-of-sample evaluation.
+          San Diego, Tijuana, or remote.
         </p>
       </PageSection>
 

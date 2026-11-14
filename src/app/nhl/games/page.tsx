@@ -139,7 +139,7 @@ export default async function Page({
         </div>
       </PageHeader>
       <p className="max-w-4xl text-sm text-muted-foreground">
-        Poisson model prices beside partner-book prices; predictions keep the
+        Poisson model prices beside partner-book prices. Predictions keep the
         prices frozen at publication.
       </p>
       <SlateSummary stats={[
@@ -151,14 +151,14 @@ export default async function Page({
         <Notice>
           {decisionsRes.unavailable
             ? "Decisions are temporarily unavailable. Model forecasts remain available."
-            : "Decisions for today have not been published yet; prices and plays appear after the morning run."}
+            : "Decisions for today have not been published yet. Prices and plays appear after the morning run."}
         </Notice>
       )}
       {decisionsRes.decisions.length > 0 &&
         decisionsRes.decisions.every((d) => d.status === "no_play" && d.reason === "stale_offer") && (
           <Notice>
             All games are No Play because sportsbook price freshness could not be verified.
-            Model forecasts remain available; unverified book prices and edges are hidden.
+            Model forecasts remain available, and unverified book prices and edges are hidden.
           </Notice>
         )}
       {hasCorroboratedPicks && (

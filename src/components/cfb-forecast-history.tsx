@@ -152,7 +152,7 @@ export default async function ForecastHistory({
 
       <div className="space-y-2">
         <HowGraded
-          lead={<>{isLive ? "Every completed game graded live this season, with lines quoted for the home team." : "Frozen walk-forward backtest, historical stand-ins rather than live results, with lines quoted for the home team."}</>}
+          lead={<>{isLive ? "Every completed game graded live this season, with lines quoted for the home team." : "Frozen walk-forward backtest over past seasons, with lines quoted for the home team."}</>}
         >
           <p>
             {isLive
@@ -160,11 +160,11 @@ export default async function ForecastHistory({
               : "Every graded prediction from the frozen walk-forward backtest, next to the closing spread and the final margin."}
           </p>
           <p>
-            Model and Close are home lines; Result is the final margin on the same
+            Model and Close are home lines. Result is the final margin on the same
             axis. Model err is the absolute miss of the model&apos;s margin, shown
             green when the model was closer than the closing line.
             {isLive
-              ? " Model is the published market-informed line, not the pure projection."
+              ? " Model is the published market-informed line."
               : ""}
           </p>
         </HowGraded>

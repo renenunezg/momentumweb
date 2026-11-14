@@ -12,8 +12,8 @@ export default function ErrorPage({ reset }: { reset: () => void }) {
         Something went wrong
       </PageTitle>
       <p className="text-sm text-muted-foreground leading-relaxed">
-        The page could not load its data. The models keep running; this is the
-        site failing to read them.
+        The page could not load its data. The models are still running, and the
+        site could not read their output.
       </p>
       <button
         type="button"

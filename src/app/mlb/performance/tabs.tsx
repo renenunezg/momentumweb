@@ -33,7 +33,7 @@ import {
 } from "@/components/ui/table";
 
 const REWRITTEN_NOTE =
-  "Predictions for this day were overwritten by a later hand-run with a different model. Eval is computed against the rewritten predictions, not what was live on the day.";
+  "Predictions for this day were overwritten by a later hand-run with a different model. Eval is computed against the rewritten predictions.";
 
 // The same three views, and the same ?view= values, as the football
 // performance pages; hockey has no player model.
@@ -206,7 +206,7 @@ export function PerformanceTabs({
                 label="Brier"
                 value={formatNumber(latest?.brier_score, 3)}
                 sub={formatInterval(latest?.brier_ci95_low, latest?.brier_ci95_high, num3) ?? "Coin flip 0.250; lower is better"}
-                tooltip="Average squared error of win probabilities over both teams of every graded game. Lower is better; a coin flip scores 0.25. The range is a 95 percent bootstrap interval when one is published."
+                tooltip="Average squared error of win probabilities over both teams of every graded game. Lower is better, and a coin flip scores 0.25. The range is a 95 percent bootstrap interval when one is published."
               />
               {latest?.market_brier != null && (
                 <KpiCard
@@ -221,7 +221,7 @@ export function PerformanceTabs({
                   label="Model vs market"
                   value={describeGap(latest.paired_brier - latest.market_brier, latest.brier_vs_market_ci95_low, latest.brier_vs_market_ci95_high, 4).text}
                   sub={brierGapVerdict(latest.brier_vs_market_ci95_low, latest.brier_vs_market_ci95_high)}
-                  tooltip="Model Brier minus pregame-market Brier on the paired games; negative means the model scored better. The range is a 95 percent bootstrap interval."
+                  tooltip="Model Brier minus pregame-market Brier on the paired games. Negative means the model scored better. The range is a 95 percent bootstrap interval."
                 />
               )}
               {latest?.closing_market_brier != null && (
@@ -237,7 +237,7 @@ export function PerformanceTabs({
                   label="Model vs close"
                   value={describeGap(latest.closing_paired_brier - latest.closing_market_brier, latest.brier_vs_closing_ci95_low, latest.brier_vs_closing_ci95_high, 4).text}
                   sub={brierGapVerdict(latest.brier_vs_closing_ci95_low, latest.brier_vs_closing_ci95_high)}
-                  tooltip="Model Brier minus closing-market Brier on the games with a captured close; negative means the model scored better. The range is a 95 percent bootstrap interval."
+                  tooltip="Model Brier minus closing-market Brier on the games with a captured close. Negative means the model scored better. The range is a 95 percent bootstrap interval."
                 />
               )}
               <KpiCard
@@ -274,8 +274,8 @@ export function PerformanceTabs({
                     ? `${latest.excluded_games} completed games have no gradable forecast and are excluded.`
                     : "Completed games with no stored forecast or an even 50/50 probability are not counted."}
                   {latest?.late_forecast_games != null && latest.late_forecast_games > 0 && ` ${latest.late_forecast_games} games whose forecast was written after first pitch stay in the record and are flagged in the export.`}
-                  {latest?.market_brier == null && " The coin flip is the only reference shown; a market baseline on the same games is not published yet."}
-                  {latest?.market_brier != null && latest.closing_market_brier == null && " The market baseline is the pregame price the forecast was priced at, usually the morning line, not a closing line; a closing benchmark from one quote captured at first pitch starts with the 2027 season."}
+                  {latest?.market_brier == null && " The coin flip is the only reference shown until a market baseline on the same games is published."}
+                  {latest?.market_brier != null && latest.closing_market_brier == null && " The market baseline is the pregame price the forecast was priced at, usually the morning line. A closing benchmark from one quote captured at first pitch starts with the 2027 season."}
                   {latest?.closing_market_brier != null && closingSourceNote(latest.closing_games_by_source)}
                   {" "}
                   <a href="/mlb/api/export/predictions.csv" className="underline underline-offset-4">Download the graded predictions (CSV)</a>.
@@ -303,7 +303,7 @@ export function PerformanceTabs({
 
             <Section
               title="Calibration"
-              note={latestCalDate ? `Season to date as of ${latestCalDate}, both model versions; the extreme bins hold few rows.` : undefined}
+              note={latestCalDate ? `Season to date as of ${latestCalDate}, both model versions. The extreme bins hold few rows.` : undefined}
               details={<p>One point per team row. Points on the dashed diagonal are perfectly calibrated.</p>}
             >
               {latestCalibration.length > 0 ? (
@@ -315,7 +315,7 @@ export function PerformanceTabs({
               )}
             </Section>
 
-            <Section title="Error by day" note="Each point is one day's games, so single days swing widely; read the trend, not the spikes.">
+            <Section title="Error by day" note="Each point is one day's games, so single days swing widely and the trend says more.">
               <div className="grid gap-x-8 gap-y-6 md:grid-cols-2">
                 <figure className="space-y-1">
                   <figcaption className="type-label font-semibold">Brier score <span className="font-normal text-muted-foreground">(dashed: coin flip)</span></figcaption>
@@ -339,7 +339,7 @@ export function PerformanceTabs({
               note="How often the actual run total landed inside the model's 50%, 80% and 90% intervals."
               details={
                 <p>
-                  Coverage should match the target, not be maximized. v1 published no intervals. The intervals use
+                  Coverage should land on the target. v1 published no intervals. The intervals use
                   inclusive integer endpoints, so they cover somewhat more than their nominal level by construction.
                 </p>
               }
@@ -391,10 +391,10 @@ export function PerformanceTabs({
                     }
                   >
                     <p>
-                      v1 through May 11 and v2 from May 12, at quarter-Kelly stakes. The record applies
-                      today&apos;s edge gate (4.5 percent on moneyline and run line, 6.5 percent on totals) to
-                      every past prediction, so some plays shown on the day are not counted. Prices are the best
-                      pregame line published, not a closing line.
+                      v1 through May 11 and v2 from May 12. Predictions through November 1 are staked at
+                      quarter-Kelly and count only if they clear the edge gate (4.5 percent on moneyline and run
+                      line, 6.5 percent on totals), so some plays shown on the day are not counted. From November
+                      2 every published pick counts at a flat 1 unit. Prices are the best pregame line published.
                       {(liveKpis.n_written_after_start > 0 || liveKpis.n_rewritten > 0) && (
                         <> {liveKpis.n_written_after_start} predictions were written after first pitch and {liveKpis.n_rewritten} belong to a day whose predictions were later rewritten; both stay in the record and are flagged in the export.</>
                       )}{" "}
@@ -407,13 +407,13 @@ export function PerformanceTabs({
                     label="ROI"
                     value={formatPct(liveKpis.roi)}
                     sub={formatInterval(combined?.roi_ci95_low, combined?.roi_ci95_high, pct1) ?? `${liveKpis.n_bets} predictions`}
-                    tooltip="Net profit divided by total stakes at the best pregame price published among DraftKings, FanDuel and BetMGM, not a closing line. A 13% ROI means 13¢ profit per $1 risked."
+                    tooltip="Net profit divided by total stakes at the best pregame price published among DraftKings, FanDuel and BetMGM, plus Pinnacle from November 2. A 13% ROI means 13¢ profit per $1 risked."
                   />
                   <KpiCard
                     label="P&L"
                     value={`${formatSigned(liveKpis.net_profit_units, 2)}u`}
                     sub={`${formatNumber(liveKpis.total_staked_units, 2)}u staked`}
-                    tooltip="Net profit in units of the fixed starting bankroll. Stakes sum every prediction staked in the period; returns do not compound."
+                    tooltip="Net profit in units of the fixed starting bankroll. Stakes sum every prediction staked in the period, and returns do not compound."
                   />
                   <KpiCard
                     label="Max drawdown"
@@ -461,7 +461,7 @@ export function PerformanceTabs({
                     </Table>
                   </Section>
                 )}
-                <Section title="By market" details={<p>Run line uses quarter-Kelly sizing.</p>}>
+                <Section title="By market" details={<p>Picks through November 1 are sized at quarter-Kelly, and later picks at 1 unit.</p>}>
                   <div className="grid gap-6 md:grid-cols-2">
                     {[
                       { title: `v2, current model, since ${formatDate(V2_CUTOVER_DATE)}`, kpis: eraKpis?.v2 ?? liveKpis, row: current },

@@ -53,7 +53,7 @@ export default async function MlbAwardsPage() {
           <PageTitle>MLB Awards Forecast</PageTitle>
           <div className="mt-heading">
             <HowGraded label="How this works"
-              lead={<>Who the voters will pick, not who deserves it.</>}
+              lead={<>A forecast of who the voters will pick.</>}
             >
               <p>
                 Each race is fitted on past ballots and winners using regular-season numbers only, then frozen and graded
@@ -95,7 +95,7 @@ export default async function MlbAwardsPage() {
       <PageSection id="gold-gloves" className="scroll-mt-24 border-t border-rule-strong pt-section">
         <h2 className="type-section">Gold Gloves</h2>
         <HowGraded
-          lead={<>Picked from the three finalists at each position: a blind test published after the winners, not an advance call.</>}
+          lead={<>Picked from the three finalists at each position. This blind test was published after the winners were announced.</>}
         >
           <p>
             This board was run without the {season} winners. Pitchers and utility players are ranked with no probability: the pitcher model called{" "}

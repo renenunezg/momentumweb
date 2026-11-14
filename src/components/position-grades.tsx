@@ -62,7 +62,7 @@ function BarLegend({ traits }: { traits: GradedPlayerTrait[] }) {
   const items = [
     { label: "Measured", swatch: "bg-primary", show: true },
     { label: "Inferred from teammates or unit results", swatch: "bg-accent-blue", fill: INFERRED_FILL, show: looks.some((l) => l.inferred) },
-    { label: "Style, not quality", swatch: "bg-muted-foreground", show: looks.some((l) => l.style) },
+    { label: "Style or role", swatch: "bg-muted-foreground", show: looks.some((l) => l.style) },
     { label: "Not graded", swatch: "bg-primary opacity-40", show: looks.some((l) => l.dimmed) },
   ].filter((item) => item.show);
   return (
@@ -104,7 +104,7 @@ function TraitRow({
   const detail = trait == null
     ? `${tip} No value for this player yet.`
     : kind != null
-      ? `${tip}${inGrade ? " Used in the grade." : style ? " Higher is not necessarily better." : noise ? " Unreliable across games; not graded." : " Not used in the grade."}`
+      ? `${tip}${inGrade ? " Used in the grade." : style ? " Higher is not necessarily better." : noise ? " Unreliable across games, so not graded." : " Not used in the grade."}`
       : inGrade
         ? tip
         : `${tip} Not used in the ${group} grade.`;
@@ -866,10 +866,10 @@ export default function PositionGrades({
       <PlayerComparisonPicker players={comparisonPlayers} selected={compare} onChange={setCompare} description="Choose two players at the same position." disclosure={{ open: compareOpen, onOpenChange: setCompareOpen }} />
       <p className="flex items-center gap-1.5 font-mono text-xs text-muted-foreground">
         {search
-          ? `${matches.length} player${matches.length === 1 ? "" : "s"} match “${query.trim()}”${group === ALL ? "" : ` in the ${group}`}, best grade first`
+          ? `${matches.length} player${matches.length === 1 ? "" : "s"} match "${query.trim()}"${group === ALL ? "" : ` in the ${group}`}, best grade first`
           : `Top ${visible.length} of ${matches.length} ${group === ALL ? "" : `${group} `}${position} · ${graded} graded this week`}
         <InfoTip
-          text={`Percentiles among ${copy.pool} at the position this week. ${sport === "cfb" ? "Grade inputs contribute to the rating; More context does not. Each player card has a key to its bar colors." : "Each player card has a key to its bar colors. The r is the stat’s reliability over 8 games: how well odd and even games agree, scaled to 8 games."}`}
+          text={`Percentiles among ${copy.pool} at the position this week. ${sport === "cfb" ? "Grade inputs contribute to the rating, and More context does not. Each player card has a key to its bar colors." : "Each player card has a key to its bar colors. The r is the stat’s reliability over 8 games: how well odd and even games agree, scaled to 8 games."}`}
           label="How to read the bars"
         />
       </p>
@@ -897,7 +897,7 @@ export default function PositionGrades({
             {renderPlayers(false)}
           </div>
           <div className="hidden md:block">
-            <p className="pb-2 text-xs text-muted-foreground">± is grade uncertainty; Pct and trait columns are position percentiles.</p>
+            <p className="pb-2 text-xs text-muted-foreground">± is grade uncertainty. Pct and trait columns are position percentiles.</p>
             <Table className="table-fixed min-w-[1080px]">
               <colgroup>
                 <col className="w-8" />
