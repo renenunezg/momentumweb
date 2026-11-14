@@ -1,5 +1,5 @@
 // Frozen report read from mlb.player_value_models.payload (model player-value-v3-grade)
-// in Supabase on 2026-10-27. Shared by methodology and performance; not live scores.
+// in Supabase on 2026-11-14. Shared by methodology and performance; not live scores.
 //
 // The current grade has no untouched holdout yet: its development pairs run
 // 2021 to 2022 through 2025 to 2026, and the 2026 to 2027 pair is the first
@@ -8,7 +8,7 @@
 // pairs, so they are development results, not a holdout.
 export const MLB_PLAYER_EVALUATION = {
   modelVersion: "player-value-v3-grade",
-  fittedAt: "2026-10-21T21:33:33.195924Z",
+  fittedAt: "2026-11-01T00:18:18.765044Z",
   devSeasons: [2021, 2022, 2023, 2024, 2025, 2026],
   pairs: 5,
   holdoutPair: [2026, 2027],
@@ -17,16 +17,16 @@ export const MLB_PLAYER_EVALUATION = {
       key: "hitter",
       label: "Batters",
       n: 345,
-      grade: 0.469741422221346,
-      shrunkOnly: 0.3711934861096528,
-      priorProduction: 0.35421552315632404,
-      marcel: 0.36929465881108314,
+      grade: 0.47431216731384424,
+      shrunkOnly: 0.37103925299805085,
+      priorProduction: 0.3544086987253151,
+      marcel: 0.3691826865934715,
     },
     {
       key: "SP",
       label: "Starting pitchers",
       n: 171,
-      grade: 0.4152607476090049,
+      grade: 0.41736033991468596,
       shrunkOnly: 0.3184064756122278,
       priorProduction: 0.3434322715867311,
       marcel: 0.3119454958837305,
@@ -35,7 +35,7 @@ export const MLB_PLAYER_EVALUATION = {
       key: "RP",
       label: "Relievers",
       n: 175,
-      grade: 0.256152876455192,
+      grade: 0.29291088150601624,
       shrunkOnly: 0.18100198876846135,
       priorProduction: 0.12683863249540714,
       marcel: 0.1661812281681556,

@@ -60,7 +60,7 @@ const flowNodes = [
     items: [
       { label: "CFBD play-by-play", sub: "Every D1 game, 2019+" },
       { label: "CFBD API", sub: "Games, lines, talent, portal, returning" },
-      { label: "The Odds API", sub: "Priced moneylines, spreads and totals" },
+      { label: "Sportsbook feeds", sub: "The Odds API, or DraftKings on ESPN" },
       { label: "Previous season fit", sub: "Seeds the preseason prior" },
     ],
   },
@@ -92,7 +92,7 @@ const flowNodes = [
     labelColor: "text-chart-4",
     items: [
       { label: "Play-boundary states", sub: "Strictly pre-snap information" },
-      { label: "3-parameter WP model", sub: "Gaussian on the final margin" },
+      { label: "Live WP model", sub: "Gaussian on the final margin, with lead reversion" },
       { label: "Market anchor", sub: "Published pregame line as the kickoff prior" },
       { label: "Live publishing", sub: "Scoreboard states during games" },
     ],
@@ -153,7 +153,7 @@ const stack = [
   },
   {
     category: "Data",
-    items: ["CFBD API", "The Odds API", "parquet (pyarrow)"],
+    items: ["CFBD API", "The Odds API", "ESPN odds", "parquet (pyarrow)"],
   },
   {
     category: "Database",
@@ -187,34 +187,37 @@ export function MethodologyContent({ example, backtestVersion }: { example: Pick
             game with a probability distribution around each, and an in-game
             layer turns any game state into a home win probability. The
             published line, total, projected scores and team ratings are
-            those numbers moved toward the sportsbook market; the model&apos;s
-            own numbers stay on the site wherever they are labeled Pure.
+            those numbers moved toward the sportsbook market. The model&apos;s
+            own numbers appear on the site labeled Pure.
           </p>
           <p>
             <strong>The pregame model does not beat the closing spread.</strong>{" "}
             Across 4,227 FBS-vs-FBS games walked forward from 2020 through 2025
             ({coreVersion}, the current model core) its average margin error is
             12.71 points against the closing line&apos;s 12.19, and the market wins
-            every season. The live 2026 forecasts come from joint_scoring_v14,
-            which adds a process margin adjustment and a total offset on top of
-            that core, and from November 9 joint_scoring_v15, which also adds
-            1.77 points to the home side for every 1,000 miles the visitor
-            travels beyond the home team&apos;s own trip (fitted on 2020&ndash;2022,
-            centered so the average home edge is unchanged). Both are graded
-            separately from the core. So the published line, total and scores
-            are blended halfway to the market, predictions are priced from those
-            market-informed numbers, and the in-game model anchors on the
-            published line instead of the pure model&apos;s number.
+            every season. The live forecasts add three frozen corrections on
+            top of that core (a process margin adjustment, a total offset and a
+            visitor travel term, described under Rating Engine) and are graded
+            separately from it. Because of that gap, the published line, total
+            and scores are blended halfway to the market, predictions are priced
+            from those market-informed numbers, and the in-game model anchors on
+            the published line.
           </p>
           <p>
-            What the model offers is coverage and calibration. It rates all 266 D1
+            The model adds coverage and calibration. It rates all 266 D1
             teams, including FCS programs the market barely prices, its 50/80/95%
             intervals were checked on the 2023 to 2025 validation seasons, and the
             last decision before kickoff is the one graded in public on the{" "}
             <Link href="/cfb/performance" className="underline underline-offset-2 hover:text-foreground">
               Performance page
             </Link>
-            .
+            . The{" "}
+            <Link href="/cfb/playoffs" className="underline underline-offset-2 hover:text-foreground">
+              Playoff page
+            </Link>{" "}
+            draws from the same game distributions to simulate the rest of the
+            season, the conference title games and a modeled committee selection
+            for the 12-team bracket.
           </p>
           <div className="mt-4 grid grid-cols-1 gap-3 sm:grid-cols-2">
             {[
@@ -223,9 +226,9 @@ export function MethodologyContent({ example, backtestVersion }: { example: Pick
               { label: "Rating engine", val: "Bayesian linear model blended with a points-only rating" },
               { label: "Training data", val: "2019–2025 play-by-play; validation 2023–2025" },
               { label: "Home field", val: "Refit weekly from a 2.5 ± 1.5 point prior" },
-              { label: "In-game model", val: "3-parameter Gaussian on the final margin" },
+              { label: "In-game model", val: "Gaussian on the final margin, with lead reversion" },
               { label: "Kickoff anchor", val: "Published market-informed line, sd 15.35 points" },
-              { label: "Predictions", val: "Moneyline, spread and total at a flat unit (cfb-picks-v13)" },
+              { label: "Predictions", val: "Moneyline, spread and total at a flat unit" },
             ].map(({ label, val }) => (
               <Card key={label} size="sm"><CardContent>
                 <p className="type-eyebrow text-muted-foreground">{label}</p>
@@ -338,7 +341,7 @@ export function MethodologyContent({ example, backtestVersion }: { example: Pick
             <div>
               <p className="type-eyebrow mb-2 text-muted-foreground">Data sources</p>
               <div className="flex flex-wrap gap-2">
-                {["CFBD API", "The Odds API", "Supabase"].map((src) => (
+                {["CFBD API", "The Odds API", "ESPN odds", "Supabase"].map((src) => (
                   <Badge key={src} variant="outline">{src}</Badge>
                 ))}
               </div>
@@ -393,15 +396,20 @@ export function MethodologyContent({ example, backtestVersion }: { example: Pick
             games with no play-by-play, carried across seasons with a 9-point
             prior. On the 2023&ndash;2025 validation seasons the blend cut margin
             error by about 0.2 points on Division I games with a closing line,
-            and the score-only games by less than a tenth, both inside noise. Two frozen corrections come last,
-            fitted on 2020&ndash;2022 and checked on 2023&ndash;2025: a small
-            margin adjustment from 14 process features of each team&apos;s earlier
-            games, and a 0.8-point reduction to the total.
+            and the score-only games by less than a tenth, both inside noise.
           </p>
           <p>
-            Hyperparameters were chosen on development seasons only, and the
-            search preferred no recency decay: college seasons are short, and
-            throwing away September to sharpen November costs more than it buys.
+            Three frozen corrections come last, each fitted on 2020&ndash;2022
+            and checked on 2023&ndash;2025. A small margin adjustment comes from
+            14 process features of each team&apos;s earlier games. The total
+            drops by 0.8 points. The home side gains 1.77 points for every
+            1,000 miles the visitor travels beyond the home team&apos;s own
+            trip, centered so the average home edge is unchanged.
+          </p>
+          <p>
+            Hyperparameters were chosen on development seasons only. The search
+            preferred no recency decay, since a college season is too short to
+            down-weight its early games.
           </p>
         </div>
       </SectionCard>
@@ -418,14 +426,15 @@ export function MethodologyContent({ example, backtestVersion }: { example: Pick
             defense, pass defense, pass blocking, and run blocking. Each is an
             opponent-adjusted ridge over games strictly before the forecast week,
             centered so zero is an average FBS unit and positive is better. They
-            are descriptive: they never feed the scoring engine and do not add up
-            to the headline ratings.
+            are descriptive. They do not feed the scoring engine or add up to the
+            headline ratings.
           </p>
           <p>
             Rush and pass units use competitive-play PPA. Pass blocking is sack
             PPA relative to the expected sack cost for the team&apos;s dropbacks,
-            and run blocking is adjusted line yards on a PPA-equivalent scale;
-            both reflect the whole offense, not film grades of the line.
+            and run blocking is adjusted line yards on a PPA-equivalent scale.
+            Both come from team results, so they credit the whole offense along
+            with the line.
             Preseason forecasts carry last season&apos;s final unit ratings.
             Special teams is omitted because CFBD has no reliable PPA for routine
             kicks.
@@ -472,13 +481,13 @@ export function MethodologyContent({ example, backtestVersion }: { example: Pick
           </Table>
           <p>
             Service academies do not sign rated recruiting classes, so their talent
-            is treated as missing, not as a near-zero roster. A parallel equation
+            is treated as missing data. A parallel equation
             projects each team&apos;s scoring environment from QB continuity, QB
             transfers and returning receiving production, which lets two teams
             with the same power rating project different totals.
           </p>
           <p>
-            Uncertainty is an explicit budget. Every rating starts at 6.05 points
+            Each rating carries an uncertainty budget. It starts at 6.05 points
             of standard deviation and grows in quadrature for each missing input:
             3.0 with no previous rating, 3.0 for FCS teams, 1.5 for missing
             returning production, down to 0.75 for recruiting. Injury availability
@@ -502,12 +511,12 @@ export function MethodologyContent({ example, backtestVersion }: { example: Pick
           <p>
             Power rating is offense plus defense and scoring environment is
             offense minus defense, so the model&apos;s own (pure) projection
-            is short:
+            is:
           </p>
           <FormulaBlock>
             joint_margin = power_home − power_away + home_field + crossover
             <br />
-            pure_margin = 0.5 · joint_margin + 0.5 · points_only_margin + process_correction
+            pure_margin = 0.5 · joint_margin + 0.5 · points_only_margin + process_correction + travel
             <br />
             pure_total = league_base + environment_home + environment_away − 0.8
             <br />
@@ -520,13 +529,15 @@ export function MethodologyContent({ example, backtestVersion }: { example: Pick
             on the site only where they are labeled Pure.
           </p>
           <p>
-            What is published is market-informed. The pure margin is first
+            The published numbers are market-informed. The pure margin is first
             mixed with a rating fitted to the closing lines of earlier games
             (weight 0.55 through week 3, 0.35 after), then moved halfway toward
-            the game&apos;s own sportsbook line; the weight on the game&apos;s
-            line is capped at 0.50. The published total is the pure total
-            moved halfway toward the sportsbook total posted when the forecast
-            was made, and the two published scores are the pair whose
+            the game&apos;s own sportsbook line. The weight on the game&apos;s
+            line is capped at 0.50. The total works the same way. The pure
+            total is mixed with a rating fitted to earlier games&apos; closing
+            totals (weight 0.68 through week 3, 0.71 after), then moved halfway
+            toward the sportsbook total posted when the forecast was made. The
+            two published scores are the pair whose
             difference is the published line and whose sum is the published
             total.
           </p>
@@ -535,23 +546,24 @@ export function MethodologyContent({ example, backtestVersion }: { example: Pick
             <br />
             published_margin = 0.5 · informed_margin + 0.5 · market_margin
             <br />
-            published_total = 0.5 · pure_total + 0.5 · market_total
+            informed_total = (1 − v) · pure_total + v · market_history_total
             <br />
-            <span className="text-muted-foreground">{"//"} w = 0.55 through week 3, 0.35 after</span>
+            published_total = 0.5 · informed_total + 0.5 · market_total
+            <br />
+            <span className="text-muted-foreground">{"//"} w = 0.55 through week 3, 0.35 after; v = 0.68 through week 3, 0.71 after</span>
           </FormulaBlock>
           <p>
             Published team ratings are the fitted ratings moved part of the way
             toward each team&apos;s market-history rating, by the same share
             the line uses (0.55 through week 3, 0.35 after). Offense and defense
             each take half of a team&apos;s shift, and the size of the shift is
-            stored per team. Nothing about the coming week&apos;s matchups
-            enters a rating, so a change from one week to the next reflects
-            games played and the market&apos;s history, not who a team plays
-            next. A scheduled game&apos;s published line also carries the
+            stored per team. A rating uses only games already played and the
+            market&apos;s history, so the next opponent has no effect on it. A
+            scheduled game&apos;s published line also carries the
             market&apos;s view of that game, so it can sit a point or two from
             the two teams&apos; rating difference plus home field. The
-            underlying fit is unchanged and uses no market input: market
-            information enters only at the output layer.
+            underlying fit uses no market input. Market information enters only
+            at the output layer.
           </p>
           <p>
             The Compare tab on the{" "}
@@ -571,13 +583,12 @@ export function MethodologyContent({ example, backtestVersion }: { example: Pick
             parameter uncertainty, including both teams&apos; rating SDs. The
             margin SD is scaled by 0.915, which brought 80% interval coverage from
             0.85 back to 0.81, and lands near 16 points for a typical game.
-            College football is that noisy.
           </p>
           <p>
             The market comparison view flags any offer where the published line
-            or total sees at least 4 points of edge with positive EV. Those flags are review
-            diagnostics, not predictions: the biggest raw edges usually involve FCS
-            opponents with thin data.
+            or total sees at least 4 points of edge with positive EV. Those flags
+            are for review and do not become predictions. The biggest raw edges
+            usually involve FCS opponents with thin data.
           </p>
         </div>
       </SectionCard>
@@ -590,46 +601,63 @@ export function MethodologyContent({ example, backtestVersion }: { example: Pick
       >
         <div className="space-y-4 text-sm leading-relaxed">
           <p>
-            Predictions come from a separate policy, currently{" "}
-            <span className="font-mono">cfb-picks-v13</span>, that selects at most
-            one side per game and market, and every edge is measured after
-            shrinking toward the market the prediction is priced against. Spreads
-            start from the market spread and move 0.75% of the way toward the
-            model and history margin, the weight fitted against closing lines;
-            football key-number weights set only the push chance. Totals move the
-            median market total 21% of the way toward the model side of the
-            published total, a weight fitted on 2020&ndash;2022 and checked on
-            2023&ndash;2025. Moneylines keep only 0.2 of the
-            model&apos;s disagreement with the vig-free median market. Probabilities use the
-            measured dispersion of results around these lines (15.35 points for
-            margin, 15.93 for total), not the pure model&apos;s wider spread.
-            Earlier predictions this season were made under v5, v6, v7 and v11 (spreads
-            blended 20% model with 80% market; totals used the published 50/50 blend) and keep
-            their rules; the record on the performance page pools them.
+            Predictions come from a separate versioned policy that selects at
+            most one side per game and market, and every edge is measured after
+            shrinking toward the market the prediction is priced against.
+            Spreads start from the market spread and move 0.75% of the way
+            toward the model and history margin, the weight fitted against
+            closing lines. Football key-number weights set only the push
+            chance. Totals move the median market total 21% of the way toward
+            the model side of the published total, a weight fitted on
+            2020&ndash;2022 and checked on 2023&ndash;2025. Moneylines keep only
+            0.2 of the model&apos;s disagreement with the vig-free median
+            market. Probabilities use the measured dispersion of results around
+            these lines (15.35 points for margin, 15.93 for total), which is
+            narrower than the pure model&apos;s spread.
           </p>
           <p>
             A prediction needs the priced line at least 2 points beyond the
             price&apos;s break-even line, plus positive EV, from a forecast no
             more than a week old with no missing input beyond the always-on
             injury flag, a paired two-sided quote and a price under an hour old.
-            If fewer than 15 predictions clear the gate in a week, the highest-edge
-            positive-EV offers fill the gap and are labeled as volume-floor
-            predictions, which is a product choice and not a calibration result.
             Anything else is a No Play.
           </p>
           <p>
-            Every prediction records the exact line, price, book and decision time, then
-            settles at that contract at a flat one unit, along with the closing line:
-            the provider median captured before kickoff where the kickoff capture
-            ran, otherwise the CFBD median recorded after the game, each labeled
-            by its source. A decision can be replaced until kickoff by a newer model
-            or policy, with the original archived; line movement alone never
-            changes one, and after kickoff the database refuses edits. The price
-            is the best of nine bookmakers in The Odds API feed, several offshore.
+            One fixed rule changes that for rivalries. In a listed FBS rivalry
+            played on the home team&apos;s field in the regular season, a home
+            underdog has finished about 3 points short of the closing line in
+            both 2019&ndash;2022 and 2023&ndash;2025, so the spread price moves
+            1.37 points toward the road favorite, and the road favorite
+            qualifies at any positive edge. The rivalry list was written before
+            any results were checked, but the home underdog split was chosen
+            after seeing both periods, so neither is an untouched test.
+          </p>
+          <p>
+            If fewer than 15 predictions clear the gate in a week, the
+            highest-edge positive-EV spreads and totals fill the gap, with each
+            market capped at half the shortfall. Moneylines never fill it, and a
+            capped slot stays empty. These are labeled volume-floor predictions.
+            The 15-prediction floor is a product choice with no calibration
+            behind it.
+          </p>
+          <p>
+            Every prediction records the exact line, price, book and decision
+            time, then settles at that contract at a flat one unit. It also
+            records the closing line: the last validated pregame line the
+            kickoff capture froze, labeled with its source, or the CFBD median
+            recorded after the game where no capture ran. A decision can be
+            replaced until kickoff by a newer model or policy, with the original
+            archived. Line movement alone never changes one, and after kickoff
+            the database refuses edits. The price is the best quote in the feed:
+            ten named books on The Odds API, including Pinnacle and several
+            offshore books, or DraftKings alone when the ESPN feed is in use.
             The half-market blend improved validation-season margin error from
             13.3 to 12.3 points while the closing line stayed better at 12.0, so
-            it is not independent skill, and the gates have not been tuned on live
-            outcomes. Results are on the{" "}
+            the gain comes from the market. The gates have not been tuned on
+            live outcomes. Predictions made under earlier policies keep their
+            rules (spreads once blended 20% model with 80% market, and totals
+            used the published 50/50 blend), and the record pools them.
+            Results are on the{" "}
             <Link href="/cfb/performance" className="underline underline-offset-2 hover:text-foreground">
               Performance page
             </Link>
@@ -675,20 +703,16 @@ export function MethodologyContent({ example, backtestVersion }: { example: Pick
             </TableBody>
           </Table>
           <p>
-            The market wins every season, as expected: the closing line
+            The market wins every season, as expected, because the closing line
             aggregates injury news, weather and sharper private models. The table
             is the walk-forward of the current model core, published to the
-            public backtest table with its version; the live 2026 record is
-            graded on joint_scoring_v14, which adds a process margin adjustment
-            and a total offset on top of it, and from November 9 on
-            joint_scoring_v15, which also adds the visitor travel term, so the
-            core and the live record are separate populations.
-            The June 2026 base engine&apos;s earlier table (13.40 against 12.14 on
-            3,853 games, 2021 to 2025) is superseded. What the model can claim is
-            calibration: on the 2023&ndash;2025 validation seasons (2,258 games),
-            which were used to compare model revisions and so are not an
-            untouched test, the 50/80/95% margin intervals covered 52%, 80% and
-            94% of outcomes. The only untouched tests are the live 2026 record
+            public backtest table with its version. The live record is graded
+            on the core plus the three frozen corrections, so the two are
+            separate populations. The model&apos;s claim is calibration. On the
+            2023&ndash;2025 validation seasons (2,258 games) the 50/80/95% margin
+            intervals covered 52%, 80% and 94% of outcomes. Those seasons were
+            used to compare model revisions, so they are not an untouched test.
+            The only untouched tests are the live 2026 record
             and the pre-registered 2026 grade endpoint.
           </p>
           <p>
@@ -696,8 +720,8 @@ export function MethodologyContent({ example, backtestVersion }: { example: Pick
             NIL, realignment and playoff expansion keep changing the sport, so
             these error levels should be expected to drift. The 2026 season is
             graded live against the projection published before kickoff and the
-            CFBD closing line, and that record supersedes this table as it
-            accumulates.
+            captured closing line (the CFBD median where none was captured), and
+            that record supersedes this table as it accumulates.
           </p>
           <p className="text-muted-foreground">
             The weak segment is early season: games where either team has fewer
@@ -715,13 +739,13 @@ export function MethodologyContent({ example, backtestVersion }: { example: Pick
       <SectionCard
         id="ingame"
         title="In-Game Win Probability"
-        subtitle="Three fitted parameters, a Gaussian on the final margin, and nothing the model could not know pre-snap"
+        subtitle="A Gaussian on the final margin with partial lead reversion, using only pre-snap information"
       >
         <div className="space-y-4 text-sm leading-relaxed">
           <p>
-            At every play boundary the in-game model asks: given the score, the
-            clock, who has the ball and where, and what was believed before
-            kickoff, how likely is the home team to win? The state for play N uses
+            At every play boundary the in-game model estimates the home
+            team&apos;s chance to win from the score, the clock, who has the
+            ball and where, and the pregame expectation. The state for play N uses
             only plays 1 through N−1 plus the pre-snap situation. The form is a
             Gaussian over the final margin whose mean decays from the pregame
             expectation toward the live score as the clock runs out:
@@ -747,9 +771,9 @@ export function MethodologyContent({ example, backtestVersion }: { example: Pick
           <p>
             On the 2023&ndash;2025 seasons held out of this fit (400,878 play states across 2,258 games)
             the model scores 0.4073 log loss and 0.1328 Brier and passes
-            calibration checks in every quarter and score-margin bucket. There
-            are no momentum or streak features; this is the reference any such
-            idea has to beat.
+            calibration checks in every quarter and score-margin bucket. It has
+            no momentum or streak features, and it is the reference any such
+            feature has to beat.
           </p>
           <p>
             Serving reads only a four-column anchor (<span className="font-mono">game_id,
@@ -762,10 +786,20 @@ export function MethodologyContent({ example, backtestVersion }: { example: Pick
           <p>
             In production a live worker reads the CFBD scoreboard during games
             and publishes a win probability for each new state. It uses the
-            score, the clock and possession; the scoreboard feed carries no
+            score, the clock and possession. The scoreboard feed carries no
             field position, so that term is left out. The pregame expectation
             is the published market-informed line, with the 15.35-point
             dispersion predictions are priced with.
+          </p>
+          <p>
+            The served model adds one term to that baseline. A team running
+            ahead of where the pregame line expected it to be by this point
+            tends to give some of that surplus back, so in regulation the mean
+            final margin moves 9% of the surplus back toward the pregame line.
+            The coefficient was fitted on market-anchored states from
+            2021&ndash;2025. Every leave-one-season-out fit lands between 7.6%
+            and 10.3% and improves four of the five held-out seasons. Overtime
+            keeps the baseline.
           </p>
         </div>
       </SectionCard>
@@ -780,8 +814,7 @@ export function MethodologyContent({ example, backtestVersion }: { example: Pick
           <p>
             If the market is the better pregame forecast, the in-game model
             should start from it. This was tested offline with the closing
-            spread, which is a research evaluation and not the live anchor.
-            One closing spread per game, the median across
+            spread, which the live model does not use. One closing spread per game, the median across
             priced providers, enters the equation as{" "}
             <span className="font-mono">pregame_margin = −closing_spread</span>. The
             market prices no uncertainty, so{" "}
@@ -824,12 +857,12 @@ export function MethodologyContent({ example, backtestVersion }: { example: Pick
             ))}
           </div>
           <p className="text-muted-foreground">
-            The pregame anchor is the binding constraint on in-game accuracy; this
-            does not show an independent model beating the market. The live
-            publisher does not wait for the closing line: it anchors on the
-            published market-informed pregame line, which is already blended
+            The pregame anchor limits in-game accuracy more than anything else.
+            This result does not show an independent model beating the market.
+            The live publisher anchors on the published market-informed pregame
+            line, which is available before the close and already blended
             halfway toward the market. At kickoff the served win probability is
-            essentially that published line; by the fourth quarter it is almost
+            close to that published line, and by the fourth quarter it is almost
             entirely the scoreboard. A forecast stored without a market-informed
             line falls back to the model&apos;s own projection.
           </p>
@@ -840,12 +873,11 @@ export function MethodologyContent({ example, backtestVersion }: { example: Pick
       <SectionCard
         id="momentum"
         title="Momentum: Tested and Rejected"
-        subtitle="Two attempts at a momentum layer, neither better on the validation seasons, both shelved"
+        subtitle="Two momentum layers, tested on the validation seasons and shelved"
       >
         <div className="space-y-4 text-sm leading-relaxed">
           <p>
-            The project is named after momentum, so this section is a little
-            painful to write. The hypothesis was that process evidence carries
+            The project takes its name from momentum. The hypothesis was that process evidence carries
             signal the scoreboard has not absorbed yet. Eight evidence families
             (sustained stops, drive efficiency, turnovers, field position,
             fourth-down outcomes, missed kicks, success rate, tempo) were allowed
@@ -853,7 +885,7 @@ export function MethodologyContent({ example, backtestVersion }: { example: Pick
           </p>
           <p>
             Version one used cumulative totals and improved the development
-            seasons by 0.003 of log loss; on the 2023 to 2025 validation seasons it was no better (0.0004 worse, inside noise).
+            seasons by 0.003 of log loss. On the 2023 to 2025 validation seasons it was no better (0.0004 worse, inside noise).
             Version two weighted recent plays with a 120-play half-life and was
             no better on those seasons either (0.0006 worse). My read is that whatever is real in a hot
             streak reaches the scoreboard quickly, and the scoreboard is already
@@ -867,34 +899,35 @@ export function MethodologyContent({ example, backtestVersion }: { example: Pick
       <SectionCard
         id="players"
         title="Player Values and the Heisman Board"
-        subtitle="Opponent-adjusted value above replacement, and a conditional-logit vote-share model on top of it"
+        subtitle="Opponent-adjusted value above replacement, and a conditional-logit vote-share model"
       >
         <div className="space-y-4 text-sm leading-relaxed">
           <p>
-            The Heisman page runs on a separate player layer that never feeds team
-            ratings. Every credited play is measured against what an average
+            The Heisman page runs on a separate player layer that does not feed
+            team ratings. Every credited play is measured against what an average
             player produces against that opponent unit, using rush and pass unit
             ratings fit strictly before the game&apos;s week. Early in the season
             those ratings start from a frozen previous-season prior, so opening
-            opponents are not treated as average. Teams in a conference share a
+            opponents carry last season&apos;s strength. Teams in a conference share a
             conference level learned from every non-conference game, so a slate of
-            weaker-conference defenses is discounted as a group, not one team at a
-            time. How a play&apos;s EPA is split
+            weaker-conference defenses is discounted as a group. How a play&apos;s EPA is split
             among credited players is a fixed, documented table, because there is
             no ground truth for responsibility that could fit it. Defensive credit
             covers only tagged disruption plays (sacks, interceptions, breakups,
             fumbles) plus box-score tackles for loss and passes defended. Rates
-            shrink toward the position mean with a four-game prior, FCS opponents
-            count half, and a 30th-percentile replacement baseline is subtracted.
+            shrink toward the position mean by a prior sized to how noisy each
+            position&apos;s per-game credit is, from about 4 games for
+            quarterbacks to about 26 for defensive backs. FCS opponents count
+            half, and a 30th-percentile replacement baseline is subtracted.
           </p>
           <p>
             The position grades on the players page weight each position&apos;s
             traits by how well they predicted the next season&apos;s credit from
             2020 through 2024. Quarterback, running back and defensive back grades
             also include the talent composite of the player&apos;s program, which
-            carries about a quarter to a third of the grade there: it is a level
-            for the roster around him, not a measurement of the player, and it
-            did not improve the one 2025 check at defensive back. Service
+            carries about a quarter to a third of the grade there. The composite
+            rates the roster around the player, and it did not improve the one
+            2025 check at defensive back. Service
             academy players take no talent term, because the composite does not
             rate their rosters. Early in the
             season a grade leans on the player&apos;s final grade from the season
@@ -905,10 +938,15 @@ export function MethodologyContent({ example, backtestVersion }: { example: Pick
           <p>
             The Heisman board is a conditional logit trained on 2010 through 2025
             ballots: predicted vote share is a softmax across each season&apos;s
-            candidate pool, which sums to one the way a ballot does. Pools are
-            chosen from statistics available that week, and evaluation uses later
-            seasons only, counting winners missing from the pool as misses. The
-            shares are conditional on the pool, not calibrated win probabilities.
+            candidate pool, which sums to one the way a ballot does. Its inputs
+            are per-game box-score rates (passing, rushing and receiving yards
+            and touchdowns, interceptions), team record, poll rank, conference
+            and games played, plus position terms. Player value does not feed
+            it. The board shows each candidate&apos;s value rank beside his
+            share. Pools are chosen from statistics available that week, and
+            evaluation uses later seasons only, counting winners missing from
+            the pool as misses. The shares are conditional on the pool and have
+            not been calibrated as win probabilities.
           </p>
         </div>
       </SectionCard>
@@ -917,20 +955,26 @@ export function MethodologyContent({ example, backtestVersion }: { example: Pick
       <SectionCard
         id="limits"
         title="What the Model Does Not Do"
-        subtitle="The boundaries are design decisions too"
+        subtitle="Inputs left out, and the limits of what the numbers claim"
       >
         <div className="space-y-4 text-sm leading-relaxed">
           <p>
             Injuries are never inferred from play-by-play or line movement. The
-            one availability input is a hand-entered, sourced and timestamped
-            report that a starting quarterback is out or doubtful, which lowers
-            that team&apos;s expected points by a fixed 1.5 (4.0 in the
-            postseason). Everything else stays flagged as missing and widens
-            uncertainty.
+            one availability input is a sourced, timestamped report that a
+            starting quarterback is out or doubtful, which lowers that
+            team&apos;s expected points by a fixed 1.5 (4.0 in the postseason).
+            For the SEC, Big Ten, ACC and Big 12 these reports are read from the
+            conferences&apos; published availability reports, counting a listed
+            quarterback only if he led the team in dropbacks the game before.
+            Other reports are entered by hand. A report counts only if it came
+            before the forecast or decision, and the market-informed line moves
+            only by the model&apos;s share, because the market has already
+            priced the absence. Everything else stays flagged as missing and
+            widens uncertainty.
           </p>
           <p>
-            Estimated EV does not establish a real advantage over the market, and nothing
-            on this site is wagering advice.
+            Estimated EV does not establish a real advantage over the market.
+            The site offers no wagering advice.
           </p>
           <p>
             Live win probability reads a scoreboard feed, so it sees the score,
@@ -946,7 +990,7 @@ export function MethodologyContent({ example, backtestVersion }: { example: Pick
       <SectionCard
         id="stack"
         title="Tech Stack"
-        subtitle="Small tools, closed-form math, and parquet files all the way down"
+        subtitle="Python, closed-form linear algebra and parquet files"
       >
         <div className="space-y-5 text-sm">
           {stack.map(({ category, items }) => (
@@ -965,13 +1009,12 @@ export function MethodologyContent({ example, backtestVersion }: { example: Pick
           ))}
 
           <Notice className="mt-2 bg-muted/50 text-xs text-muted-foreground leading-relaxed">
-<strong className="text-foreground">A note on model size:</strong> there is
-            no machine learning framework here, but the model is still Bayesian.
-            Because it is Gaussian throughout, the posterior has a closed form:
-            what a NUTS sampler does for the MLB model on this site, NumPy linear
-            algebra does here. Nothing needs a GPU, every artifact is a parquet
-            file, and added complexity has to win on seasons it was not fit on. So far, momentum
-            could not.
+<strong className="text-foreground">Model size.</strong> The model is
+            Bayesian and uses no machine learning framework. Because it is
+            Gaussian throughout, the posterior has a closed form, so NumPy linear
+            algebra does the work a NUTS sampler does for the MLB model. It runs
+            without a GPU, each artifact is a parquet file, and any added
+            complexity has to improve seasons it was not fit on.
           </Notice>
         </div>
       </SectionCard>

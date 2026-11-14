@@ -8,7 +8,7 @@ export const revalidate = 1800;
 export const metadata: Metadata = {
   title: "NFL Model Methodology",
   description:
-    "How the NFL model works: drive-based Bayesian ratings from EPA and points, quarterback and rest adjustments, a capped market blend, and an honest backtest.",
+    "How the NFL model works: drive-based Bayesian ratings from EPA and points, quarterback and injury adjustments, a capped market blend, and a walk-forward backtest.",
 };
 
 export default async function Page() {
@@ -19,8 +19,9 @@ export default async function Page() {
         <div>
           <PageTitle>NFL Model Methodology</PageTitle>
           <PageDescription>
-            Drive-based Bayesian ratings from EPA and points, QB and rest
-            adjustments, a capped market blend, and an honest backtest
+            Drive-based Bayesian ratings from EPA and points, quarterback and
+            injury adjustments, a capped market blend, and a walk-forward
+            backtest
           </PageDescription>
         </div>
       </PageHeader>

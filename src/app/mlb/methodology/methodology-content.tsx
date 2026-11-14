@@ -74,7 +74,7 @@ const flowNodes = [
     items: [
       { label: "Statcast pitch data", sub: "~480k PAs, 2024+25+26-YTD" },
       { label: "MLB Stats API", sub: "Schedule, lineups, rosters, boxscores, weather" },
-      { label: "The Odds API", sub: "ML, RL, totals across three books" },
+      { label: "The Odds API", sub: "ML, RL, totals across four books" },
       { label: "Active bullpen workload", sub: "Per-pitcher outs per day (rest)" },
     ],
   },
@@ -96,7 +96,7 @@ const flowNodes = [
     items: [
       { label: "Per-PA outcome sampler", sub: "Vectorized over 8 categories" },
       { label: "Empirical advancement", sub: "P(state', runs | state, outs, outcome)" },
-      { label: "Rest-aware bullpen", sub: "Active roster + 1d/2d workload caps" },
+      { label: "Rest-aware bullpen", sub: "Proven relievers, sampled workloads, 1d/2d caps" },
       { label: "30 posterior draws × ~333 sims", sub: "~10,000 simulated games per matchup" },
     ],
   },
@@ -105,21 +105,21 @@ const flowNodes = [
     color: "border-chart-4/40 bg-chart-4/5",
     labelColor: "text-chart-4",
     items: [
-      { label: "Win probability", sub: "Sim logit anchored to de-vigged market consensus" },
-      { label: "Totals & RL distributions", sub: "Pure sim quantiles" },
-      { label: "Edge vs best price", sub: "4.5% on ML and RL; totals switched off" },
-      { label: "Quarter-Kelly sizing", sub: "0.25 × f*, f clipped to [0, 1]" },
+      { label: "Market reconciliation", sub: "Sims reweighted to match ML, RL and total targets" },
+      { label: "One score distribution", sub: "Win, RL, totals and percentiles share the weights" },
+      { label: "One pick per game", sub: "Highest expected value at the best price" },
+      { label: "Flat stakes", sub: "1 unit per pick, totals switched off" },
     ],
   },
 ];
 
 const pipelineSteps = [
   { num: "01", name: "Schedule & Bullpen", desc: "Games, scores and per-pitcher workload" },
-  { num: "02", name: "Lineups, Odds & Weather", desc: "Stats API lineups and weather; ML/RL/totals from The Odds API" },
-  { num: "03", name: "Posterior Refit", desc: "Nightly NUTS run: pitcher, batter, park (about 15 min)" },
+  { num: "02", name: "Lineups, Odds & Weather", desc: "Stats API lineups and weather, ML/RL/totals from The Odds API" },
+  { num: "03", name: "Posterior Refit", desc: "Morning NUTS run in season: pitcher, batter, park (about 15 min)" },
   { num: "04", name: "Score Games", desc: "30 posterior draws × ~333 sims, ~10,000 per matchup" },
-  { num: "05", name: "Derive Markets", desc: "Win prob anchored to market consensus; RL and totals from the sims" },
-  { num: "06", name: "Verify & Publish", desc: "Pairing, range, anti-correlation, posterior-age checks; write to Supabase" },
+  { num: "05", name: "Derive Markets", desc: "Sims reweighted to the market targets, then one pick per game" },
+  { num: "06", name: "Verify & Publish", desc: "Pairing, range, anti-correlation and posterior-age checks, then a write to Supabase" },
 ];
 
 // Rounded to what 542 games support: two decimals of Brier and log loss,
@@ -156,10 +156,10 @@ export function MethodologyContent({
           <p>
             This model predicts a full distribution of runs per team per MLB game, then
             derives win, run-line and totals probabilities by simulating each matchup
-            roughly 10,000 times. Predictions are graded daily against sportsbook lines:
-            sharp bettors push lines toward true probabilities quickly, which makes the
-            market a better probability signal than most models built from scratch, mine
-            included. That is also why the published win probability borrows from it.
+            roughly 10,000 times. Predictions are graded daily against sportsbook lines.
+            Sharp bettors move those lines toward true probabilities quickly, so the
+            market is a better probability signal than most models built from scratch,
+            mine included, and the published win probability borrows from it.
           </p>
           <p>
             The current model (v2, live since May 12, 2026) has two layers: a{" "}
@@ -168,9 +168,9 @@ export function MethodologyContent({
             <strong>per-PA Monte Carlo simulator</strong> with rest-aware bullpens, an
             empirical baserunner-advancement table, weather effects, and per-game
             posterior draws that carry parameter uncertainty through. It replaced an
-            XGBoost regressor (v1) after a 542-game comparison in which v2 was scored in
-            sample, its skill model having been fit on data that included those games,
-            against v1&apos;s live picks. The live record since May 12 is the
+            XGBoost regressor (v1) after a 542-game comparison against v1&apos;s live
+            picks. v2 was scored in sample there, because its skill model had been fit
+            on data that included those games. The live record since May 12 is the
             out-of-sample evidence.
           </p>
           <div className="mt-4 grid grid-cols-1 gap-3 sm:grid-cols-2">
@@ -179,8 +179,8 @@ export function MethodologyContent({
               { label: "Skill model", val: "Hierarchical multinomial-logit (8 outcomes), NUTS via numpyro / JAX" },
               { label: "Training data", val: "~480k PAs across 2024, 2025 and 2026 to date, growing nightly" },
               { label: "Simulator", val: "30 posterior draws × ~333 sims each (~10,000 per matchup)" },
-              { label: "Probability output", val: "Sim win prob anchored to market consensus; p10/p90 bands" },
-              { label: "Sizing rule", val: "Quarter-Kelly on flagged ML and RL plays; totals off" },
+              { label: "Probability output", val: "Sim reconciled with the market consensus, with p10/p90 bands" },
+              { label: "Picks", val: "At most one ML or RL pick per game at 1 unit, totals off" },
             ].map(({ label, val }) => (
               <Card key={label} size="sm"><CardContent>
                 <p className="type-eyebrow text-muted-foreground">{label}</p>
@@ -225,6 +225,45 @@ export function MethodologyContent({
       >
         <div className="space-y-section text-sm">
           <ChangelogEntry
+            date="November 2, 2026"
+            title="One market-priced pick per game at a flat unit"
+          >
+            On the 2026 games, 327 replayed moneyline picks over the 4.5-point bar won
+            42%, against a claimed 51% and a market-implied 42%, so the sim&apos;s edge
+            was noise. Each game now publishes at most one pick, priced from the market
+            consensus and staked at 1 unit in place of quarter-Kelly sizing. Earlier
+            picks keep the thresholds they were flagged under.
+          </ChangelogEntry>
+
+          <ChangelogEntry
+            date="October 30, 2026"
+            title="Forecasts graded against a closing line captured at first pitch"
+          >
+            The market benchmark used to be the morning quote. The live worker now
+            stores one closing line per game at first pitch, and the frozen forecasts
+            are also scored against it.
+          </ChangelogEntry>
+
+          <ChangelogEntry
+            date="September 29, 2026"
+            title="Run-line and totals probabilities reconciled with the market"
+          >
+            The published win, run-line and totals probabilities now come from one
+            reweighted score distribution that matches the moneyline blend, the run-line
+            consensus and a totals blend. Before this, run-line and totals probabilities were pure sim.
+          </ChangelogEntry>
+
+          <ChangelogEntry
+            date="September 8, 2026"
+            title="Sampled pitcher workloads and a proven-reliever bullpen"
+          >
+            Starters used to exit at a fixed batter count. They now exit at a workload
+            drawn from their recent starts, and only established relievers enter the
+            bullpen. The
+            win-probability band now removes simulation noise before it is shown.
+          </ChangelogEntry>
+
+          <ChangelogEntry
             date="September 4, 2026"
             title="Moneyline flags require a paired market anchor"
           >
@@ -232,71 +271,70 @@ export function MethodologyContent({
             of the game, so the anchored probability behind the flag always exists.
           </ChangelogEntry>
 
-          <ChangelogEntry
-            date="August 18, 2026"
-            title="Published win probability anchored to the de-vigged market consensus"
-          >
-            Publishing the raw sim probability flagged big underdogs +EV
-            systematically: dogs the market priced under 33% came out at 37% from the
-            sim and won 29%. The published win probability is now a logit-scale blend of
-            the sim and the de-vigged consensus across the paired moneylines, plus a
-            +0.09 home-field logit the sim lacks. The sim weight was 0.2, chosen on 2026
-            games already played, and moved to 0.5 on September 9, 2026 as a product
-            decision; neither is an out-of-sample optimum. Run-line and totals
-            probabilities stay pure sim.
-          </ChangelogEntry>
-
-          <ChangelogEntry
-            date="July 18, 2026"
-            title="Weather effects in the simulator, and odds shopped across three books"
-          >
-            Temperature and wind now shift the outcome logits per game, with
-            coefficients fit on Statcast PAs controlling for park, batter and pitcher.
-            Two days later the odds feed started pulling DraftKings, FanDuel and BetMGM
-            and pricing each side at the best available number.
-          </ChangelogEntry>
-
-          <ChangelogEntry
-            date="May 27, 2026"
-            title="Totals predictions switched off; form noise raised to 0.18 in June"
-          >
-            Every totals edge bucket lost money on the 2026 backtest and model edge had
-            no relationship to outcome, so totals flags are disabled. The per-game
-            form-noise scalar went from 0.13 to 0.18 on June 16 after a recalibration
-            against actuals.
-          </ChangelogEntry>
-
-          <ChangelogEntry
-            date="May 12, 2026"
-            title="v2 cutover: hierarchical Bayesian skill model + per-PA Monte Carlo simulator"
-            accent="brand"
-          >
-            Replaced the v1 XGBoost regressor after a 542-game comparison (Mar 26 to May 9,
-            2026), scored in sample for v2 against v1&apos;s live picks: Brier and log
-            loss about 7% lower, max calibration gap from 42% to 3%, ROI higher on each
-            market on paper. Totals then kept losing live.
-          </ChangelogEntry>
-
           <details className="group">
             <summary className="type-eyebrow cursor-pointer select-none rounded-sm border border-border bg-muted/40 px-3 py-2 text-muted-foreground hover:bg-muted">
-              See full changelog (2 older entries)
+              See full changelog (6 older entries)
             </summary>
             <div className="mt-6 space-y-section">
+              <ChangelogEntry
+                date="August 18, 2026"
+                title="Published win probability anchored to the de-vigged market consensus"
+              >
+                Underdogs the market priced under 33% came out at 37% from the raw sim and
+                won 29%, so the sim flagged them +EV far too often. The published win probability became a logit-scale blend
+                of the sim and the de-vigged consensus across the paired moneylines, plus a
+                +0.09 home-field logit the sim lacks. The sim weight was 0.2, chosen on 2026
+                games already played, and moved to 0.5 on September 9, 2026 as a product
+                decision. Both weights were chosen with those results in hand.
+              </ChangelogEntry>
+
+              <ChangelogEntry
+                date="July 18, 2026"
+                title="Weather effects in the simulator, and odds shopped across three books"
+              >
+                Temperature and wind now shift the outcome logits per game, with
+                coefficients fit on Statcast PAs controlling for park, batter and pitcher.
+                Two days later the odds feed started pulling DraftKings, FanDuel and BetMGM
+                and pricing each side at the best available number. Pinnacle joined them
+                on November 2.
+              </ChangelogEntry>
+
+              <ChangelogEntry
+                date="May 27, 2026"
+                title="Totals predictions switched off, and form noise raised to 0.18 in June"
+              >
+                Every totals edge bucket lost money on the 2026 backtest and model edge had
+                no relationship to outcome, so totals flags are disabled. The per-game
+                form-noise scalar went from 0.13 to 0.18 on June 16 after a recalibration
+                against actuals.
+              </ChangelogEntry>
+
+              <ChangelogEntry
+                date="May 12, 2026"
+                title="v2 cutover: hierarchical Bayesian skill model + per-PA Monte Carlo simulator"
+                accent="brand"
+              >
+                Replaced the v1 XGBoost regressor after a 542-game comparison (Mar 26 to May 9,
+                2026), scored in sample for v2 against v1&apos;s live picks: Brier and log
+                loss about 7% lower, max calibration gap from 42% to 3%, ROI higher on each
+                market on paper. Totals then kept losing live.
+              </ChangelogEntry>
+
               <ChangelogEntry
                 date="April 20, 2026 (v1)"
                 title="Raised +EV thresholds from 3% to 4.5% (ML/RL) and 6.5% (totals)"
               >
                 Below the typical vig on a −110 line there is no cushion for model
-                miscalibration. v2 inherited these thresholds.
+                miscalibration. v2 kept these thresholds until November 2, 2026.
               </ChangelogEntry>
 
               <ChangelogEntry
                 date="April 2026 (v1)"
                 title="Win probability switched from Poisson to negative binomial"
               >
-                MLB run-scoring is overdispersed relative to Poisson. v2 needs no
-                parametric assumption: win probability comes straight from the simulated
-                run distributions.
+                MLB run-scoring is overdispersed relative to Poisson. v2 makes no
+                parametric assumption and reads win probability from the simulated run
+                distributions.
               </ChangelogEntry>
             </div>
           </details>
@@ -306,14 +344,14 @@ export function MethodologyContent({
       <SectionCard
         id="flow"
         title="Architecture & Daily Pipeline"
-        subtitle="From pitch-level data to market probabilities: nightly refit, morning scoring, intraday lineup re-scoring"
+        subtitle="From pitch-level data to market probabilities: morning refit and scoring, intraday lineup re-scoring"
       >
         <div className="space-y-4 text-sm">
           <p className="leading-relaxed text-muted-foreground">
             The skill layer learns slow-moving parameters from years of Statcast data and
-            is refit nightly. The simulator consumes them to produce per-game run
-            distributions, and the markets layer turns those into win, total and run-line
-            probabilities with edge and sizing.
+            is refit each morning of the season. The simulator turns them into per-game
+            run distributions, and the markets layer reconciles those with the betting
+            market and picks at most one bet per game.
           </p>
           <div className="mt-4 flex flex-col gap-2 md:flex-row md:items-stretch md:gap-0">
             {flowNodes.map((node, i) => (
@@ -346,20 +384,20 @@ export function MethodologyContent({
           </div>
 
           <p className="leading-relaxed text-muted-foreground">
-            A full NUTS refit runs nightly on GitHub Actions (~4 AM PT) and, on success,
-            triggers the scoring run, so scoring always uses fresh posteriors. From about
-            5 AM to 7:40 PM PT a lineup refresh fires every 20 minutes and re-scores any
-            game whose posted lineup changed. A midnight job grades yesterday&apos;s
-            games.
+            During the season a full NUTS refit runs on GitHub Actions around 4 AM PT
+            and, on success, triggers the scoring run, so scoring uses that
+            morning&apos;s posteriors. From about 5 AM to 7:40 PM PT a lineup refresh fires every 20
+            minutes and re-scores any game whose posted lineup changed. A midnight job
+            grades yesterday&apos;s games. In the offseason the refit is run by hand.
           </p>
           <p className="leading-relaxed text-muted-foreground">
             Predictions track lineups, scratches and late odds up to first pitch. Once a
-            game starts its row is frozen, and that final pregame value is what gets
-            graded. A flag shown in the morning can disappear if a re-score drops the
-            edge below threshold; it is then removed from the history and from model
-            evaluation too. A flag also requires a known starter, a fully posted lineup
-            and enough pitching-usage evidence: a game scored on a fallback lineup is a
-            No Play regardless of edge.
+            game starts its row is frozen, the database refuses any later write to it,
+            and that final pregame version is what gets graded. A pick shown in the
+            morning can change or disappear after a re-score. Earlier versions and all
+            odds quotes stay in an append-only history. A pick also requires a known
+            starter, a fully posted lineup and enough pitching-usage evidence, so a game
+            scored on a fallback lineup gets no pick.
           </p>
 
           <div className="mt-4 flex flex-col gap-2 md:flex-row md:items-start md:gap-0">
@@ -393,10 +431,10 @@ export function MethodologyContent({
           </div>
 
           <p className="leading-relaxed text-muted-foreground">
-            The stack is Python throughout: PyMC describes the models, numpyro and JAX
-            sample them, NumPy runs the vectorized simulator, and GitHub Actions plus
-            Supabase pg_cron schedule everything. Results land in Supabase (Postgres),
-            which is the only thing this Next.js site reads.
+            The stack is Python. PyMC describes the models, numpyro and JAX sample them,
+            NumPy runs the vectorized simulator, and GitHub Actions and Supabase pg_cron
+            schedule the jobs. Results land in Supabase (Postgres), the only source this
+            Next.js site reads.
           </p>
         </div>
       </SectionCard>
@@ -413,10 +451,10 @@ export function MethodologyContent({
             hierarchical models learn the additive log-odds offsets that each actor
             (batter, pitcher, venue) contributes to those logits, with{" "}
             <span className="font-mono">OUT</span> as the reference category. The pitcher
-            model fits first and sets the league intercept; the batter model then fits
-            with that intercept frozen, so there is one baseline, not two competing
-            ones. Working on the log-odds scale makes platoon, role, park and weather
-            effects simple additive terms.
+            model fits first and sets the league intercept. The batter model then fits
+            with that intercept frozen, so both models share one baseline. On the
+            log-odds scale, platoon, role, park and weather effects are additive
+            terms.
           </p>
 
           <p className="type-eyebrow text-muted-foreground">
@@ -439,7 +477,7 @@ export function MethodologyContent({
           <p>
             Two implementation choices matter at this scale. The parameterization is
             non-centered, which avoids Neal&apos;s funnel, the distorted posterior
-            geometry that stalls HMC on hierarchical models. And the likelihood is a
+            geometry that stalls HMC on hierarchical models. The likelihood is a
             Multinomial over each actor&apos;s aggregated outcome counts, which is
             mathematically identical to a per-PA Categorical but roughly 400× faster on
             400k PAs (about 3 minutes against a projected 19 hours).
@@ -494,13 +532,13 @@ export function MethodologyContent({
       <SectionCard
         id="simulator"
         title="Per-PA Monte Carlo Simulator"
-        subtitle="30 posterior draws × ~333 sims per draw, propagating parameter uncertainty"
+        subtitle="30 posterior draws × ~333 sims per draw, so parameter uncertainty reaches each game"
       >
         <div className="space-y-4 text-sm leading-relaxed">
           <p>
             For each game I draw 30 posterior samples and run about 333 simulations per
-            draw, roughly 10,000 per matchup. Every draw is a coherent realization of all
-            batter, pitcher and park parameters together, so the spread across draws is
+            draw, roughly 10,000 per matchup. Each draw sets all batter, pitcher and park
+            parameters together, so the spread across draws is
             parameter uncertainty and the spread within a draw is ordinary run-scoring
             noise.
           </p>
@@ -538,13 +576,16 @@ export function MethodologyContent({
           </p>
 
           <p>
-            Bullpen management is rest-aware. Starters are pulled after 24 batters faced
-            (roughly 95 pitches), or earlier after 18 outs, after 6 runs allowed, or
-            after 12 outs with 4 or more runs allowed. Relievers come from the active
-            26-man roster, most rested first, and any reliever with{" "}
+            Each simulated starter leaves at a workload drawn from his recent starts
+            (between 3 and 21 outs), or earlier after 6 runs allowed, 4 runs by his
+            twelfth out, or 24 batters faced. The bullpen holds only established
+            relievers from the active roster, ordered by how often they have pitched,
+            and any reliever with{" "}
             <span className="font-mono">≥ 6 outs yesterday</span> or{" "}
             <span className="font-mono">≥ 9 outs in the last 2 days</span> is skipped.
-            Workloads are refreshed daily from MLB boxscores.
+            A reliever also works a sampled outing and comes out after 3 runs. In the
+            postseason every bullpen arm is treated as rested. Workloads are refreshed
+            daily from MLB boxscores.
           </p>
 
           <p className="type-eyebrow text-muted-foreground">
@@ -558,16 +599,17 @@ export function MethodologyContent({
             {"             "}+ Var<sub>aleatoric</sub>(inning-level sim noise)
           </FormulaBlock>
           <p className="text-xs text-muted-foreground">
-            The form-noise scalar is calibrated against actual game outcomes, never
-            against market backtests: that would mask modeling errors as noise.
+            The form-noise scalar is calibrated against actual game outcomes.
+            Calibrating it against market backtests would hide modeling errors inside
+            the noise.
           </p>
 
           <p className="text-muted-foreground">
             The pre-cutover shape check replayed 200 stratified 2025 games: simulated
             mean runs per team-game came out 4.59 against an actual 4.38 (+4.86%), and
             simulated variance 9.72 against 10.32 (−5.86%). The model is mildly
-            underdispersed, so blowouts and large totals get a little less probability
-            than they should, which is part of why totals are off.
+            underdispersed. Blowouts and large totals get a little less probability than
+            they should, and that is one reason totals are switched off.
           </p>
         </div>
       </SectionCard>
@@ -575,7 +617,7 @@ export function MethodologyContent({
       <SectionCard
         id="markets"
         title="From Simulated Runs to Market Probabilities"
-        subtitle="Empirical frequencies over the simulated games, a market anchor on the moneyline, and quarter-Kelly sizing"
+        subtitle="Weighted frequencies over the simulated games, reconciled with the market, and one flat-stake pick per game"
       >
         <div className="space-y-4 text-sm leading-relaxed">
           <p>
@@ -583,15 +625,17 @@ export function MethodologyContent({
             Poisson or negative binomial assumption on top. With{" "}
             <span className="font-mono">h<sub>i</sub></span>,{" "}
             <span className="font-mono">a<sub>i</sub></span> the home and away runs in sim{" "}
-            <span className="font-mono">i = 1..N</span>:
+            <span className="font-mono">i = 1..N</span> and{" "}
+            <span className="font-mono">w<sub>i</sub></span> its weight (1/N before the
+            market step below):
           </p>
 
           <FormulaBlock>
-            P(home wins) = (1/N) · Σ<sub>i</sub> 𝟙[h<sub>i</sub> &gt; a<sub>i</sub>]
+            P(home wins) = Σ<sub>i</sub> w<sub>i</sub> · 𝟙[h<sub>i</sub> &gt; a<sub>i</sub>]
             <br />
-            P(total &gt; L) = (1/N) · Σ<sub>i</sub> 𝟙[h<sub>i</sub> + a<sub>i</sub> &gt; L]
+            P(total &gt; L) = Σ<sub>i</sub> w<sub>i</sub> · 𝟙[h<sub>i</sub> + a<sub>i</sub> &gt; L]
             <br />
-            P(home covers s<sub>h</sub>) = (1/N) · Σ<sub>i</sub> 𝟙[h<sub>i</sub> − a<sub>i</sub> &gt; −s<sub>h</sub>]
+            P(home covers s<sub>h</sub>) = Σ<sub>i</sub> w<sub>i</sub> · 𝟙[h<sub>i</sub> − a<sub>i</sub> &gt; −s<sub>h</sub>]
             <br />
             <span className="text-muted-foreground">
               s<sub>h</sub> is the book&apos;s home spread (−1.5 means home must win by
@@ -601,41 +645,58 @@ export function MethodologyContent({
           </FormulaBlock>
 
           <p>
-            The published moneyline number is not the raw sim. Each book&apos;s two
-            moneylines are de-vigged as a pair and averaged into a market consensus. The
-            sim&apos;s home logit gets a +0.09 home-field shift it does not produce on
-            its own, then is blended with the consensus at weight 0.5 on the sim since
-            September 9, 2026 (0.2 from August 18). Both weights were set with 2026
-            results in hand, a product decision rather than an out-of-sample optimum.
-            The raw sim flagged big underdogs as +EV all season, and they did not win at
-            the rate it said.
-            Run-line and totals probabilities are still pure sim. A game with no paired
-            moneyline publishes the shifted sim probability and gets no moneyline flag.
+            Before publication, each book&apos;s prices are de-vigged as a pair and
+            averaged into a market consensus, and the simulated games are reweighted, as
+            little as possible, to match three targets at once. The moneyline target blends the sim&apos;s home logit,
+            shifted +0.09 for the home field the sim does not produce on its own, with
+            the consensus at weight 0.5 on the sim. The run line matches the consensus
+            exactly, and the total blends sim and market at 0.5. The raw sim flagged big
+            underdogs as +EV all season, and they did not win at the rate it said. The
+            weights were set with 2026 results in hand, so they are a product
+            decision.
+          </p>
+          <p>
+            Percentiles, histograms and expected runs use the same weights, so all the
+            numbers on a game describe one score distribution. If matching the market
+            would lean on too few simulated games, the reweighting is rejected. The game
+            then shows the moneyline blend, the plain sim for everything else, and no
+            pick. A game with no paired moneyline shows the shifted sim probability.
           </p>
 
           <p>
-            The <strong>p10/p90 win-probability band</strong> is computed per posterior
-            draw: each of the 30 draws yields a win probability, and the band is the p10
-            and p90 of those, pushed through the same anchoring map. It measures
-            parameter uncertainty about the win rate, separate from run-scoring noise.
+            The <strong>p10/p90 win-probability band</strong> comes from the 30
+            posterior draws, each of which yields a win probability. Their spread mixes
+            parameter uncertainty with the noise of running only about 333 games per
+            draw, so the estimated simulation noise is subtracted first, and the band is
+            pushed through the same market blend. When the remaining spread is too
+            small to tell apart from simulation noise, no band is shown.
           </p>
 
           <p>
-            A moneyline or run-line play is flagged when the modeled probability beats
-            the implied probability of the best available price by at least 4.5
-            points. Totals carried a 6.5-point bar but are switched off entirely.
-            Sizing uses the Kelly criterion:
+            Each game publishes at most one pick, the moneyline or run-line side with
+            the highest expected value at the best available price. The pick probability
+            behind that expected value is the de-vigged
+            consensus, nudged toward the sim at a weight of 0.07 on moneylines and not
+            at all on run lines, because on the 2026 games the sim added almost nothing
+            the market did not already know. A pick at or above zero expected value is
+            tier value, one slightly below it a lean, and each date&apos;s three
+            best-priced games publish a minimum pick even below that floor so every
+            slate has picks. Every pick is staked at 1 unit. Totals stay switched off.
           </p>
-          <FormulaBlock>
-            f* = (p · b − q) / b{"  "}{"//"} p = model prob, q = 1−p, b = decimal odds − 1
-            <br />
-            stake = 0.25 · clip(f*, 0, 1){"  "}{"//"} quarter-Kelly
-          </FormulaBlock>
           <p className="text-muted-foreground">
-            Full Kelly maximizes long-run growth but draws down hard on losing streaks,
-            and model probabilities are only estimates; quarter-Kelly trades some growth
-            for a much tighter drawdown. A high-variance flag marks games where a
-            team&apos;s simulated runs stdev exceeds 4.0.
+            Picks published before November 2, 2026 were flagged when the modeled
+            probability beat the best price&apos;s implied probability by 4.5 points
+            (6.5 for totals), sized at quarter-Kelly, and are still graded that way. A
+            high-variance flag marks games where a team&apos;s simulated runs stdev
+            exceeds 4.0.
+          </p>
+
+          <p>
+            Forecasts are scored against two market benchmarks: the morning consensus
+            the forecast used, and a closing line the live worker stores once at first
+            pitch, from The Odds API median across books with ESPN&apos;s DraftKings line
+            as the fallback. Each closing row records which feed it came from, and the
+            two feeds are counted separately.
           </p>
         </div>
       </SectionCard>
@@ -659,7 +720,10 @@ export function MethodologyContent({
             major-league record shrinks toward his translated Triple-A record instead of the position
             mean, and his Triple-A Statcast enters the inputs with a same-season level offset. Both
             fits use the {MLB_PLAYER_EVALUATION.devSeasons[0]} to {MLB_PLAYER_EVALUATION.devSeasons[MLB_PLAYER_EVALUATION.devSeasons.length - 1]} development
-            pairs with each pair held out in turn.
+            pairs with each pair held out in turn. The hitter Grade also learns from in-season
+            pairs, each month start scored against the rest of that season. Relievers have small
+            samples, so their Grade is fit on full-season pairs back to 2015 and reads the
+            pitch-level inputs directly beside the traits.
           </p>
           <p>
             <strong>Trade value</strong> prices the projection over the player&apos;s remaining control
@@ -668,14 +732,13 @@ export function MethodologyContent({
             seasons pay the league minimum, arbitration seasons a fitted share of market value, options
             go the way of whoever holds them. The price of a win, about $9.9 million per projected WAR,
             is fitted on verified free-agent contract values above the league minimum with separate
-            prices for batters, starters and relievers; it is calibrated to those contracts, not yet
-            validated against ones signed after the fit. A player with no control years left shows a
+            prices for batters, starters and relievers. It is calibrated to those contracts and has not
+            yet been checked against contracts signed after the fit. A player with no control years left shows a
             one-season <strong>Market value</strong> instead.
           </p>
           <p>
             <strong>Impact</strong> is descriptive: FanGraphs wins above replacement for the completed
-            season, read from the MLB Stats API. It is the public number, not a projection, and it
-            anchors the season-by-season outlook.
+            season, read from the MLB Stats API. It anchors the season-by-season outlook.
           </p>
           <p>
             The current grade has no untouched test yet. Its development pairs run {MLB_PLAYER_EVALUATION.devSeasons[0]} to {MLB_PLAYER_EVALUATION.devSeasons[1]} through {MLB_PLAYER_EVALUATION.devSeasons[MLB_PLAYER_EVALUATION.devSeasons.length - 2]} to {MLB_PLAYER_EVALUATION.devSeasons[MLB_PLAYER_EVALUATION.devSeasons.length - 1]},
@@ -683,12 +746,30 @@ export function MethodologyContent({
             a time, its rank correlation with next-season runs averages {MLB_PLAYER_EVALUATION.groups[0].grade.toFixed(2)} for hitters
             against {MLB_PLAYER_EVALUATION.groups[0].marcel.toFixed(2)} for a Marcel projection, {MLB_PLAYER_EVALUATION.groups[1].grade.toFixed(2)} for
             starters against {MLB_PLAYER_EVALUATION.groups[1].marcel.toFixed(2)}, and {MLB_PLAYER_EVALUATION.groups[2].grade.toFixed(2)} for relievers
-            against {MLB_PLAYER_EVALUATION.groups[2].marcel.toFixed(2)}; hyperparameters were chosen on the same pairs, so these are development
+            against {MLB_PLAYER_EVALUATION.groups[2].marcel.toFixed(2)}. Hyperparameters were chosen on the same pairs, so these are development
             results. The previous version, scored once on the {MLB_PLAYER_EVALUATION.previous.inputSeason} to {MLB_PLAYER_EVALUATION.previous.outcomeSeason} pair it never saw, reached
             {" "}{MLB_PLAYER_EVALUATION.previous.groups[0].grade.toFixed(2)} for hitters against {MLB_PLAYER_EVALUATION.previous.groups[0].priorXwoba.toFixed(2)} for prior-season xwOBA,
             a gap within sampling noise. A comparison with ZiPS, THE BAT X and Steamer, on the
             grade&apos;s own fielding-inclusive target and on hitting alone, is on the performance page. A player is graded once his season-equivalent sample
-            reaches 100 plate appearances or batters faced; below that the page shows no number.
+            reaches 100 plate appearances or batters faced. Below that the page shows no number.
+          </p>
+          <p className="text-muted-foreground">
+            Prospect grades, award forecasts, playoff odds and pitch and batting run values each
+            have their own page:{" "}
+            {[
+              { href: "/mlb/prospects", label: "Prospects" },
+              { href: "/mlb/awards", label: "Awards" },
+              { href: "/mlb/playoffs", label: "Playoffs" },
+              { href: "/mlb/pitch-value", label: "Pitch value" },
+              { href: "/mlb/batting-value", label: "Batting value" },
+            ].map((link, i, all) => (
+              <span key={link.href}>
+                <Link href={link.href} className="underline underline-offset-2 hover:text-foreground">
+                  {link.label}
+                </Link>
+                {i < all.length - 1 ? ", " : "."}
+              </span>
+            ))}
           </p>
         </div>
       </SectionCard>
@@ -703,9 +784,9 @@ export function MethodologyContent({
             Before cutover, v2 was benchmarked against a pinned copy of the v1 XGBoost
             baseline on every completed 2026 game where both models had a prediction.
             v2&apos;s skill model had been fit on 2024 to 2026 data that included these
-            games, so its side is in sample; v1&apos;s side is its live picks. The table
-            shows that v2 fit the season better, not that it forecasts better out of
-            sample. The live record since May 12 is that test.
+            games, so its side is in sample. v1&apos;s side is its live picks. The table
+            shows that v2 fit the season better. Whether it forecasts better out of
+            sample is a question for the live record since May 12.
           </p>
 
           <Table>
@@ -738,13 +819,13 @@ export function MethodologyContent({
           </Table>
 
           <p className="text-muted-foreground">
-            Brier and log-loss are proper scoring rules, so the comparison covers
-            calibration and sharpness together, not just hit rate. v1&apos;s 42% max
-            calibration gap is partly thin-bin variance, but the direction holds. Totals
-            ROI improved on paper here and then kept losing once v2 went live, which is
-            how totals ended up switched off. A six-week backtest is a small sample and
-            the ROI rows rest on a few hundred flagged bets or fewer; the numbers are
-            rounded accordingly and frozen from that run. Live results, including
+            Brier and log-loss are proper scoring rules, so the comparison scores
+            calibration and sharpness together. v1&apos;s 42% max calibration gap is
+            partly thin-bin variance, but the direction holds. Totals ROI improved on
+            paper here, then kept losing once v2 went live, and totals were switched off.
+            A six-week backtest is a small sample, and the ROI rows rest on a few hundred
+            flagged bets or fewer. The numbers are rounded to match and frozen from that
+            run. Live results, including
             ongoing Brier and calibration, are on the{" "}
             <Link href="/mlb/performance" className="underline underline-offset-2 hover:text-foreground">
               Performance page
@@ -764,14 +845,14 @@ export function MethodologyContent({
             v1 was a gradient-boosted regressor (XGBoost) on 14 hand-built team-level
             features per game: starter and bullpen xFIP, WHIP and K/9, team OPS, ISO and
             K%, rolling run scoring, park factor, home field and bullpen rest. It
-            predicted expected runs per team; win, total and run-line probabilities came
+            predicted expected runs per team. Win, total and run-line probabilities came
             from a negative binomial score distribution with isotonic calibration.
           </p>
           <p className="text-muted-foreground">
-            v2 replaced it because v1 had no concept of individual batter or pitcher
-            skill, so lineup changes, platoon advantages and bullpen identity were
-            invisible to it; it reported no parameter uncertainty; and its calibration
-            degraded in the tails. The v1 code was deleted on September 1, 2026. Its
+            v1 had no concept of individual batter or pitcher skill, so lineup changes,
+            platoon advantages and bullpen identity were invisible to it. It also
+            reported no parameter uncertainty, and its calibration degraded in the
+            tails, so v2 replaced it. The v1 code was deleted on September 1, 2026. Its
             predictions before May 12, 2026 are kept in archive tables so the historical
             record is unchanged, and a dashed vertical line on every time-series chart
             marks the cutover.
