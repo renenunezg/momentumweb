@@ -760,7 +760,7 @@ export function MethodologyContent({
               { href: "/mlb/prospects", label: "Prospects" },
               { href: "/mlb/awards", label: "Awards" },
               { href: "/mlb/playoffs", label: "Playoffs" },
-              { href: "/mlb/pitch-value", label: "Pitch value" },
+              { href: "/mlb/pitching-value", label: "Pitching value" },
               { href: "/mlb/batting-value", label: "Batting value" },
             ].map((link, i, all) => (
               <span key={link.href}>
