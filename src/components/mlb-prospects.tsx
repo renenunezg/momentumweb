@@ -371,8 +371,119 @@ function ProspectComparison({ suggestions }: { suggestions: ProspectRow[] }) {
 
 type LoadState = "loading" | "failed";
 
+// One list of prospect rows: disclosure rows on phones, a table on wider
+// screens, and the card under whichever row is open.
+function ProspectList({ rows, sort, empty }: { rows: ProspectRow[]; sort: ProspectSort; empty: string }) {
+  const [expanded, setExpanded] = useState<number | null>(null);
+  return (
+    <>
+      <div className="md:hidden">
+        <PlayerRowHeader />
+        {rows.map((row, i) => {
+          const open = expanded === row.player_id;
+          const name = row.player_name ?? String(row.player_id);
+          return (
+            <article key={row.player_id} aria-label={name} className="min-w-0 border-b border-border">
+              <PlayerRowDisclosure
+                name={name}
+                rank={i + 1}
+                identity={identity(row)}
+                grade={row.peak_grade == null ? EMPTY : formatNumber(row.peak_grade, 0)}
+                open={open}
+                panelId={`mlb-mobile-prospect-${row.player_id}`}
+                onToggle={() => setExpanded(open ? null : row.player_id)}
+              />
+              <div id={`mlb-mobile-prospect-${row.player_id}`} hidden={!open} className="border-t border-border px-3">
+                {open && <ProspectCard row={row} />}
+              </div>
+            </article>
+          );
+        })}
+      </div>
+      <div className="hidden md:block">
+        <Table>
+          <TableHeader>
+            <TableRow className="type-eyebrow [&>th]:text-muted-foreground">
+              <TableHead className="w-8">#</TableHead>
+              <TableHead>Player</TableHead>
+              <TableHead>Level</TableHead>
+              <TableHead>Age</TableHead>
+              <TableHead aria-sort={sort === "grade" ? "descending" : undefined}>
+                Peak grade <InfoTip text={PEAK_GRADE_TIP} label="What is Peak grade?" className="ml-1" />
+              </TableHead>
+              <TableHead className="text-right" aria-sort={sort === "regular" ? "descending" : undefined}>
+                Regular <InfoTip text={P_REGULAR_TIP} label="What is Regular?" className="ml-1" />
+              </TableHead>
+              <TableHead className="text-right" aria-sort={sort === "eta" ? "ascending" : undefined}>
+                ETA <InfoTip text={ETA_TIP} label="What is ETA?" className="ml-1" />
+              </TableHead>
+              <TableHead className="text-right" aria-sort={sort === "value" ? "descending" : undefined}>
+                Value <InfoTip text={PROSPECT_TRADE_VALUE_TIP} label="What is Value?" className="ml-1" />
+              </TableHead>
+              <TableHead className="hidden lg:table-cell">
+                Risk <InfoTip text={RISK_TIP} label="What is Risk?" className="ml-1" />
+              </TableHead>
+            </TableRow>
+          </TableHeader>
+          <TableBody>
+            {rows.length === 0 ? (
+              <TableRow>
+                <TableCell colSpan={9} className="text-sm text-muted-foreground">{empty}</TableCell>
+              </TableRow>
+            ) : (
+              rows.map((row, i) => {
+                const open = expanded === row.player_id;
+                const graded = row.peak_grade != null;
+                return (
+                  <Fragment key={row.player_id}>
+                    <TableRow
+                      onClick={() => setExpanded(open ? null : row.player_id)}
+                      aria-expanded={open}
+                      className={cn("cursor-pointer", open && "bg-muted/40")}
+                    >
+                      <TableCell className="font-mono text-xs text-muted-foreground">{i + 1}</TableCell>
+                      <TableCell className="min-w-56 max-w-72">{identity(row)}</TableCell>
+                      <TableCell className="font-mono text-xs">{levelLabel(row.level) ?? EMPTY}</TableCell>
+                      <TableCell className="font-mono tabular-nums">{row.age == null ? EMPTY : formatNumber(row.age, 1)}</TableCell>
+                      <TableCell className="whitespace-nowrap font-mono tabular-nums">
+                        {graded ? (
+                          <span className="inline-flex items-center gap-2">
+                            <span className="font-bold text-primary">{formatNumber(row.peak_grade, 0)}</span>
+                            <GradeBar grade={row.peak_grade} />
+                            <span className="text-[11px] text-muted-foreground">{formatNumber(row.peak_grade_low, 0)}–{formatNumber(row.peak_grade_high, 0)}</span>
+                          </span>
+                        ) : (
+                          <span className="text-xs text-muted-foreground">Not yet graded</span>
+                        )}
+                      </TableCell>
+                      <TableCell className="text-right font-mono tabular-nums">{percent(row.p_regular)}</TableCell>
+                      <TableCell className="text-right font-mono tabular-nums">{row.eta_season ?? EMPTY}</TableCell>
+                      <TableCell className={cn("whitespace-nowrap text-right font-mono font-bold tabular-nums", !graded ? "text-muted-foreground" : (row.trade_value_musd ?? 0) >= 0 ? "text-positive" : "text-destructive")}>
+                        {graded ? formatMillions(row.trade_value_musd) : EMPTY}
+                      </TableCell>
+                      <TableCell className="hidden font-mono text-xs lg:table-cell">{row.risk ? (RISK_LABEL[row.risk] ?? row.risk) : EMPTY}</TableCell>
+                    </TableRow>
+                    {open && (
+                      <TableRow className="hover:bg-transparent">
+                        <TableCell colSpan={9} className="whitespace-normal bg-muted/20">
+                          <ProspectCard row={row} />
+                        </TableCell>
+                      </TableRow>
+                    )}
+                  </Fragment>
+                );
+              })
+            )}
+          </TableBody>
+        </Table>
+      </div>
+    </>
+  );
+}
+
 const PROSPECT_VIEWS = [
   { key: "players", label: "Prospects" },
+  { key: "top", label: "Top 100" },
   { key: "farms", label: "Farm systems" },
 ] as const;
 
@@ -382,10 +493,12 @@ export default function MlbProspects({
   initial,
   leaders,
   farms,
+  top,
 }: {
   initial: Record<ProspectRole, ProspectPage>;
   leaders: ProspectLeader[];
   farms: FarmSystemRow[];
+  top: ProspectRow[];
 }) {
   const [view, setView] = useState<ProspectView>("players");
   const [filters, setFilters] = useState<ProspectFilters>(DEFAULT_PROSPECT_FILTERS);
@@ -400,7 +513,6 @@ export default function MlbProspects({
   );
   const [moreFor, setMoreFor] = useState<string | null>(null);
   const [failed, setFailed] = useState<Record<string, true>>({});
-  const [expanded, setExpanded] = useState<number | null>(null);
   const [query, setQuery] = useState("");
 
   const key = prospectQuery(filters);
@@ -441,7 +553,6 @@ export default function MlbProspects({
 
   const update = (patch: Partial<ProspectFilters>) => {
     setFilters((prev) => ({ ...prev, ...patch }));
-    setExpanded(null);
     setMoreFor(null);
   };
 
@@ -512,6 +623,12 @@ export default function MlbProspects({
 
   return (
     <ViewTabs label="Prospect view" options={PROSPECT_VIEWS} value={view} onValueChange={setView}>
+      <ViewTabPanel value="top" className="min-w-0 space-y-section">
+        <p className="max-w-4xl text-sm text-muted-foreground leading-relaxed">
+          The {top.length} best prospects, batters and pitchers together, ranked by peak grade with trade value breaking ties.
+        </p>
+        <ProspectList rows={top} sort="grade" empty="No prospects have been graded yet." />
+      </ViewTabPanel>
       <ViewTabPanel value="farms">
         <MlbFarmSystems rows={farms} onSelectOrg={chooseOrg} />
       </ViewTabPanel>
@@ -585,106 +702,7 @@ export default function MlbProspects({
               status
             ) : (
               <>
-                <div className="md:hidden">
-                  <PlayerRowHeader />
-                  {rows.map((row, i) => {
-                    const open = expanded === row.player_id;
-                    const name = row.player_name ?? String(row.player_id);
-                    return (
-                      <article key={row.player_id} aria-label={name} className="min-w-0 border-b border-border">
-                        <PlayerRowDisclosure
-                          name={name}
-                          rank={i + 1}
-                          identity={identity(row)}
-                          grade={row.peak_grade == null ? EMPTY : formatNumber(row.peak_grade, 0)}
-                          open={open}
-                          panelId={`mlb-mobile-prospect-${row.player_id}`}
-                          onToggle={() => setExpanded(open ? null : row.player_id)}
-                        />
-                        <div id={`mlb-mobile-prospect-${row.player_id}`} hidden={!open} className="border-t border-border px-3">
-                          {open && <ProspectCard row={row} />}
-                        </div>
-                      </article>
-                    );
-                  })}
-                </div>
-                <div className="hidden md:block">
-                  <Table>
-                    <TableHeader>
-                      <TableRow className="type-eyebrow [&>th]:text-muted-foreground">
-                        <TableHead className="w-8">#</TableHead>
-                        <TableHead>Player</TableHead>
-                        <TableHead>Level</TableHead>
-                        <TableHead>Age</TableHead>
-                        <TableHead aria-sort={filters.sort === "grade" ? "descending" : undefined}>
-                          Peak grade <InfoTip text={PEAK_GRADE_TIP} label="What is Peak grade?" className="ml-1" />
-                        </TableHead>
-                        <TableHead className="text-right" aria-sort={filters.sort === "regular" ? "descending" : undefined}>
-                          Regular <InfoTip text={P_REGULAR_TIP} label="What is Regular?" className="ml-1" />
-                        </TableHead>
-                        <TableHead className="text-right" aria-sort={filters.sort === "eta" ? "ascending" : undefined}>
-                          ETA <InfoTip text={ETA_TIP} label="What is ETA?" className="ml-1" />
-                        </TableHead>
-                        <TableHead className="text-right" aria-sort={filters.sort === "value" ? "descending" : undefined}>
-                          Value <InfoTip text={PROSPECT_TRADE_VALUE_TIP} label="What is Value?" className="ml-1" />
-                        </TableHead>
-                        <TableHead className="hidden lg:table-cell">
-                          Risk <InfoTip text={RISK_TIP} label="What is Risk?" className="ml-1" />
-                        </TableHead>
-                      </TableRow>
-                    </TableHeader>
-                    <TableBody>
-                      {rows.length === 0 ? (
-                        <TableRow>
-                          <TableCell colSpan={9} className="text-sm text-muted-foreground">No {noun} match.</TableCell>
-                        </TableRow>
-                      ) : (
-                        rows.map((row, i) => {
-                          const open = expanded === row.player_id;
-                          const graded = row.peak_grade != null;
-                          return (
-                            <Fragment key={row.player_id}>
-                              <TableRow
-                                onClick={() => setExpanded(open ? null : row.player_id)}
-                                aria-expanded={open}
-                                className={cn("cursor-pointer", open && "bg-muted/40")}
-                              >
-                                <TableCell className="font-mono text-xs text-muted-foreground">{i + 1}</TableCell>
-                                <TableCell className="min-w-56 max-w-72">{identity(row)}</TableCell>
-                                <TableCell className="font-mono text-xs">{levelLabel(row.level) ?? EMPTY}</TableCell>
-                                <TableCell className="font-mono tabular-nums">{row.age == null ? EMPTY : formatNumber(row.age, 1)}</TableCell>
-                                <TableCell className="whitespace-nowrap font-mono tabular-nums">
-                                  {graded ? (
-                                    <span className="inline-flex items-center gap-2">
-                                      <span className="font-bold text-primary">{formatNumber(row.peak_grade, 0)}</span>
-                                      <GradeBar grade={row.peak_grade} />
-                                      <span className="text-[11px] text-muted-foreground">{formatNumber(row.peak_grade_low, 0)}–{formatNumber(row.peak_grade_high, 0)}</span>
-                                    </span>
-                                  ) : (
-                                    <span className="text-xs text-muted-foreground">Not yet graded</span>
-                                  )}
-                                </TableCell>
-                                <TableCell className="text-right font-mono tabular-nums">{percent(row.p_regular)}</TableCell>
-                                <TableCell className="text-right font-mono tabular-nums">{row.eta_season ?? EMPTY}</TableCell>
-                                <TableCell className={cn("whitespace-nowrap text-right font-mono font-bold tabular-nums", !graded ? "text-muted-foreground" : (row.trade_value_musd ?? 0) >= 0 ? "text-positive" : "text-destructive")}>
-                                  {graded ? formatMillions(row.trade_value_musd) : EMPTY}
-                                </TableCell>
-                                <TableCell className="hidden font-mono text-xs lg:table-cell">{row.risk ? (RISK_LABEL[row.risk] ?? row.risk) : EMPTY}</TableCell>
-                              </TableRow>
-                              {open && (
-                                <TableRow className="hover:bg-transparent">
-                                  <TableCell colSpan={9} className="whitespace-normal bg-muted/20">
-                                    <ProspectCard row={row} />
-                                  </TableCell>
-                                </TableRow>
-                              )}
-                            </Fragment>
-                          );
-                        })
-                      )}
-                    </TableBody>
-                  </Table>
-                </div>
+                <ProspectList key={key} rows={rows} sort={filters.sort} empty={`No ${noun} match.`} />
                 {status}
                 {state == null && rows.length < total && (
                   <button

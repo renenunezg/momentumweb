@@ -86,7 +86,7 @@ async function attachSeasonStats(rows: ProspectRow[]): Promise<void> {
     .select("player_id, season, levels, stats")
     .eq("pool", "prospect")
     .in("player_id", rows.map((row) => row.player_id))
-    .limit(PROSPECT_PAGE)
+    .limit(rows.length)
     .abortSignal(AbortSignal.timeout(10_000));
   if (res.error) throw new Error(`Prospect season stats read failed: ${res.error.message}`);
   const byId = new Map((res.data ?? []).map((row) => [row.player_id, seasonStatsLine(row)]));
@@ -120,6 +120,26 @@ export async function fetchProspectPage(filters: ProspectFilters, offset: number
     rows,
     total: offset === 0 ? (res.count ?? null) : null,
   };
+}
+
+const TOP_PROSPECTS = 100;
+
+// The hundred best prospects, batters and pitchers together, by peak grade
+// with trade value breaking ties; ungraded rows never qualify.
+export async function fetchTopProspects(): Promise<ProspectRow[]> {
+  const res = await supabase
+    .from("prospect_values")
+    .select(COLUMNS)
+    .not("peak_grade", "is", null)
+    .order("peak_grade", { ascending: false })
+    .order("trade_value_musd", { ascending: false, nullsFirst: false })
+    .order("player_id", { ascending: true })
+    .limit(TOP_PROSPECTS)
+    .abortSignal(AbortSignal.timeout(10_000));
+  if (res.error) throw new Error(`Top prospects read failed: ${res.error.message}`);
+  const rows = (res.data ?? []).map((row) => toRow(row as Record<string, unknown>));
+  await attachSeasonStats(rows);
+  return rows;
 }
 
 export type FarmSystemRow = Tables<"mlb", "farm_systems">;
