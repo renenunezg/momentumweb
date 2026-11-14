@@ -4,7 +4,7 @@ import type { Tables } from "@/lib/database-schema";
 
 // Pitch run value, written by mlbmodel (v2.pitch_value.publish): one jsonb row with the coverage and validation the
 // page quotes, one row per pitcher-season and one per pitcher-season and pitch type. Runs are the batting team's, so
-// negative is good for the pitcher; per-100 rates are derived here.
+// negative is good for the pitcher; runs saved and their per-100 rates are derived here.
 
 export type PitchValueRow = Omit<Tables<"mlb", "pitch_values">, "updated_at">;
 export type PitchTypeValueRow = Omit<Tables<"mlb", "pitch_type_values">, "updated_at">;
@@ -88,7 +88,9 @@ export const fetchPitchValue = cache(async (): Promise<PitchValueData> => {
   return { study: row.payload as unknown as PitchValueStudy, season: row.season, updatedAt: row.updated_at, pitchers, types };
 });
 
-export const per100 = (row: { runs: number; pitches: number }) => (100 * row.runs) / row.pitches;
+// The page shows runs saved, the negation, so a bigger number is better for the pitcher as it is on the batting page.
+export const runsSaved = (row: { runs: number }) => -row.runs;
+export const savedPer100 = (row: { runs: number; pitches: number }) => (-100 * row.runs) / row.pitches;
 
 // Statcast pitch type codes.
 const PITCH_NAMES: Record<string, string> = {

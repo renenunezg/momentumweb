@@ -32,7 +32,8 @@ export function BattingZonePicker({
   shares,
   className,
 }: {
-  value: BattingZone;
+  // Null while a direction is chosen instead of a zone.
+  value: BattingZone | null;
   onChange: (zone: BattingZone) => void;
   // Each zone's share of all tracked pitches.
   shares: Partial<Record<BattingZone, number>>;

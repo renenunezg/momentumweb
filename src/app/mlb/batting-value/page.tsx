@@ -53,6 +53,11 @@ export default async function MlbBattingValuePage() {
       </PageHeader>
       <PlayerSectionTabs sections={MLB_PLAYER_SECTIONS} label="Player pages" />
 
+      <p className="max-w-4xl text-sm leading-relaxed text-muted-foreground">
+        Runs each hitter added against the league average, pitch by pitch, with the difficulty of every pitch taken out.
+        Positive is better for the hitter.
+      </p>
+
       <BattingValueLeaderboard
         hitters={hitters}
         splits={splits}
@@ -80,8 +85,8 @@ export default async function MlbBattingValuePage() {
           {formatCorrelation(calls.next_runs[2])}).
         </p>
         <p>
-          Counts, Pitches and Zones are the same runs on part of his pitches, and the three never cross. The directions
-          under Zones do cross: inside and outside are the outer thirds of the plate from the hitter&apos;s side of it, up and
+          By count, By pitch and By zone are the same runs on part of his pitches, and the three never cross. The directions
+          under By zone do cross: inside and outside are the outer thirds of the plate from the hitter&apos;s side of it, up and
           down the outer thirds of his own strike zone, each running on past the edge, so a pitch up and in counts in both.
           Two strikes is every
           two-strike count, hitter ahead is 1-0, 2-0, 3-0, 2-1 and 3-1, and first pitch is 0-0. The counts where he is behind or

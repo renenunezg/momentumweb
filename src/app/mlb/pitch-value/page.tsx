@@ -53,7 +53,7 @@ export default async function MlbPitchValuePage() {
       <PlayerSectionTabs sections={MLB_PLAYER_SECTIONS} label="Player pages" />
 
       <p className="max-w-4xl text-sm leading-relaxed text-muted-foreground">
-        Runs each pitcher saved or gave away, pitch by pitch. Negative is better for the pitcher.
+        Runs each pitcher saved against an average pitcher, pitch by pitch. Positive is better for the pitcher.
       </p>
 
       <PitchValueLeaderboard
