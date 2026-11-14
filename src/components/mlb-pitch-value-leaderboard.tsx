@@ -234,7 +234,10 @@ function PitcherComparison({
       { label: "Pitches", values: pair((p) => count(p.pitches)) },
     ]],
     ["Pitches both throw", rows(codes.filter((c) => throws(0, c) && throws(1, c)))],
-    ["Pitches only one throws", rows(codes.filter((c) => throws(0, c) !== throws(1, c)))],
+    ...([0, 1] as const).map((i): [string, ComparisonMetric[]] => [
+      `Only ${surname(pitchers[i].player_name)} throws`,
+      rows(codes.filter((c) => throws(i, c) && !throws(i === 0 ? 1 : 0, c))),
+    ]),
   ];
   return (
     <section aria-label="Pitcher comparison" className="space-y-4 rounded-lg border border-rule-strong p-4">
@@ -417,7 +420,7 @@ export function PitchValueLeaderboard({
   return (
     <div className="space-y-section">
     <div className="space-y-2">
-      <p className="type-eyebrow text-muted-foreground">Best of each pitch, {count(leaderFloor)}+ thrown. Tap one to rank that pitch.</p>
+      <p className="type-eyebrow text-muted-foreground">Best of each pitch</p>
       <PositionLeaderTabs label="Pitch type" options={pitchLeaders} value={view === "types" ? pitchType : null} onChange={choosePitch} />
     </div>
     <div className="space-y-3">
