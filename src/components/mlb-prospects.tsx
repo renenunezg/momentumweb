@@ -73,7 +73,7 @@ function identity(row: ProspectRow) {
       athleteId={String(row.player_id)}
       headshotUrl={row.headshot_url}
       name={name}
-      team={[row.org, row.team].filter(Boolean).join(" · ") || "Unassigned"}
+      team={[row.org, levelLabel(row.level), row.team].filter(Boolean).join(" · ") || "Unassigned"}
       position={row.position_group}
       logo={mlbTeamIdentity(row.org)}
       headshotFallback={<TeamLogo team={mlbTeamIdentity(row.org)} name={row.org ?? name} className="h-6 w-6" />}
@@ -406,7 +406,6 @@ function ProspectList({ rows, sort, empty }: { rows: ProspectRow[]; sort: Prospe
             <TableRow className="type-eyebrow [&>th]:text-muted-foreground">
               <TableHead className="w-8">#</TableHead>
               <TableHead>Player</TableHead>
-              <TableHead>Level</TableHead>
               <TableHead>Age</TableHead>
               <TableHead aria-sort={sort === "grade" ? "descending" : undefined}>
                 Peak grade <InfoTip text={PEAK_GRADE_TIP} label="What is Peak grade?" className="ml-1" />
@@ -428,7 +427,7 @@ function ProspectList({ rows, sort, empty }: { rows: ProspectRow[]; sort: Prospe
           <TableBody>
             {rows.length === 0 ? (
               <TableRow>
-                <TableCell colSpan={9} className="text-sm text-muted-foreground">{empty}</TableCell>
+                <TableCell colSpan={8} className="text-sm text-muted-foreground">{empty}</TableCell>
               </TableRow>
             ) : (
               rows.map((row, i) => {
@@ -443,7 +442,6 @@ function ProspectList({ rows, sort, empty }: { rows: ProspectRow[]; sort: Prospe
                     >
                       <TableCell className="font-mono text-xs text-muted-foreground">{i + 1}</TableCell>
                       <TableCell className="min-w-56 max-w-72">{identity(row)}</TableCell>
-                      <TableCell className="font-mono text-xs">{levelLabel(row.level) ?? EMPTY}</TableCell>
                       <TableCell className="font-mono tabular-nums">{row.age == null ? EMPTY : formatNumber(row.age, 1)}</TableCell>
                       <TableCell className="whitespace-nowrap font-mono tabular-nums">
                         {graded ? (
@@ -465,7 +463,7 @@ function ProspectList({ rows, sort, empty }: { rows: ProspectRow[]; sort: Prospe
                     </TableRow>
                     {open && (
                       <TableRow className="hover:bg-transparent">
-                        <TableCell colSpan={9} className="whitespace-normal bg-muted/20">
+                        <TableCell colSpan={8} className="whitespace-normal bg-muted/20">
                           <ProspectCard row={row} />
                         </TableCell>
                       </TableRow>
