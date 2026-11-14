@@ -1,7 +1,7 @@
 "use client";
 
 import type { FarmSystemRow } from "@/lib/mlb-prospects";
-import { FARM_GRADE_50_TIP, FARM_REGULARS_TIP, FARM_TOP30_TIP, FARM_TOTAL_TIP } from "@/lib/prospect-values";
+import { FARM_BEST_TIP, FARM_GRADE_50_TIP, FARM_REGULARS_TIP, FARM_TOP30_TIP, FARM_TOTAL_TIP } from "@/lib/prospect-values";
 import { formatMillions } from "@/lib/player-values";
 import { mlbTeamIdentity } from "@/lib/mlb-teams";
 import { EMPTY, formatNumber } from "@/lib/utils";
@@ -31,9 +31,11 @@ export default function MlbFarmSystems({ rows, onSelectOrg }: { rows: FarmSystem
           <TableHead aria-sort="descending">
             Top 30 <InfoTip text={FARM_TOP30_TIP} label="What is Top 30?" className="ml-1" />
           </TableHead>
-          <TableHead className="hidden sm:table-cell">Best prospect</TableHead>
-          <TableHead className="text-right">
-            Regulars <InfoTip text={FARM_REGULARS_TIP} label="What is Regulars?" className="ml-1" />
+          <TableHead className="hidden sm:table-cell">
+            Best prospect <InfoTip text={FARM_BEST_TIP} label="What is Best prospect?" className="ml-1" />
+          </TableHead>
+          <TableHead className="whitespace-normal text-right leading-tight">
+            Expected regulars <InfoTip text={FARM_REGULARS_TIP} label="What is Expected regulars?" className="ml-1" />
           </TableHead>
           <TableHead className="hidden text-right md:table-cell">
             50+ <InfoTip text={FARM_GRADE_50_TIP} label="What is 50+?" className="ml-1" />
@@ -74,7 +76,13 @@ export default function MlbFarmSystems({ rows, onSelectOrg }: { rows: FarmSystem
                   <span>
                     {row.best_player_name}
                     <span className="ml-2 font-mono text-[11px] text-muted-foreground">
-                      {[row.best_position_group, formatMillions(row.best_value_musd)].filter(Boolean).join(" · ")}
+                      {[
+                        row.best_position_group,
+                        row.best_peak_grade == null ? null : formatNumber(row.best_peak_grade, 0),
+                        formatMillions(row.best_value_musd),
+                      ]
+                        .filter(Boolean)
+                        .join(" · ")}
                     </span>
                   </span>
                 ) : (

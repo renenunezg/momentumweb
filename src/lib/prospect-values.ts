@@ -154,6 +154,8 @@ export const PROSPECT_TRADE_VALUE_TIP =
 export const FARM_TOP30_TIP =
   "Trade value of the organization's 30 most valuable prospects, added up. It sets the order: past thirty, prospects rarely reach the majors.";
 
+export const FARM_BEST_TIP = "The organization's highest peak grade, with his position, grade, and trade value.";
+
 export const FARM_TOTAL_TIP = "Trade value of every prospect in the organization, the deep end included.";
 
 export const FARM_REGULARS_TIP = "How many of the top 30 are expected to become regulars: their chances of a 2.0-WAR season added up.";

@@ -4547,6 +4547,7 @@ export type Database = {
         Row: {
           as_of: string | null
           best_headshot_url: string | null
+          best_peak_grade: number | null
           best_player_id: number | null
           best_player_name: string | null
           best_position_group: string | null
