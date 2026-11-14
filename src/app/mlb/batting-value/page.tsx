@@ -82,7 +82,7 @@ export default async function MlbBattingValuePage() {
         hitters={hitters}
         splits={splits}
         pitchTypes={pitchTypes}
-        repeats={{ ...study.counts.values, ...study.pitch_types.values }}
+        repeats={{ ...study.counts.values, ...study.pitch_types.values, ...study.directions?.values }}
         season={season}
         minimumPa={study.min_pa}
       />
@@ -105,10 +105,13 @@ export default async function MlbBattingValuePage() {
           {formatCorrelation(calls.next_runs[2])}).
         </p>
         <p>
-          Counts, Pitches and Zones are the same runs on part of his pitches, and the three never cross. Two strikes is every
+          Counts, Pitches and Zones are the same runs on part of his pitches, and the three never cross. The directions
+          under Zones do cross: inside and outside are the outer thirds of the plate from the hitter&apos;s side of it, up and
+          down the outer thirds of his own strike zone, each running on past the edge, so a pitch up and in counts in both.
+          Two strikes is every
           two-strike count, hitter ahead is 1-0, 2-0, 3-0, 2-1 and 3-1, and first pitch is 0-0. The counts where he is behind or
           even are not listed, because what he does there only restates his overall level. The published study checks the count
-          situations and the pitch types; pitch groups and zones are listed without that check. Splits leave out the few
+          situations, the pitch types and the directions; pitch groups and zones are listed without that check. Splits leave out the few
           pitches with no tracked location or an unusual pitch type, so they do not sum exactly to the total.
         </p>
         <p>

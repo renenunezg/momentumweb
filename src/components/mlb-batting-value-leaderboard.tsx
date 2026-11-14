@@ -9,7 +9,7 @@ import { PlayerCell } from "@/components/player-cell";
 import { ToggleGroup } from "@/components/toggle-group";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import {
-  BATTING_OPENING_PA, COUNT_SPLITS, PITCH_GROUP_SPLITS, ZONE_SPLITS, battingSplitLabel, battingTotal, formatCorrelation,
+  BATTING_OPENING_PA, COUNT_SPLITS, DIRECTION_SPLITS, PITCH_GROUP_SPLITS, ZONE_SPLITS, battingSplitLabel, battingTotal, formatCorrelation,
   type BattingHitter, type BattingPart, type BattingParts, type BattingSplit, type BattingSplitRepeat, type Interval,
 } from "@/lib/mlb-batting-value";
 import { mlbTeamIdentity } from "@/lib/mlb-teams";
@@ -121,6 +121,10 @@ const SPLIT_NOTES: Record<string, string> = {
   shadow: "The edges of the zone, just inside and just outside its border.",
   chase: "Off the plate, close enough to tempt a swing.",
   waste: "Far from the zone.",
+  inside: "The third of the plate nearest the hitter, and everything off the plate on that side.",
+  away: "The third of the plate farthest from the hitter, and everything off the plate on that side.",
+  up: "The top third of his strike zone, and everything above it.",
+  down: "The bottom third of his strike zone, and everything below it.",
 };
 
 const interval = ([value, low, high]: Interval) => `${formatCorrelation(value)} (${formatCorrelation(low)} to ${formatCorrelation(high)})`;
@@ -165,7 +169,7 @@ export function BattingValueLeaderboard({
     return {
       counts: [set("Count", COUNT_SPLITS)],
       pitches: [set("Pitch group", PITCH_GROUP_SPLITS), set("Pitch type", pitchTypes)],
-      zones: [set("Zone", ZONE_SPLITS)],
+      zones: [set("Zone", ZONE_SPLITS), set("Direction", DIRECTION_SPLITS)],
     };
   }, [splits, pitchTypes]);
 
@@ -181,7 +185,8 @@ export function BattingValueLeaderboard({
 
   const split = view === "hitters" ? null : (chosen[view] ?? options[view][0].options[0]?.key ?? null);
   const columns = COLUMNS[view];
-  const zone = view === "zones" && split ? (split as BattingZone) : null;
+  const zone = view === "zones" && (ZONE_SPLITS as readonly string[]).includes(split ?? "") ? (split as BattingZone) : null;
+  const directions = options.zones[1].options;
 
   // Each hitter's runs per 100 pitches in every zone, and each zone's share of all the listed hitters' pitches.
   const zoneData = useMemo(() => {
@@ -292,6 +297,21 @@ export function BattingValueLeaderboard({
                 <p className="type-subsection text-foreground">{battingSplitLabel(zone)}</p>
                 {note && <p>{note}</p>}
                 <p>The small map on each row is that hitter&apos;s runs per 100 pitches in all four zones: green above the league and red below, shaded against other hitters in the same zone, with the zone chosen here outlined.</p>
+                {directions.length > 0 && (
+                  <div className="flex flex-wrap items-center gap-x-2 gap-y-1.5">
+                    <span>Or by direction:</span>
+                    <ToggleGroup
+                      variant="chip"
+                      label="Direction"
+                      options={directions}
+                      value={split}
+                      onChange={(key) => {
+                        setChosen({ ...chosen, zones: key });
+                        setPage(0);
+                      }}
+                    />
+                  </div>
+                )}
               </div>
             </div>
           ) : (

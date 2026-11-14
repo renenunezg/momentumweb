@@ -31,11 +31,15 @@ export const BATTING_OPENING_PA = 350;
 export const COUNT_SPLITS = ["two_strikes", "ahead", "first_pitch"] as const;
 export const PITCH_GROUP_SPLITS = ["fastball", "breaking", "offspeed"] as const;
 export const ZONE_SPLITS = ["heart", "shadow", "chase", "waste"] as const;
+// The outer thirds of the plate, from the hitter's side of it, and of his own strike zone, each running on past the edge.
+// Unlike the zones these cross: a pitch up and in is in both Up and Inside.
+export const DIRECTION_SPLITS = ["inside", "away", "up", "down"] as const;
 
 const SPLIT_LABELS: Record<string, string> = {
   two_strikes: "Two strikes", ahead: "Hitter ahead", first_pitch: "First pitch",
   fastball: "Fastballs", breaking: "Breaking balls", offspeed: "Offspeed",
   heart: "Heart", shadow: "Shadow", chase: "Chase", waste: "Waste",
+  inside: "Inside", away: "Outside", up: "Up", down: "Down",
 };
 // Any other split code is a Statcast pitch type.
 export const battingSplitLabel = (code: string) => SPLIT_LABELS[code] ?? pitchName(code);
@@ -74,6 +78,8 @@ export interface BattingValueStudy {
   parts: { pa: number; pairs: number; measures: Record<BattingMeasure, { repeat: Interval; next_runs: Interval }> };
   counts: { pitches: number; values: Record<string, BattingSplitRepeat> };
   pitch_types: { pitches: number; values: Record<string, BattingSplitRepeat> };
+  // Absent from a study published before the directions were added.
+  directions?: { pitches: number; values: Record<string, BattingSplitRepeat> };
 }
 
 export interface BattingValueData {

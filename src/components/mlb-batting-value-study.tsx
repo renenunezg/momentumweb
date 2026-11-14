@@ -3,7 +3,7 @@ import { BATTING_PART_FILL } from "@/components/mlb-batting-parts-bar";
 import { PageSection } from "@/components/page-layout";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import {
-  BATTING_PARTS, BATTING_PART_LABELS, COUNT_SPLITS, battingSplitLabel, formatCorrelation, leadSide,
+  BATTING_PARTS, BATTING_PART_LABELS, COUNT_SPLITS, DIRECTION_SPLITS, battingSplitLabel, formatCorrelation, leadSide,
   type BattingMeasure, type BattingValueStudy, type Interval, type LeadSide,
 } from "@/lib/mlb-batting-value";
 import { cn, describeGap, formatSigned } from "@/lib/utils";
@@ -111,6 +111,10 @@ export function BattingValueStudySection({ study, pitchTypes }: { study: Batting
   const listed = [
     ...COUNT_SPLITS.filter((code) => study.counts.values[code]).map((code) => [code, study.counts.values[code]] as const),
     ...pitchTypes.map((code) => [code, study.pitch_types.values[code]] as const),
+    ...DIRECTION_SPLITS.flatMap((code) => {
+      const found = study.directions?.values[code];
+      return found ? [[code, found] as const] : [];
+    }),
   ];
   const split = (field: "repeat" | "vs_rest"): PlotRow[] =>
     listed.map(([code, found]) => ({ key: code, label: battingSplitLabel(code), interval: found[field] }));
@@ -206,7 +210,7 @@ export function BattingValueStudySection({ study, pitchTypes }: { study: Batting
           <IntervalPlot title="Link to next season's batting runs" rows={measure("next_runs")} />
         </div>
         <p className="max-w-3xl text-sm leading-relaxed">
-          A count or a pitch type is a fraction of a hitter&apos;s pitches, so it repeats less than his season does.
+          A count, a pitch type or a direction is a fraction of a hitter&apos;s pitches, so it repeats less than his season does.
           {generalLevel.length > 0 &&
             ` ${list(generalLevel)} ${generalLevel.length > 1 ? "values mostly reflect" : "value mostly reflects"} a hitter's general level: his gap to his other pitches is not shown to repeat.`}
         </p>
@@ -217,8 +221,8 @@ export function BattingValueStudySection({ study, pitchTypes }: { study: Batting
         <p className="max-w-3xl text-xs leading-relaxed text-muted-foreground">
           Correlations with 95% intervals from resampling hitters; a hollow point is one whose interval reaches zero. Parts:
           hitters with {study.parts.pa} or more plate appearances in both seasons, {study.parts.pairs.toLocaleString("en-US")} pairs.
-          Splits: {study.counts.pitches} or more pitches in the count, or {study.pitch_types.pitches} or more of the pitch type, in
-          both seasons.
+          Splits: {study.counts.pitches} or more pitches in the count{study.directions ? " or the direction" : ""}, or{" "}
+          {study.pitch_types.pitches} or more of the pitch type, in both seasons.
         </p>
       </PageSection>
     </>
