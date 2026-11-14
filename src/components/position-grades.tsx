@@ -32,7 +32,8 @@ import { SeasonStatsPanel } from "@/components/season-stats-panel";
 import { footballSeasonStats } from "@/lib/football-season-stats";
 import { TeamLogo, type TeamLogoSource } from "@/components/team-logo";
 import { PlayerComparisonPicker } from "@/components/player-comparison-picker";
-import { ToggleGroup } from "@/components/toggle-group";
+import { PositionLeaderTabs, gradeFill, surname, type PositionLeader } from "@/components/position-leader-tabs";
+import { cfbPlayerHeadshotUrl } from "@/lib/player-headshots";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 
 const ALL = "all";
@@ -692,11 +693,8 @@ export default function PositionGrades({
   teams: GradeTeam[];
 }) {
   const copy = SPORT_COPY[sport];
-  const positions = POSITION_ORDER.filter((key) => index.some((row) => row.positionGroup === key)).map((key) => ({
-    key,
-    label: key,
-  }));
-  const [position, setPosition] = useState<PositionGroup>(positions[0]?.key ?? "QB");
+  const positions = useMemo(() => POSITION_ORDER.filter((key) => index.some((row) => row.positionGroup === key)), [index]);
+  const [position, setPosition] = useState<PositionGroup>(positions[0] ?? "QB");
   const [group, setGroup] = useState<string>(ALL);
   const [query, setQuery] = useState("");
   const search = useDeferredValue(query.trim().toLowerCase());
@@ -730,6 +728,22 @@ export default function PositionGrades({
     [index, search, position, group]
   );
   const visible = matches.slice(0, GRADE_ROWS);
+
+  // The index is ranked best grade first, so each position's first match is its leader.
+  const leaderOptions = useMemo(() => positions.map((key) => {
+    const row = index.find((r) => r.positionGroup === key && r.grade != null && (group === ALL || r.group === group));
+    if (!row) return { key, leader: null };
+    const unit = isUnitRow(row.athleteId);
+    const leader: PositionLeader = {
+      name: unit ? `${row.team} offensive line` : row.name,
+      short: unit ? `${row.team} line` : surname(row.name),
+      image: unit ? <TeamLogo team={logoFor(row.team)} name={row.team} className="h-11 w-11" /> : undefined,
+      headshotUrl: row.headshotUrl ?? cfbPlayerHeadshotUrl(row.athleteId),
+      stat: formatNumber(row.grade, 1),
+      fill: gradeFill(row.grade),
+    };
+    return { key, leader };
+  }), [positions, index, group, logoFor]);
 
   useEffect(() => {
     const wanted = [...visible.map((row) => row.athleteId), ...compare];
@@ -816,40 +830,41 @@ export default function PositionGrades({
 
   return (
     <div className="space-y-section">
-      <PlayerComparisonPicker players={comparisonPlayers} selected={compare} onChange={setCompare} description="Choose two players at the same position." disclosure={{ open: compareOpen, onOpenChange: setCompareOpen }} />
-      <div className="grid grid-cols-2 gap-3 sm:flex sm:flex-wrap sm:items-center">
-        <div className="col-span-2 min-w-0 overflow-x-auto">
-        <ToggleGroup
+      <div className="space-y-3">
+        <PositionLeaderTabs
           label="Position"
-          options={positions}
-          value={position}
+          options={leaderOptions}
+          value={search ? null : position}
           onChange={(next) => {
             setPosition(next);
+            setQuery("");
             setCompare([]);
           }}
         />
+        <div className="grid grid-cols-2 gap-3 sm:flex sm:flex-wrap sm:items-center">
+          <select
+            aria-label={copy.groupLabel}
+            value={group}
+            onChange={(e) => setGroup(e.target.value)}
+            className="h-10 min-w-0 rounded-md border border-input bg-background px-2 text-sm"
+          >
+            {groups.map((option) => (
+              <option key={option.key} value={option.key}>
+                {option.label}
+              </option>
+            ))}
+          </select>
+          <input
+            type="search"
+            value={query}
+            onChange={(e) => setQuery(e.target.value)}
+            placeholder="Search player or team"
+            aria-label="Search player or team"
+            className="h-10 w-full min-w-0 rounded-md border border-input bg-background px-2 text-sm sm:w-56"
+          />
         </div>
-        <select
-          aria-label={copy.groupLabel}
-          value={group}
-          onChange={(e) => setGroup(e.target.value)}
-          className="h-10 min-w-0 rounded-md border border-input bg-background px-2 text-sm"
-        >
-          {groups.map((option) => (
-            <option key={option.key} value={option.key}>
-              {option.label}
-            </option>
-          ))}
-        </select>
-        <input
-          type="search"
-          value={query}
-          onChange={(e) => setQuery(e.target.value)}
-          placeholder="Search player or team"
-          aria-label="Search player or team"
-          className="h-10 w-full min-w-0 rounded-md border border-input bg-background px-2 text-sm sm:w-56"
-        />
       </div>
+      <PlayerComparisonPicker players={comparisonPlayers} selected={compare} onChange={setCompare} description="Choose two players at the same position." disclosure={{ open: compareOpen, onOpenChange: setCompareOpen }} />
       <p className="flex items-center gap-1.5 font-mono text-xs text-muted-foreground">
         {search
           ? `${matches.length} player${matches.length === 1 ? "" : "s"} match “${query.trim()}”${group === ALL ? "" : ` in the ${group}`}, best grade first`

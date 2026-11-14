@@ -1,6 +1,7 @@
 import { supabase } from "@/lib/supabase";
 import type { Tables } from "@/lib/database-schema";
 import { seasonStatsLine, type SeasonStatsLine } from "@/lib/season-stats";
+import { MLB_POSITION_ORDER } from "@/lib/player-values";
 import { PROSPECT_PAGE, prospectSearchRegex, rolePositions, type ProspectFilters, type ProspectSort } from "@/lib/prospect-values";
 
 // The prospect table, written weekly by mlbmodel: about 8,500 rows, so neither
@@ -26,11 +27,13 @@ export interface ProspectPage {
   total: number | null;
 }
 
+export type ProspectLeader = Pick<ProspectRow, "player_id" | "player_name" | "org" | "position_group" | "headshot_url" | "trade_value_musd">;
+
 export interface ProspectSummary {
   updatedAt: string | null;
   season: number | null;
-  graded: number;
-  topGrade: Pick<ProspectRow, "player_name" | "org" | "position_group" | "peak_grade"> | null;
+  // The most valuable prospect at each position, in MLB_POSITION_ORDER.
+  leaders: ProspectLeader[];
 }
 
 const TRAIT_COUNT = 9;
@@ -119,24 +122,34 @@ export async function fetchProspectPage(filters: ProspectFilters, offset: number
   };
 }
 
+// One keyed read per position: the table's single most valuable row there.
 export async function fetchProspectSummary(): Promise<ProspectSummary> {
   const signal = AbortSignal.timeout(10_000);
-  const [gradedRes, topRes] = await Promise.all([
-    supabase.from("prospect_values").select("player_id", { count: "exact", head: true }).not("peak_grade", "is", null).abortSignal(signal),
-    supabase
-      .from("prospect_values")
-      .select("player_name, org, position_group, peak_grade, season, updated_at")
-      .order("peak_grade", { ascending: false, nullsFirst: false })
-      .limit(1)
-      .abortSignal(signal),
-  ]);
-  if (gradedRes.error) throw new Error(`Prospect count failed: ${gradedRes.error.message}`);
-  if (topRes.error) throw new Error(`Prospect summary failed: ${topRes.error.message}`);
-  const top = topRes.data?.[0] ?? null;
+  const results = await Promise.all(
+    MLB_POSITION_ORDER.map((position) =>
+      supabase
+        .from("prospect_values")
+        .select("player_id, player_name, org, position_group, headshot_url, trade_value_musd, season, updated_at")
+        .eq("position_group", position)
+        .not("trade_value_musd", "is", null)
+        .order("trade_value_musd", { ascending: false })
+        .limit(1)
+        .abortSignal(signal)
+    )
+  );
+  const failed = results.find((res) => res.error);
+  if (failed?.error) throw new Error(`Prospect leaders read failed: ${failed.error.message}`);
+  const rows = results.flatMap((res) => res.data ?? []);
   return {
-    updatedAt: top?.updated_at ?? null,
-    season: top?.season ?? null,
-    graded: gradedRes.count ?? 0,
-    topGrade: top?.peak_grade != null ? top : null,
+    updatedAt: rows[0]?.updated_at ?? null,
+    season: rows[0]?.season ?? null,
+    leaders: rows.map((row) => ({
+      player_id: row.player_id,
+      player_name: row.player_name,
+      org: row.org,
+      position_group: row.position_group,
+      headshot_url: row.headshot_url,
+      trade_value_musd: row.trade_value_musd,
+    })),
   };
 }

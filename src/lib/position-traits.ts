@@ -8,10 +8,10 @@ export type GradeSport = "cfb" | "nfl";
 export const POSITION_ORDER = ["QB", "RB", "WR", "TE", "OL", "DL", "LB", "DB", "P"] as const;
 export type PositionGroup = (typeof POSITION_ORDER)[number];
 
-export const GRADE_TIP =
+const GRADE_TIP =
   "Projected talent on a 20 to 80 scale among qualified FBS players at the position this week. 50 is average; 10 points is one standard deviation. Quarterback, running back and defensive back grades include the talent level of the player's program. Early in the season, grades at every position except defensive back, offensive line and punter lean on last season's final grade, with a weight that fades to zero by week 13. ± shows uncertainty.";
 
-export const WAR_TIP =
+const WAR_TIP =
   "Estimated wins above a replacement-level player at the position: points above replacement from opponent-adjusted play credit, at the league rate of about 50 points per win. Defensive value is understated because only tagged disruptions count.";
 
 const NFL_GRADE_TIP =

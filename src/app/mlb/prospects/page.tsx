@@ -1,12 +1,9 @@
 import { PageDescription, PageHeader, PageShell, PageTitle, PageMeta } from "@/components/page-layout";
 import type { Metadata } from "next";
 import { fetchProspectPage, fetchProspectSummary } from "@/lib/mlb-prospects";
-import { DEFAULT_PROSPECT_FILTERS, PEAK_GRADE_TIP, PROSPECT_TRADE_VALUE_TIP } from "@/lib/prospect-values";
-import { formatMillions } from "@/lib/player-values";
-import { formatNumber } from "@/lib/utils";
-import { KpiCard } from "@/components/kpi-card";
 import { LastUpdated } from "@/components/last-updated";
 import MlbProspects from "@/components/mlb-prospects";
+import { DEFAULT_PROSPECT_FILTERS } from "@/lib/prospect-values";
 
 // Every read here is expired by the revalidation webhook when its table is
 // published, and nothing on the page depends on the clock, so the week is only
@@ -38,12 +35,6 @@ export default async function MlbProspectsPage() {
     );
   }
 
-  const topValue =
-    [hitters.rows[0], pitchers.rows[0]]
-      .filter((row) => row?.trade_value_musd != null)
-      .sort((a, b) => (b.trade_value_musd ?? 0) - (a.trade_value_musd ?? 0))[0] ?? null;
-  const top = summary.topGrade;
-
   return (
     <PageShell>
       <PageHeader>
@@ -64,31 +55,7 @@ export default async function MlbProspectsPage() {
         Expected peak, chance of sticking, and trade value for every rookie-eligible player in the minors.
       </p>
 
-      <div className="grid grid-cols-3 gap-3 border-y border-rule-strong [&>div]:py-3 sm:gap-4">
-        <KpiCard
-          compact
-          label="Top peak grade"
-          value={top?.player_name ?? "–"}
-          sub={top ? `${top.org ?? "–"} · ${top.position_group} · ${formatNumber(top.peak_grade, 0)} grade` : "no graded prospects"}
-          tooltip={PEAK_GRADE_TIP}
-        />
-        <KpiCard
-          compact
-          label="Trade value"
-          value={topValue?.player_name ?? "–"}
-          sub={topValue ? `${topValue.org ?? "–"} · ${topValue.position_group} · ${formatMillions(topValue.trade_value_musd)}` : "no graded prospects"}
-          tooltip={PROSPECT_TRADE_VALUE_TIP}
-        />
-        <KpiCard
-          compact
-          label="Graded"
-          value={formatNumber(summary.graded, 0)}
-          sub={`of ${formatNumber(total, 0)} prospects`}
-          tooltip="Prospects with enough playing time in the last three seasons. Pitcher grades come from a model that has not yet beaten its baseline on the validation check; read them as provisional."
-        />
-      </div>
-
-      <MlbProspects initial={{ hitter: hitters, pitcher: pitchers }} />
+      <MlbProspects initial={{ hitter: hitters, pitcher: pitchers }} leaders={summary.leaders} />
     </PageShell>
   );
 }

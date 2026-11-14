@@ -1,7 +1,7 @@
 "use client";
 
 import { Fragment, useEffect, useEffectEvent, useMemo, useState } from "react";
-import type { ProspectPage, ProspectRow } from "@/lib/mlb-prospects";
+import type { ProspectLeader, ProspectPage, ProspectRow } from "@/lib/mlb-prospects";
 import {
   CONTROL_TIP,
   DEFAULT_PROSPECT_FILTERS,
@@ -31,7 +31,7 @@ import {
   type ProspectRole,
   type ProspectSort,
 } from "@/lib/prospect-values";
-import { formatMillions } from "@/lib/player-values";
+import { MLB_POSITION_ORDER, formatMillions } from "@/lib/player-values";
 import { mlbTeamIdentity } from "@/lib/mlb-teams";
 import { EMPTY, cn, formatNumber, formatSigned } from "@/lib/utils";
 import { InfoTip } from "@/components/info-tip";
@@ -43,6 +43,8 @@ import { PlayerRowDisclosure, PlayerRowHeader } from "@/components/player-row-di
 import { SeasonStatsPanel } from "@/components/season-stats-panel";
 import { seasonStats } from "@/lib/season-stats";
 import { TeamLogo } from "@/components/team-logo";
+import { PlayerHeadshot } from "@/components/player-headshot";
+import { PositionLeaderTabs, surname, type PositionLeader } from "@/components/position-leader-tabs";
 import { ViewTabPanel, ViewTabs } from "@/components/view-tabs";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 
@@ -368,7 +370,7 @@ function ProspectComparison({ suggestions }: { suggestions: ProspectRow[] }) {
 
 type LoadState = "loading" | "failed";
 
-export default function MlbProspects({ initial }: { initial: Record<ProspectRole, ProspectPage> }) {
+export default function MlbProspects({ initial, leaders }: { initial: Record<ProspectRole, ProspectPage>; leaders: ProspectLeader[] }) {
   const [filters, setFilters] = useState<ProspectFilters>(DEFAULT_PROSPECT_FILTERS);
   // Every filter set already fetched, so going back to one costs no request.
   const [results, setResults] = useState<Record<string, { rows: ProspectRow[]; total: number }>>(() =>
@@ -436,6 +438,37 @@ export default function MlbProspects({ initial }: { initial: Record<ProspectRole
     });
   };
 
+  // Fixed league-wide leaders: the list is paged on the server, so the tiles
+  // cannot follow the organization, level and sort filters.
+  const maxValue = Math.max(0, ...leaders.map((row) => row.trade_value_musd ?? 0));
+  const leaderOptions = MLB_POSITION_ORDER.map((key) => {
+    const row = leaders.find((r) => r.position_group === key);
+    const value = row?.trade_value_musd ?? null;
+    const leader: PositionLeader | null = row == null || value == null ? null : {
+      name: row.player_name ?? String(row.player_id),
+      short: surname(row.player_name ?? String(row.player_id)),
+      image: (
+        <PlayerHeadshot
+          name={row.player_name ?? String(row.player_id)}
+          src={row.headshot_url}
+          className="h-11 w-11"
+          fallback={<TeamLogo team={mlbTeamIdentity(row.org)} name={row.org ?? ""} className="h-7 w-7" />}
+        />
+      ),
+      headshotUrl: row.headshot_url,
+      stat: formatMillions(value, 0),
+      fill: maxValue > 0 ? Math.max(0, (value / maxValue) * 100) : null,
+      tone: value >= 0 ? "positive" : "destructive",
+    };
+    return { key, leader };
+  });
+  // Choosing a position also picks its role; choosing it again shows every position.
+  const choosePosition = (position: string) => {
+    if (filters.position === position && !filters.search) return update({ position: null });
+    setQuery("");
+    update({ position, role: isPitcherGroup(position) ? "pitcher" : "hitter", search: null });
+  };
+
   const rows = current?.rows ?? [];
   const total = current?.total ?? 0;
   const role = filters.role ?? "hitter";
@@ -457,6 +490,12 @@ export default function MlbProspects({ initial }: { initial: Record<ProspectRole
 
   return (
     <div className="min-w-0 space-y-section">
+      <div className="space-y-2">
+        <p className="type-eyebrow inline-flex items-center gap-1 text-muted-foreground">
+          Most valuable by position <InfoTip text={PROSPECT_TRADE_VALUE_TIP} label="What is trade value?" />
+        </p>
+        <PositionLeaderTabs label="Position" options={leaderOptions} value={filters.search ? null : filters.position} onChange={choosePosition} />
+      </div>
       <ProspectComparison suggestions={rows} />
       <ViewTabs label="Prospect role" options={PROSPECT_ROLES} value={role} onValueChange={(next) => update({ role: next, position: null })}>
         <ViewTabPanel value={role} className="space-y-section">

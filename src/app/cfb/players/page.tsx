@@ -2,11 +2,8 @@ import { PageDescription, PageHeader, PageShell, PageTitle, PageMeta } from "@/c
 import { PlayerSectionTabs } from "@/components/player-section-tabs";
 import type { Metadata } from "next";
 import { fetchGradeTeams, fetchPositionGrades } from "@/lib/cfb";
-import { formatNumber, formatSigned } from "@/lib/utils";
-import { KpiCard } from "@/components/kpi-card";
 import { LastUpdated } from "@/components/last-updated";
 import PositionGrades from "@/components/position-grades";
-import { GRADE_TIP, WAR_TIP } from "@/lib/position-traits";
 
 // Every read here is expired by the revalidation webhook when its table is
 // published, and nothing on the page depends on the clock, so the week is only
@@ -38,12 +35,6 @@ export default async function PlayersPage() {
     );
   }
 
-  const topQb = index.find((row) => row.positionGroup === "QB" && row.grade != null) ?? null;
-  const warLeader = Object.values(details)
-    .filter((p) => p.war != null)
-    .sort((a, b) => (b.war ?? 0) - (a.war ?? 0))[0] ?? null;
-  const gradedTotal = Object.values(gradedCounts).reduce((sum, n) => sum + n, 0);
-
   return (
     <PageShell>
       <PageHeader>
@@ -62,30 +53,6 @@ export default async function PlayersPage() {
       <p className="max-w-4xl text-sm text-muted-foreground leading-relaxed">
         Position-specific grades and wins above replacement.
       </p>
-
-      <div className="grid grid-cols-3 gap-3 border-y border-rule-strong [&>div]:py-3 sm:gap-4">
-        <KpiCard
-          compact
-          label="Top QB"
-          value={topQb?.name ?? "–"}
-          sub={topQb ? `${topQb.team} · ${formatNumber(topQb.grade, 1)} grade` : "no graded quarterbacks"}
-          tooltip={GRADE_TIP}
-        />
-        <KpiCard
-          compact
-          label="WAR leader"
-          value={warLeader?.name ?? "–"}
-          sub={warLeader ? `${warLeader.team} · ${formatSigned(warLeader.war, 2)} wins` : "no credited plays"}
-          tooltip={`${WAR_TIP} Leader in the initial player list.`}
-        />
-        <KpiCard
-          compact
-          label="Graded"
-          value={formatNumber(gradedTotal, 0)}
-          sub="qualified this week"
-          tooltip="Requires the week’s minimum games played (up to six) and the traits needed for the position’s grade."
-        />
-      </div>
 
       <PositionGrades
         sport="cfb"

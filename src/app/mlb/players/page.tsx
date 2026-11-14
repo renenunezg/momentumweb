@@ -1,12 +1,9 @@
 import { PageDescription, PageHeader, PageShell, PageTitle, PageMeta } from "@/components/page-layout";
 import type { Metadata } from "next";
 import { fetchPlayerValues } from "@/lib/mlb-players";
-import { formatNumber } from "@/lib/utils";
-import { KpiCard } from "@/components/kpi-card";
 import { LastUpdated } from "@/components/last-updated";
 import MlbPlayerValues from "@/components/mlb-player-values";
 import { MLB_PLAYER_SECTIONS, PlayerSectionTabs } from "@/components/player-section-tabs";
-import { GRADE_TIP, TRADE_VALUE_TIP, formatMillions } from "@/lib/player-values";
 
 // Every read here is expired by the revalidation webhook when its table is
 // published, and nothing on the page depends on the clock, so the week is only
@@ -35,10 +32,6 @@ export default async function MlbPlayersPage() {
     );
   }
 
-  const graded = index.filter((row) => row.grade != null);
-  const top = [...graded].sort((a, b) => (b.grade ?? 0) - (a.grade ?? 0))[0] ?? null;
-  const bargain = [...graded].filter((row) => row.control_years > 0).sort((a, b) => (b.trade_value_musd ?? -Infinity) - (a.trade_value_musd ?? -Infinity))[0] ?? null;
-
   return (
     <PageShell>
       <PageHeader>
@@ -57,30 +50,6 @@ export default async function MlbPlayersPage() {
       <p className="max-w-4xl text-sm text-muted-foreground leading-relaxed">
         Projected talent, trade value, and on-field impact.
       </p>
-
-      <div className="grid grid-cols-3 gap-3 border-y border-rule-strong [&>div]:py-3 sm:gap-4">
-        <KpiCard
-          compact
-          label="Top graded"
-          value={top?.player_name ?? "–"}
-          sub={top ? `${top.team || "FA"} · ${top.position_group} · ${formatNumber(top.grade, 0)} grade` : "no graded players"}
-          tooltip={GRADE_TIP}
-        />
-        <KpiCard
-          compact
-          label="Trade value"
-          value={bargain?.player_name ?? "–"}
-          sub={bargain ? `${bargain.team || "FA"} · ${bargain.position_group} · ${formatMillions(bargain.trade_value_musd)} over ${bargain.control_years} yrs` : "no contracts"}
-          tooltip={TRADE_VALUE_TIP}
-        />
-        <KpiCard
-          compact
-          label="Graded"
-          value={formatNumber(graded.length, 0)}
-          sub={`of ${index.length} on 40-man rosters`}
-          tooltip="Requires a season-equivalent sample of 100 plate appearances or batters faced across the last three seasons."
-        />
-      </div>
 
       <MlbPlayerValues index={index} />
     </PageShell>

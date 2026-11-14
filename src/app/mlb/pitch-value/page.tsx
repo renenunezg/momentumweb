@@ -1,12 +1,11 @@
 import type { Metadata } from "next";
 import { PageDescription, PageHeader, PageMeta, PageSection, PageShell, PageTitle } from "@/components/page-layout";
 import { HowGraded } from "@/components/how-graded";
-import { KpiCard } from "@/components/kpi-card";
 import { LastUpdated } from "@/components/last-updated";
 import { PitchValueLeaderboard } from "@/components/mlb-pitch-value-leaderboard";
 import { MLB_PLAYER_SECTIONS, PlayerSectionTabs } from "@/components/player-section-tabs";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { fetchPitchValue, per100, pitchName, type PitchValueBaseline } from "@/lib/mlb-pitch-value";
+import { fetchPitchValue, type PitchValueBaseline } from "@/lib/mlb-pitch-value";
 import { formatNumber, formatSigned } from "@/lib/utils";
 
 // Every read here is expired by the revalidation webhook when its table is
@@ -40,14 +39,6 @@ export default async function MlbPitchValuePage() {
     );
   }
 
-  const names = new Map(pitchers.map((p) => [p.player_id, p]));
-  const top = [...pitchers].sort((a, b) => a.runs - b.runs)[0];
-  // Rates are compared at twice the published minimum, where a season is long enough for the rate to mean something.
-  const rateFloor = 2 * study.min_pitches;
-  const sharpest = pitchers.filter((p) => p.pitches >= rateFloor).sort((a, b) => per100(a) - per100(b))[0] ?? top;
-  const bestPitch = [...types].sort((a, b) => a.runs - b.runs)[0] ?? null;
-  const bestPitchOwner = bestPitch ? names.get(bestPitch.player_id) : undefined;
-
   return (
     <PageShell>
       <PageHeader>
@@ -62,34 +53,8 @@ export default async function MlbPitchValuePage() {
       <PlayerSectionTabs sections={MLB_PLAYER_SECTIONS} label="Player pages" />
 
       <p className="max-w-4xl text-sm leading-relaxed text-muted-foreground">
-        Every pitch moves the inning&apos;s expected runs up or down. Add those moves up and you get the runs a pitcher saved or gave
-        away, one pitch at a time and one pitch type at a time. Negative is better for the pitcher. This describes where a
-        season&apos;s runs came from; the projection of what comes next is the grade on the Grades tab.
+        Runs each pitcher saved or gave away, pitch by pitch. Negative is better for the pitcher.
       </p>
-
-      <div className="grid grid-cols-3 gap-3 border-y border-rule-strong [&>div]:py-3 sm:gap-4">
-        <KpiCard
-          compact
-          label="Most runs saved"
-          value={top.player_name}
-          sub={`${top.team} · ${formatSigned(top.runs, 0)} runs`}
-          tooltip="The lowest total against the league average this season."
-        />
-        <KpiCard
-          compact
-          label="Best per 100"
-          value={sharpest.player_name}
-          sub={`${sharpest.team} · ${formatSigned(per100(sharpest), 1)} per 100`}
-          tooltip={`The lowest runs per 100 pitches among pitchers with ${formatNumber(rateFloor, 0)} or more pitches.`}
-        />
-        <KpiCard
-          compact
-          label="Best pitch"
-          value={bestPitch && bestPitchOwner ? `${bestPitchOwner.player_name}` : "–"}
-          sub={bestPitch && bestPitchOwner ? `${pitchName(bestPitch.pitch_type)} · ${formatSigned(bestPitch.runs, 0)} runs` : "no pitch types"}
-          tooltip="The single pitch type that saved the most runs this season."
-        />
-      </div>
 
       <PitchValueLeaderboard
         pitchers={pitchers}
@@ -145,6 +110,11 @@ export default async function MlbPitchValuePage() {
       </PageSection>
 
       <HowGraded label="How this works">
+        <p>
+          Every pitch moves the inning&apos;s expected runs up or down, and these are those moves added up, per pitcher and per
+          pitch type. They describe where a season&apos;s runs came from; the projection of what comes next is the grade on the
+          Grades tab.
+        </p>
         <p>
           Method: regular-season Statcast, {study.seasons[0]} to {study.seasons[study.seasons.length - 1]}, {formatNumber(study.pitches, 0)} pitches.
           Run expectancy is measured for all 288 combinations of count, bases and outs. A pitch is worth the expectancy after it,

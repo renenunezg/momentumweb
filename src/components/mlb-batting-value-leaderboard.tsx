@@ -3,6 +3,7 @@
 import { Fragment, useDeferredValue, useMemo, useState } from "react";
 import { InfoTip } from "@/components/info-tip";
 import { BATTING_PART_FILL, BattingPartsBar, BattingPartsLegend, battingPartsExtent } from "@/components/mlb-batting-parts-bar";
+import { BattingZoneMini, BattingZonePicker, type BattingZone } from "@/components/mlb-batting-zone-map";
 import { Pager } from "@/components/pager";
 import { PlayerCell } from "@/components/player-cell";
 import { ToggleGroup } from "@/components/toggle-group";
@@ -18,7 +19,7 @@ import { cn, foldSearch, formatSigned } from "@/lib/utils";
 type View = "hitters" | "counts" | "pitches" | "zones";
 type SplitView = Exclude<View, "hitters">;
 type SortKey = "pa" | "pitches" | "runs" | "rate" | "rest" | "decision" | "contact" | "quality" | "calls";
-// Phones show three numeric columns: the totals or the three parts.
+// Below the large breakpoint the table shows three numeric columns: the totals or the three parts.
 type ColumnSet = "totals" | "parts";
 const PAGE_SIZE = 25;
 const MINIMUMS = [200, 350, 500];
@@ -180,6 +181,23 @@ export function BattingValueLeaderboard({
 
   const split = view === "hitters" ? null : (chosen[view] ?? options[view][0].options[0]?.key ?? null);
   const columns = COLUMNS[view];
+  const zone = view === "zones" && split ? (split as BattingZone) : null;
+
+  // Each hitter's runs per 100 pitches in every zone, and each zone's share of all the listed hitters' pitches.
+  const zoneData = useMemo(() => {
+    const rates = new Map<number, Partial<Record<BattingZone, number>>>();
+    const shares: Partial<Record<BattingZone, number>> = {};
+    const allPitches = hitters.reduce((sum, h) => sum + h.pitches, 0);
+    for (const z of ZONE_SPLITS) {
+      let pitchesHere = 0;
+      for (const [playerId, pitches, decision, contact, quality] of splits[z] ?? []) {
+        pitchesHere += pitches;
+        if (pitches > 0) rates.set(playerId, { ...rates.get(playerId), [z]: (100 * (decision + contact + quality)) / pitches });
+      }
+      if (allPitches > 0 && splits[z]) shares[z] = pitchesHere / allPitches;
+    }
+    return { rates, shares };
+  }, [hitters, splits]);
 
   const all = useMemo<Row[]>(() => {
     if (split == null) {
@@ -212,6 +230,18 @@ export function BattingValueLeaderboard({
   // The bars share one scale across pages, sorts and searches, so it is set by everyone who clears the minimum.
   const qualified = useMemo(() => all.filter((r) => r.pa >= minimum), [all, minimum]);
   const extent = useMemo(() => battingPartsExtent(qualified), [qualified]);
+  // Full shade at the 90th percentile of the qualified hitters' rates in each zone, so a few extremes do not wash out the rest.
+  const zoneScale = useMemo(() => {
+    const scale = {} as Record<BattingZone, number>;
+    for (const z of ZONE_SPLITS) {
+      const sizes = qualified.flatMap((r) => {
+        const v = zoneData.rates.get(r.player_id)?.[z];
+        return v == null ? [] : [Math.abs(v)];
+      }).sort((a, b) => a - b);
+      scale[z] = Math.max(0.1, sizes[Math.floor(0.9 * (sizes.length - 1))] ?? 1);
+    }
+    return scale;
+  }, [qualified, zoneData]);
   const rows = useMemo(() => {
     const filtered = search ? qualified.filter((r) => foldSearch(r.player_name).includes(search)) : [...qualified];
     return filtered.sort((a, b) => {
@@ -240,13 +270,31 @@ export function BattingValueLeaderboard({
     setPage(0);
   };
   const hiddenBelow = (c: Column) =>
-    c.from === "lg" ? "hidden lg:table-cell" : c.from === "sm" || c.set !== phoneSet ? "hidden sm:table-cell" : undefined;
+    c.from === "lg" ? "hidden lg:table-cell" : c.from === "sm" ? "hidden sm:table-cell" : c.set !== phoneSet ? "hidden lg:table-cell" : undefined;
 
   return (
     <div className="space-y-3">
       <ToggleGroup label="Leaderboard view" options={VIEWS} value={view} onChange={show} />
       {view !== "hitters" && split && (
         <div className="space-y-2">
+          {zone ? (
+            <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:gap-8">
+              <BattingZonePicker
+                value={zone}
+                shares={zoneData.shares}
+                onChange={(key) => {
+                  setChosen({ ...chosen, zones: key });
+                  setPage(0);
+                }}
+                className="max-w-56 max-sm:mx-auto max-sm:max-w-52"
+              />
+              <div className="max-w-md space-y-2 text-xs leading-relaxed text-muted-foreground">
+                <p className="type-subsection text-foreground">{battingSplitLabel(zone)}</p>
+                {note && <p>{note}</p>}
+                <p>The small map on each row is that hitter&apos;s runs per 100 pitches in all four zones: green above the league and red below, shaded against other hitters in the same zone, with the zone chosen here outlined.</p>
+              </div>
+            </div>
+          ) : (
           <div className="flex flex-wrap items-center gap-x-3 gap-y-1.5">
             {options[view].map((set, i) => (
               <Fragment key={set.label}>
@@ -264,7 +312,8 @@ export function BattingValueLeaderboard({
               </Fragment>
             ))}
           </div>
-          {note && <p className="max-w-4xl text-xs leading-relaxed text-muted-foreground">{note}</p>}
+          )}
+          {note && !zone && <p className="max-w-4xl text-xs leading-relaxed text-muted-foreground">{note}</p>}
         </div>
       )}
       <div className="flex flex-wrap items-end gap-x-4 gap-y-3">
@@ -299,7 +348,7 @@ export function BattingValueLeaderboard({
           options={COLUMN_SETS}
           value={phoneSet}
           onChange={setPhoneSet}
-          className="sm:hidden"
+          className="lg:hidden"
         />
         <span className="text-xs text-muted-foreground">
           {rows.length} hitters, {season}
@@ -328,6 +377,7 @@ export function BattingValueLeaderboard({
                 <InfoTip text={c.tip} label={`What is ${c.label}?`} className="ml-1 hidden sm:inline-flex" />
               </TableHead>
             ))}
+            {zone && <TableHead className="text-center text-muted-foreground md:hidden"><span className="type-eyebrow">Zones</span></TableHead>}
             <TableHead className="hidden pl-4 md:table-cell">
               <BattingPartsLegend className="flex-nowrap tracking-normal normal-case" />
             </TableHead>
@@ -336,7 +386,7 @@ export function BattingValueLeaderboard({
         <TableBody>
           {rows.length === 0 && (
             <TableRow>
-              <TableCell colSpan={columns.length + 3} className="py-6 text-center font-sans text-muted-foreground">
+              <TableCell colSpan={columns.length + 4} className="py-6 text-center font-sans text-muted-foreground">
                 No hitters match.
               </TableCell>
             </TableRow>
@@ -357,13 +407,21 @@ export function BattingValueLeaderboard({
                     </TableCell>
                   );
                 })}
+                {zone && (
+                  <TableCell className="md:hidden">
+                    <BattingZoneMini rates={zoneData.rates.get(r.player_id) ?? {}} selected={zone} scale={zoneScale} className="ml-auto" />
+                  </TableCell>
+                )}
                 <TableCell className="hidden pl-4 md:table-cell">
-                  <BattingPartsBar parts={r} negative={extent.negative} positive={extent.positive} className="w-52 lg:w-64" />
+                  <div className="flex items-center gap-3">
+                    {zone && <BattingZoneMini rates={zoneData.rates.get(r.player_id) ?? {}} selected={zone} scale={zoneScale} />}
+                    <BattingPartsBar parts={r} negative={extent.negative} positive={extent.positive} className="w-52 lg:w-64" />
+                  </div>
                 </TableCell>
               </TableRow>
               {/* Below the bar column's width the bar takes its own line, the full width of the table. */}
               <TableRow className="hover:bg-transparent md:hidden">
-                <TableCell colSpan={columns.length + 3} className="pt-0.5 pb-3">
+                <TableCell colSpan={columns.length + 4} className="pt-0.5 pb-3">
                   <BattingPartsBar parts={r} negative={extent.negative} positive={extent.positive} />
                 </TableCell>
               </TableRow>

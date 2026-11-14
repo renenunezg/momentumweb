@@ -24,11 +24,13 @@ import { PlayerCell } from "@/components/player-cell";
 import { PlayerComparisonPicker } from "@/components/player-comparison-picker";
 import { ComparisonGrades, ComparisonMetrics, type ComparisonMetric } from "@/components/player-comparison";
 import { ToggleGroup } from "@/components/toggle-group";
+import { PositionLeaderTabs, gradeFill, surname, type PositionLeader } from "@/components/position-leader-tabs";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { SeasonStatsPanel } from "@/components/season-stats-panel";
 import { seasonStats } from "@/lib/season-stats";
 
 const PAGE_ROWS = 40;
+const GRADED_TIP = "Graded players have a season-equivalent sample of 100 plate appearances or batters faced across the last three seasons.";
 const ALL = "all";
 const PRESETS = [
   { key: "best", label: "Best" },
@@ -391,8 +393,8 @@ function SortHeader({
 }
 
 export default function MlbPlayerValues({ index }: { index: PlayerValueIndex[] }) {
-  const positions = MLB_POSITION_ORDER.filter((key) => index.some((row) => row.position_group === key)).map((key) => ({ key, label: key }));
-  const [position, setPosition] = useState<string>(positions[0]?.key ?? "C");
+  const positions = useMemo(() => MLB_POSITION_ORDER.filter((key) => index.some((row) => row.position_group === key)), [index]);
+  const [position, setPosition] = useState<string>(positions[0] ?? "C");
   const [preset, setPreset] = useState<Preset>("best");
   const [sortKey, setSortKey] = useState<SortKey>("grade");
   const [sortDir, setSortDir] = useState<"asc" | "desc">("desc");
@@ -425,6 +427,35 @@ export default function MlbPlayerValues({ index }: { index: PlayerValueIndex[] }
       setSortDir(key === "age" || key === "per_war" ? "asc" : "desc");
     }
   };
+
+  // Each position's first row under the current preset and team, as the table
+  // would rank it. Bargain bars are relative to the most valuable leader shown.
+  const leaderOptions = useMemo(() => {
+    const score = (row: PlayerValueIndex) => (preset === "best" ? row.grade : headlineValue(row).value);
+    const leaders = positions.map((key) => {
+      let best: PlayerValueIndex | null = null;
+      for (const row of index) {
+        if (row.position_group !== key || row.grade == null || (team !== ALL && row.team !== team)) continue;
+        const value = score(row);
+        if (value != null && (best == null || value > (score(best) ?? -Infinity))) best = row;
+      }
+      return { key, row: best };
+    });
+    const maxValue = Math.max(0, ...leaders.map(({ row }) => (row ? (headlineValue(row).value ?? 0) : 0)));
+    return leaders.map(({ key, row }) => {
+      if (row == null) return { key, leader: null };
+      const value = headlineValue(row).value ?? 0;
+      const leader: PositionLeader = {
+        name: row.player_name ?? String(row.player_id),
+        short: surname(row.player_name ?? String(row.player_id)),
+        headshotUrl: row.headshot_url,
+        ...(preset === "best"
+          ? { stat: formatNumber(row.grade, 0), fill: gradeFill(row.grade) }
+          : { stat: formatMillions(value, 0), fill: maxValue > 0 ? Math.max(0, (value / maxValue) * 100) : null, tone: value >= 0 ? "positive" : "destructive" }),
+      };
+      return { key, leader };
+    });
+  }, [positions, index, preset, team]);
 
   const pitcherList = PITCHER_GROUPS.has(position);
   const matches = useMemo(() => {
@@ -498,43 +529,38 @@ export default function MlbPlayerValues({ index }: { index: PlayerValueIndex[] }
 
   return (
     <div className="min-w-0 space-y-section">
+      <div className="space-y-3">
+        <PositionLeaderTabs
+          label="Position"
+          options={leaderOptions}
+          value={search ? null : position}
+          onChange={(key) => { setPosition(key); setQuery(""); setExpanded(null); }}
+        />
+        <div className="flex flex-wrap items-center gap-3">
+          <ToggleGroup label="Sort" options={PRESETS} value={preset} onChange={choosePreset} variant="pill" />
+          <select aria-label="Team" value={team} onChange={(e) => setTeam(e.target.value)} className="h-10 min-w-0 rounded-md border border-input bg-background px-2 text-sm">
+            {teams.map((option) => (
+              <option key={option.key} value={option.key}>{option.label}</option>
+            ))}
+          </select>
+          <input
+            type="search"
+            value={query}
+            onChange={(e) => setQuery(e.target.value)}
+            placeholder="Search player or team"
+            aria-label="Search player or team"
+            className="h-10 w-full min-w-0 rounded-md border border-input bg-background px-2 text-sm sm:w-56"
+          />
+        </div>
+      </div>
       <PlayerComparisonPicker players={comparisonPlayers} selected={compare} onChange={setCompare} description="Compare two batters, starters, or relievers." disclosure={{ open: compareOpen, onOpenChange: setCompareOpen }} />
       {comparedRows.length === 2 && <MlbComparison rows={[comparedRows[0], comparedRows[1]]} loaded={loaded} failed={comparedRows.some((row) => failed[String(row.player_id)])} onRetry={() => retryDetails(comparedRows.map((row) => row.player_id))} />}
-      <div className="flex flex-wrap items-center gap-3">
-        {/* Eleven positions overflow a phone, so small screens get one select beside the team select. */}
-        <div className="hidden md:block">
-          <ToggleGroup label="Position" options={positions} value={position} onChange={(key) => { setPosition(key); setExpanded(null); }} />
-        </div>
-        <select
-          aria-label="Position"
-          value={position}
-          onChange={(e) => { setPosition(e.target.value); setExpanded(null); }}
-          className="h-8 border border-input bg-transparent px-2 font-mono text-xs md:hidden"
-        >
-          {[...positions].sort((a, b) => a.label.localeCompare(b.label)).map((option) => (
-            <option key={option.key} value={option.key}>{option.label}</option>
-          ))}
-        </select>
-        <ToggleGroup label="Sort" options={PRESETS} value={preset} onChange={choosePreset} variant="pill" />
-        <select aria-label="Team" value={team} onChange={(e) => setTeam(e.target.value)} className="h-8 border border-input bg-transparent px-2 font-mono text-xs">
-          {teams.map((option) => (
-            <option key={option.key} value={option.key}>{option.label}</option>
-          ))}
-        </select>
-        <input
-          type="search"
-          value={query}
-          onChange={(e) => setQuery(e.target.value)}
-          placeholder="Search player or team"
-          aria-label="Search player or team"
-          className="h-8 w-full border border-input bg-transparent px-2 text-sm sm:w-56"
-        />
-      </div>
       <p className="max-w-4xl text-sm text-muted-foreground leading-relaxed">
         {search
           ? `${matches.length} player${matches.length === 1 ? "" : "s"} match “${query.trim()}”.`
           : `Top ${visible.length} of ${matches.length} ${position}, ${graded} graded.`}{" "}
-        Best ranks talent; Bargain ranks trade value.
+        Best ranks talent; Bargain ranks trade value.{" "}
+        <InfoTip text={GRADED_TIP} label="Who is graded?" />
       </p>
       <div className="md:hidden">
         <div className="mb-4 flex items-center gap-2">
