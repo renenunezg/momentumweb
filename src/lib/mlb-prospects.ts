@@ -122,6 +122,22 @@ export async function fetchProspectPage(filters: ProspectFilters, offset: number
   };
 }
 
+export type FarmSystemRow = Tables<"mlb", "farm_systems">;
+
+// Thirty rows, one per organization, ranked by mlbmodel's farm_systems view
+// over the same prospect table.
+export async function fetchFarmSystems(): Promise<FarmSystemRow[]> {
+  const res = await supabase
+    .from("farm_systems")
+    .select("*")
+    .order("farm_rank", { ascending: true })
+    .order("org", { ascending: true })
+    .limit(40)
+    .abortSignal(AbortSignal.timeout(10_000));
+  if (res.error) throw new Error(`Farm systems read failed: ${res.error.message}`);
+  return res.data ?? [];
+}
+
 // One keyed read per position: the table's single most valuable row there.
 export async function fetchProspectSummary(): Promise<ProspectSummary> {
   const signal = AbortSignal.timeout(10_000);

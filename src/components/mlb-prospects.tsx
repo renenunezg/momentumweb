@@ -1,7 +1,8 @@
 "use client";
 
 import { Fragment, useEffect, useEffectEvent, useMemo, useState } from "react";
-import type { ProspectLeader, ProspectPage, ProspectRow } from "@/lib/mlb-prospects";
+import type { FarmSystemRow, ProspectLeader, ProspectPage, ProspectRow } from "@/lib/mlb-prospects";
+import MlbFarmSystems from "@/components/mlb-farm-systems";
 import {
   CONTROL_TIP,
   DEFAULT_PROSPECT_FILTERS,
@@ -370,7 +371,23 @@ function ProspectComparison({ suggestions }: { suggestions: ProspectRow[] }) {
 
 type LoadState = "loading" | "failed";
 
-export default function MlbProspects({ initial, leaders }: { initial: Record<ProspectRole, ProspectPage>; leaders: ProspectLeader[] }) {
+const PROSPECT_VIEWS = [
+  { key: "players", label: "Prospects" },
+  { key: "farms", label: "Farm systems" },
+] as const;
+
+type ProspectView = (typeof PROSPECT_VIEWS)[number]["key"];
+
+export default function MlbProspects({
+  initial,
+  leaders,
+  farms,
+}: {
+  initial: Record<ProspectRole, ProspectPage>;
+  leaders: ProspectLeader[];
+  farms: FarmSystemRow[];
+}) {
+  const [view, setView] = useState<ProspectView>("players");
   const [filters, setFilters] = useState<ProspectFilters>(DEFAULT_PROSPECT_FILTERS);
   // Every filter set already fetched, so going back to one costs no request.
   const [results, setResults] = useState<Record<string, { rows: ProspectRow[]; total: number }>>(() =>
@@ -486,191 +503,203 @@ export default function MlbProspects({ initial, leaders }: { initial: Record<Pro
       <p role="status" className="text-sm text-muted-foreground">Loading {noun}…</p>
     ) : null;
 
+  // A farm system opens the prospect list filtered to that organization.
+  const chooseOrg = (org: string) => {
+    setQuery("");
+    update({ org, position: null, search: null });
+    setView("players");
+  };
+
   return (
-    <div className="min-w-0 space-y-section">
-      <div className="space-y-2">
-        <p className="type-eyebrow inline-flex items-center gap-1 text-muted-foreground">
-          Most valuable by position <InfoTip text={PROSPECT_TRADE_VALUE_TIP} label="What is trade value?" />
-        </p>
-        <PositionLeaderTabs label="Position" options={leaderOptions} value={filters.search ? null : filters.position} onChange={choosePosition} />
-      </div>
-      <ProspectComparison suggestions={rows} />
-      <ViewTabs label="Prospect role" options={PROSPECT_ROLES} value={role} onValueChange={(next) => update({ role: next, position: null })}>
-        <ViewTabPanel value={role} className="space-y-section">
-          <div className="grid grid-cols-2 gap-3 sm:flex sm:flex-wrap sm:items-center">
-            <select aria-label="Organization" value={filters.org ?? ""} onChange={(e) => update({ org: e.target.value || null })} className={SELECT}>
-              <option value="">All organizations</option>
-              {PROSPECT_ORGS.map((org) => (
-                <option key={org} value={org}>{org}</option>
-              ))}
-            </select>
-            <select aria-label="Level" value={filters.level ?? ""} onChange={(e) => update({ level: e.target.value || null })} className={SELECT}>
-              <option value="">All levels</option>
-              {PROSPECT_LEVELS.map((level) => (
-                <option key={level.key} value={level.key}>{level.label}</option>
-              ))}
-            </select>
-            <select aria-label="Position" value={filters.position ?? ""} onChange={(e) => update({ position: e.target.value || null })} className={SELECT}>
-              <option value="">All positions</option>
-              {rolePositions(role).map((position) => (
-                <option key={position} value={position}>{position}</option>
-              ))}
-            </select>
-            <select aria-label="Sort by" value={filters.sort} onChange={(e) => update({ sort: e.target.value as ProspectSort })} className={SELECT}>
-              {PROSPECT_SORTS.map((sort) => (
-                <option key={sort.key} value={sort.key}>{sort.label}</option>
-              ))}
-            </select>
-            <input
-              type="search"
-              value={query}
-              onChange={(e) => setQuery(e.target.value)}
-              placeholder="Search player"
-              aria-label="Search player"
-              className={cn(SELECT, "col-span-2 w-full sm:w-56")}
-            />
-            <label className="col-span-2 inline-flex min-h-10 items-center gap-2 text-sm md:min-h-8 md:text-xs">
-              <input type="checkbox" checked={filters.gradedOnly} onChange={(e) => update({ gradedOnly: e.target.checked })} className="size-4" />
-              Graded only
-            </label>
-          </div>
+    <ViewTabs label="Prospect view" options={PROSPECT_VIEWS} value={view} onValueChange={setView}>
+      <ViewTabPanel value="farms">
+        <MlbFarmSystems rows={farms} onSelectOrg={chooseOrg} />
+      </ViewTabPanel>
+      <ViewTabPanel value="players" className="min-w-0 space-y-section">
+        <div className="space-y-2">
+          <p className="type-eyebrow inline-flex items-center gap-1 text-muted-foreground">
+            Most valuable by position <InfoTip text={PROSPECT_TRADE_VALUE_TIP} label="What is trade value?" />
+          </p>
+          <PositionLeaderTabs label="Position" options={leaderOptions} value={filters.search ? null : filters.position} onChange={choosePosition} />
+        </div>
+        <ProspectComparison suggestions={rows} />
+        <ViewTabs label="Prospect role" options={PROSPECT_ROLES} value={role} onValueChange={(next) => update({ role: next, position: null })}>
+          <ViewTabPanel value={role} className="space-y-section">
+            <div className="grid grid-cols-2 gap-3 sm:flex sm:flex-wrap sm:items-center">
+              <select aria-label="Organization" value={filters.org ?? ""} onChange={(e) => update({ org: e.target.value || null })} className={SELECT}>
+                <option value="">All organizations</option>
+                {PROSPECT_ORGS.map((org) => (
+                  <option key={org} value={org}>{org}</option>
+                ))}
+              </select>
+              <select aria-label="Level" value={filters.level ?? ""} onChange={(e) => update({ level: e.target.value || null })} className={SELECT}>
+                <option value="">All levels</option>
+                {PROSPECT_LEVELS.map((level) => (
+                  <option key={level.key} value={level.key}>{level.label}</option>
+                ))}
+              </select>
+              <select aria-label="Position" value={filters.position ?? ""} onChange={(e) => update({ position: e.target.value || null })} className={SELECT}>
+                <option value="">All positions</option>
+                {rolePositions(role).map((position) => (
+                  <option key={position} value={position}>{position}</option>
+                ))}
+              </select>
+              <select aria-label="Sort by" value={filters.sort} onChange={(e) => update({ sort: e.target.value as ProspectSort })} className={SELECT}>
+                {PROSPECT_SORTS.map((sort) => (
+                  <option key={sort.key} value={sort.key}>{sort.label}</option>
+                ))}
+              </select>
+              <input
+                type="search"
+                value={query}
+                onChange={(e) => setQuery(e.target.value)}
+                placeholder="Search player"
+                aria-label="Search player"
+                className={cn(SELECT, "col-span-2 w-full sm:w-56")}
+              />
+              <label className="col-span-2 inline-flex min-h-10 items-center gap-2 text-sm md:min-h-8 md:text-xs">
+                <input type="checkbox" checked={filters.gradedOnly} onChange={(e) => update({ gradedOnly: e.target.checked })} className="size-4" />
+                Graded only
+              </label>
+            </div>
 
-          {current != null && (
-            <p className="max-w-4xl text-sm text-muted-foreground leading-relaxed">
-              {total === 0
-                ? `No ${noun} match.`
-                : filters.search
-                  ? `${formatNumber(total, 0)} ${total === 1 ? noun.slice(0, -1) : noun} match “${query.trim()}”${rows.length < total ? `, showing ${rows.length}` : ""}.`
-                  : `Showing ${rows.length} of ${formatNumber(total, 0)} ${noun}.`}
-            </p>
-          )}
-
-          {current != null && (noneGraded || (total === 0 && filters.gradedOnly && role === "pitcher")) && (
-            <Notice>
-              <p className="text-sm text-muted-foreground">
-                None of these {noun} has a grade yet. They are listed with their level, age, and playing time.
+            {current != null && (
+              <p className="max-w-4xl text-sm text-muted-foreground leading-relaxed">
+                {total === 0
+                  ? `No ${noun} match.`
+                  : filters.search
+                    ? `${formatNumber(total, 0)} ${total === 1 ? noun.slice(0, -1) : noun} match “${query.trim()}”${rows.length < total ? `, showing ${rows.length}` : ""}.`
+                    : `Showing ${rows.length} of ${formatNumber(total, 0)} ${noun}.`}
               </p>
-            </Notice>
-          )}
+            )}
 
-          {current == null ? (
-            status
-          ) : (
-            <>
-              <div className="md:hidden">
-                <PlayerRowHeader />
-                {rows.map((row, i) => {
-                  const open = expanded === row.player_id;
-                  const name = row.player_name ?? String(row.player_id);
-                  return (
-                    <article key={row.player_id} aria-label={name} className="min-w-0 border-b border-border">
-                      <PlayerRowDisclosure
-                        name={name}
-                        rank={i + 1}
-                        identity={identity(row)}
-                        grade={row.peak_grade == null ? EMPTY : formatNumber(row.peak_grade, 0)}
-                        open={open}
-                        panelId={`mlb-mobile-prospect-${row.player_id}`}
-                        onToggle={() => setExpanded(open ? null : row.player_id)}
-                      />
-                      <div id={`mlb-mobile-prospect-${row.player_id}`} hidden={!open} className="border-t border-border px-3">
-                        {open && <ProspectCard row={row} />}
-                      </div>
-                    </article>
-                  );
-                })}
-              </div>
-              <div className="hidden md:block">
-                <Table>
-                  <TableHeader>
-                    <TableRow className="type-eyebrow [&>th]:text-muted-foreground">
-                      <TableHead className="w-8">#</TableHead>
-                      <TableHead>Player</TableHead>
-                      <TableHead>Level</TableHead>
-                      <TableHead>Age</TableHead>
-                      <TableHead aria-sort={filters.sort === "grade" ? "descending" : undefined}>
-                        Peak grade <InfoTip text={PEAK_GRADE_TIP} label="What is Peak grade?" className="ml-1" />
-                      </TableHead>
-                      <TableHead className="text-right" aria-sort={filters.sort === "regular" ? "descending" : undefined}>
-                        Regular <InfoTip text={P_REGULAR_TIP} label="What is Regular?" className="ml-1" />
-                      </TableHead>
-                      <TableHead className="text-right" aria-sort={filters.sort === "eta" ? "ascending" : undefined}>
-                        ETA <InfoTip text={ETA_TIP} label="What is ETA?" className="ml-1" />
-                      </TableHead>
-                      <TableHead className="text-right" aria-sort={filters.sort === "value" ? "descending" : undefined}>
-                        Value <InfoTip text={PROSPECT_TRADE_VALUE_TIP} label="What is Value?" className="ml-1" />
-                      </TableHead>
-                      <TableHead className="hidden lg:table-cell">
-                        Risk <InfoTip text={RISK_TIP} label="What is Risk?" className="ml-1" />
-                      </TableHead>
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {rows.length === 0 ? (
-                      <TableRow>
-                        <TableCell colSpan={9} className="text-sm text-muted-foreground">No {noun} match.</TableCell>
+            {current != null && (noneGraded || (total === 0 && filters.gradedOnly && role === "pitcher")) && (
+              <Notice>
+                <p className="text-sm text-muted-foreground">
+                  None of these {noun} has a grade yet. They are listed with their level, age, and playing time.
+                </p>
+              </Notice>
+            )}
+
+            {current == null ? (
+              status
+            ) : (
+              <>
+                <div className="md:hidden">
+                  <PlayerRowHeader />
+                  {rows.map((row, i) => {
+                    const open = expanded === row.player_id;
+                    const name = row.player_name ?? String(row.player_id);
+                    return (
+                      <article key={row.player_id} aria-label={name} className="min-w-0 border-b border-border">
+                        <PlayerRowDisclosure
+                          name={name}
+                          rank={i + 1}
+                          identity={identity(row)}
+                          grade={row.peak_grade == null ? EMPTY : formatNumber(row.peak_grade, 0)}
+                          open={open}
+                          panelId={`mlb-mobile-prospect-${row.player_id}`}
+                          onToggle={() => setExpanded(open ? null : row.player_id)}
+                        />
+                        <div id={`mlb-mobile-prospect-${row.player_id}`} hidden={!open} className="border-t border-border px-3">
+                          {open && <ProspectCard row={row} />}
+                        </div>
+                      </article>
+                    );
+                  })}
+                </div>
+                <div className="hidden md:block">
+                  <Table>
+                    <TableHeader>
+                      <TableRow className="type-eyebrow [&>th]:text-muted-foreground">
+                        <TableHead className="w-8">#</TableHead>
+                        <TableHead>Player</TableHead>
+                        <TableHead>Level</TableHead>
+                        <TableHead>Age</TableHead>
+                        <TableHead aria-sort={filters.sort === "grade" ? "descending" : undefined}>
+                          Peak grade <InfoTip text={PEAK_GRADE_TIP} label="What is Peak grade?" className="ml-1" />
+                        </TableHead>
+                        <TableHead className="text-right" aria-sort={filters.sort === "regular" ? "descending" : undefined}>
+                          Regular <InfoTip text={P_REGULAR_TIP} label="What is Regular?" className="ml-1" />
+                        </TableHead>
+                        <TableHead className="text-right" aria-sort={filters.sort === "eta" ? "ascending" : undefined}>
+                          ETA <InfoTip text={ETA_TIP} label="What is ETA?" className="ml-1" />
+                        </TableHead>
+                        <TableHead className="text-right" aria-sort={filters.sort === "value" ? "descending" : undefined}>
+                          Value <InfoTip text={PROSPECT_TRADE_VALUE_TIP} label="What is Value?" className="ml-1" />
+                        </TableHead>
+                        <TableHead className="hidden lg:table-cell">
+                          Risk <InfoTip text={RISK_TIP} label="What is Risk?" className="ml-1" />
+                        </TableHead>
                       </TableRow>
-                    ) : (
-                      rows.map((row, i) => {
-                        const open = expanded === row.player_id;
-                        const graded = row.peak_grade != null;
-                        return (
-                          <Fragment key={row.player_id}>
-                            <TableRow
-                              onClick={() => setExpanded(open ? null : row.player_id)}
-                              aria-expanded={open}
-                              className={cn("cursor-pointer", open && "bg-muted/40")}
-                            >
-                              <TableCell className="font-mono text-xs text-muted-foreground">{i + 1}</TableCell>
-                              <TableCell className="min-w-56 max-w-72">{identity(row)}</TableCell>
-                              <TableCell className="font-mono text-xs">{levelLabel(row.level) ?? EMPTY}</TableCell>
-                              <TableCell className="font-mono tabular-nums">{row.age == null ? EMPTY : formatNumber(row.age, 1)}</TableCell>
-                              <TableCell className="whitespace-nowrap font-mono tabular-nums">
-                                {graded ? (
-                                  <span className="inline-flex items-center gap-2">
-                                    <span className="font-bold text-primary">{formatNumber(row.peak_grade, 0)}</span>
-                                    <GradeBar grade={row.peak_grade} />
-                                    <span className="text-[11px] text-muted-foreground">{formatNumber(row.peak_grade_low, 0)}–{formatNumber(row.peak_grade_high, 0)}</span>
-                                  </span>
-                                ) : (
-                                  <span className="text-xs text-muted-foreground">Not yet graded</span>
-                                )}
-                              </TableCell>
-                              <TableCell className="text-right font-mono tabular-nums">{percent(row.p_regular)}</TableCell>
-                              <TableCell className="text-right font-mono tabular-nums">{row.eta_season ?? EMPTY}</TableCell>
-                              <TableCell className={cn("whitespace-nowrap text-right font-mono font-bold tabular-nums", !graded ? "text-muted-foreground" : (row.trade_value_musd ?? 0) >= 0 ? "text-positive" : "text-destructive")}>
-                                {graded ? formatMillions(row.trade_value_musd) : EMPTY}
-                              </TableCell>
-                              <TableCell className="hidden font-mono text-xs lg:table-cell">{row.risk ? (RISK_LABEL[row.risk] ?? row.risk) : EMPTY}</TableCell>
-                            </TableRow>
-                            {open && (
-                              <TableRow className="hover:bg-transparent">
-                                <TableCell colSpan={9} className="whitespace-normal bg-muted/20">
-                                  <ProspectCard row={row} />
+                    </TableHeader>
+                    <TableBody>
+                      {rows.length === 0 ? (
+                        <TableRow>
+                          <TableCell colSpan={9} className="text-sm text-muted-foreground">No {noun} match.</TableCell>
+                        </TableRow>
+                      ) : (
+                        rows.map((row, i) => {
+                          const open = expanded === row.player_id;
+                          const graded = row.peak_grade != null;
+                          return (
+                            <Fragment key={row.player_id}>
+                              <TableRow
+                                onClick={() => setExpanded(open ? null : row.player_id)}
+                                aria-expanded={open}
+                                className={cn("cursor-pointer", open && "bg-muted/40")}
+                              >
+                                <TableCell className="font-mono text-xs text-muted-foreground">{i + 1}</TableCell>
+                                <TableCell className="min-w-56 max-w-72">{identity(row)}</TableCell>
+                                <TableCell className="font-mono text-xs">{levelLabel(row.level) ?? EMPTY}</TableCell>
+                                <TableCell className="font-mono tabular-nums">{row.age == null ? EMPTY : formatNumber(row.age, 1)}</TableCell>
+                                <TableCell className="whitespace-nowrap font-mono tabular-nums">
+                                  {graded ? (
+                                    <span className="inline-flex items-center gap-2">
+                                      <span className="font-bold text-primary">{formatNumber(row.peak_grade, 0)}</span>
+                                      <GradeBar grade={row.peak_grade} />
+                                      <span className="text-[11px] text-muted-foreground">{formatNumber(row.peak_grade_low, 0)}–{formatNumber(row.peak_grade_high, 0)}</span>
+                                    </span>
+                                  ) : (
+                                    <span className="text-xs text-muted-foreground">Not yet graded</span>
+                                  )}
                                 </TableCell>
+                                <TableCell className="text-right font-mono tabular-nums">{percent(row.p_regular)}</TableCell>
+                                <TableCell className="text-right font-mono tabular-nums">{row.eta_season ?? EMPTY}</TableCell>
+                                <TableCell className={cn("whitespace-nowrap text-right font-mono font-bold tabular-nums", !graded ? "text-muted-foreground" : (row.trade_value_musd ?? 0) >= 0 ? "text-positive" : "text-destructive")}>
+                                  {graded ? formatMillions(row.trade_value_musd) : EMPTY}
+                                </TableCell>
+                                <TableCell className="hidden font-mono text-xs lg:table-cell">{row.risk ? (RISK_LABEL[row.risk] ?? row.risk) : EMPTY}</TableCell>
                               </TableRow>
-                            )}
-                          </Fragment>
-                        );
-                      })
-                    )}
-                  </TableBody>
-                </Table>
-              </div>
-              {status}
-              {state == null && rows.length < total && (
-                <button
-                  type="button"
-                  onClick={() => setMoreFor(key)}
-                  className="min-h-10 self-start rounded-md border border-border px-4 text-sm text-primary hover:bg-muted focus-visible:outline-2 focus-visible:outline-ring"
-                >
-                  Show {Math.min(PROSPECT_PAGE, total - rows.length)} more
-                </button>
-              )}
-            </>
-          )}
-        </ViewTabPanel>
-      </ViewTabs>
-    </div>
+                              {open && (
+                                <TableRow className="hover:bg-transparent">
+                                  <TableCell colSpan={9} className="whitespace-normal bg-muted/20">
+                                    <ProspectCard row={row} />
+                                  </TableCell>
+                                </TableRow>
+                              )}
+                            </Fragment>
+                          );
+                        })
+                      )}
+                    </TableBody>
+                  </Table>
+                </div>
+                {status}
+                {state == null && rows.length < total && (
+                  <button
+                    type="button"
+                    onClick={() => setMoreFor(key)}
+                    className="min-h-10 self-start rounded-md border border-border px-4 text-sm text-primary hover:bg-muted focus-visible:outline-2 focus-visible:outline-ring"
+                  >
+                    Show {Math.min(PROSPECT_PAGE, total - rows.length)} more
+                  </button>
+                )}
+              </>
+            )}
+          </ViewTabPanel>
+        </ViewTabs>
+      </ViewTabPanel>
+    </ViewTabs>
   );
 }

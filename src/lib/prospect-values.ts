@@ -151,6 +151,15 @@ export const P_MLB_TIP = "Chance of a season of 100 plate appearances or 40 inni
 export const PROSPECT_TRADE_VALUE_TIP =
   "Expected surplus over six control years starting at his ETA, priced at the player model's price of a win and discounted 8 percent a year. Same dollar scale as the player values.";
 
+export const FARM_TOP30_TIP =
+  "Trade value of the organization's 30 most valuable prospects, added up. It sets the order: past thirty, prospects rarely reach the majors.";
+
+export const FARM_TOTAL_TIP = "Trade value of every prospect in the organization, the deep end included.";
+
+export const FARM_REGULARS_TIP = "How many of the top 30 are expected to become regulars: their chances of a 2.0-WAR season added up.";
+
+export const FARM_GRADE_50_TIP = "Prospects with a peak grade of 50 or better, an average regular or more.";
+
 export const RISK_TIP =
   "Banded on his chance of never reaching the majors, cut at the quartiles of past prospects: safe, medium, high, or extreme.";
 

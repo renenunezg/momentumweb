@@ -4543,6 +4543,27 @@ export type Database = {
         }
         Relationships: []
       }
+      farm_systems: {
+        Row: {
+          as_of: string | null
+          best_headshot_url: string | null
+          best_player_id: number | null
+          best_player_name: string | null
+          best_position_group: string | null
+          best_value_musd: number | null
+          farm_rank: number | null
+          grade_50_plus: number | null
+          org: string | null
+          org_id: number | null
+          prospects: number | null
+          season: number | null
+          top30_control_war: number | null
+          top30_expected_regulars: number | null
+          top30_value_musd: number | null
+          total_value_musd: number | null
+        }
+        Relationships: []
+      }
       model_outputs_season_unified: {
         Row: {
           away_score: number | null

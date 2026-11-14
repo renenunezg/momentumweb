@@ -1,6 +1,6 @@
 import { PageDescription, PageHeader, PageShell, PageTitle, PageMeta } from "@/components/page-layout";
 import type { Metadata } from "next";
-import { fetchProspectPage, fetchProspectSummary } from "@/lib/mlb-prospects";
+import { fetchFarmSystems, fetchProspectPage, fetchProspectSummary } from "@/lib/mlb-prospects";
 import { LastUpdated } from "@/components/last-updated";
 import MlbProspects from "@/components/mlb-prospects";
 import { DEFAULT_PROSPECT_FILTERS } from "@/lib/prospect-values";
@@ -19,10 +19,11 @@ export const metadata: Metadata = {
 export default async function MlbProspectsPage() {
   // Both tabs' first pages are read here so switching costs no request; a
   // failure throws so ISR keeps the last good page.
-  const [hitters, pitchers, summary] = await Promise.all([
+  const [hitters, pitchers, summary, farms] = await Promise.all([
     fetchProspectPage({ ...DEFAULT_PROSPECT_FILTERS, role: "hitter" }, 0),
     fetchProspectPage({ ...DEFAULT_PROSPECT_FILTERS, role: "pitcher" }, 0),
     fetchProspectSummary(),
+    fetchFarmSystems(),
   ]);
   const total = (hitters.total ?? hitters.rows.length) + (pitchers.total ?? pitchers.rows.length);
 
@@ -52,10 +53,11 @@ export default async function MlbProspectsPage() {
       </PageHeader>
 
       <p className="max-w-4xl text-sm text-muted-foreground leading-relaxed">
-        Expected peak, chance of sticking, and trade value for every rookie-eligible player in the minors.
+        Expected peak, chance of sticking, and trade value for every rookie-eligible player in the minors, and every
+        farm system ranked by its top 30.
       </p>
 
-      <MlbProspects initial={{ hitter: hitters, pitcher: pitchers }} leaders={summary.leaders} />
+      <MlbProspects initial={{ hitter: hitters, pitcher: pitchers }} leaders={summary.leaders} farms={farms} />
     </PageShell>
   );
 }
