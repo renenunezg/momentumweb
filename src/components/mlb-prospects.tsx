@@ -482,7 +482,7 @@ function ProspectList({ rows, sort, empty }: { rows: ProspectRow[]; sort: Prospe
 }
 
 const PROSPECT_VIEWS = [
-  { key: "players", label: "Prospects" },
+  { key: "players", label: "All prospects" },
   { key: "top", label: "Top 100" },
   { key: "farms", label: "Farm systems" },
 ] as const;
