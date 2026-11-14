@@ -1,61 +1,53 @@
 # momentumweb
 
-The website behind [renenunez.dev](https://renenunez.dev): one frontend for a set of probabilistic sports forecasting models.
-MLB run-distribution forecasts are published daily and graded live, college football and NFL publish weekly power ratings and spread projections, the NHL model prices every slate against the league's partner sportsbooks, and every model is benchmarked against the market in public.
-
-The models themselves live in separate repositories and write their outputs to Postgres.
-This repository renders those tables.
-The MLB live-score route also writes official final scores and provisional evaluation counts; the MLB model owns nightly reconciliation.
+The website behind [renenunez.dev](https://renenunez.dev): one frontend for a set of probabilistic sports forecasting models (MLB, college football, NFL, and NHL).
+Each model publishes game forecasts, picks, and a graded record benchmarked against the market, along with ratings and player, prospect, awards, and playoff forecasts.
+This repository renders them.
 
 ## Stack
 
-- Next.js 16 (App Router, React Server Components), React 19, TypeScript
-- Tailwind CSS v4 with a small set of shadcn primitives on Base UI
-- Supabase Postgres, one schema per sport, with authenticated cache invalidation and timed live-score polling
-- Recharts for the performance charts
+- Next.js (App Router, React Server Components), React, TypeScript
+- Tailwind CSS with a small set of shadcn primitives on Base UI
+- Supabase Postgres, one schema per sport
+- Recharts for charts
 - Deployed on Vercel
 
 ## Architecture
 
-Supabase is the only interface between this site and the model repositories.
-Each sport owns a Postgres schema (`mlb`, `cfb`, `nfl`, `nhl`), and each has a pinned client in `src/lib/supabase.ts` so a query cannot cross sports by accident.
-The site never imports model code and never calls a model repo; a schema change on the model side is an API change here, and `src/lib/database.types.ts` surfaces it at compile time.
+The models live in separate repositories and write their outputs to Supabase.
+Supabase is the only interface between this site and those repositories: the site never imports model code and never calls a model repo.
 
 ```
-model repos  ──write──▶  Supabase (mlb / cfb / nfl / nhl schemas)  ──read──▶  this site
+model repos  ──write──▶  Supabase (one schema per sport)  ──read──▶  this site
 ```
 
-Route tree:
+Each sport owns a Postgres schema (`mlb`, `cfb`, `nfl`, `nhl`) with its own pinned client in `src/lib/supabase.ts`, so a query cannot cross sports by accident.
+A schema change on the model side is an API change here; regenerating `src/lib/database.types.ts` surfaces it at compile time.
 
-| Route | What it renders |
-| --- | --- |
-| `/` | Home hub with a live headline per sport and the latest posts |
-| `/mlb/games` | Today's slate with picks, Kelly stakes, and live scores (rendered per request) |
-| `/mlb/history` | Season-long pick history from the unified v1+v2 view |
-| `/mlb/performance` | Accuracy, calibration, betting KPIs, and posterior diagnostics |
-| `/cfb/ratings`, `/nfl/ratings` | Power ratings by tier, conference or division, and unit |
-| `/cfb/schedule`, `/nfl/schedule` | Weekly projections priced against the market |
-| `/cfb/history`, `/nfl/history` | Graded games, live season first, frozen backtest behind it |
-| `/cfb/performance`, `/nfl/performance` | Model vs closing line, by season and by segment |
-| `/nhl/games` | Today's NHL slate with fair and partner-book prices, picks, and live scores (rendered per request) |
-| `/nhl/ratings`, `/nhl/schedule` | Venue-split expected goals and strengths; the next seven days of projections |
-| `/nhl/history`, `/nhl/performance` | Frozen NHL picks graded at the recorded price; win-probability calibration on the live season and the backtest |
-| `/*/methodology` | How each model works |
-| `/blog`, `/about` | Writing and contact |
+Routes follow `src/app/<sport>/<page>`, with each sport's methodology page explaining its model.
+Sport-scoped API routes under `src/app/<sport>/api/` proxy live score feeds behind a short CDN cache, serve in-game win probabilities, page large player lists on demand, and export the graded records as CSV.
 
-One API route supports the MLB games page.
-`GET /mlb/api/live-scores` is a CDN-cached proxy to the MLB Stats API so many browsers polling the page cost at most two upstream requests a minute per region.
-It is also the live-grading trigger: after responding, it grades any game the schedule shows as Final, writing the score back and refreshing the day's evaluation windows.
-Which game gets graded is decided server-side from the MLB feed, never from the request, so the site exposes no write endpoint; the CDN window bounds grading to one pass per window, and the nightly Python batch remains the source of truth.
+The MLB live-score route is the one place the site writes: after responding, it grades any game the MLB feed shows as final and writes the score and provisional evaluation counts.
+Which game gets graded comes from the feed, never from the request, and the model's nightly reconciliation remains the source of truth.
 
-Things that are load-bearing and easy to break:
+## Caching
 
-- `src/app/mlb/games/page.tsx` is `force-dynamic`.
-The pick shown for a started game must be the frozen pick that gets graded, so it cannot be served from a cached render.
-- `SUPABASE_SERVICE_ROLE_KEY` is read only inside `src/app/mlb/api/live-scores/route.ts`, for the grading step.
-Everything else uses the anon key.
-- Failed reads must render an unavailable state, distinct from unpublished decisions or a genuine empty result.
-Healthy independent sections remain visible.
+Pages are statically cached (ISR) and refreshed on demand rather than on short timers.
+A statement trigger, `public.site_revalidate()`, sits on every table the site reads and posts to `/api/revalidate`, which expires the cached reads of that table.
+Page timers are only a backstop sized to staleness risk, and every page rebuild re-reads the database, so prefer the webhook over a shorter timer.
+The site holds no Supabase Realtime subscriptions.
+
+When adding a read:
+
+- A new table the site reads needs the `site_revalidate` trigger attached in its sport's schema.
+- A new view needs its base tables listed in `VIEW_TABLES` in `src/lib/cache-tags.ts`.
+- A table without the trigger goes in `UNTRIGGERED` there, which gives its reads a short lifetime.
+
+## Rules that must hold
+
+- The pick shown for a started game must be the frozen pick that gets graded, so `src/app/mlb/games/page.tsx` renders per request and is never cached.
+- A failed read on a cached page throws (`keepLastGood`), so ISR keeps the last good page instead of caching an error. During `next build` it fails the deploy, and the previous deploy keeps serving.
+- `SUPABASE_SERVICE_ROLE_KEY` is read only by the MLB live-score route, server-side. Everything else uses the anon key.
 
 ## Running locally
 
@@ -70,7 +62,7 @@ npm run dev
 | `NEXT_PUBLIC_SUPABASE_URL` | all Supabase clients |
 | `NEXT_PUBLIC_SUPABASE_ANON_KEY` | read-only clients (server and browser) |
 | `SUPABASE_SERVICE_ROLE_KEY` | Optional local live grading, server-side only; leave unset for read-only development |
-| `REVALIDATE_SECRET` | Authenticates `/api/revalidate`; matches the Supabase Vault secret named `site_revalidate_secret` |
+| `REVALIDATE_SECRET` | Authenticates `/api/revalidate`; matches the Supabase Vault secret `site_revalidate_secret` |
 
 Checks:
 
@@ -80,10 +72,9 @@ npx tsc --noEmit
 npm test
 ```
 
-Tests cover the pure logic that has to agree with the Python backend: pick grading, per-game accuracy, Kelly-weighted ROI, drawdown, and the odds conversions.
-There are no markup tests on purpose.
+Tests cover the pure logic that has to agree with the Python backends (grading, accuracy, ROI, drawdown, odds conversions); there are no markup tests on purpose.
 
-## Regenerating database types
+## Database types and contracts
 
 When a model repo changes a table, regenerate the types and let the compiler find the call sites:
 
@@ -91,18 +82,11 @@ When a model repo changes a table, regenerate the types and let the compiler fin
 npx supabase gen types typescript --project-id <project-ref> --schema mlb,cfb,nfl,nhl > src/lib/database.types.ts
 ```
 
-Public football reads and cached pages expire after one hour and refresh on authenticated database callbacks.
-Live-score and live-probability routes use short CDN windows.
-The site uses no Supabase Realtime subscriptions.
+`database.types.ts` is generated and never hand-edited; the explicit-schema `Tables<Schema, Name>` helper lives in `database-schema.ts`.
+The versioned payloads in `contracts/` are copied unchanged into the model repositories' tests, and both sides must pass when a contract changes.
 
-The shared cache callback is owned here in `sql/001_site_revalidate.sql`.
-Install it before restoring sport schemas, with pg_net and Vault available and `site_revalidate_secret` provisioned separately.
-Each sport owns its table trigger attachments.
-MLB live evaluation requires the model repository's `live_evaluation_reconciliation.sql` migration and is explicitly provisional until nightly reconciliation.
-The migration prevents stale concurrent live writes from replacing newer or canonical results.
+## Shared SQL
 
-`database.types.ts` is generated without hand edits; the explicit-schema `Tables<Schema, Name>` helper lives separately in `database-schema.ts`.
-
-The versioned acceptance payloads in `contracts/v1/` are copied unchanged into the corresponding model repository tests.
-Their producer and consumer tests must both pass when a database contract changes.
-`sql/tests/revalidation.sql` verifies the shared callback in disposable PostgreSQL without sending network requests.
+`sql/` holds the database objects this repository owns: the `site_revalidate` callback function and the site's pg_cron jobs.
+Install `sql/001_site_revalidate.sql` before restoring any sport schema, with pg_net and Vault available and `site_revalidate_secret` provisioned separately; each sport repository attaches its own triggers.
+`sql/tests/` verifies the callback in disposable PostgreSQL without sending network requests.
