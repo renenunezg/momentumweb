@@ -2,15 +2,10 @@ import type { Metadata } from "next";
 import { PageDescription, PageHeader, PageMeta, PageShell, PageTitle } from "@/components/page-layout";
 import { HowGraded } from "@/components/how-graded";
 import { LastUpdated } from "@/components/last-updated";
-import { BattingPartsBar, battingPartsExtent } from "@/components/mlb-batting-parts-bar";
 import { BattingValueLeaderboard } from "@/components/mlb-batting-value-leaderboard";
 import { BattingValueStudySection } from "@/components/mlb-batting-value-study";
-import { PlayerCell } from "@/components/player-cell";
 import { MLB_PLAYER_SECTIONS, PlayerSectionTabs } from "@/components/player-section-tabs";
-import { BATTING_OPENING_PA, battingTotal, fetchBattingValue, formatCorrelation } from "@/lib/mlb-batting-value";
-import { mlbTeamIdentity } from "@/lib/mlb-teams";
-import { mlbPlayerHeadshotUrl } from "@/lib/player-headshots";
-import { formatSigned } from "@/lib/utils";
+import { fetchBattingValue, formatCorrelation } from "@/lib/mlb-batting-value";
 
 // Every read here is expired by the revalidation webhook when its table is
 // published, and nothing on the page depends on the clock, so the week is only
@@ -40,9 +35,6 @@ export default async function MlbBattingValuePage() {
     );
   }
 
-  // The example is the hitter the leaderboard opens on.
-  const regulars = hitters.filter((h) => h.pa >= BATTING_OPENING_PA);
-  const top = [...(regulars.length > 0 ? regulars : hitters)].sort((a, b) => battingTotal(b) - battingTotal(a))[0];
   const pitchTypes = Object.keys(study.pitch_types.values)
     .filter((code) => splits[code])
     .sort((a, b) => splits[b].length - splits[a].length);
@@ -60,23 +52,6 @@ export default async function MlbBattingValuePage() {
         </div>
       </PageHeader>
       <PlayerSectionTabs sections={MLB_PLAYER_SECTIONS} label="Player pages" />
-
-      <figure className="border-y border-rule-strong py-4">
-        <figcaption className="flex items-end justify-between gap-4">
-          <div className="min-w-0 space-y-1.5">
-            <p className="type-meta text-muted-foreground">Most runs added, {BATTING_OPENING_PA}+ PA</p>
-            <PlayerCell athleteId={String(top.player_id)} headshotUrl={mlbPlayerHeadshotUrl(top.player_id)} name={top.player_name}
-              team={top.team} position={`${top.pa} PA`} logo={mlbTeamIdentity(top.team)} />
-          </div>
-          <p className="shrink-0 text-right">
-            <span className="type-value">{formatSigned(battingTotal(top), 0)}</span>{" "}
-            <span className="type-meta text-muted-foreground">runs</span>
-          </p>
-        </figcaption>
-        <div className="mt-5">
-          <BattingPartsBar parts={top} {...battingPartsExtent([top])} axis className="h-5" />
-        </div>
-      </figure>
 
       <BattingValueLeaderboard
         hitters={hitters}

@@ -1,5 +1,4 @@
 import { Axis, Dot, Gridlines } from "@/components/home-figures";
-import { BATTING_PART_FILL } from "@/components/mlb-batting-parts-bar";
 import { PageSection } from "@/components/page-layout";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import {
@@ -36,7 +35,6 @@ const ROW = "grid grid-cols-[5.75rem_minmax(0,1fr)_6.25rem] items-stretch gap-x-
 interface PlotRow {
   key: string;
   label: string;
-  swatch?: string;
   // A reference number, not part of this stat.
   reference?: boolean;
   interval: Interval;
@@ -47,12 +45,11 @@ function IntervalPlot({ title, rows }: { title: string; rows: PlotRow[] }) {
   return (
     <div className="min-w-0">
       <p className="type-eyebrow mb-1 text-muted-foreground">{title}</p>
-      {rows.map(({ key, label, swatch, reference, interval: [value, low, high] }) => {
+      {rows.map(({ key, label, reference, interval: [value, low, high] }) => {
         const clear = low > 0 || high < 0;
         return (
           <div key={key} className={ROW}>
             <span className={cn("flex min-w-0 items-center gap-1.5 type-label", reference ? "text-muted-foreground" : "font-semibold")}>
-              {swatch && <span aria-hidden="true" className={cn("size-2.5 shrink-0 rounded-[2px]", swatch)} />}
               <span className="truncate">{label}</span>
             </span>
             <span className="relative h-7">
@@ -105,7 +102,6 @@ export function BattingValueStudySection({ study, pitchTypes }: { study: Batting
   const measure = (field: "repeat" | "next_runs"): PlotRow[] =>
     MEASURES.map(({ key, label, reference }) => ({
       key, label, reference,
-      swatch: key in BATTING_PART_FILL ? BATTING_PART_FILL[key as keyof typeof BATTING_PART_FILL] : undefined,
       interval: study.parts.measures[key][field],
     }));
   const listed = [
