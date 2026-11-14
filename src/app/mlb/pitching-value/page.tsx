@@ -16,7 +16,7 @@ export const revalidate = 604800;
 export async function generateMetadata(): Promise<Metadata> {
   const { season } = await fetchPitchValue();
   return {
-    title: `MLB Pitch Run Value ${season ?? ""}`.trim(),
+    title: `MLB Pitching Run Value ${season ?? ""}`.trim(),
     description:
       "Every pitch graded by the change in expected runs it causes: runs saved per pitcher and per pitch type, with contact valued by how it was hit and park, hitter and season removed.",
   };
@@ -32,9 +32,9 @@ export default async function MlbPitchValuePage() {
   if (!study || season == null || pitchers.length === 0) {
     return (
       <PageShell>
-        <PageTitle>Pitch Run Value</PageTitle>
+        <PageTitle>Pitching Run Value</PageTitle>
         <PlayerSectionTabs sections={MLB_PLAYER_SECTIONS} label="Player pages" />
-        <p className="text-muted-foreground">No pitch run values have been published yet.</p>
+        <p className="text-muted-foreground">No pitching run values have been published yet.</p>
       </PageShell>
     );
   }
@@ -43,7 +43,7 @@ export default async function MlbPitchValuePage() {
     <PageShell>
       <PageHeader>
         <div>
-          <PageTitle>Pitch Run Value</PageTitle>
+          <PageTitle>Pitching Run Value</PageTitle>
           <PageMeta>
             <PageDescription className="type-eyebrow">Through the {season} season</PageDescription>
             <LastUpdated timestamp={updatedAt} schedule="Refreshed by hand after each season" />
@@ -79,7 +79,7 @@ export default async function MlbPitchValuePage() {
               {BASELINES.map(([key, label]) => (
                 <TableHead key={key} className="type-eyebrow text-right text-muted-foreground">{label}</TableHead>
               ))}
-              <TableHead className="type-eyebrow text-right text-muted-foreground">Pitch value</TableHead>
+              <TableHead className="type-eyebrow text-right text-muted-foreground">Pitching value</TableHead>
               <TableHead className="type-eyebrow hidden text-right text-muted-foreground sm:table-cell">Lead over FIP</TableHead>
             </TableRow>
           </TableHeader>
@@ -102,7 +102,7 @@ export default async function MlbPitchValuePage() {
         <p className="max-w-3xl text-xs leading-relaxed text-muted-foreground">
           Correlation of each first-season number with runs allowed per nine innings the next season, {study.seasons[0]} to{" "}
           {study.seasons[study.seasons.length - 1]}.
-          <span className="hidden sm:inline"> The lead is pitch value minus FIP with a 95% interval from resampling pitchers.</span>{" "}
+          <span className="hidden sm:inline"> The lead is pitching value minus FIP with a 95% interval from resampling pitchers.</span>{" "}
           The method was designed on the earlier pairs. On the latest pairs, kept back to check it, the lead over FIP
           was {study.held_back.map((cut) => formatSigned(cut.lead.fip[0], 2)).join(", ")} at{" "}
           {study.held_back.map((cut) => cut.innings).join(", ")} innings: a tie.

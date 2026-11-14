@@ -18,7 +18,7 @@ export const NFL_PLAYER_SECTIONS = [
 ] as const;
 export const MLB_PLAYER_SECTIONS = [
   { href: "/mlb/players", label: "Grades" },
-  { href: "/mlb/pitch-value", label: "Pitch value" },
+  { href: "/mlb/pitching-value", label: "Pitching value" },
   { href: "/mlb/batting-value", label: "Batting value" },
 ] as const;
 // The carry study and its lab share the MLB Swing Lab nav entry.

@@ -30,7 +30,7 @@ export function surname(name: string): string {
 }
 
 // A picker whose every option shows the player the table would rank first
-// there (a position on the grades pages, a pitch type on pitch value), so the
+// there (a position on the grades pages, a pitch type on pitching value), so the
 // picker doubles as a leaderboard summary. Pressed buttons, not tabs, for the
 // reason in ToggleGroup.
 export function PositionLeaderTabs<K extends string>({

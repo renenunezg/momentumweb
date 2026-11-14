@@ -19,6 +19,8 @@ const nextConfig: NextConfig = {
       // The only pre-/mlb API route was live-scores; /api/revalidate is
       // site-wide and must not be bounced.
       { source: "/api/live-scores", destination: "/mlb/api/live-scores", permanent: true },
+      // Renamed to pair with Batting value (2026-11-14).
+      { source: "/mlb/pitch-value", destination: "/mlb/pitching-value", permanent: true },
     ];
   },
 };
