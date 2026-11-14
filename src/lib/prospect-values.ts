@@ -158,7 +158,7 @@ export const FARM_BEST_TIP = "The organization's highest peak grade, with his po
 
 export const FARM_TOTAL_TIP = "Trade value of every prospect in the organization, the deep end included.";
 
-export const FARM_REGULARS_TIP = "How many of the top 30 are expected to become regulars: their chances of a 2.0-WAR season added up.";
+export const FARM_REGULARS_TIP = "xR, expected regulars: how many of the top 30 should become regulars, their chances of a 2.0-WAR season added up.";
 
 export const FARM_GRADE_50_TIP = "Prospects with a peak grade of 50 or better, an average regular or more.";
 

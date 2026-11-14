@@ -6,13 +6,14 @@ import { formatMillions } from "@/lib/player-values";
 import { mlbTeamIdentity } from "@/lib/mlb-teams";
 import { EMPTY, formatNumber } from "@/lib/utils";
 import { InfoTip } from "@/components/info-tip";
+import { surname } from "@/components/position-leader-tabs";
 import { TeamLogo } from "@/components/team-logo";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 
 function ValueBar({ value, max }: { value: number; max: number }) {
   const width = max > 0 ? Math.max(0, Math.min(100, (value / max) * 100)) : 0;
   return (
-    <span className="inline-block h-1.5 w-12 overflow-hidden rounded-[1px] bg-grid align-middle sm:w-20">
+    <span className="hidden h-1.5 w-20 overflow-hidden rounded-[1px] bg-grid align-middle sm:inline-block">
       <span className="block h-full bg-primary" style={{ width: `${width}%` }} />
     </span>
   );
@@ -31,11 +32,11 @@ export default function MlbFarmSystems({ rows, onSelectOrg }: { rows: FarmSystem
           <TableHead aria-sort="descending">
             Top 30 <InfoTip text={FARM_TOP30_TIP} label="What is Top 30?" className="ml-1" />
           </TableHead>
-          <TableHead className="hidden sm:table-cell">
+          <TableHead className="whitespace-normal leading-tight">
             Best prospect <InfoTip text={FARM_BEST_TIP} label="What is Best prospect?" className="ml-1" />
           </TableHead>
-          <TableHead className="whitespace-normal text-right leading-tight">
-            Expected regulars <InfoTip text={FARM_REGULARS_TIP} label="What is Expected regulars?" className="ml-1" />
+          <TableHead className="text-right">
+            <span className="normal-case">xR</span> <InfoTip text={FARM_REGULARS_TIP} label="What is xR?" className="ml-1" />
           </TableHead>
           <TableHead className="hidden text-right md:table-cell">
             50+ <InfoTip text={FARM_GRADE_50_TIP} label="What is 50+?" className="ml-1" />
@@ -71,11 +72,13 @@ export default function MlbFarmSystems({ rows, onSelectOrg }: { rows: FarmSystem
                   <ValueBar value={row.top30_value_musd ?? 0} max={max} />
                 </span>
               </TableCell>
-              <TableCell className="hidden max-w-56 truncate sm:table-cell">
+              <TableCell className="w-full max-w-0 sm:w-auto sm:max-w-56">
                 {row.best_player_name ? (
-                  <span>
-                    {row.best_player_name}
-                    <span className="ml-2 font-mono text-[11px] text-muted-foreground">
+                  // A phone takes the surname over a second line; wider screens keep the full name on one.
+                  <span className="block truncate">
+                    <span className="sm:hidden">{surname(row.best_player_name)}</span>
+                    <span className="max-sm:hidden">{row.best_player_name}</span>
+                    <span className="block font-mono text-[11px] text-muted-foreground sm:ml-2 sm:inline">
                       {[
                         row.best_position_group,
                         row.best_peak_grade == null ? null : formatNumber(row.best_peak_grade, 0),
