@@ -119,11 +119,11 @@ function PitcherBreakdown({
   return (
     <div className="grid gap-6 py-2 md:grid-cols-[minmax(0,3fr)_minmax(0,2fr)]">
       <section className="min-w-0 space-y-2">
-        <p className="type-eyebrow text-muted-foreground">His pitches</p>
+        <h3 className="text-sm font-semibold text-foreground">His pitches</h3>
         <ArsenalBar arsenal={arsenal} scale={scale} className="h-6" />
         <table className="w-full text-sm">
           <thead>
-            <tr className="type-eyebrow text-muted-foreground">
+            <tr className="text-[10px] uppercase tracking-wide text-muted-foreground">
               <th className="py-1 text-left font-normal">Pitch</th>
               <th className="py-1 text-right font-normal">Usage</th>
               <th className="hidden py-1 text-right font-normal sm:table-cell">Pitches</th>
@@ -175,7 +175,7 @@ function PitcherBreakdown({
         </p>
       </section>
       <section className="min-w-0 space-y-2">
-        <p className="type-eyebrow text-muted-foreground">From what happened to Runs saved</p>
+        <h3 className="text-sm font-semibold text-foreground">From what happened to Runs saved</h3>
         <ol className="space-y-2 text-sm">
           {steps.map(([label, help, value]) => (
             <li key={label} className="flex items-start justify-between gap-4 border-t border-border/60 pt-2 first:border-t-0 first:pt-0">
@@ -246,7 +246,6 @@ export function PitchValueLeaderboard({
       if (t.pitches >= leaderFloor && saved(t) > (best.has(t.pitch_type) ? saved(best.get(t.pitch_type)!) : -Infinity)) best.set(t.pitch_type, t);
     }
     const codes = [...best.keys()].sort((a, b) => (thrown.get(b) ?? 0) - (thrown.get(a) ?? 0)).slice(0, 10);
-    const most = Math.max(0, ...codes.map((code) => saved(best.get(code)!)));
     return codes.map((code) => {
       const t = best.get(code)!;
       const name = who.get(t.player_id)?.player_name ?? String(t.player_id);
@@ -255,7 +254,6 @@ export function PitchValueLeaderboard({
         short: surname(name),
         headshotUrl: mlbPlayerHeadshotUrl(t.player_id),
         stat: runs(saved(t)),
-        fill: most > 0 ? Math.max(0, (saved(t) / most) * 100) : null,
         tone: saved(t) >= 0 ? "positive" : "destructive",
       };
       return { key: code, label: pitchName(code), leader };

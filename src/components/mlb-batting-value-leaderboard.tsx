@@ -143,20 +143,24 @@ function tone(value: number, digits: number) {
   return rounded > 0 ? "text-positive" : rounded < 0 ? "text-negative" : undefined;
 }
 
-// One value as a bar from the middle of a track: right of the center line when positive, left of it and in the losing
-// color when negative. `reach` is the value that fills half the track, shared by every cell so a length means the same
-// runs everywhere. The figure itself is beside the bar.
+// One value as a bar from a zero line: right of it when positive, left of it and in the losing color when negative.
+// No track behind it, so it reads as a bar from zero rather than a half-filled meter. `reach` is the value that spans
+// half the width, shared by every bar it is compared with so a length means the same runs.
+// The same size in the table and the breakdown, smaller where the table has less room. A phone's table shows no part
+// bars, so there the breakdown's bars take the room the line has.
+const BAR = "h-2 w-16 lg:h-2.5 lg:w-24";
+const PANEL_BAR = "h-2.5 w-28 sm:h-2 sm:w-16 lg:h-2.5 lg:w-24";
 function ValueBar({ value, reach, className }: { value: number | undefined; reach: number; className?: string }) {
   const width = value == null ? 0 : Math.min(50, (50 * Math.abs(value)) / reach);
   return (
-    <span aria-hidden="true" className={cn("relative block rounded-[2px] bg-muted", className)}>
+    <span aria-hidden="true" className={cn("relative block", className)}>
       {value != null && (
         <span
           className={cn("absolute inset-y-0", value < 0 ? "rounded-l-[2px] bg-worse" : "rounded-r-[2px] bg-primary")}
           style={{ left: `${value < 0 ? 50 - width : 50}%`, width: `${width}%` }}
         />
       )}
-      <span className="absolute inset-y-[-2px] left-1/2 w-px bg-rule-strong" />
+      <span className="absolute inset-y-[-1px] left-1/2 w-px bg-muted-foreground/60" />
     </span>
   );
 }
@@ -167,7 +171,8 @@ interface SplitRanks {
   of: number;
 }
 // Fixed widths, because each line is its own grid and the columns must still line up down the list.
-const SPLIT_LINE = "grid grid-cols-[minmax(0,1fr)_3.75rem_3.5rem_2.5rem] items-baseline gap-x-2 whitespace-nowrap";
+const SPLIT_LINE = "grid grid-cols-[minmax(0,1fr)_3.25rem_3.25rem_2.25rem] items-baseline gap-x-2 whitespace-nowrap";
+const PANEL_TITLE = "text-sm font-semibold text-foreground";
 
 // Every split of one hitter at once, so finding him once shows where his runs came from without visiting each view.
 function HitterBreakdown({
@@ -186,78 +191,84 @@ function HitterBreakdown({
   reach: number;
 }) {
   const overall = (100 * battingTotal(hitter)) / hitter.pitches;
-  const groups: { title: string; sets: readonly (readonly string[])[] }[] = [
-    { title: "By count", sets: [COUNT_SPLITS] },
-    { title: "By pitch", sets: [PITCH_GROUP_SPLITS, pitchTypes] },
-    { title: "By zone", sets: [ZONE_SPLITS, DIRECTION_SPLITS] },
-  ];
+  const header = "text-[10px] uppercase tracking-wide text-muted-foreground text-right";
+  const group = (title: string, sets: readonly (readonly string[])[]) => (
+    <section key={title} className="min-w-0 space-y-2 border-t border-rule-strong pt-3">
+      <div className={SPLIT_LINE}>
+        <h3 className={PANEL_TITLE}>{title}</h3>
+        <span className={header}>Pitches</span>
+        <span className={header}>Per 100</span>
+        <span className={header}>Rank</span>
+      </div>
+      {sets.map((codes, i) => {
+        const seen = codes.flatMap((code) => {
+          const split = bySplit[code]?.get(hitter.player_id);
+          return split && split[1] > 0 ? [{ code, split }] : [];
+        });
+        if (seen.length === 0) return null;
+        return (
+          <ul key={i} className={cn("space-y-1 text-sm", i > 0 && "border-t border-border/60 pt-1.5")}>
+            {seen.map(({ code, split: [, pitches, decision, contact, quality] }) => {
+              const v = (100 * (decision + contact + quality)) / pitches;
+              const place = ranks[code]?.rank.get(hitter.player_id);
+              const of = ranks[code]?.of ?? 0;
+              return (
+                <li key={code} className={SPLIT_LINE}>
+                  <span className="min-w-0 truncate">{battingSplitLabel(code)}</span>
+                  <span className="text-right text-xs text-muted-foreground tabular-nums">{count(pitches)}</span>
+                  <span className={cn("text-right font-mono tabular-nums", tone(v, 1))}>{rate(v)}</span>
+                  {place == null ? <span /> : <RankBadge place={place} of={of} />}
+                </li>
+              );
+            })}
+          </ul>
+        );
+      })}
+    </section>
+  );
   return (
-    <div className="grid gap-6 py-2 sm:grid-cols-2 xl:grid-cols-[minmax(0,1.4fr)_repeat(3,minmax(0,1fr))]">
-      <section className="min-w-0 space-y-2 sm:col-span-2 xl:col-span-1">
-        <p className="type-eyebrow text-muted-foreground">Where his {runs(battingTotal(hitter))} runs came from</p>
-        <ul className="max-w-md space-y-2.5">
+    <div className="space-y-5 py-2">
+      <section className="space-y-3">
+        <h3 className={PANEL_TITLE}>Where his {runs(battingTotal(hitter))} runs came from</h3>
+        <ul className="grid gap-x-8 gap-y-3 sm:grid-cols-3">
           {BATTING_PARTS.map((part) => (
-            <li key={part} className="grid grid-cols-[minmax(0,1fr)_5rem_2.25rem] items-center gap-3 text-sm">
-              <span className="min-w-0">
-                <span className="block font-medium">{BATTING_PART_LABELS[part]}</span>
-                <span className="block text-xs text-muted-foreground">{PART_PLAIN[part]}</span>
-              </span>
-              <ValueBar value={hitter[part]} reach={reach} className="h-2.5" />
-              <span className={cn("text-right font-mono tabular-nums", tone(hitter[part], 0))}>{runs(hitter[part])}</span>
+            <li key={part} className="min-w-0 space-y-0.5">
+              <div className="flex items-center justify-between gap-3">
+                <span className="font-semibold">{BATTING_PART_LABELS[part]}</span>
+                <span className="flex items-center gap-2.5">
+                  <ValueBar value={hitter[part]} reach={reach} className={PANEL_BAR} />
+                  <span className={cn("w-8 text-right font-mono tabular-nums", tone(hitter[part], 0))}>{runs(hitter[part])}</span>
+                </span>
+              </div>
+              <p className="text-xs text-muted-foreground">{PART_PLAIN[part]}</p>
             </li>
           ))}
-          <li className="grid grid-cols-[minmax(0,1fr)_2.25rem] items-center gap-3 border-t border-border/60 pt-2 text-xs text-muted-foreground">
-            <span>
-              Umpire calls on his takes, not counted
-              <InfoTip
-                text="Called strikes and hit batters on his takes against what the league model expected. Shown, but left out of his runs: How this works below gives the reason."
-                label="Why are calls not counted?"
-                className="ml-1 align-middle"
-              />
-            </span>
-            <span className="text-right font-mono tabular-nums">{runs(hitter.calls)}</span>
-          </li>
         </ul>
+        <p className="text-xs text-muted-foreground">
+          Umpire calls on his takes, not counted: <span className="font-mono tabular-nums">{runs(hitter.calls)}</span>
+          <InfoTip
+            text="Called strikes and hit batters on his takes against what the league model expected. Shown, but left out of his runs: How this works below gives the reason."
+            label="Why are calls not counted?"
+            className="ml-1 align-middle"
+          />
+        </p>
       </section>
-      {groups.map(({ title, sets }) => (
-        <section key={title} className="min-w-0 space-y-2">
-          <p className={cn(SPLIT_LINE, "type-eyebrow text-muted-foreground")}>
-            <span>{title}</span>
-            <span className="text-right">Pitches</span>
-            <span className="text-right">Per 100</span>
-            <span className="text-right">Rank</span>
+      {/* Two columns put count over pitch beside zone, with the note filling the shorter zone column, so the two end
+          close together; three columns set the groups side by side, and the wrappers dissolve into that grid. */}
+      <div className="grid items-start gap-x-10 gap-y-5 sm:grid-cols-2 lg:grid-cols-3">
+        <div className="flex min-w-0 flex-col gap-5 lg:contents">
+          {group("By count", [COUNT_SPLITS])}
+          {group("By pitch", [PITCH_GROUP_SPLITS, pitchTypes])}
+        </div>
+        <div className="flex min-w-0 flex-col gap-5 lg:contents">
+          {group("By zone", [ZONE_SPLITS, DIRECTION_SPLITS])}
+          <p className="text-xs leading-relaxed text-muted-foreground lg:col-span-3">
+            Runs per 100 pitches against the league average. His overall rate is {rate(overall)}; small samples swing widely.
+            Rank is by runs per 100 among hitters with {minimum}+ PA listed for that split; a pitch type lists a hitter once
+            he has seen enough of it.
           </p>
-          {sets.map((codes, i) => {
-            const seen = codes.flatMap((code) => {
-              const split = bySplit[code]?.get(hitter.player_id);
-              return split && split[1] > 0 ? [{ code, split }] : [];
-            });
-            if (seen.length === 0) return null;
-            return (
-              <ul key={i} className={cn("space-y-1 text-sm", i > 0 && "border-t border-border/60 pt-1.5")}>
-                {seen.map(({ code, split: [, pitches, decision, contact, quality] }) => {
-                  const v = (100 * (decision + contact + quality)) / pitches;
-                  const place = ranks[code]?.rank.get(hitter.player_id);
-                  const of = ranks[code]?.of ?? 0;
-                  return (
-                    <li key={code} className={SPLIT_LINE}>
-                      <span className="min-w-0 truncate">{battingSplitLabel(code)}</span>
-                      <span className="text-right text-xs text-muted-foreground tabular-nums">{count(pitches)}</span>
-                      <span className={cn("text-right font-mono tabular-nums", tone(v, 1))}>{rate(v)}</span>
-                      {place == null ? <span /> : <RankBadge place={place} of={of} />}
-                    </li>
-                  );
-                })}
-              </ul>
-            );
-          })}
-        </section>
-      ))}
-      <p className="text-xs text-muted-foreground sm:col-span-2 xl:col-span-4">
-        Runs per 100 pitches against the league average. His overall rate is {rate(overall)}; small samples swing widely.
-        Rank is by runs per 100 among hitters with {minimum}+ PA listed for that split; a pitch type lists a hitter once he
-        has seen enough of it.
-      </p>
+        </div>
+      </div>
     </div>
   );
 }
@@ -564,7 +575,7 @@ export function BattingValueLeaderboard({
                           // Beside the figure where the table has room, under it below that.
                           <span className="inline-flex flex-col items-end gap-1 lg:flex-row lg:items-center lg:gap-2.5 lg:pl-3">
                             <span className="lg:w-7">{figure}</span>
-                            <ValueBar value={v} reach={reach} className="h-1.5 w-14 lg:h-2.5 lg:w-24" />
+                            <ValueBar value={v} reach={reach} className={BAR} />
                           </span>
                         ) : figure}
                       </TableCell>

@@ -8,25 +8,20 @@ export interface PositionLeader {
   // The full name is the accessible label; the tile shows the short one.
   name: string;
   short: string;
-  // A unit row (an offensive line) shows its team logo instead of a headshot.
+  // A unit row (an offensive line) shows its team logo instead of a headshot, set in the same circle.
   image?: ReactNode;
   headshotUrl: string | null;
   // The figure the table ranks by, already formatted.
   stat: string;
-  // 0 to 100 fill for a 20 to 80 grade; null shows the stat alone.
-  fill: number | null;
   tone?: "primary" | "positive" | "destructive";
 }
 
-const TONE = {
-  primary: "text-primary",
-  positive: "text-positive",
-  destructive: "text-destructive",
+// The badge pinned to the photo: tinted text at rest, a solid fill on the chosen option.
+const BADGE = {
+  primary: { rest: "text-primary", on: "bg-primary text-primary-foreground" },
+  positive: { rest: "text-positive", on: "bg-positive text-background" },
+  destructive: { rest: "text-destructive", on: "bg-destructive text-background" },
 } as const;
-
-export function gradeFill(grade: number | null | undefined): number | null {
-  return grade == null ? null : Math.min(100, Math.max(0, ((grade - 20) / 60) * 100));
-}
 
 // Two-part names lose the first name; suffixed and compound surnames keep the rest.
 export function surname(name: string): string {
@@ -55,10 +50,11 @@ export function PositionLeaderTabs<K extends string>({
     <div
       role="group"
       aria-label={label}
-      className="-mx-page-gutter grid auto-cols-[minmax(5.75rem,1fr)] grid-flow-col gap-1.5 overflow-x-auto px-page-gutter [scrollbar-width:none] md:mx-0 md:px-0"
+      className="-mx-page-gutter grid auto-cols-[minmax(5.25rem,1fr)] grid-flow-col gap-1 overflow-x-auto px-page-gutter [scrollbar-width:none] md:mx-0 md:px-0"
     >
       {options.map(({ key, label: title = key, leader }) => {
         const active = key === value;
+        const badge = BADGE[leader?.tone ?? "primary"];
         return (
           <button
             key={key}
@@ -67,25 +63,42 @@ export function PositionLeaderTabs<K extends string>({
             aria-label={leader ? `${title}: ${leader.name}, ${leader.stat}` : `${title}: no player`}
             onClick={() => onChange(key)}
             className={cn(
-              "flex min-w-0 flex-col items-center gap-1.5 rounded-md border px-2 pb-2.5 pt-2 text-center transition-colors",
+              "group flex min-w-0 flex-col items-center gap-1.5 rounded-lg px-1 pb-2 pt-1.5 text-center transition-colors",
               "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring",
-              active ? "border-primary bg-primary/10" : "border-border bg-card hover:border-rule-strong hover:bg-muted/50"
+              active ? "bg-primary/[0.07]" : "hover:bg-muted/50"
             )}
           >
             <span className={cn("type-eyebrow w-full truncate", active ? "text-primary" : "text-muted-foreground")}>{title}</span>
             {leader ? (
               <>
-                {leader.image ?? <PlayerHeadshot name={leader.name} src={leader.headshotUrl} className="h-11 w-11" />}
-                <span className="w-full truncate text-xs font-medium text-foreground">{leader.short}</span>
-                <span className={cn("font-mono text-base font-bold leading-none tabular-nums", TONE[leader.tone ?? "primary"])}>
-                  {leader.stat}
+                <span className="relative">
+                  <span
+                    className={cn(
+                      "block rounded-full ring-2 ring-offset-2 ring-offset-background transition-shadow",
+                      active ? "ring-primary" : "ring-transparent group-hover:ring-rule-strong"
+                    )}
+                  >
+                    {leader.image ? (
+                      <span className="flex h-12 w-12 items-center justify-center rounded-full bg-muted">{leader.image}</span>
+                    ) : (
+                      <PlayerHeadshot name={leader.name} src={leader.headshotUrl} className="h-12 w-12" />
+                    )}
+                  </span>
+                  <span
+                    className={cn(
+                      "absolute -bottom-2 left-1/2 -translate-x-1/2 whitespace-nowrap rounded-full px-1.5 py-px font-mono text-[11px] font-bold leading-tight tabular-nums ring-2 ring-background",
+                      active ? badge.on : cn("bg-card", badge.rest)
+                    )}
+                  >
+                    {leader.stat}
+                  </span>
                 </span>
-                <span aria-hidden="true" className="h-1 w-full overflow-hidden rounded-[1px] bg-grid">
-                  {leader.fill != null && <span className="block h-full bg-primary" style={{ width: `${leader.fill}%` }} />}
+                <span className={cn("mt-2 w-full truncate text-xs", active ? "font-semibold text-foreground" : "font-medium text-muted-foreground group-hover:text-foreground")}>
+                  {leader.short}
                 </span>
               </>
             ) : (
-              <span className="flex flex-1 items-center text-xs text-muted-foreground">{EMPTY}</span>
+              <span className="flex h-12 items-center text-xs text-muted-foreground">{EMPTY}</span>
             )}
           </button>
         );

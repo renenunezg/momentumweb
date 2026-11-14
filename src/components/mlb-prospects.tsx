@@ -440,7 +440,6 @@ export default function MlbProspects({ initial, leaders }: { initial: Record<Pro
 
   // Fixed league-wide leaders: the list is paged on the server, so the tiles
   // cannot follow the organization, level and sort filters.
-  const maxValue = Math.max(0, ...leaders.map((row) => row.trade_value_musd ?? 0));
   const leaderOptions = MLB_POSITION_ORDER.map((key) => {
     const row = leaders.find((r) => r.position_group === key);
     const value = row?.trade_value_musd ?? null;
@@ -457,7 +456,6 @@ export default function MlbProspects({ initial, leaders }: { initial: Record<Pro
       ),
       headshotUrl: row.headshot_url,
       stat: formatMillions(value, 0),
-      fill: maxValue > 0 ? Math.max(0, (value / maxValue) * 100) : null,
       tone: value >= 0 ? "positive" : "destructive",
     };
     return { key, leader };

@@ -32,7 +32,7 @@ import { SeasonStatsPanel } from "@/components/season-stats-panel";
 import { footballSeasonStats } from "@/lib/football-season-stats";
 import { TeamLogo, type TeamLogoSource } from "@/components/team-logo";
 import { PlayerComparisonPicker } from "@/components/player-comparison-picker";
-import { PositionLeaderTabs, gradeFill, surname, type PositionLeader } from "@/components/position-leader-tabs";
+import { PositionLeaderTabs, surname, type PositionLeader } from "@/components/position-leader-tabs";
 import { cfbPlayerHeadshotUrl } from "@/lib/player-headshots";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 
@@ -737,10 +737,9 @@ export default function PositionGrades({
     const leader: PositionLeader = {
       name: unit ? `${row.team} offensive line` : row.name,
       short: unit ? `${row.team} line` : surname(row.name),
-      image: unit ? <TeamLogo team={logoFor(row.team)} name={row.team} className="h-11 w-11" /> : undefined,
+      image: unit ? <TeamLogo team={logoFor(row.team)} name={row.team} className="h-8 w-8" /> : undefined,
       headshotUrl: row.headshotUrl ?? cfbPlayerHeadshotUrl(row.athleteId),
       stat: formatNumber(row.grade, 1),
-      fill: gradeFill(row.grade),
     };
     return { key, leader };
   }), [positions, index, group, logoFor]);

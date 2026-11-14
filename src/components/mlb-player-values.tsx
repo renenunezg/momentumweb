@@ -24,7 +24,7 @@ import { PlayerCell } from "@/components/player-cell";
 import { PlayerComparisonPicker } from "@/components/player-comparison-picker";
 import { ComparisonGrades, ComparisonMetrics, type ComparisonMetric } from "@/components/player-comparison";
 import { ToggleGroup } from "@/components/toggle-group";
-import { PositionLeaderTabs, gradeFill, surname, type PositionLeader } from "@/components/position-leader-tabs";
+import { PositionLeaderTabs, surname, type PositionLeader } from "@/components/position-leader-tabs";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { SeasonStatsPanel } from "@/components/season-stats-panel";
 import { seasonStats } from "@/lib/season-stats";
@@ -441,7 +441,6 @@ export default function MlbPlayerValues({ index }: { index: PlayerValueIndex[] }
       }
       return { key, row: best };
     });
-    const maxValue = Math.max(0, ...leaders.map(({ row }) => (row ? (headlineValue(row).value ?? 0) : 0)));
     return leaders.map(({ key, row }) => {
       if (row == null) return { key, leader: null };
       const value = headlineValue(row).value ?? 0;
@@ -450,8 +449,8 @@ export default function MlbPlayerValues({ index }: { index: PlayerValueIndex[] }
         short: surname(row.player_name ?? String(row.player_id)),
         headshotUrl: row.headshot_url,
         ...(preset === "best"
-          ? { stat: formatNumber(row.grade, 0), fill: gradeFill(row.grade) }
-          : { stat: formatMillions(value, 0), fill: maxValue > 0 ? Math.max(0, (value / maxValue) * 100) : null, tone: value >= 0 ? "positive" : "destructive" }),
+          ? { stat: formatNumber(row.grade, 0) }
+          : { stat: formatMillions(value, 0), tone: value >= 0 ? "positive" : "destructive" }),
       };
       return { key, leader };
     });
