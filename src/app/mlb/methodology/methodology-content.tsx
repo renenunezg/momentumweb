@@ -754,7 +754,7 @@ export function MethodologyContent({
             reaches 100 plate appearances or batters faced. Below that the page shows no number.
           </p>
           <p className="text-muted-foreground">
-            Prospect grades, award forecasts, playoff odds and pitch and batting run values each
+            Prospect grades, award forecasts, playoff odds, pitch and batting run values and xWAR each
             have their own page:{" "}
             {[
               { href: "/mlb/prospects", label: "Prospects" },
@@ -762,6 +762,7 @@ export function MethodologyContent({
               { href: "/mlb/playoffs", label: "Playoffs" },
               { href: "/mlb/pitching-value", label: "Pitching value" },
               { href: "/mlb/batting-value", label: "Batting value" },
+              { href: "/mlb/xwar", label: "xWAR" },
             ].map((link, i, all) => (
               <span key={link.href}>
                 <Link href={link.href} className="underline underline-offset-2 hover:text-foreground">

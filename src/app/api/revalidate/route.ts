@@ -20,7 +20,7 @@ const MLB_PATHS: Record<string, string[]> = {
   model_calibration: ["/mlb/performance"],
   model_edge_buckets: ["/mlb/performance"],
   posterior_sigmas: ["/mlb/performance"],
-  player_values: ["/mlb/players", "/mlb/performance"], // The performance page checks the fitted model version.
+  player_values: ["/mlb/players", "/mlb/performance", "/mlb/xwar"], // The performance page checks the fitted model version; xWAR shows the projection.
   player_value_models: ["/", "/mlb/performance", "/mlb/methodology"], // The evaluation view reads this row.
   player_traits: [], // Details use their API route's CDN window.
   prospect_values: ["/mlb/prospects"], // Filtered pages use their API route's CDN window.
@@ -32,6 +32,8 @@ const MLB_PATHS: Record<string, string[]> = {
   batting_value_study: ["/mlb/batting-value"],
   batting_values: ["/mlb/batting-value"],
   batting_split_values: ["/mlb/batting-value"],
+  xwar_study: ["/mlb/xwar"],
+  xwar: ["/mlb/xwar"],
   award_boards: ["/mlb/awards"],
   award_models: ["/mlb/awards"],
 };

@@ -4501,6 +4501,87 @@ export type Database = {
         }
         Relationships: []
       }
+      xwar: {
+        Row: {
+          balls: number | null
+          balls_allowed: number | null
+          earned_gap_runs: number | null
+          earned_home_runs: number | null
+          expected_home_runs: number | null
+          expected_woba_contact: number | null
+          home_run_gap: number | null
+          home_runs_allowed: number | null
+          player_id: number
+          player_name: string
+          realized_gap_runs: number | null
+          season: number
+          team: string
+          updated_at: string
+          war: number
+          woba_contact: number | null
+          xwar: number
+        }
+        Insert: {
+          balls?: number | null
+          balls_allowed?: number | null
+          earned_gap_runs?: number | null
+          earned_home_runs?: number | null
+          expected_home_runs?: number | null
+          expected_woba_contact?: number | null
+          home_run_gap?: number | null
+          home_runs_allowed?: number | null
+          player_id: number
+          player_name: string
+          realized_gap_runs?: number | null
+          season: number
+          team: string
+          updated_at?: string
+          war: number
+          woba_contact?: number | null
+          xwar: number
+        }
+        Update: {
+          balls?: number | null
+          balls_allowed?: number | null
+          earned_gap_runs?: number | null
+          earned_home_runs?: number | null
+          expected_home_runs?: number | null
+          expected_woba_contact?: number | null
+          home_run_gap?: number | null
+          home_runs_allowed?: number | null
+          player_id?: number
+          player_name?: string
+          realized_gap_runs?: number | null
+          season?: number
+          team?: string
+          updated_at?: string
+          war?: number
+          woba_contact?: number | null
+          xwar?: number
+        }
+        Relationships: []
+      }
+      xwar_study: {
+        Row: {
+          model_version: string
+          payload: Json
+          season: number
+          updated_at: string
+        }
+        Insert: {
+          model_version: string
+          payload: Json
+          season: number
+          updated_at?: string
+        }
+        Update: {
+          model_version?: string
+          payload?: Json
+          season?: number
+          updated_at?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       bet_ledger_agg_v: {
