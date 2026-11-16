@@ -359,18 +359,21 @@ export const CFB_SECTION_ORDER = ["grade_inputs", "context"] as const;
 // A skater's value splits into the goals he adds and the goals he prevents.
 // Each trait is in goals per 82 games above an average skater at his position
 // and sits in its section in the order listed here; a goalie has one trait and
-// no section.
+// no section. `short` is the name under the section's heading, which already
+// says offense or defense.
 const NHL_SECTION_ORDER = ["offense", "defense"] as const;
 type NhlSection = (typeof NHL_SECTION_ORDER)[number];
 
-const NHL_TRAITS: Record<string, { label: string; tip: string; section: NhlSection | null }> = {
+const NHL_TRAITS: Record<string, { label: string; short?: string; tip: string; section: NhlSection | null }> = {
   offense: {
     label: "Offense",
+    short: "Overall",
     tip: "Goals he adds per 82 games above an average skater at his position: even strength, power play and finishing together.",
     section: "offense",
   },
   even_strength_offense: {
     label: "Even-strength offense",
+    short: "Even strength",
     tip: "His effect on his team's expected goals at 5-on-5 with linemates and opponents held constant, combined with his shot and point rates, times the 5-on-5 ice time he is getting. Goals per 82 games.",
     section: "offense",
   },
@@ -386,11 +389,13 @@ const NHL_TRAITS: Record<string, { label: string; tip: string; section: NhlSecti
   },
   defense: {
     label: "Defense",
+    short: "Overall",
     tip: "Goals he prevents per 82 games above an average skater at his position: even strength and penalty kill together.",
     section: "defense",
   },
   even_strength_defense: {
     label: "Even-strength defense",
+    short: "Even strength",
     tip: "His effect on opponents' expected goals at 5-on-5 with linemates and opponents held constant, times the 5-on-5 ice time he is getting. Goals prevented per 82 games.",
     section: "defense",
   },
@@ -551,7 +556,7 @@ const RATED_MEASURE_LABELS: Record<string, { label: string; tip: string }> = {
   ngs_efficiency: { label: "Efficiency", tip: "Next Gen's yards travelled per yard gained; lower means a straighter runner." },
 };
 
-export function traitLabel(trait: string, sport: GradeSport = "cfb"): { label: string; tip: string } {
+export function traitLabel(trait: string, sport: GradeSport = "cfb"): { label: string; short?: string; tip: string } {
   if (sport === "nhl") return NHL_TRAITS[trait] ?? { label: trait, tip: "" };
   const base = TRAIT_LABELS[trait] ?? { label: trait, tip: "" };
   if (sport !== "nfl") return base;

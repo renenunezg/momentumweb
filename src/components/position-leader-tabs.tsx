@@ -71,7 +71,7 @@ export function PositionLeaderTabs<K extends string>({
       role="group"
       aria-label={label}
       style={mask}
-      className="-mx-page-gutter grid auto-cols-[4.75rem] grid-flow-col md:auto-cols-[minmax(5.25rem,1fr)] gap-1 overflow-x-auto px-page-gutter [scrollbar-width:none] md:mx-0 md:px-0"
+      className="-mx-page-gutter grid auto-cols-[minmax(4.75rem,1fr)] grid-flow-col md:auto-cols-[minmax(5.25rem,1fr)] gap-1 overflow-x-auto px-page-gutter [scrollbar-width:none] md:mx-0 md:px-0"
     >
       {options.map(({ key, label: title = key, leader }) => {
         const active = key === value;

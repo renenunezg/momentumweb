@@ -102,7 +102,7 @@ function TraitRow({
   group: string;
   trait: GradedPlayerTrait | undefined;
 }) {
-  const { label, tip } = traitLabel(name, sport);
+  const { label, short = label, tip } = traitLabel(name, sport);
   const inGrade = trait?.in_grade ?? false;
   const { kind, inferred, style, dimmed } = barLook(trait);
   const noise = kind === "noise";
@@ -124,7 +124,7 @@ function TraitRow({
     >
       <span className="col-span-2 flex min-w-0 items-center justify-between gap-1.5 sm:col-span-1">
         <span className="flex min-w-0 items-center gap-1.5">
-          <span className="truncate">{label}</span>
+          <span className="truncate">{short}</span>
           <InfoTip
             text={`${detail}${trait?.value != null ? ` Value: ${formatNumber(trait.value, 3)}.` : ""}`}
             label={`What is ${label}?`}
@@ -338,6 +338,7 @@ function rankByPosition(index: PlayerIndexRow[]): Map<string, PositionRank> {
 
 function GradeCard({
   desktop = false,
+  showUncertainty = true,
   showForecast = false,
   showSpread = false,
   showValue = false,
@@ -355,6 +356,7 @@ function GradeCard({
   logo,
 }: {
   desktop?: boolean;
+  showUncertainty?: boolean;
   showForecast?: boolean;
   showSpread?: boolean;
   showValue?: boolean;
@@ -621,7 +623,7 @@ function GradeCard({
           <TableCell className="text-center">{row.positionGroup}</TableCell>
           <TableCell className="text-center">{formatNumber(row.games, 0)}</TableCell>
           <TableCell className="text-center font-bold text-primary">{formatGrade(grade)}</TableCell>
-          <TableCell className="text-center">{player?.uncertainty == null ? EMPTY : `±${formatNumber(player.uncertainty, 1)}`}</TableCell>
+          {showUncertainty && <TableCell className="text-center">{player?.uncertainty == null ? EMPTY : `±${formatNumber(player.uncertainty, 1)}`}</TableCell>}
           <TableCell className="text-center">{row.percentile == null ? EMPTY : Math.round(row.percentile)}</TableCell>
           {desktopTraits.map((name) => {
             const trait = player?.traits.find((item) => item.trait === name);
@@ -646,7 +648,7 @@ function GradeCard({
           <TableCell><ChevronDown aria-hidden="true" className={cn("size-4 text-muted-foreground transition-transform", open && "rotate-180")} /></TableCell>
         </TableRow>
         <TableRow hidden={!open} className="hover:bg-transparent">
-          <TableCell colSpan={8 + Number(showForecast) + Number(copy.warTip != null) + (showSpread ? 1 : 0) + (showValue ? 2 : 0) + (showNil ? 1 : 0) + (showNilSurplus ? 1 : 0) + desktopTraits.length} className="whitespace-normal bg-muted/20">{details}</TableCell>
+          <TableCell colSpan={7 + Number(showUncertainty) + Number(showForecast) + Number(copy.warTip != null) + (showSpread ? 1 : 0) + (showValue ? 2 : 0) + (showNil ? 1 : 0) + (showNilSurplus ? 1 : 0) + desktopTraits.length} className="whitespace-normal bg-muted/20">{details}</TableCell>
         </TableRow>
       </Fragment>
     );
@@ -681,7 +683,7 @@ function CompareRow({
   left: GradedPlayerTrait | undefined;
   right: GradedPlayerTrait | undefined;
 }) {
-  const { label, tip } = traitLabel(name, sport);
+  const { label, short = label, tip } = traitLabel(name, sport);
   const sample = left ?? right;
   const { style, dimmed } = barLook(sample);
   const reliability = sample?.reliability ?? null;
@@ -705,7 +707,7 @@ function CompareRow({
       <span className="text-left font-mono tabular-nums">{pct(left) == null ? EMPTY : Math.round(pct(left)!)}</span>
       {bar(left, style ? "bg-muted-foreground" : "bg-primary", true)}
       <span className="col-span-4 row-start-1 flex min-w-0 items-center justify-center gap-1.5 sm:col-span-1 sm:col-start-3">
-        <span className="text-center">{label}</span>
+        <span className="text-center">{short}</span>
         <InfoTip
           text={`${tip}${reliability != null ? ` Reliability: ${formatNumber(reliability, 2)}.` : ""}${value(left) || value(right) ? ` Values: left${value(left) || " unavailable"}, right${value(right) || " unavailable"}.` : ""}`}
           label={`What is ${label}?`}
@@ -976,6 +978,12 @@ export default function PositionGrades({
         })
         .map(([name, meta]) => ({ name, kind: meta.kind }));
   }, [index, loaded, sport]);
+  // A position whose loaded players carry no grade uncertainty has no ± column;
+  // it stays while cards load so a table that has one does not shift.
+  const showUncertainty = visible.some((row) => {
+    const player = loaded[row.athleteId];
+    return player == null || player.uncertainty != null;
+  });
   const ratedRow = visible.find((row) => RATING_LABELS[row.positionGroup] != null && loaded[row.athleteId]?.rating != null);
   const showForecast = ratedRow != null;
   // One position on screen shares one forecast unit, so the header carries it;
@@ -993,6 +1001,7 @@ export default function PositionGrades({
     <GradeCard
       key={row.athleteId}
       desktop={desktop}
+      showUncertainty={showUncertainty}
       showForecast={showForecast}
       showSpread={showSpread}
       showValue={showValue}
@@ -1082,7 +1091,7 @@ export default function PositionGrades({
             {renderPlayers(false)}
           </div>
           <div className="hidden md:block">
-            <p className="pb-2 text-xs text-muted-foreground">± is grade uncertainty. Pct and trait columns are position percentiles.</p>
+            <p className="pb-2 text-xs text-muted-foreground">{showUncertainty && "± is grade uncertainty. "}Pct and trait columns are position percentiles.</p>
             <Table className="table-fixed min-w-[1080px]">
               <colgroup>
                 <col className="w-8" />
@@ -1090,7 +1099,7 @@ export default function PositionGrades({
                 <col className="w-12" />
                 <col className="w-16" />
                 <col className="w-16" />
-                <col className="w-12" />
+                {showUncertainty && <col className="w-12" />}
                 <col className="w-12" />
                 {desktopTraits.map((name) => <col key={name} className="w-34" />)}
                 {showForecast && <col className="w-32" />}
@@ -1109,7 +1118,7 @@ export default function PositionGrades({
                   <TableHead className="text-center">Pos</TableHead>
                   <TableHead className="text-center">Games</TableHead>
                   <TableHead className="text-center"><span className="inline-flex items-center gap-1">Grade <InfoTip text={copy.gradeTip} label="What is the grade?" /></span></TableHead>
-                  <TableHead className="text-center">±</TableHead>
+                  {showUncertainty && <TableHead className="text-center">±</TableHead>}
                   <TableHead className="text-center">Pct</TableHead>
                   {desktopTraits.map((name) => {
                     const { label, tip } = traitLabel(name, sport);
