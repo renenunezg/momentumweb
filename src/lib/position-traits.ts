@@ -299,7 +299,7 @@ export const KIND_LABELS: Record<MeasureKind, { label: string; tip: string }> = 
   },
   noise: {
     label: "Noise",
-    tip: "Measures that vary too much between games to reliably grade the player.",
+    tip: "Swings from game to game more than it repeats, and does not help forecast the rest of the season, so it is shown but not graded.",
   },
 };
 

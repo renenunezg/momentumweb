@@ -106,7 +106,7 @@ function TraitRow({
   const detail = trait == null
     ? `${tip} No value for this player yet.`
     : kind != null
-      ? `${tip}${inGrade ? " Used in the grade." : style ? " Higher is not necessarily better." : noise ? " Unreliable across games, so not graded." : " Not used in the grade."}`
+      ? `${tip}${inGrade ? " Used in the grade." : style ? " Higher is not necessarily better." : noise ? " Swings from game to game and does not help the forecast, so not graded." : " Not used in the grade."}`
       : inGrade
         ? tip
         : `${tip} Not used in the ${group} grade.`;
@@ -917,7 +917,7 @@ export default function PositionGrades({
           ? `${matches.length} player${matches.length === 1 ? "" : "s"} match "${query.trim()}"${group === ALL ? "" : ` in the ${group}`}, best grade first`
           : `${visible.length === matches.length ? `All ${matches.length}` : `Top ${visible.length} of ${matches.length}`} ${group === ALL ? "" : `${group} `}${position} graded this week`}
         <InfoTip
-          text={`Percentiles among ${copy.pool} at the position this week. ${sport === "cfb" ? "Grade inputs contribute to the rating, and More context does not. Each player card has a key to its bar colors." : "Each player card has a key to its bar colors. The r is the stat’s reliability over 8 games: how well odd and even games agree, scaled to 8 games."}`}
+          text={`Percentiles among ${copy.pool} at the position this week. ${sport === "cfb" ? "Grade inputs contribute to the rating, and More context does not. Each player card has a key to its bar colors." : `Each player card has a key to its bar colors. The r is the stat’s reliability over 8 games: how well odd and even games agree, scaled to 8 games.${headerRating ? " GRADE marks the inputs of the fitted forecast. An input earns its place by improving the forecast, so a low r can still be graded: the forecast reads the stat weighted by volume." : ""}`}`}
           label="How to read the bars"
         />
       </p>
