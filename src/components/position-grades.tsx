@@ -350,15 +350,55 @@ function GradeCard({
   const scouted = cfb && player?.scoutRank != null;
   const efficient = cfb && player?.efficiency != null;
   const inForm = cfb && player?.form != null;
+  const cfbExtras = Number(scouted) + Number(efficient) + Number(inForm);
   const headlines =
     cfb
-      ? 2 + Number(rated) + Number(scouted) + Number(efficient) + Number(inForm)
+      ? 2 + Number(rated) + cfbExtras
       : 2 + Number(rated) + Number(priced) + (valued ? 2 : 0);
   // A CFB phone card keeps grade and WAR and adds one more: scouts, else form, else efficiency.
   const phoneThird = scouted ? "scouts" : inForm ? "form" : efficient ? "efficiency" : null;
-  const wideOnly = (key: string) => (phoneThird === key ? undefined : "hidden sm:flex");
+  const wideOnly = (key: string) => (desktop || phoneThird === key ? undefined : "hidden sm:flex");
   const phoneHeadlines = Math.min(3, headlines);
   const headlineGrid = cfb ? cn(PHONE_GRID[phoneHeadlines], WIDE_GRID[headlines]) : HEADLINE_GRID[headlines];
+  // Scouts, efficiency and form: headlines on the phone card and the desktop panel alike,
+  // since the desktop row has columns for grade and WAR but not for these.
+  const cfbHeadlines = (
+    <>
+      {scouted && (
+        <Headline
+          label="Scouts"
+          tip={CFB_SCOUTS_TIP}
+          tipLabel="What is the scouts' rank?"
+          value={`${player.scoutPosition} #${player.scoutRank}`}
+          sub="draft board"
+        />
+      )}
+      {efficient && (
+        <Headline
+          label="Efficiency"
+          tip={CFB_EFFICIENCY_TIP}
+          tipLabel="What is efficiency?"
+          value={formatSigned(player.efficiency, 2)}
+          sub={[
+            "EPA per play",
+            player.efficiencyPercentile == null ? null : `pct ${Math.round(player.efficiencyPercentile)}`,
+          ].filter(Boolean).join(" · ")}
+          className={wideOnly("efficiency")}
+        />
+      )}
+      {inForm && (
+        <Headline
+          label="Form"
+          tip={CFB_FORM_TIP}
+          tipLabel="What is form?"
+          value={formatSigned(player.form, 1)}
+          sub="last 3 vs season"
+          tone={signTone(player.form)}
+          className={wideOnly("form")}
+        />
+      )}
+    </>
+  );
   // A long card folds its sections on a phone so the stat lines stay in reach;
   // a short one keeps every row open.
   const folded = !desktop && lines.length > FOLD_ROWS;
@@ -369,6 +409,14 @@ function GradeCard({
     if (last && last.kind === line.kind) last.names.push(line.name);
     else sections.push({ kind: line.kind, names: [line.name] });
   }
+  // On the desktop card the CFB headlines fill the space under the shorter
+  // second section when there are exactly two; otherwise they lead the card.
+  const besideContext = desktop && sections.length === 2 && !folded;
+  const desktopHeadlines = (
+    <div className={cn("flex flex-wrap gap-x-12 gap-y-4 [&>*]:items-start [&>*]:text-left", besideContext && "col-start-2 border-t border-border pt-4")}>
+      {cfbHeadlines}
+    </div>
+  );
   const details = (
       // A card renders only once opened: forty closed cards in both layouts
       // would otherwise be most of the page's HTML.
@@ -410,39 +458,7 @@ function GradeCard({
               }
               tone={player?.war != null && player.war > 0 ? "text-positive" : undefined}
             />
-            {scouted && (
-              <Headline
-                label="Scouts"
-                tip={CFB_SCOUTS_TIP}
-                tipLabel="What is the scouts' rank?"
-                value={`${player.scoutPosition} #${player.scoutRank}`}
-                sub="draft board"
-              />
-            )}
-            {efficient && (
-              <Headline
-                label="Efficiency"
-                tip={CFB_EFFICIENCY_TIP}
-                tipLabel="What is efficiency?"
-                value={formatSigned(player.efficiency, 2)}
-                sub={[
-                  "EPA per play",
-                  player.efficiencyPercentile == null ? null : `pct ${Math.round(player.efficiencyPercentile)}`,
-                ].filter(Boolean).join(" · ")}
-                className={wideOnly("efficiency")}
-              />
-            )}
-            {inForm && (
-              <Headline
-                label="Form"
-                tip={CFB_FORM_TIP}
-                tipLabel="What is form?"
-                value={formatSigned(player.form, 1)}
-                sub="last 3 vs season"
-                tone={signTone(player.form)}
-                className={wideOnly("form")}
-              />
-            )}
+            {cfbHeadlines}
             {priced && (
               <Headline
                 label="PSR"
@@ -473,6 +489,7 @@ function GradeCard({
             )}
           </div>
         )}
+        {desktop && cfbExtras > 0 && !besideContext && desktopHeadlines}
         {!desktop && nilPriced && (
           <p className="flex flex-wrap items-center justify-center gap-1 text-center font-mono text-[11px] text-muted-foreground">
             {nilLine(player)} <InfoTip text={CFB_NIL_PRICE_TIP} label="What is NIL price?" />
@@ -501,7 +518,10 @@ function GradeCard({
                 // A lone section on the desktop card takes the full width and splits its rows into two columns.
                 const lone = desktop && sections.length === 1;
                 return (
-                  <section key={section.kind ?? "traits"} className={cn("min-w-0 border-t border-border", lone && "col-span-2")}>
+                  <section
+                    key={section.kind ?? "traits"}
+                    className={cn("min-w-0 border-t border-border", lone && "col-span-2", besideContext && cfbExtras > 0 && section === sections[0] && "row-span-2")}
+                  >
                     <div className="flex min-h-11 items-center gap-2">
                       <h3 className="font-mono text-xs">{label}</h3>
                       {info}
@@ -528,6 +548,7 @@ function GradeCard({
                 </Accordion.Item>
               );
             })}
+            {besideContext && cfbExtras > 0 && desktopHeadlines}
           </Accordion.Root>
         )}
         {player && <BarLegend traits={player.traits.filter((t) => lines.some((line) => line.name === t.trait))} />}
@@ -554,10 +575,7 @@ function GradeCard({
           </TableCell>
           <TableCell className="text-center">{row.positionGroup}</TableCell>
           <TableCell className="text-center">{formatNumber(row.games, 0)}</TableCell>
-          <TableCell className="text-center">
-            <div className="font-bold text-primary">{formatGrade(grade)}</div>
-            {player?.scoutRank != null && <div className="text-[11px] font-bold text-foreground">Scouts {player.scoutPosition} #{player.scoutRank}</div>}
-          </TableCell>
+          <TableCell className="text-center font-bold text-primary">{formatGrade(grade)}</TableCell>
           <TableCell className="text-center">{player?.uncertainty == null ? EMPTY : `±${formatNumber(player.uncertainty, 1)}`}</TableCell>
           <TableCell className="text-center">{row.percentile == null ? EMPTY : Math.round(row.percentile)}</TableCell>
           {desktopTraits.map((name) => {
