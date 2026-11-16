@@ -21,7 +21,8 @@ export interface SeasonStat {
 }
 
 export interface SeasonStatsData {
-  season: number;
+  // The year, or a label such as 2026-27 for a season that spans two.
+  season: number | string;
   context: string;
   tiers: { label: string; stats: SeasonStat[] }[];
   note: string;

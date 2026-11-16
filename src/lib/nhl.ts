@@ -4,6 +4,7 @@ import { nhlPlayerHeadshotUrl } from "@/lib/player-headshots";
 import {
   EMPTY_GRADES,
   ID_CHUNK,
+  STATS_COLUMNS,
   INDEX_COLUMNS,
   buildGradedPlayers,
   chunk,
@@ -12,6 +13,7 @@ import {
   toIndexRow,
   type GradedPlayer,
   type IndexRow,
+  type PlayerSeasonStatsRow,
   type PositionGrades,
 } from "@/lib/position-grades";
 import { supabaseNhl } from "@/lib/supabase";
@@ -231,22 +233,36 @@ async function fetchGradeIndex(season: number): Promise<IndexRow[]> {
   );
 }
 
-export async function fetchNhlPlayerTraitRows(season: number, ids: string[]): Promise<NhlPositionTrait[]> {
+// Each player's trait rows and season stat line.
+export async function fetchNhlPlayerTraitRows(
+  season: number,
+  ids: string[],
+): Promise<{ traits: NhlPositionTrait[]; stats: PlayerSeasonStatsRow[] }> {
   const parts = await Promise.all(
     chunk(ids, ID_CHUNK).map((part) =>
-      readAllPages((from, to) =>
-        supabaseNhl
-          .from("position_traits")
-          .select("*")
-          .eq("season", season)
-          .in("athlete_id", part)
-          .order("athlete_id")
-          .order("trait")
-          .range(from, to)
-      ),
+      Promise.all([
+        readAllPages((from, to) =>
+          supabaseNhl
+            .from("position_traits")
+            .select("*")
+            .eq("season", season)
+            .in("athlete_id", part)
+            .order("athlete_id")
+            .order("trait")
+            .range(from, to)
+        ),
+        supabaseNhl.from("player_season_stats").select(STATS_COLUMNS).eq("season", season).in("athlete_id", part).limit(ID_CHUNK),
+      ]),
     ),
   );
-  return parts.flat();
+  const traits: NhlPositionTrait[] = [];
+  const stats: PlayerSeasonStatsRow[] = [];
+  for (const [traitRows, statsRes] of parts) {
+    if (statsRes.error) throw statsRes.error;
+    traits.push(...traitRows);
+    stats.push(...(statsRes.data ?? []));
+  }
+  return { traits, stats };
 }
 
 // A player off his club's current roster is published without a headshot.
@@ -258,13 +274,13 @@ function withHeadshot<T extends { athlete_id: string; headshot_url?: string | nu
 // total, a goalie's goals saved. The card shows it as the rating headline. A
 // skater's total is the sum of the offense and defense rows the card lists, so
 // it is not listed again; a goalie's is the only row he has, so it stays.
-export function buildNhlGradedPlayers(rows: NhlPositionTrait[]): Record<string, GradedPlayer> {
-  const shaped = rows.map(withHeadshot).flatMap((row) => {
+export function buildNhlGradedPlayers({ traits, stats }: { traits: NhlPositionTrait[]; stats: PlayerSeasonStatsRow[] }): Record<string, GradedPlayer> {
+  const shaped = traits.map(withHeadshot).flatMap((row) => {
     if (row.trait === "total") return [{ ...row, trait: "rating" }];
     if (row.trait === "goals_saved") return [row, { ...row, trait: "rating" }];
     return [row];
   });
-  return buildGradedPlayers(shaped, []);
+  return buildGradedPlayers(shaped, stats);
 }
 
 // The grade index and trait rows throw on a failed read so ISR keeps the last

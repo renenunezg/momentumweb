@@ -20,9 +20,9 @@ export async function GET(request: Request) {
     return bad("Invalid player list");
   }
   try {
-    const rows = await fetchNhlPlayerTraitRows(Number(season), [...new Set(ids)].sort());
+    const players = await fetchNhlPlayerTraitRows(Number(season), [...new Set(ids)].sort());
     return Response.json(
-      { season: Number(season), players: buildNhlGradedPlayers(rows) },
+      { season: Number(season), players: buildNhlGradedPlayers(players) },
       {
         headers: {
           "Cache-Control": "public, max-age=0, must-revalidate",

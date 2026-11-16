@@ -35,6 +35,7 @@ import { PlayerRowDisclosure, PlayerRowHeader } from "@/components/player-row-di
 import { PlayerCell } from "@/components/player-cell";
 import { SeasonStatsPanel } from "@/components/season-stats-panel";
 import { footballSeasonStats } from "@/lib/football-season-stats";
+import { hockeySeasonStats } from "@/lib/hockey-season-stats";
 import { TeamLogo, type TeamLogoSource } from "@/components/team-logo";
 import { PlayerComparisonPicker } from "@/components/player-comparison-picker";
 import { PositionLeaderTabs, surname, type PositionLeader } from "@/components/position-leader-tabs";
@@ -447,7 +448,8 @@ function GradeCard({
   // A long card folds its sections on a phone so the stat lines stay in reach;
   // a short one keeps every row open.
   const folded = !desktop && lines.length > FOLD_ROWS;
-  const seasonStats = footballSeasonStats(sport, player?.seasonStats);
+  const seasonStats =
+    sport === "nhl" ? hockeySeasonStats(player?.seasonStats) : footballSeasonStats(sport, player?.seasonStats);
   const sections: { kind: TraitSection | null; names: string[] }[] = [];
   for (const line of lines) {
     const last = sections[sections.length - 1];
