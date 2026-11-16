@@ -21,7 +21,7 @@ export async function generateMetadata(): Promise<Metadata> {
 
 export default async function NflPlayersPage() {
   const [grades, teams] = await Promise.all([fetchNflPositionGrades(), fetchGradeTeams()]);
-  const { season, week, index, details, gradedCounts } = grades;
+  const { season, week, index, details } = grades;
 
   if (season == null || index.length === 0) {
     return (
@@ -51,12 +51,15 @@ export default async function NflPlayersPage() {
       </PageHeader>
       <PlayerSectionTabs sections={NFL_PLAYER_SECTIONS} />
 
+      <p className="max-w-4xl text-sm text-muted-foreground leading-relaxed">
+        Position-specific grades and wins above replacement.
+      </p>
+
       <PositionGrades
         sport="nfl"
         season={season}
         index={index}
         details={details}
-        gradedCounts={gradedCounts}
         teams={teams}
       />
     </PageShell>

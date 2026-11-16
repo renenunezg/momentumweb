@@ -21,12 +21,13 @@ export async function generateMetadata(): Promise<Metadata> {
 
 export default async function PlayersPage() {
   const [grades, teams] = await Promise.all([fetchPositionGrades(), fetchGradeTeams()]);
-  const { season, week, index, details, gradedCounts } = grades;
+  const { season, week, index, details } = grades;
 
   if (season == null || index.length === 0) {
     return (
       <PageShell>
         <PageTitle>Player Grades</PageTitle>
+        <PlayerSectionTabs />
         <p className="text-muted-foreground">
           No position grades have been published yet. The grades appear once the
           first week of the season is final.
@@ -59,7 +60,6 @@ export default async function PlayersPage() {
         season={season}
         index={index}
         details={details}
-        gradedCounts={gradedCounts}
         teams={teams}
       />
     </PageShell>

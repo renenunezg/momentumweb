@@ -9,25 +9,25 @@ export const POSITION_ORDER = ["QB", "RB", "WR", "TE", "OL", "DL", "LB", "DB", "
 export type PositionGroup = (typeof POSITION_ORDER)[number];
 
 const GRADE_TIP =
-  "Projected talent on a 20 to 80 scale among qualified FBS players at the position this week. 50 is average; 10 points is one standard deviation. Quarterback, running back and defensive back grades include the talent level of the player's program. Early in the season, grades at every position except defensive back, offensive line and punter lean on last season's final grade, with a weight that fades to zero by week 13. ± shows uncertainty.";
+  "Projected talent on a 20 to 80 scale among qualified FBS players at the position this week. 50 is average; 10 points is one standard deviation. Quarterback, running back and defensive back grades include the talent level of the player's program. Early in the season, grades at every position except defensive back, offensive line and punter lean on last season's final grade, with a weight that fades to zero by week 13. The scale stops at 20 and 80. ± shows uncertainty.";
 
 const WAR_TIP =
   "Estimated wins above a replacement-level player at the position: points above replacement from opponent-adjusted play credit, at the league rate of about 50 points per win. Defensive value is understated because only tagged disruptions count.";
 
 const NFL_GRADE_TIP =
-  "Talent on a 20 to 80 scale among qualified NFL players at the position this week. 50 is average; 10 points is one standard deviation. ± shows uncertainty.";
+  "Talent on a 20 to 80 scale among qualified NFL players at the position this week. 50 is average; 10 points is one standard deviation. The scale stops at 20 and 80. ± shows uncertainty.";
 
 const NFL_WAR_TIP =
   "Estimated wins above a replacement-level player at the position, using opponent-adjusted credit on competitive plays and game leverage. Defensive plays are weighted by how closely each kind tracks a defender's on-field impact; coverage that never shows up on a tagged play is not counted.";
 
 export const NFL_VALUE_TIP =
-  "What his projected wins are worth over the rest of his contract, in millions of this season's cap dollars, at the league's price of a win. ± is the range of the projection.";
+  "What his projected wins are worth over the rest of his contract, in millions of this season's cap dollars, at the league's price of a win. A longer contract holds more value. ± is the range of the projection.";
 
 export const NFL_SURPLUS_TIP =
-  "His value minus the cash a team taking on his contract would still owe, cutting him in any later year where that is cheaper. Positive means the contract pays less than his wins are worth. It is not a trade price: deadline buyers routinely pay picks for players with negative surplus.";
+  "His value minus the cash a team taking on his contract would still owe, cutting him in any later year where that is cheaper. Positive means the contract pays less than his wins are worth; it is colored only when the range clears zero. It is not a trade price: deadline buyers routinely pay picks for players with negative surplus.";
 
 export const CFB_NIL_PRICE_TIP =
-  "What landing him would cost in school revenue share for one season, from the College Sports Commission's 2026 pay at his position. Players are ranked by how strong a program the market would send them to: a portal entrant by his portal rating, everyone else by his production, which predicts it less well and is marked est. Third-party NIL comes on top. Above the 90th percentile of published pay the figure is extrapolated. ± is the range of where he would land.";
+  "What landing him would cost in school revenue share for one season, from the College Sports Commission's 2026 pay at his position. Players are ranked by how strong a program the market would send them to: a portal entrant by his portal rating, everyone else by his production, which predicts it less well and is shown dimmed in the table and marked est. on the card. Third-party NIL comes on top. Above the 90th percentile of published pay the figure is extrapolated. ± is the range of where he would land.";
 
 export const CFB_NIL_WORTH_TIP =
   "What his projected wins next season are worth: the same revenue-share pay, read at his rank in projected wins above replacement among quarterbacks. Quarterbacks only; at other positions the projection did not beat portal ratings.";

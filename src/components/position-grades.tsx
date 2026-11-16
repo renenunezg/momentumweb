@@ -3,7 +3,7 @@
 import { Accordion } from "@base-ui/react/accordion";
 import { ChevronDown } from "lucide-react";
 import { Fragment, useDeferredValue, useEffect, useMemo, useState } from "react";
-import { GRADE_ROWS, type GradedPlayer, type GradedPlayerTrait, type GradeTeam, type PlayerIndexRow } from "@/lib/position-grades";
+import { GRADE_ROWS, defaultPosition, formatGrade, type GradedPlayer, type GradedPlayerTrait, type GradeTeam, type PlayerIndexRow } from "@/lib/position-grades";
 import {
   CFB_SECTION_ORDER,
   TRAIT_SECTION_LABELS,
@@ -37,6 +37,8 @@ import { cfbPlayerHeadshotUrl } from "@/lib/player-headshots";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 
 const ALL = "all";
+// More trait rows than this fold a phone card's sections.
+const FOLD_ROWS = 12;
 
 // Diagonal stripes mark a trait inferred from unit outcomes or teammates
 // rather than counted from the player's own tagged plays.
@@ -184,10 +186,11 @@ function formatPsr(spreadValue: number | null): string {
   return spreadValue == null ? EMPTY : formatSigned(spreadValue, 1);
 }
 
-// Millions of cap dollars: "$45.6M", or signed for a surplus.
+// Whole millions of cap dollars, "$46M", or signed for a surplus: the ranges
+// run to tens of millions, so a decimal would claim precision they lack.
 function formatMillions(value: number | null, signed = false): string {
   if (value == null) return EMPTY;
-  const text = `$${Math.abs(value).toFixed(1)}M`;
+  const text = `$${Math.abs(value).toFixed(0)}M`;
   if (value < 0) return `−${text}`;
   return signed ? `+${text}` : text;
 }
@@ -204,9 +207,11 @@ function formatPay(value: number | null, signed = false): string {
 }
 
 // A surplus reads green when the player is worth more than he costs and red
-// when he costs more than he is worth.
-function surplusTone(value: number | null | undefined): string | undefined {
+// when he costs more than he is worth, and stays neutral when its range
+// reaches across zero and so leaves the sign unsettled.
+function surplusTone(value: number | null | undefined, range?: number | null): string | undefined {
   if (value == null || value === 0) return undefined;
+  if (range != null && Math.abs(value) <= Math.abs(range)) return undefined;
   return value > 0 ? "text-positive" : "text-destructive";
 }
 
@@ -217,13 +222,14 @@ function paySub(player: GradedPlayer): string {
 }
 
 function rangeSub(range: number | null): string {
-  return range == null ? "rest of contract" : `±${Math.abs(range).toFixed(1)}M · rest of contract`;
+  return range == null ? "rest of contract" : `±${formatMillions(Math.abs(range))} · rest of contract`;
 }
 
 const HEADLINE_GRID: Record<number, string> = {
   1: "grid-cols-1",
   2: "grid-cols-2 divide-x divide-border",
   3: "grid-cols-3 divide-x divide-border",
+  4: "grid-cols-2 gap-y-3",
 };
 
 function Headline({
@@ -260,6 +266,8 @@ function GradeCard({
   showNil = false,
   showNilSurplus = false,
   desktopTraits = [],
+  forecastInHeader = false,
+  failed = false,
   sport,
   rank,
   row,
@@ -274,6 +282,8 @@ function GradeCard({
   showNil?: boolean;
   showNilSurplus?: boolean;
   desktopTraits?: string[];
+  forecastInHeader?: boolean;
+  failed?: boolean;
   sport: GradeSport;
   rank: number;
   row: PlayerIndexRow;
@@ -291,7 +301,10 @@ function GradeCard({
   const valued = sport === "nfl" && player?.playerValue != null;
   const nilPriced = sport === "cfb" && player?.nilPrice != null;
   const nilWorthed = nilPriced && player?.nilWorth != null;
-  const headlines = 1 + Number(rated) + Number(priced);
+  const headlines = 2 + Number(rated) + Number(priced);
+  // A long card folds its sections on a phone so the stat lines stay in reach;
+  // a short one keeps every row open.
+  const folded = !desktop && lines.length > FOLD_ROWS;
   const seasonStats = footballSeasonStats(sport, player?.seasonStats);
   const sections: { kind: TraitSection | null; names: string[] }[] = [];
   for (const line of lines) {
@@ -300,9 +313,22 @@ function GradeCard({
     else sections.push({ kind: line.kind, names: [line.name] });
   }
   const details = (
+      // A card renders only once opened: forty closed cards in both layouts
+      // would otherwise be most of the page's HTML.
       <div id={panelId} className={cn("space-y-3 p-3 md:block md:space-y-5 md:px-6 md:py-5", open ? "border-t border-border md:border-t-0" : "hidden")}>
+        {open && <>
         {!desktop && (
           <div className={cn("grid gap-2 py-1", HEADLINE_GRID[headlines])}>
+            <Headline
+              label="Grade"
+              tip={copy.gradeTip}
+              tipLabel="What is the grade?"
+              value={formatGrade(grade)}
+              sub={[
+                player?.uncertainty == null ? null : `±${formatNumber(player.uncertainty, 1)}`,
+                row.percentile == null ? null : `pct ${Math.round(row.percentile)}`,
+              ].filter(Boolean).join(" · ")}
+            />
             {rated && (
               <Headline
                 label={rating.label}
@@ -320,7 +346,7 @@ function GradeCard({
               value={player?.war == null ? EMPTY : formatSigned(player.war, 2)}
               sub={
                 player == null
-                  ? "loading"
+                  ? failed ? "unavailable" : "loading"
                   : player.pointsAboveReplacement == null
                     ? "no credited plays"
                     : `${formatSigned(player.pointsAboveReplacement, 0)} season pts`
@@ -341,9 +367,9 @@ function GradeCard({
         {!desktop && valued && (
           <div className={cn("grid gap-2 py-1", HEADLINE_GRID[2])}>
             <Headline
-              label="Value"
+              label="Contract value"
               tip={NFL_VALUE_TIP}
-              tipLabel="What is value?"
+              tipLabel="What is contract value?"
               value={formatMillions(player.playerValue)}
               sub={rangeSub(player.playerValueRange)}
             />
@@ -353,7 +379,7 @@ function GradeCard({
               tipLabel="What is contract surplus?"
               value={formatMillions(player.contractSurplus, true)}
               sub={rangeSub(player.contractSurplusRange)}
-              tone={surplusTone(player.contractSurplus)}
+              tone={surplusTone(player.contractSurplus, player.contractSurplusRange)}
             />
           </div>
         )}
@@ -387,6 +413,9 @@ function GradeCard({
             )}
           </div>
         )}
+        {player == null && failed && (
+          <p className="text-xs text-muted-foreground">This player&apos;s card could not be loaded. Reload the page to try again.</p>
+        )}
         {player && (
           <Accordion.Root multiple className={desktop ? "grid grid-cols-2 items-start gap-x-8 gap-y-4" : "space-y-2"}>
             {sections.map((section) => {
@@ -403,7 +432,7 @@ function GradeCard({
               const info = section.kind && (
                 <InfoTip text={TRAIT_SECTION_LABELS[section.kind].tip} label={`What are ${label} measures?`} />
               );
-              if (desktop || sport === "cfb") {
+              if (!folded) {
                 // A lone section on the desktop card takes the full width and splits its rows into two columns.
                 const lone = desktop && sections.length === 1;
                 return (
@@ -438,6 +467,7 @@ function GradeCard({
         )}
         {player && <BarLegend traits={player.traits.filter((t) => lines.some((line) => line.name === t.trait))} />}
         {seasonStats && <SeasonStatsPanel stats={seasonStats} />}
+        </>}
       </div>
   );
   if (desktop) {
@@ -459,7 +489,7 @@ function GradeCard({
           </TableCell>
           <TableCell className="text-center">{row.positionGroup}</TableCell>
           <TableCell className="text-center">{formatNumber(row.games, 0)}</TableCell>
-          <TableCell className="text-center font-bold text-primary">{grade == null ? EMPTY : formatNumber(grade, 1)}</TableCell>
+          <TableCell className="text-center font-bold text-primary">{formatGrade(grade)}</TableCell>
           <TableCell className="text-center">{player?.uncertainty == null ? EMPTY : `±${formatNumber(player.uncertainty, 1)}`}</TableCell>
           <TableCell className="text-center">{row.percentile == null ? EMPTY : Math.round(row.percentile)}</TableCell>
           {desktopTraits.map((name) => {
@@ -468,27 +498,24 @@ function GradeCard({
           })}
           {showForecast && (
             <TableCell className="text-center">
-              {rated ? <><div>{formatSigned(player.rating, 2)}</div><div className="whitespace-normal text-[11px] leading-tight text-muted-foreground">{rating.unit}</div></> : EMPTY}
+              {rated ? <><div>{formatSigned(player.rating, 2)}</div>{!forecastInHeader && <div className="whitespace-normal text-[11px] leading-tight text-muted-foreground">{rating.unit}</div>}</> : EMPTY}
             </TableCell>
           )}
           <TableCell className="text-center">{player?.war == null ? EMPTY : formatSigned(player.war, 2)}</TableCell>
-          <TableCell className="text-center">{player?.pointsAboveReplacement == null ? EMPTY : formatSigned(player.pointsAboveReplacement, 1)}</TableCell>
           {showSpread && <TableCell className="text-center">{player?.spreadValue == null ? EMPTY : formatPsr(player.spreadValue)}</TableCell>}
           {showValue && <TableCell className="text-center">{formatMillions(player?.playerValue ?? null)}</TableCell>}
-          {showValue && <TableCell className={cn("text-center", surplusTone(player?.contractSurplus))}>{formatMillions(player?.contractSurplus ?? null, true)}</TableCell>}
+          {showValue && <TableCell className={cn("text-center", surplusTone(player?.contractSurplus, player?.contractSurplusRange))}>{formatMillions(player?.contractSurplus ?? null, true)}</TableCell>}
           {showNil && (
             <TableCell className="text-center">
               <div className={cn(player?.nilPriceSource === "production" && "text-muted-foreground")}>{formatPay(player?.nilPrice ?? null)}</div>
-              {player?.nilPrice != null && (
-                <div className="text-[11px] text-muted-foreground">{player.nilPriceSource === "portal" ? "portal" : "est."}</div>
-              )}
+              {player?.nilPriceSource === "portal" && <div className="text-[11px] text-muted-foreground">portal</div>}
             </TableCell>
           )}
           {showNilSurplus && <TableCell className={cn("text-center", surplusTone(player?.nilSurplus))}>{formatPay(player?.nilSurplus ?? null, true)}</TableCell>}
           <TableCell><ChevronDown aria-hidden="true" className={cn("size-4 text-muted-foreground transition-transform", open && "rotate-180")} /></TableCell>
         </TableRow>
         <TableRow hidden={!open} className="hover:bg-transparent">
-          <TableCell colSpan={(showForecast ? 11 : 10) + (showSpread ? 1 : 0) + (showValue ? 2 : 0) + (showNil ? 1 : 0) + (showNilSurplus ? 1 : 0) + desktopTraits.length} className="whitespace-normal bg-muted/20">{details}</TableCell>
+          <TableCell colSpan={(showForecast ? 10 : 9) + (showSpread ? 1 : 0) + (showValue ? 2 : 0) + (showNil ? 1 : 0) + (showNilSurplus ? 1 : 0) + desktopTraits.length} className="whitespace-normal bg-muted/20">{details}</TableCell>
         </TableRow>
       </Fragment>
     );
@@ -499,7 +526,7 @@ function GradeCard({
         name={row.name}
         rank={rank}
         identity={<Identity row={row} logo={logo} />}
-        grade={grade == null ? EMPTY : formatNumber(grade, 1)}
+        grade={formatGrade(grade)}
         open={open}
         panelId={panelId}
         onToggle={() => setOpen(!open)}
@@ -566,6 +593,7 @@ function ComparePanel({
   lines,
   logoFor,
   onClear,
+  failed,
 }: {
   sport: GradeSport;
   rows: [PlayerIndexRow, PlayerIndexRow];
@@ -573,6 +601,7 @@ function ComparePanel({
   lines: TraitLine[];
   logoFor: (team: string) => TeamLogoSource | undefined;
   onClear: () => void;
+  failed: boolean;
 }) {
   const copy = SPORT_COPY[sport];
   const rating = RATING_LABELS[rows[0].positionGroup];
@@ -584,8 +613,12 @@ function ComparePanel({
   }
   const headline = (row: PlayerIndexRow, player: GradedPlayer | undefined, align: "left" | "right") => {
     const grade = player?.grade ?? row.grade;
+    const gradeSub = [
+      player?.uncertainty == null ? null : `±${formatNumber(player.uncertainty, 1)}`,
+      row.percentile == null ? null : `pct ${Math.round(row.percentile)}`,
+    ].filter(Boolean).join(" · ");
     const items = [
-      { label: "grade", value: grade == null ? EMPTY : formatNumber(grade, 1), sub: grade == null ? "" : `±${formatNumber(player?.uncertainty, 1)} · pct ${row.percentile == null ? EMPTY : Math.round(row.percentile)}` },
+      { label: "grade", value: formatGrade(grade), sub: gradeSub },
       ...(rating && player?.rating != null
         ? [{ label: rating.label, value: formatSigned(player.rating, 2), sub: rating.unit }]
         : []),
@@ -595,8 +628,8 @@ function ComparePanel({
         : []),
       ...(sport === "nfl" && player?.playerValue != null
         ? [
-            { label: "Value", value: formatMillions(player.playerValue), sub: rangeSub(player.playerValueRange) },
-            { label: "Surplus", value: formatMillions(player.contractSurplus, true), sub: rangeSub(player.contractSurplusRange), tone: surplusTone(player.contractSurplus) },
+            { label: "Contract value", value: formatMillions(player.playerValue), sub: rangeSub(player.playerValueRange) },
+            { label: "Surplus", value: formatMillions(player.contractSurplus, true), sub: rangeSub(player.contractSurplusRange), tone: surplusTone(player.contractSurplus, player.contractSurplusRange) },
           ]
         : []),
       ...(sport === "cfb" && player?.nilPrice != null
@@ -671,7 +704,7 @@ function ComparePanel({
           ))}
         </div>
       ) : (
-        <p className="text-xs text-muted-foreground">loading</p>
+        <p className="text-xs text-muted-foreground">{failed ? "These players could not be loaded. Reload the page to try again." : "loading"}</p>
       )}
     </section>
   );
@@ -682,23 +715,25 @@ export default function PositionGrades({
   season,
   index,
   details,
-  gradedCounts,
   teams,
 }: {
   sport: GradeSport;
   season: number;
   index: PlayerIndexRow[];
   details: Record<string, GradedPlayer>;
-  gradedCounts: Record<string, number>;
   teams: GradeTeam[];
 }) {
   const copy = SPORT_COPY[sport];
   const positions = useMemo(() => POSITION_ORDER.filter((key) => index.some((row) => row.positionGroup === key)), [index]);
-  const [position, setPosition] = useState<PositionGroup>(positions[0] ?? "QB");
+  // The server sent full cards for this position only.
+  const [position, setPosition] = useState<PositionGroup>(() => defaultPosition(index));
   const [group, setGroup] = useState<string>(ALL);
   const [query, setQuery] = useState("");
   const search = useDeferredValue(query.trim().toLowerCase());
   const [loaded, setLoaded] = useState<Record<string, GradedPlayer>>(details);
+  // Ids whose card request failed: they are not asked for again, so the cards
+  // say so instead of loading forever.
+  const [failed, setFailed] = useState<ReadonlySet<string>>(() => new Set());
   // Up to two players of one position to set side by side; picking a player at
   // another position starts a new pair.
   const [compare, setCompare] = useState<string[]>([]);
@@ -739,25 +774,34 @@ export default function PositionGrades({
       short: unit ? `${row.team} line` : surname(row.name),
       image: unit ? <TeamLogo team={logoFor(row.team)} name={row.team} className="h-8 w-8" /> : undefined,
       headshotUrl: row.headshotUrl ?? cfbPlayerHeadshotUrl(row.athleteId),
-      stat: formatNumber(row.grade, 1),
+      stat: formatGrade(row.grade),
     };
     return { key, leader };
   }), [positions, index, group, logoFor]);
 
   useEffect(() => {
     const wanted = [...visible.map((row) => row.athleteId), ...compare];
-    const missing = [...new Set(wanted)].filter((id) => !loaded[id]);
+    const missing = [...new Set(wanted)].filter((id) => !loaded[id] && !failed.has(id));
     if (missing.length === 0) return;
     const controller = new AbortController();
     const params = new URLSearchParams({ season: String(season), ids: missing.join(",") });
+    const giveUp = (ids: string[]) => setFailed((prev) => new Set([...prev, ...ids]));
     fetch(`${copy.apiPath}?${params}`, { signal: controller.signal })
-      .then((res) => (res.ok ? res.json() : null))
-      .then((body: { players?: Record<string, GradedPlayer> } | null) => {
-        if (body?.players) setLoaded((prev) => ({ ...prev, ...body.players }));
+      .then((res) => {
+        if (!res.ok) throw new Error(`player traits ${res.status}`);
+        return res.json() as Promise<{ players?: Record<string, GradedPlayer> }>;
       })
-      .catch(() => {});
+      .then((body) => {
+        const players = body.players ?? {};
+        setLoaded((prev) => ({ ...prev, ...players }));
+        const absent = missing.filter((id) => !players[id]);
+        if (absent.length > 0) giveUp(absent);
+      })
+      .catch(() => {
+        if (!controller.signal.aborted) giveUp(missing);
+      });
     return () => controller.abort();
-  }, [visible, compare, loaded, season, copy.apiPath]);
+  }, [visible, compare, loaded, failed, season, copy.apiPath]);
 
   // The same rows on every card at a position, taken from every loaded player
   // of that position. A fitted rating's measures sit in sections by kind,
@@ -797,8 +841,10 @@ export default function PositionGrades({
         })
         .map(([name, meta]) => ({ name, kind: meta.kind }));
   }, [index, loaded, sport]);
-  const graded = gradedCounts[position] ?? 0;
   const showForecast = visible.some((row) => RATING_LABELS[row.positionGroup] != null && loaded[row.athleteId]?.rating != null);
+  // One position on screen shares one forecast unit, so the header carries it;
+  // a search can mix positions, so each cell keeps its own.
+  const headerRating = search ? null : RATING_LABELS[position] ?? null;
   const showSpread = visible.some((row) => loaded[row.athleteId]?.spreadValue != null);
   const showValue = visible.some((row) => loaded[row.athleteId]?.playerValue != null);
   const showNil = sport === "cfb" && visible.some((row) => loaded[row.athleteId]?.nilPrice != null);
@@ -818,6 +864,8 @@ export default function PositionGrades({
       showNil={showNil}
       showNilSurplus={showNilSurplus}
       desktopTraits={desktopTraits}
+      forecastInHeader={headerRating != null}
+      failed={failed.has(row.athleteId)}
       sport={sport}
       rank={i + 1}
       row={row}
@@ -867,7 +915,7 @@ export default function PositionGrades({
       <p className="flex items-center gap-1.5 font-mono text-xs text-muted-foreground">
         {search
           ? `${matches.length} player${matches.length === 1 ? "" : "s"} match "${query.trim()}"${group === ALL ? "" : ` in the ${group}`}, best grade first`
-          : `Top ${visible.length} of ${matches.length} ${group === ALL ? "" : `${group} `}${position} · ${graded} graded this week`}
+          : `${visible.length === matches.length ? `All ${matches.length}` : `Top ${visible.length} of ${matches.length}`} ${group === ALL ? "" : `${group} `}${position} graded this week`}
         <InfoTip
           text={`Percentiles among ${copy.pool} at the position this week. ${sport === "cfb" ? "Grade inputs contribute to the rating, and More context does not. Each player card has a key to its bar colors." : "Each player card has a key to its bar colors. The r is the stat’s reliability over 8 games: how well odd and even games agree, scaled to 8 games."}`}
           label="How to read the bars"
@@ -881,6 +929,7 @@ export default function PositionGrades({
           lines={linesFor(byId.get(compare[0])!.positionGroup)}
           logoFor={logoFor}
           onClear={() => setCompare([])}
+          failed={compare.some((id) => failed.has(id))}
         />
       )}
       {compare.length === 1 && (
@@ -910,10 +959,11 @@ export default function PositionGrades({
                 {desktopTraits.map((name) => <col key={name} className="w-34" />)}
                 {showForecast && <col className="w-32" />}
                 <col className="w-16" />
-                <col className="w-30" />
                 {showSpread && <col className="w-18" />}
+                {showValue && <col className="w-24" />}
                 {showValue && <col className="w-20" />}
-                {showValue && <col className="w-20" />}
+                {showNil && <col className="w-24" />}
+                {showNilSurplus && <col className="w-20" />}
                 <col className="w-8" />
               </colgroup>
               <TableHeader>
@@ -922,7 +972,7 @@ export default function PositionGrades({
                   <TableHead>Player</TableHead>
                   <TableHead className="text-center">Pos</TableHead>
                   <TableHead className="text-center">Games</TableHead>
-                  <TableHead className="text-center">Grade</TableHead>
+                  <TableHead className="text-center"><span className="inline-flex items-center gap-1">Grade <InfoTip text={copy.gradeTip} label="What is the grade?" /></span></TableHead>
                   <TableHead className="text-center">±</TableHead>
                   <TableHead className="text-center">Pct</TableHead>
                   {desktopTraits.map((name) => {
@@ -936,11 +986,18 @@ export default function PositionGrades({
                       </TableHead>
                     );
                   })}
-                  {showForecast && <TableHead className="text-center">Forecast</TableHead>}
-                  <TableHead className="text-center">WAR</TableHead>
-                  <TableHead className="text-center"><span className="inline-flex items-center gap-1">Season pts <InfoTip text="Points above replacement credited to this player so far this season, as shown in the full card." label="What are season points above replacement?" /></span></TableHead>
+                  {showForecast && (
+                    <TableHead className="text-center">
+                      <span className="inline-flex items-center gap-1">
+                        Forecast
+                        {headerRating && <InfoTip text={headerRating.tip} label="What is the forecast?" />}
+                      </span>
+                      {headerRating && <div className="whitespace-normal text-[10px] font-normal normal-case leading-tight">{headerRating.unit}</div>}
+                    </TableHead>
+                  )}
+                  <TableHead className="text-center"><span className="inline-flex items-center gap-1">WAR <InfoTip text={copy.warTip} label="What is wins above replacement?" /></span></TableHead>
                   {showSpread && <TableHead className="text-center"><span className="inline-flex items-center gap-1">PSR <InfoTip text={NFL_SPREAD_TIP} label="What is PSR?" /></span></TableHead>}
-                  {showValue && <TableHead className="text-center"><span className="inline-flex items-center gap-1">Value <InfoTip text={NFL_VALUE_TIP} label="What is value?" /></span></TableHead>}
+                  {showValue && <TableHead className="whitespace-normal text-center leading-tight"><span className="inline-flex items-center gap-1">Contract value <InfoTip text={NFL_VALUE_TIP} label="What is contract value?" /></span></TableHead>}
                   {showValue && <TableHead className="text-center"><span className="inline-flex items-center gap-1">Surplus <InfoTip text={NFL_SURPLUS_TIP} label="What is contract surplus?" /></span></TableHead>}
                   {showNil && <TableHead className="text-center"><span className="inline-flex items-center gap-1">NIL price <InfoTip text={CFB_NIL_PRICE_TIP} label="What is NIL price?" /></span></TableHead>}
                   {showNilSurplus && <TableHead className="text-center"><span className="inline-flex items-center gap-1">Surplus <InfoTip text={CFB_NIL_SURPLUS_TIP} label="What is surplus?" /></span></TableHead>}

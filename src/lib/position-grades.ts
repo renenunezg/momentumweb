@@ -4,6 +4,8 @@
 // schema they are rendering.
 
 import { footballStatsLine, type FootballStatsLine } from "./football-season-stats.ts";
+import { POSITION_ORDER, type PositionGroup } from "./position-traits.ts";
+import { EMPTY } from "./utils.ts";
 
 // The columns both position_traits tables carry. The CFB table also has a
 // team_id and the NFL table a headshot_url; neither is needed here beyond the
@@ -116,7 +118,6 @@ export interface PositionGrades {
   modelVersion: string | null;
   index: PlayerIndexRow[];
   details: Record<string, GradedPlayer>;
-  gradedCounts: Record<string, number>;
 }
 
 export const EMPTY_GRADES: PositionGrades = {
@@ -126,11 +127,11 @@ export const EMPTY_GRADES: PositionGrades = {
   modelVersion: null,
   index: [],
   details: {},
-  gradedCounts: {},
 };
 
 // The grades page lists this many players at a time, and the server fetches
-// full rows for that many per position. The rest load on demand through the
+// full rows for that many at the position the page opens on. The rest load on
+// demand through the
 // sport's player-traits API route, one request covering a listed page plus the
 // two compared players.
 export const GRADE_ROWS = 40;
@@ -248,20 +249,41 @@ export function toIndexRow(row: IndexRow, group: string | null): PlayerIndexRow 
   };
 }
 
-// Best grade first, ties by percentile; the ids of the top of each position
-// are the players whose full rows the page renders on the server.
-export function rankIndex(index: PlayerIndexRow[]): { index: PlayerIndexRow[]; topIds: string[]; gradedCounts: Record<string, number> } {
+// The position the page opens on: the first in display order that has a graded
+// player. The server sends full rows for this position only, so the page must
+// open on the same one.
+export function defaultPosition(index: PlayerIndexRow[]): PositionGroup {
+  return POSITION_ORDER.find((key) => index.some((row) => row.positionGroup === key)) ?? "QB";
+}
+
+// Best grade first, ties by percentile, which separates players the 20 to 80
+// scale caps at the same grade. The ids of the top of the opening position are
+// the players whose full rows the page renders on the server.
+export function rankIndex(index: PlayerIndexRow[]): { index: PlayerIndexRow[]; topIds: string[] } {
   const sorted = [...index].sort(
     (a, b) => (b.grade ?? -Infinity) - (a.grade ?? -Infinity) || (b.percentile ?? -1) - (a.percentile ?? -1)
   );
-  const gradedCounts: Record<string, number> = {};
-  const seen: Record<string, number> = {};
-  const topIds: string[] = [];
-  for (const row of sorted) {
-    gradedCounts[row.positionGroup] = (gradedCounts[row.positionGroup] ?? 0) + 1;
-    if ((seen[row.positionGroup] ?? 0) >= GRADE_ROWS) continue;
-    seen[row.positionGroup] = (seen[row.positionGroup] ?? 0) + 1;
-    topIds.push(row.athleteId);
-  }
-  return { index: sorted, topIds, gradedCounts };
+  const opening = defaultPosition(sorted);
+  const topIds = sorted
+    .filter((row) => row.positionGroup === opening)
+    .slice(0, GRADE_ROWS)
+    .map((row) => row.athleteId);
+  // The index ships every graded player to the browser, which shows a grade to
+  // one decimal and a whole percentile; two decimals keep a grade just under
+  // 80 from rounding onto the cap.
+  const shipped = sorted.map((row) => ({
+    ...row,
+    grade: row.grade == null ? null : Math.round(row.grade * 100) / 100,
+    percentile: row.percentile == null ? null : Math.round(row.percentile * 10) / 10,
+  }));
+  return { index: shipped, topIds };
+}
+
+// The grade scale stops at 20 and 80, so a grade at either end reads as at or
+// beyond it.
+export function formatGrade(grade: number | null | undefined): string {
+  if (grade == null) return EMPTY;
+  if (grade >= 80) return "80+";
+  if (grade <= 20) return "≤20";
+  return grade.toFixed(1);
 }

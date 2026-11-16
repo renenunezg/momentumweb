@@ -327,7 +327,7 @@ async function readNflPositionGrades(): Promise<PositionGrades> {
   if (!latest) return EMPTY_GRADES;
 
   const [gradeRows, divisionOf] = await Promise.all([fetchGradeIndex(latest.season), fetchGradeDivisions(latest.season)]);
-  const { index, topIds, gradedCounts } = rankIndex(
+  const { index, topIds } = rankIndex(
     gradeRows.map((row) => toIndexRow(row, divisionOf.get(row.team ?? "") ?? null)),
   );
   const { traits, stats } = await fetchNflPlayerTraitRows(latest.season, topIds);
@@ -339,6 +339,5 @@ async function readNflPositionGrades(): Promise<PositionGrades> {
     modelVersion: latest.model_version,
     index,
     details,
-    gradedCounts,
   };
 }

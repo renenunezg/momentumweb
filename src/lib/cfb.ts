@@ -432,7 +432,7 @@ async function readPositionGrades(): Promise<CfbPositionGrades> {
   if (!latest) return EMPTY_GRADES;
 
   const [gradeRows, conferenceOf] = await Promise.all([fetchGradeIndex(latest.season), fetchGradeConferences(latest.season)]);
-  const { index, topIds, gradedCounts } = rankIndex(
+  const { index, topIds } = rankIndex(
     gradeRows.map((row) => toIndexRow(row, conferenceOf.get(row.team ?? "") ?? null))
   );
   const { traits, stats } = await fetchPlayerTraitRows(latest.season, topIds);
@@ -444,6 +444,5 @@ async function readPositionGrades(): Promise<CfbPositionGrades> {
     modelVersion: latest.model_version,
     index,
     details,
-    gradedCounts,
   };
 }
