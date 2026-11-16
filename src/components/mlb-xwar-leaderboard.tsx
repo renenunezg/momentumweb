@@ -82,47 +82,36 @@ const sideColumns: Record<View, Column[]> = {
   ],
 };
 
-interface Field {
+interface Stat {
   label: string;
-  // A shorter heading for a phone.
+  // A shorter label for a phone.
   short?: string;
-  // The column the box is about.
+  tip: string;
+  value: string;
+  // The number the side is about.
   strong?: boolean;
 }
 
-// A titled box holding a small table: the headings, a row of numbers per line, and a line on how to read them.
-function Box({ title, note, fields, rows, foot }: { title: string; note: string; fields: Field[]; rows: string[][]; foot?: string }) {
-  const align = (i: number) => (i === 0 ? "text-left" : "text-right");
+// One side of a player's season: a title with its sample, then a tile per step from his results to the change in his WAR.
+function Side({ title, note, stats }: { title: string; note: string; stats: Stat[] }) {
   return (
-    <section className="overflow-hidden rounded-md border border-border bg-background">
-      <header className="flex flex-wrap items-baseline justify-between gap-x-3 gap-y-1 border-b border-border px-4 py-2.5">
+    <section className="space-y-2">
+      <header className="flex flex-wrap items-baseline gap-x-3 gap-y-1">
         <h3 className="type-eyebrow font-bold">{title}</h3>
         <span className="type-meta text-muted-foreground">{note}</span>
       </header>
-      <table className="w-full text-sm">
-        <thead>
-          <tr className="border-b border-border">
-            {fields.map((field, i) => (
-              <th key={field.label} scope="col" className={cn("type-meta px-2 py-2 font-normal text-muted-foreground first:pl-4 last:pr-4 sm:px-4", align(i))}>
-                <span className={cn(field.short && "hidden sm:inline")}>{field.label}</span>
-                {field.short && <span className="sm:hidden">{field.short}</span>}
-              </th>
-            ))}
-          </tr>
-        </thead>
-        <tbody className="divide-y divide-border/60">
-          {rows.map((row) => (
-            <tr key={row[0]}>
-              {row.map((value, i) => (
-                <td key={fields[i].label} className={cn("px-2 py-2 font-mono tabular-nums first:pl-4 last:pr-4 sm:px-4", align(i), fields[i].strong && "font-semibold")}>
-                  {value}
-                </td>
-              ))}
-            </tr>
-          ))}
-        </tbody>
-      </table>
-      {foot && <p className="type-meta border-t border-border px-4 py-2.5 leading-relaxed text-muted-foreground">{foot}</p>}
+      <dl className="grid grid-cols-3 gap-2 sm:grid-cols-6">
+        {stats.map((stat) => (
+          <div key={stat.label} className={cn("min-w-0 rounded-sm border px-3 py-2", stat.strong ? "border-primary/60" : "border-border")}>
+            <dt className="type-meta flex items-center gap-1 text-muted-foreground">
+              <span className={cn("truncate", stat.short && "hidden sm:inline")}>{stat.label}</span>
+              {stat.short && <span className="sm:hidden">{stat.short}</span>}
+              <InfoTip text={stat.tip} label={`What is ${stat.label}?`} />
+            </dt>
+            <dd className={cn("font-mono text-base tabular-nums", stat.strong && "font-semibold text-primary")}>{stat.value}</dd>
+          </div>
+        ))}
+      </dl>
     </section>
   );
 }
@@ -153,47 +142,47 @@ function Breakdown({
   const plateMove = batted ? (pitched ? -plateLuck / runsPerWin : move) : 0;
   const moundMove = pitched ? move - plateMove : 0;
   const sample = (n: number) => counted(n, "tracked ball in play", "tracked balls in play");
-  // What every side's row ends with.
-  const change: Field = { label: "Change to his WAR", short: "WAR", strong: true };
-  const perWin = `${runsPerWin.toFixed(2)} runs make a win`;
+  const change = (v: number): Stat => ({
+    label: "Change to his WAR", short: "WAR", strong: true, value: formatSigned(v, 2),
+    tip: `The luck in wins, at ${runsPerWin.toFixed(2)} runs a win.`,
+  });
   return (
-    <div className="max-w-4xl space-y-3 font-sans">
+    <div className="space-y-4 font-sans">
       {batted && (
-        <Box
+        <Side
           title="At the plate"
           note={sample(balls)}
-          fields={[
-            { label: "wOBA on contact", short: "wOBA" },
-            { label: "xwOBA on contact", short: "xwOBA" },
-            { label: "Gap, in runs", short: "Gap" },
-            { label: "Kept" },
-            { label: "Luck, in runs", short: "Luck" },
-            change,
+          stats={[
+            { label: "wOBA on contact", short: "wOBA", value: woba == null ? EMPTY : rate(woba), tip: "What his balls in play did." },
+            {
+              label: "xwOBA on contact", short: "xwOBA", value: expectedWoba == null ? EMPTY : rate(expectedWoba),
+              tip: "What their exit velocity, their launch angle and his speed called for.",
+            },
+            { label: "Gap, in runs", short: "Gap", value: formatSigned(gap, 1), tip: "The difference between the two in runs, with the park removed." },
+            { label: "Kept", value: formatSigned(kept, 1), tip: `The part of the gap his record since ${firstSeason} supports.` },
+            { label: "Luck, in runs", short: "Luck", value: formatSigned(plateLuck, 1), tip: "The gap minus what he kept." },
+            change(plateMove),
           ]}
-          foot={`wOBA is what his balls in play did; xwOBA is what their exit velocity, their launch angle and his speed called for. The gap between them is in runs with the park removed. Kept is the part his record since ${firstSeason} supports, luck is the gap minus kept, and ${perWin}.`}
-          rows={[[
-            woba == null ? EMPTY : rate(woba), expectedWoba == null ? EMPTY : rate(expectedWoba), formatSigned(gap, 1),
-            formatSigned(kept, 1), formatSigned(plateLuck, 1), formatSigned(plateMove, 2),
-          ]]}
         />
       )}
       {pitched && (
-        <Box
+        <Side
           title="On the mound"
           note={sample(allowed)}
-          fields={[
-            { label: "Home runs allowed", short: "HR" },
-            { label: "xHR" },
-            { label: "Gap, in home runs", short: "Gap" },
-            { label: "Kept" },
-            { label: "Luck, in runs", short: "Luck" },
-            change,
+          stats={[
+            { label: "Home runs allowed", short: "HR", value: homeRuns.toFixed(0), tip: "Home runs allowed on tracked balls in play." },
+            { label: "xHR", value: expected.toFixed(1), tip: "Home runs the exit velocity and launch angle he allowed called for." },
+            { label: "Gap, in home runs", short: "Gap", value: formatSigned(homeRunGap, 1), tip: "The difference between the two, with the park removed." },
+            {
+              label: "Kept", value: formatSigned(keptHomeRuns, 1),
+              tip: keptHomeRuns === 0 ? "A pitcher's gap does not repeat, so he keeps none of it." : "The part of the gap his record supports.",
+            },
+            {
+              label: "Luck, in runs", short: "Luck", value: formatSigned(moundLuck, 1),
+              tip: `The gap he did not keep, at ${homeRunRuns.toFixed(2)} runs a home run.`,
+            },
+            change(moundMove),
           ]}
-          foot={`xHR is the home runs the exit velocity and launch angle he allowed called for. The gap is in home runs with the park removed. ${keptHomeRuns === 0 ? "A pitcher's gap does not repeat, so he keeps none of it" : "Kept is the part his record supports"}; a home run costs ${homeRunRuns.toFixed(2)} runs and ${perWin}.`}
-          rows={[[
-            homeRuns.toFixed(0), expected.toFixed(1), formatSigned(homeRunGap, 1),
-            formatSigned(keptHomeRuns, 1), formatSigned(moundLuck, 1), formatSigned(moundMove, 2),
-          ]]}
         />
       )}
     </div>
@@ -314,7 +303,6 @@ export function XwarLeaderboard({
         </span>
         <Pager page={current} totalPages={totalPages} onPage={setPage} />
       </div>
-      <p className="text-xs text-muted-foreground">Select a player to see how his fWAR becomes his xWAR. Sort by Luck for the seasons that ran furthest ahead of or behind their contact.</p>
       <Table density="compact">
         <TableHeader>
           <TableRow>

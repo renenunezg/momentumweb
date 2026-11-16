@@ -61,13 +61,7 @@ export default async function MlbXwarPage() {
       </PageHeader>
       <PlayerSectionTabs sections={MLB_PLAYER_SECTIONS} label="Player pages" />
 
-      <p className="max-w-4xl text-sm leading-relaxed text-muted-foreground">
-        Three numbers for one player. fWAR is what his {season} was worth as it happened. xWAR is the same season with the
-        luck on contact taken out: what his batted balls were worth by how hard, how high and how fast, not by where they
-        landed. A hitter keeps the part of his results that his own record supports, so a player who beats his contact
-        every year is not treated as lucky every year.
-        {projectionSeason != null && ` The ${projectionSeason} projection is the forecast of his next season, from the grade model.`}
-      </p>
+      <p className="text-sm text-muted-foreground">Each player&apos;s {season} fWAR with the luck on contact taken out.</p>
 
       <XwarLeaderboard
         players={players}
@@ -82,13 +76,10 @@ export default async function MlbXwarPage() {
       <PageSection className="border-t border-rule-strong pt-6">
         <p className="type-eyebrow text-muted-foreground">Does it mean anything?</p>
         <h2 className="type-section">What repeats, and what the next season says</h2>
-        <p className="max-w-3xl text-sm leading-relaxed">
-          A hitter&apos;s gap between his results and his contact partly repeats: over {formatNumber(hitter.pairs, 0)} pairs of
-          seasons it correlates {range(hitter.repeat)} with itself a year later, and {range(hitter.held_back.repeat)} on the
-          later seasons kept back to check. That is why he keeps a share of it.{" "}
-          {pitcher.kept
-            ? `A pitcher's home runs against expected repeat too, at ${range(pitcher.repeat)}, so he keeps a share as well.`
-            : `A pitcher's home runs against expected did not clearly repeat, at ${range(pitcher.repeat)}, so all of that gap is treated as luck.`}
+        <p className="text-sm text-muted-foreground">
+          {lead[1] > 0
+            ? "Read as xWAR, a hitter's season predicts his next fWAR better than fWAR itself does."
+            : "Read as xWAR or as fWAR, a hitter's season predicts his next fWAR about equally well."}
         </p>
         <Table density="compact" className="max-w-xl">
           <TableHeader>
@@ -106,13 +97,6 @@ export default async function MlbXwarPage() {
             ))}
           </TableBody>
         </Table>
-        <p className="max-w-3xl text-xs leading-relaxed text-muted-foreground">
-          Correlation of each number per 600 plate appearances with the same hitter&apos;s hitting fWAR per 600 the next
-          season, over {formatNumber(next.pairs, 0)} pairs with {next.min_pa} or more plate appearances in both, on the seasons
-          kept back while the method was designed. xWAR minus fWAR is {range(lead)}, with a 95% interval from resampling
-          hitters:{" "}
-          {lead[1] > 0 ? "a lead that clears chance." : "a lead no larger than chance allows, so read the two as level."}
-        </p>
       </PageSection>
 
       <HowGraded label="How this works">
@@ -139,6 +123,21 @@ export default async function MlbXwarPage() {
         <p>
           Regulars are players with {hitter.min_balls} or more tracked balls in play, the sample the repeat was measured on.
           A two-way player has one xWAR for his whole season and appears on both lists.
+        </p>
+        <p>
+          A hitter&apos;s gap between his results and his contact partly repeats: over {formatNumber(hitter.pairs, 0)} pairs of
+          seasons it correlates {range(hitter.repeat)} with itself a year later, and {range(hitter.held_back.repeat)} on the
+          later seasons kept back to check. That is why he keeps a share of it.{" "}
+          {pitcher.kept
+            ? `A pitcher's home runs against expected repeat too, at ${range(pitcher.repeat)}, so he keeps a share as well.`
+            : `A pitcher's home runs against expected did not clearly repeat, at ${range(pitcher.repeat)}, so all of that gap is treated as luck.`}
+        </p>
+        <p>
+          The table is the correlation of each number per 600 plate appearances with the same hitter&apos;s hitting fWAR per 600 the next
+          season, over {formatNumber(next.pairs, 0)} pairs with {next.min_pa} or more plate appearances in both, on the seasons
+          kept back while the method was designed. xWAR minus fWAR is {range(lead)}, with a 95% interval from resampling
+          hitters:{" "}
+          {lead[1] > 0 ? "a lead that clears chance." : "a lead no larger than chance allows, so read the two as level."}
         </p>
       </HowGraded>
     </PageShell>
