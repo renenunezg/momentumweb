@@ -60,7 +60,11 @@ export const TRAIT_LABELS: Record<string, { label: string; tip: string }> = {
   },
   "qb.ball_security": {
     label: "Ball security",
-    tip: "Win probability lost to interceptions and fumbles per dropback. Zero is best.",
+    tip: "Turnovers risked per pass and run: every fumble whoever recovered it, and interceptions plus passes defenders got a hand on, each counted at the rate such plays become turnovers. Adjusted for the defense.",
+  },
+  "qb.sack_ball_security": {
+    label: "Ball security when sacked",
+    tip: "Fumbles per sack taken, whoever recovered them, adjusted for the defense.",
   },
   "qb.floor": {
     label: "Bad-game floor",
@@ -223,6 +227,10 @@ const NFL_TRAIT_LABELS: Record<string, { label: string; tip: string }> = {
   "qb.legs": {
     label: "Rushing",
     tip: "Rushing success above situational expectation, adjusted for the defense.",
+  },
+  "qb.ball_security": {
+    label: "Ball security",
+    tip: "Win probability lost to interceptions and fumbles per dropback. Zero is best.",
   },
   "rec.yac_over_expected": {
     label: "Yards after catch",
