@@ -220,3 +220,4 @@ export type NhlLivePrediction = Tables<"nhl", "live_predictions">;
 export type NhlBacktestPrediction = Tables<"nhl", "backtest_predictions">;
 export type NhlPick = Tables<"nhl", "recommendations">;
 export type NhlPickMetric = Tables<"nhl", "recommendation_performance">;
+export type NhlPositionTrait = Tables<"nhl", "position_traits">;

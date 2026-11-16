@@ -1,12 +1,21 @@
-// Display vocabulary for the position_traits tables of both football sports.
-// The names are what a fan reads on the card; the one-sentence explanations
-// open from the info icon. The trait keys are the backends' and must stay in
-// step with momentumcfb's and momentumnfl's position_traits_v1 reports.
+// Display vocabulary for the position_traits tables of both football sports
+// and the NHL. The names are what a fan reads on the card; the one-sentence
+// explanations open from the info icon. The trait keys are the backends' and
+// must stay in step with momentumcfb's and momentumnfl's position_traits_v1
+// reports and momentumnhl's backend/players/pipeline.py.
 
-export type GradeSport = "cfb" | "nfl";
+export type GradeSport = "cfb" | "nfl" | "nhl";
 
-export const POSITION_ORDER = ["QB", "RB", "WR", "TE", "OL", "DL", "LB", "DB", "P"] as const;
+// Football's groups, then hockey's: a page lists the ones its sport publishes.
+export const POSITION_ORDER = ["QB", "RB", "WR", "TE", "OL", "DL", "LB", "DB", "P", "F", "D", "G"] as const;
 export type PositionGroup = (typeof POSITION_ORDER)[number];
+
+// A position whose code alone would not name it on the picker.
+export const POSITION_LABELS: Partial<Record<PositionGroup, string>> = {
+  F: "Forwards",
+  D: "Defense",
+  G: "Goalies",
+};
 
 const GRADE_TIP =
   "Projected talent on a 20 to 80 scale among qualified FBS players at the position this week. 50 is average; 10 points is one standard deviation. Quarterback, running back and defensive back grades include the talent level of the player's program. Early in the season, grades at every position except defensive back, offensive line and punter lean on last season's final grade, with a weight that fades to zero by week 13. The scale stops at 20 and 80. ± shows uncertainty. Scouts QB #5, say, is his rank among quarterbacks on the Scouting Grade big board for the next NFL draft, a scouts' view the grade does not use.";
@@ -19,6 +28,9 @@ const NFL_GRADE_TIP =
 
 const NFL_WAR_TIP =
   "Estimated wins above a replacement-level player at the position, using opponent-adjusted credit on competitive plays and game leverage. Defensive plays are weighted by how closely each kind tracks a defender's on-field impact; coverage that never shows up on a tagged play is not counted.";
+
+const NHL_GRADE_TIP =
+  "Talent on a 20 to 80 scale among qualified NHL players at the position. 50 is average; 10 points is one standard deviation. Forwards, defensemen and goalies are each graded against their own position. A skater qualifies with 8 games this season (fewer in the opening weeks), a goalie with 4. The scale stops at 20 and 80. ± shows uncertainty, published for goalies only so far.";
 
 export const NFL_VALUE_TIP =
   "What his projected wins are worth over the rest of his contract, in millions of this season's cap dollars, at the league's price of a win. A longer contract holds more value. ± is the range of the projection.";
@@ -51,10 +63,27 @@ export const NFL_SPREAD_TIP =
   "Point spread rating: how many points his team's projected line for the next game gives up if he is ruled out, from his opponent-adjusted play credit above a replacement times his share of the team's recent games. It measures what his absence costs for one game, not his talent; the grade does that. Quarterbacks are priced separately and the offensive line only as a unit.";
 
 // Copy that differs between the sports: who the percentile pool is, and how
-// the grade and WAR explain themselves.
-export const SPORT_COPY: Record<GradeSport, { pool: string; gradeTip: string; warTip: string; apiPath: string; groupLabel: string }> = {
+// the grade and WAR explain themselves. A sport that publishes no WAR has no
+// tip for it and the page shows no WAR. `tableTraits` names the trait columns
+// of the desktop table where the first rows of the card are not the ones to show.
+export const SPORT_COPY: Record<GradeSport, {
+  pool: string;
+  gradeTip: string;
+  warTip: string | null;
+  apiPath: string;
+  groupLabel: string;
+  tableTraits?: readonly string[];
+}> = {
   cfb: { pool: "qualified FBS players", gradeTip: GRADE_TIP, warTip: WAR_TIP, apiPath: "/cfb/api/player-traits", groupLabel: "Conference" },
   nfl: { pool: "qualified NFL players", gradeTip: NFL_GRADE_TIP, warTip: NFL_WAR_TIP, apiPath: "/nfl/api/player-traits", groupLabel: "Division" },
+  nhl: {
+    pool: "qualified NHL players",
+    gradeTip: NHL_GRADE_TIP,
+    warTip: null,
+    apiPath: "/nhl/api/player-traits",
+    groupLabel: "Division",
+    tableTraits: ["offense", "defense"],
+  },
 };
 
 export const TRAIT_LABELS: Record<string, { label: string; tip: string }> = {
@@ -326,10 +355,96 @@ export const KIND_LABELS: Record<MeasureKind, { label: string; tip: string }> = 
 // CFB publishes whether a trait contributes to the grade, but does not publish
 // the NFL charting-based quality, processing, role, style and noise taxonomy.
 export const CFB_SECTION_ORDER = ["grade_inputs", "context"] as const;
-export type TraitSection = MeasureKind | (typeof CFB_SECTION_ORDER)[number];
+
+// A skater's value splits into the goals he adds and the goals he prevents.
+// Each trait is in goals per 82 games above an average skater at his position
+// and sits in its section in the order listed here; a goalie has one trait and
+// no section.
+const NHL_SECTION_ORDER = ["offense", "defense"] as const;
+type NhlSection = (typeof NHL_SECTION_ORDER)[number];
+
+const NHL_TRAITS: Record<string, { label: string; tip: string; section: NhlSection | null }> = {
+  offense: {
+    label: "Offense",
+    tip: "Goals he adds per 82 games above an average skater at his position: even strength, power play and finishing together.",
+    section: "offense",
+  },
+  even_strength_offense: {
+    label: "Even-strength offense",
+    tip: "His effect on his team's expected goals at 5-on-5 with linemates and opponents held constant, combined with his shot and point rates, times the 5-on-5 ice time he is getting. Goals per 82 games.",
+    section: "offense",
+  },
+  power_play: {
+    label: "Power play",
+    tip: "His effect on his team's expected goals with the man advantage, times the power-play time he is getting. Goals per 82 games.",
+    section: "offense",
+  },
+  shooting: {
+    label: "Finishing",
+    tip: "Goals his own shooting adds beyond the expected goals of his shots, from his finishing over his last three seasons pulled toward average. Goals per 82 games.",
+    section: "offense",
+  },
+  defense: {
+    label: "Defense",
+    tip: "Goals he prevents per 82 games above an average skater at his position: even strength and penalty kill together.",
+    section: "defense",
+  },
+  even_strength_defense: {
+    label: "Even-strength defense",
+    tip: "His effect on opponents' expected goals at 5-on-5 with linemates and opponents held constant, times the 5-on-5 ice time he is getting. Goals prevented per 82 games.",
+    section: "defense",
+  },
+  penalty_kill: {
+    label: "Penalty kill",
+    tip: "His effect on opponents' expected goals while shorthanded, times the penalty-kill time he is getting. Goals prevented per 82 games.",
+    section: "defense",
+  },
+  goals_saved: {
+    label: "Goals saved above expected",
+    tip: "Goals saved per 60 minutes above what the shots he faced were expected to yield, weighted toward recent games, pulled toward average by how little he has played, and adjusted for age.",
+    section: null,
+  },
+};
+const NHL_TRAIT_ORDER = Object.keys(NHL_TRAITS);
+
+export type TraitSection = MeasureKind | (typeof CFB_SECTION_ORDER)[number] | NhlSection;
+
+export const SECTION_ORDER: Record<GradeSport, readonly TraitSection[]> = {
+  cfb: CFB_SECTION_ORDER,
+  nfl: KIND_ORDER,
+  nhl: NHL_SECTION_ORDER,
+};
+
+// The section a trait sits in on the card: CFB splits grade inputs from
+// context, the NFL publishes a kind for each fitted measure, and hockey's
+// sections are the two halves of a skater's value.
+export function traitSection(
+  sport: GradeSport,
+  trait: string,
+  inGrade: boolean,
+  kind: string | null | undefined
+): TraitSection | null {
+  if (sport === "cfb") return inGrade ? "grade_inputs" : "context";
+  if (sport === "nhl") return NHL_TRAITS[trait]?.section ?? null;
+  return isMeasureKind(kind) ? kind : null;
+}
+
+// A trait's place within its section where the sport fixes one; traits without
+// a fixed place tie, and the card orders them by reliability and name.
+export function traitRank(trait: string): number {
+  return NHL_TRAIT_ORDER.indexOf(trait);
+}
 
 export const TRAIT_SECTION_LABELS: Record<TraitSection, { label: string; tip: string }> = {
   ...KIND_LABELS,
+  offense: {
+    label: "Offense",
+    tip: "The goals he adds. Each bar is his percentile at the position in goals per 82 games above an average skater there.",
+  },
+  defense: {
+    label: "Defense",
+    tip: "The goals he prevents. Each bar is his percentile at the position in goals per 82 games above an average skater there; higher is better.",
+  },
   grade_inputs: {
     label: "Grade inputs",
     tip: "Traits used in this position’s published grade.",
@@ -340,7 +455,23 @@ export const TRAIT_SECTION_LABELS: Record<TraitSection, { label: string; tip: st
   },
 };
 
-export const RATING_LABELS: Record<string, { label: string; unit: string; tip: string }> = {
+const NHL_SKATER_RATING = {
+  label: "Impact",
+  unit: "goals per 82 games",
+  tip: "Goals he is worth per 82 games above an average skater at his position, offense plus defense. The grade places this number among qualified players at the position.",
+  digits: 1,
+};
+
+// The number a rated position's grade ranks, shown beside it in its own units
+// (to two decimals unless `digits` says otherwise).
+export const RATING_LABELS: Record<string, { label: string; unit: string; tip: string; digits?: number }> = {
+  F: NHL_SKATER_RATING,
+  D: NHL_SKATER_RATING,
+  G: {
+    label: "Impact",
+    unit: "goals saved per 60 min",
+    tip: "Goals saved per 60 minutes above what the shots he faced were expected to yield, weighted toward recent games, pulled toward average by how little he has played, and adjusted for age. The grade places this number among qualified goalies. A goalie's results repeat less than a skater's, so his grade is the least certain on the page.",
+  },
   QB: {
     label: "Forecast",
     unit: "EPA per dropback",
@@ -421,6 +552,7 @@ const RATED_MEASURE_LABELS: Record<string, { label: string; tip: string }> = {
 };
 
 export function traitLabel(trait: string, sport: GradeSport = "cfb"): { label: string; tip: string } {
+  if (sport === "nhl") return NHL_TRAITS[trait] ?? { label: trait, tip: "" };
   const base = TRAIT_LABELS[trait] ?? { label: trait, tip: "" };
   if (sport !== "nfl") return base;
   return RATED_MEASURE_LABELS[trait] ?? NFL_TRAIT_LABELS[trait] ?? base;

@@ -1,9 +1,24 @@
 import { cache } from "react";
 import { quotesAtForecast } from "@/lib/nhl-quote-history";
+import { nhlPlayerHeadshotUrl } from "@/lib/player-headshots";
+import {
+  EMPTY_GRADES,
+  ID_CHUNK,
+  INDEX_COLUMNS,
+  buildGradedPlayers,
+  chunk,
+  rankIndex,
+  readAllPages,
+  toIndexRow,
+  type GradedPlayer,
+  type IndexRow,
+  type PositionGrades,
+} from "@/lib/position-grades";
 import { supabaseNhl } from "@/lib/supabase";
 import type {
   NhlGameProjection,
   NhlMarketSnapshot,
+  NhlPositionTrait,
   NhlTeamIdentity,
   NhlTeamRating,
 } from "@/lib/types";
@@ -200,3 +215,83 @@ export function bestMoneyline(
   return best;
 }
 
+// Player grades: the season's snapshot of nhl.position_traits, in the shape
+// the football pages use (lib/position-grades). The index carries every graded
+// player; the full rows of the top of the opening position come with it and
+// the rest load on demand through /nhl/api/player-traits.
+async function fetchGradeIndex(season: number): Promise<IndexRow[]> {
+  return readAllPages((from, to) =>
+    supabaseNhl
+      .from("position_traits")
+      .select(INDEX_COLUMNS)
+      .eq("season", season)
+      .eq("trait", "grade")
+      .order("athlete_id", { ascending: true })
+      .range(from, to)
+  );
+}
+
+export async function fetchNhlPlayerTraitRows(season: number, ids: string[]): Promise<NhlPositionTrait[]> {
+  const parts = await Promise.all(
+    chunk(ids, ID_CHUNK).map((part) =>
+      readAllPages((from, to) =>
+        supabaseNhl
+          .from("position_traits")
+          .select("*")
+          .eq("season", season)
+          .in("athlete_id", part)
+          .order("athlete_id")
+          .order("trait")
+          .range(from, to)
+      ),
+    ),
+  );
+  return parts.flat();
+}
+
+// A player off his club's current roster is published without a headshot.
+function withHeadshot<T extends { athlete_id: string; headshot_url?: string | null }>(row: T): T {
+  return { ...row, headshot_url: row.headshot_url ?? nhlPlayerHeadshotUrl(row.athlete_id) };
+}
+
+// The number the grade ranks is published under its own name: a skater's
+// total, a goalie's goals saved. The card shows it as the rating headline. A
+// skater's total is the sum of the offense and defense rows the card lists, so
+// it is not listed again; a goalie's is the only row he has, so it stays.
+export function buildNhlGradedPlayers(rows: NhlPositionTrait[]): Record<string, GradedPlayer> {
+  const shaped = rows.map(withHeadshot).flatMap((row) => {
+    if (row.trait === "total") return [{ ...row, trait: "rating" }];
+    if (row.trait === "goals_saved") return [row, { ...row, trait: "rating" }];
+    return [row];
+  });
+  return buildGradedPlayers(shaped, []);
+}
+
+// The grade index and trait rows throw on a failed read so ISR keeps the last
+// good page.
+export const fetchNhlPositionGrades = cache(readNhlPositionGrades);
+
+async function readNhlPositionGrades(): Promise<PositionGrades> {
+  const latestRes = await supabaseNhl
+    .from("position_traits")
+    .select("season, week, as_of, model_version")
+    .eq("trait", "grade")
+    .order("season", { ascending: false })
+    .limit(1);
+  if (latestRes.error) throw latestRes.error;
+  const latest = latestRes.data?.[0];
+  if (!latest) return EMPTY_GRADES;
+
+  const [gradeRows, teams] = await Promise.all([fetchGradeIndex(latest.season), fetchTeams()]);
+  const { index, topIds } = rankIndex(
+    gradeRows.map((row) => toIndexRow(withHeadshot(row), teams.get(row.team ?? "")?.division ?? null)),
+  );
+  return {
+    season: latest.season,
+    week: latest.week,
+    asOf: latest.as_of,
+    modelVersion: latest.model_version,
+    index,
+    details: buildNhlGradedPlayers(await fetchNhlPlayerTraitRows(latest.season, topIds)),
+  };
+}

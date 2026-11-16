@@ -5,15 +5,17 @@ import { ChevronDown } from "lucide-react";
 import { Fragment, type ReactNode, useDeferredValue, useEffect, useMemo, useState } from "react";
 import { GRADE_ROWS, defaultPosition, formatGrade, type GradedPlayer, type GradedPlayerTrait, type GradeTeam, type PlayerIndexRow } from "@/lib/position-grades";
 import {
-  CFB_SECTION_ORDER,
   TRAIT_SECTION_LABELS,
-  KIND_ORDER,
+  POSITION_LABELS,
   POSITION_ORDER,
   RATING_LABELS,
+  SECTION_ORDER,
   SPORT_COPY,
   isMeasureKind,
   isUnitRow,
   traitLabel,
+  traitRank,
+  traitSection,
   type GradeSport,
   type TraitSection,
   type PositionGroup,
@@ -387,7 +389,7 @@ function GradeCard({
   const headlines =
     cfb
       ? 2 + Number(rated) + extras
-      : 2 + Number(rated) + extras + Number(priced) + (valued ? 2 : 0);
+      : 1 + Number(copy.warTip != null) + Number(rated) + extras + Number(priced) + (valued ? 2 : 0);
   // A CFB phone card keeps grade and WAR and adds scouts and form; efficiency
   // stands in only for a player with neither.
   const phoneEfficiency = efficient && !scouted && !inForm;
@@ -476,12 +478,13 @@ function GradeCard({
               <Headline
                 label={rating.label}
                 tip={rating.tip}
-                tipLabel="What is the forecast?"
-                value={formatSigned(player.rating, 2)}
+                tipLabel={`What is the ${rating.label.toLowerCase()}?`}
+                value={formatSigned(player.rating, rating.digits ?? 2)}
                 sub={`${rating.unit}${player.ratingRange != null ? ` · range ±${formatNumber(player.ratingRange, 2)}` : ""}`}
                 tone={player.rating != null && player.rating > 0 ? "text-positive" : undefined}
               />
             )}
+            {copy.warTip != null && (
             <Headline
               label="WAR"
               tip={copy.warTip}
@@ -499,6 +502,7 @@ function GradeCard({
               }
               tone={player?.war != null && player.war > 0 ? "text-positive" : undefined}
             />
+            )}
             {extraHeadlines}
             {priced && (
               <Headline
@@ -625,10 +629,10 @@ function GradeCard({
           })}
           {showForecast && (
             <TableCell className="text-center">
-              {rated ? <><div>{formatSigned(player.rating, 2)}</div>{!forecastInHeader && <div className="whitespace-normal text-[11px] leading-tight text-muted-foreground">{rating.unit}</div>}</> : EMPTY}
+              {rated ? <><div>{formatSigned(player.rating, rating.digits ?? 2)}</div>{!forecastInHeader && <div className="whitespace-normal text-[11px] leading-tight text-muted-foreground">{rating.unit}</div>}</> : EMPTY}
             </TableCell>
           )}
-          <TableCell className="text-center">{player?.war == null ? EMPTY : formatSigned(player.war, 2)}</TableCell>
+          {copy.warTip != null && <TableCell className="text-center">{player?.war == null ? EMPTY : formatSigned(player.war, 2)}</TableCell>}
           {showSpread && <TableCell className="text-center">{player?.spreadValue == null ? EMPTY : formatPsr(player.spreadValue)}</TableCell>}
           {showValue && <TableCell className="text-center">{formatMillions(player?.playerValue ?? null)}</TableCell>}
           {showValue && <TableCell className={cn("text-center", surplusTone(player?.contractSurplus, player?.contractSurplusRange))}>{formatMillions(player?.contractSurplus ?? null, true)}</TableCell>}
@@ -642,7 +646,7 @@ function GradeCard({
           <TableCell><ChevronDown aria-hidden="true" className={cn("size-4 text-muted-foreground transition-transform", open && "rotate-180")} /></TableCell>
         </TableRow>
         <TableRow hidden={!open} className="hover:bg-transparent">
-          <TableCell colSpan={(showForecast ? 10 : 9) + (showSpread ? 1 : 0) + (showValue ? 2 : 0) + (showNil ? 1 : 0) + (showNilSurplus ? 1 : 0) + desktopTraits.length} className="whitespace-normal bg-muted/20">{details}</TableCell>
+          <TableCell colSpan={8 + Number(showForecast) + Number(copy.warTip != null) + (showSpread ? 1 : 0) + (showValue ? 2 : 0) + (showNil ? 1 : 0) + (showNilSurplus ? 1 : 0) + desktopTraits.length} className="whitespace-normal bg-muted/20">{details}</TableCell>
         </TableRow>
       </Fragment>
     );
@@ -743,9 +747,11 @@ function ComparePanel({
     const items: { label: string; value: string; sub: ReactNode; tone?: string }[] = [
       { label: "grade", value: formatGrade(grade), sub: gradeSub(player, row.percentile) },
       ...(rating && player?.rating != null
-        ? [{ label: rating.label, value: formatSigned(player.rating, 2), sub: rating.unit }]
+        ? [{ label: rating.label, value: formatSigned(player.rating, rating.digits ?? 2), sub: rating.unit }]
         : []),
-      { label: "WAR", value: player?.war == null ? EMPTY : formatSigned(player.war, 2), sub: player?.pointsAboveReplacement == null ? "" : `${formatSigned(player.pointsAboveReplacement, 0)} season pts` },
+      ...(copy.warTip != null
+        ? [{ label: "WAR", value: player?.war == null ? EMPTY : formatSigned(player.war, 2), sub: player?.pointsAboveReplacement == null ? "" : `${formatSigned(player.pointsAboveReplacement, 0)} season pts` }]
+        : []),
       ...(sport === "nfl" && player?.spreadValue != null
         ? [{ label: "PSR", value: formatPsr(player.spreadValue), sub: "pts if ruled out" }]
         : []),
@@ -894,7 +900,8 @@ export default function PositionGrades({
   // The index is ranked best grade first, so each position's first match is its leader.
   const leaderOptions = useMemo(() => positions.map((key) => {
     const row = index.find((r) => r.positionGroup === key && r.grade != null && (group === ALL || r.group === group));
-    if (!row) return { key, leader: null };
+    const label = POSITION_LABELS[key];
+    if (!row) return { key, label, leader: null };
     const unit = isUnitRow(row.athleteId);
     const leader: PositionLeader = {
       name: unit ? `${row.team} offensive line` : row.name,
@@ -903,7 +910,7 @@ export default function PositionGrades({
       headshotUrl: row.headshotUrl ?? cfbPlayerHeadshotUrl(row.athleteId),
       stat: formatGrade(row.grade),
     };
-    return { key, leader };
+    return { key, label, leader };
   }), [positions, index, group, logoFor]);
 
   useEffect(() => {
@@ -931,11 +938,11 @@ export default function PositionGrades({
   }, [visible, compare, loaded, failed, season, copy.apiPath]);
 
   // The same rows on every card at a position, taken from every loaded player
-  // of that position. A fitted rating's measures sit in sections by kind,
-  // weighted measures first, then the most reliable. CFB groups the published
-  // grade inputs separately from the remaining descriptive stats.
+  // of that position, in the sport's sections (traitSection): within one,
+  // weighted measures first, then a fixed place where the sport gives one,
+  // then the most reliable.
   const linesFor = useMemo(() => {
-    const byGroup = new Map<string, Map<string, { inGrade: boolean; kind: TraitSection | null; reliability: number }>>();
+    const byGroup = new Map<string, Map<string, { inGrade: boolean; kind: string | null; reliability: number }>>();
     for (const row of index) {
       const player = loaded[row.athleteId];
       if (!player) continue;
@@ -944,7 +951,7 @@ export default function PositionGrades({
         const seen = names.get(t.trait);
         names.set(t.trait, {
           inGrade: (seen?.inGrade ?? false) || t.in_grade,
-          kind: isMeasureKind(t.kind) ? t.kind : null,
+          kind: t.kind,
           reliability: Math.max(seen?.reliability ?? -1, t.reliability ?? -1),
         });
       }
@@ -954,21 +961,23 @@ export default function PositionGrades({
       [...(byGroup.get(positionGroup) ?? new Map()).entries()]
         .map(([name, meta]): [string, { inGrade: boolean; kind: TraitSection | null; reliability: number }] => [
           name,
-          { ...meta, kind: sport === "cfb" ? (meta.inGrade ? "grade_inputs" : "context") : meta.kind },
+          { ...meta, kind: traitSection(sport, name, meta.inGrade, meta.kind) },
         ])
         .sort(([a, x], [b, y]) => {
-          const order: readonly TraitSection[] = sport === "cfb" ? CFB_SECTION_ORDER : KIND_ORDER;
+          const order = SECTION_ORDER[sport];
           const kindRank = (k: TraitSection | null) => (k == null ? -1 : order.indexOf(k));
           return (
             kindRank(x.kind) - kindRank(y.kind) ||
             Number(y.inGrade) - Number(x.inGrade) ||
+            traitRank(a) - traitRank(b) ||
             y.reliability - x.reliability ||
             a.localeCompare(b)
           );
         })
         .map(([name, meta]) => ({ name, kind: meta.kind }));
   }, [index, loaded, sport]);
-  const showForecast = visible.some((row) => RATING_LABELS[row.positionGroup] != null && loaded[row.athleteId]?.rating != null);
+  const ratedRow = visible.find((row) => RATING_LABELS[row.positionGroup] != null && loaded[row.athleteId]?.rating != null);
+  const showForecast = ratedRow != null;
   // One position on screen shares one forecast unit, so the header carries it;
   // a search can mix positions, so each cell keeps its own.
   const headerRating = search ? null : RATING_LABELS[position] ?? null;
@@ -976,11 +985,10 @@ export default function PositionGrades({
   const showValue = visible.some((row) => loaded[row.athleteId]?.playerValue != null);
   const showNil = sport === "cfb" && visible.some((row) => loaded[row.athleteId]?.nilPrice != null);
   const showNilSurplus = sport === "cfb" && visible.some((row) => loaded[row.athleteId]?.nilSurplus != null);
-  const desktopTraits = search ? [] : linesFor(position)
-    .filter(({ name }) => visible.some((row) => loaded[row.athleteId]?.traits.some((trait) => trait.trait === name && trait.in_grade)))
+  const desktopTraits = search ? [] : (copy.tableTraits ?? linesFor(position).map(({ name }) => name))
+    .filter((name) => visible.some((row) => loaded[row.athleteId]?.traits.some((trait) => trait.trait === name && trait.in_grade)))
     // The NFL value columns and the CFB price column take the second trait column's room.
-    .slice(0, showValue || showNil ? 1 : 2)
-    .map(({ name }) => name);
+    .slice(0, showValue || showNil ? 1 : 2);
   const renderPlayers = (desktop: boolean) => visible.map((row, i) => (
     <GradeCard
       key={row.athleteId}
@@ -1045,7 +1053,7 @@ export default function PositionGrades({
           ? `${matches.length} player${matches.length === 1 ? "" : "s"} match "${query.trim()}"${group === ALL ? "" : ` in the ${group}`}, best grade first`
           : `${visible.length === matches.length ? `All ${matches.length}` : `Top ${visible.length} of ${matches.length}`} ${group === ALL ? "" : `${group} `}${position} graded this week`}
         <InfoTip
-          text={`Percentiles among ${copy.pool} at the position this week. ${sport === "cfb" ? "Grade inputs contribute to the rating, and More context does not. Each player card has a key to its bar colors." : `Each player card has a key to its bar colors. The r is the stat’s reliability over 8 games: how well odd and even games agree, scaled to 8 games.${headerRating ? " GRADE marks the inputs of the fitted forecast. An input earns its place by improving the forecast, so a low r can still be graded: the forecast reads the stat weighted by volume." : ""}`}`}
+          text={`Percentiles among ${copy.pool} at the position this week. ${sport === "nhl" ? "Each bar places one part of the player's value among his position: for skaters, goals per 82 games above an average skater there; for goalies, goals saved per 60 minutes above expected. Each player card has a key to its bar colors." : sport === "cfb" ? "Grade inputs contribute to the rating, and More context does not. Each player card has a key to its bar colors." : `Each player card has a key to its bar colors. The r is the stat’s reliability over 8 games: how well odd and even games agree, scaled to 8 games.${headerRating ? " GRADE marks the inputs of the fitted forecast. An input earns its place by improving the forecast, so a low r can still be graded: the forecast reads the stat weighted by volume." : ""}`}`}
           label="How to read the bars"
         />
       </p>
@@ -1086,7 +1094,7 @@ export default function PositionGrades({
                 <col className="w-12" />
                 {desktopTraits.map((name) => <col key={name} className="w-34" />)}
                 {showForecast && <col className="w-32" />}
-                <col className="w-16" />
+                {copy.warTip != null && <col className="w-16" />}
                 {showSpread && <col className="w-18" />}
                 {showValue && <col className="w-24" />}
                 {showValue && <col className="w-20" />}
@@ -1114,16 +1122,16 @@ export default function PositionGrades({
                       </TableHead>
                     );
                   })}
-                  {showForecast && (
+                  {ratedRow && (
                     <TableHead className="text-center">
                       <span className="inline-flex items-center gap-1">
-                        Forecast
-                        {headerRating && <InfoTip text={headerRating.tip} label="What is the forecast?" />}
+                        {RATING_LABELS[ratedRow.positionGroup].label}
+                        {headerRating && <InfoTip text={headerRating.tip} label={`What is the ${headerRating.label.toLowerCase()}?`} />}
                       </span>
                       {headerRating && <div className="whitespace-normal text-[10px] font-normal normal-case leading-tight">{headerRating.unit}</div>}
                     </TableHead>
                   )}
-                  <TableHead className="text-center"><span className="inline-flex items-center gap-1">WAR <InfoTip text={copy.warTip} label="What is wins above replacement?" /></span></TableHead>
+                  {copy.warTip != null && <TableHead className="text-center"><span className="inline-flex items-center gap-1">WAR <InfoTip text={copy.warTip} label="What is wins above replacement?" /></span></TableHead>}
                   {showSpread && <TableHead className="text-center"><span className="inline-flex items-center gap-1">PSR <InfoTip text={NFL_SPREAD_TIP} label="What is PSR?" /></span></TableHead>}
                   {showValue && <TableHead className="whitespace-normal text-center leading-tight"><span className="inline-flex items-center gap-1">Contract value <InfoTip text={NFL_VALUE_TIP} label="What is contract value?" /></span></TableHead>}
                   {showValue && <TableHead className="text-center"><span className="inline-flex items-center gap-1">Surplus <InfoTip text={NFL_SURPLUS_TIP} label="What is contract surplus?" /></span></TableHead>}

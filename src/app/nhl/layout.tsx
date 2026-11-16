@@ -10,6 +10,7 @@ export const metadata: Metadata = {
 
 const nhlLinks = [
   { href: "/nhl/ratings", label: "Ratings" },
+  { href: "/nhl/players", label: "Players" },
   { href: "/nhl/games", label: "Games" },
   { href: "/nhl/schedule", label: "Schedule" },
   { href: "/nhl/history", label: "History" },

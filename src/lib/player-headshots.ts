@@ -13,6 +13,12 @@ export function nflPlayerHeadshotUrl(
   return `https://a.espncdn.com/combiner/i?img=/i/headshots/nfl/players/full/${athleteId}.png&w=${size}`;
 }
 
+// The NHL's own portrait of a player, for a graded player the published row
+// has no headshot for because he is off his club's current roster.
+export function nhlPlayerHeadshotUrl(playerId: string): string {
+  return `https://assets.nhle.com/mugs/nhl/latest/${playerId}.png`;
+}
+
 // MLB's people CDN serves major and minor leaguers by Stats API person id. The silo
 // cut is a transparent square like ESPN's portraits, so it sits in the round frame whole;
 // the tables' stored headshot_url is the opaque 2:3 photo and goes unread.

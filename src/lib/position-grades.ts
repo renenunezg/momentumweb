@@ -1,5 +1,5 @@
-// The player grades page's data model, shared by college football and the
-// NFL. Each sport's lib reads its own position_traits table and maps the rows
+// The player grades page's data model, shared by college football, the NFL
+// and the NHL. Each sport's lib reads its own position_traits table and maps the rows
 // through these helpers, so the page and its card component never know which
 // schema they are rendering.
 
@@ -7,9 +7,9 @@ import { footballStatsLine, type FootballStatsLine } from "./football-season-sta
 import { POSITION_ORDER, type PositionGroup } from "./position-traits.ts";
 import { EMPTY } from "./utils.ts";
 
-// The columns both position_traits tables carry. The CFB table also has a
-// team_id and the NFL table a headshot_url; neither is needed here beyond the
-// optional headshot.
+// The columns every position_traits table carries. The CFB table also has a
+// team_id and the NFL and NHL tables a headshot_url; neither is needed here
+// beyond the optional headshot.
 export interface PositionTraitRow {
   season: number;
   week: number;

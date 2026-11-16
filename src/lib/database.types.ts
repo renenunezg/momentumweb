@@ -7056,6 +7056,69 @@ export type Database = {
         }
         Relationships: []
       }
+      position_traits: {
+        Row: {
+          as_of: string
+          athlete_id: string
+          athlete_name: string
+          games: number
+          headshot_url: string | null
+          in_grade: boolean
+          kind: string | null
+          model_version: string
+          percentile: number
+          points_above_replacement: number | null
+          position_group: string
+          reliability: number | null
+          season: number
+          team: string
+          trait: string
+          uncertainty: number | null
+          value: number
+          week: number
+        }
+        Insert: {
+          as_of: string
+          athlete_id: string
+          athlete_name: string
+          games: number
+          headshot_url?: string | null
+          in_grade: boolean
+          kind?: string | null
+          model_version: string
+          percentile: number
+          points_above_replacement?: number | null
+          position_group: string
+          reliability?: number | null
+          season: number
+          team: string
+          trait: string
+          uncertainty?: number | null
+          value: number
+          week: number
+        }
+        Update: {
+          as_of?: string
+          athlete_id?: string
+          athlete_name?: string
+          games?: number
+          headshot_url?: string | null
+          in_grade?: boolean
+          kind?: string | null
+          model_version?: string
+          percentile?: number
+          points_above_replacement?: number | null
+          position_group?: string
+          reliability?: number | null
+          season?: number
+          team?: string
+          trait?: string
+          uncertainty?: number | null
+          value?: number
+          week?: number
+        }
+        Relationships: []
+      }
       recommendation_schedule: {
         Row: {
           away_goals: number | null
