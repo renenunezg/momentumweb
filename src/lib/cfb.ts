@@ -15,6 +15,7 @@ import {
   type PlayerSeasonStatsRow,
   type PositionGrades,
 } from "@/lib/position-grades";
+import { fetchDraft } from "@/lib/draft-server";
 import { supabaseCfb } from "@/lib/supabase";
 import type {
   CfbBacktestPrediction,
@@ -391,6 +392,33 @@ export async function fetchPlayerTraitRows(
   return { traits, stats };
 }
 
+// Each player's rank among prospects at his board position on the published
+// draft board, for the draft that follows the graded season; an older season's
+// grades get none, because the board only ranks the coming class.
+export async function withScoutRanks(
+  players: Record<string, GradedPlayer>,
+  season: number
+): Promise<Record<string, GradedPlayer>> {
+  const workspace = await fetchDraft("workspace");
+  if (workspace == null || workspace.board.season !== season + 1) return players;
+  const ranked = workspace.board.prospects
+    .filter((p) => p.rank != null)
+    .sort((a, b) => (a.rank ?? 0) - (b.rank ?? 0));
+  const seen = new Map<string, number>();
+  const rankOf = new Map<string, { rank: number; position: string }>();
+  for (const prospect of ranked) {
+    const rank = (seen.get(prospect.position) ?? 0) + 1;
+    seen.set(prospect.position, rank);
+    if (prospect.athlete_id) rankOf.set(prospect.athlete_id, { rank, position: prospect.position });
+  }
+  const out: Record<string, GradedPlayer> = {};
+  for (const [id, player] of Object.entries(players)) {
+    const scout = rankOf.get(id);
+    out[id] = { ...player, scoutRank: scout?.rank ?? null, scoutPosition: scout?.position ?? null };
+  }
+  return out;
+}
+
 // Each team's conference in the season's latest ratings week, for the grade
 // filters.
 async function fetchGradeConferences(season: number): Promise<Map<string, string | null>> {
@@ -436,7 +464,7 @@ async function readPositionGrades(): Promise<CfbPositionGrades> {
     gradeRows.map((row) => toIndexRow(row, conferenceOf.get(row.team ?? "") ?? null))
   );
   const { traits, stats } = await fetchPlayerTraitRows(latest.season, topIds);
-  const details = buildGradedPlayers(traits, stats);
+  const details = await withScoutRanks(buildGradedPlayers(traits, stats), latest.season);
   return {
     season: latest.season,
     week: latest.week,

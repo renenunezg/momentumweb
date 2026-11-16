@@ -1,4 +1,4 @@
-import { fetchPlayerTraitRows } from "@/lib/cfb";
+import { fetchPlayerTraitRows, withScoutRanks } from "@/lib/cfb";
 import { MAX_TRAIT_IDS, buildGradedPlayers } from "@/lib/position-grades";
 
 // Rows for one listed page plus the compared players of one season, for
@@ -20,8 +20,9 @@ export async function GET(request: Request) {
   }
   try {
     const { traits, stats } = await fetchPlayerTraitRows(Number(season), [...new Set(ids)].sort());
+    const players = await withScoutRanks(buildGradedPlayers(traits, stats), Number(season));
     return Response.json(
-      { season: Number(season), players: buildGradedPlayers(traits, stats) },
+      { season: Number(season), players },
       {
         headers: {
           "Cache-Control": "public, max-age=0, must-revalidate",

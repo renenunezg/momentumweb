@@ -68,6 +68,17 @@ export interface GradedPlayer {
   // millions, with the half-width of its range and whether his portal rating
   // or only his production set it; for quarterbacks the worth of his
   // projected wins at the same prices and worth less price.
+  // CFB only: his rank among prospects at his board position (QB, EDGE, CB, ...)
+  // on the next NFL draft's scouting big board, which the grade does not read,
+  // attached by the CFB loader; null off the board.
+  scoutRank: number | null;
+  scoutPosition: string | null;
+  // CFB only: adjusted EPA per credited play (ball carriers and receivers), and
+  // adjusted EPA per game over his last three games less his season mean, each
+  // with its percentile at the position.
+  efficiency: number | null;
+  efficiencyPercentile: number | null;
+  form: number | null;
   nilPrice: number | null;
   nilPriceRange: number | null;
   nilPriceSource: "portal" | "production" | null;
@@ -170,6 +181,7 @@ export function chunk<T>(items: T[], size: number): T[][] {
 // Rows the card shows as headlines rather than in the trait list.
 const HEADLINE_ROWS = new Set([
   "grade", "war", "rating", "spread_value", "player_value", "contract_surplus", "nil_price", "nil_worth", "nil_surplus",
+  "efficiency", "form",
 ]);
 
 // Traits the card never shows. QB receiver independence carries a fitted grade
@@ -198,6 +210,8 @@ export function buildGradedPlayers(rows: PositionTraitRow[], statRows: PlayerSea
     const nilPrice = list.find((r) => r.trait === "nil_price") ?? null;
     const nilWorth = list.find((r) => r.trait === "nil_worth") ?? null;
     const nilSurplus = list.find((r) => r.trait === "nil_surplus") ?? null;
+    const efficiency = list.find((r) => r.trait === "efficiency") ?? null;
+    const form = list.find((r) => r.trait === "form") ?? null;
     const first = grade ?? list[0];
     out[athleteId] = {
       athleteId,
@@ -218,6 +232,11 @@ export function buildGradedPlayers(rows: PositionTraitRow[], statRows: PlayerSea
       playerValueRange: worth?.uncertainty ?? null,
       contractSurplus: surplus?.value ?? null,
       contractSurplusRange: surplus?.uncertainty ?? null,
+      scoutRank: null,
+      scoutPosition: null,
+      efficiency: efficiency?.value ?? null,
+      efficiencyPercentile: efficiency?.percentile ?? null,
+      form: form?.value ?? null,
       nilPrice: nilPrice?.value ?? null,
       nilPriceRange: nilPrice?.uncertainty ?? null,
       nilPriceSource: nilPrice == null ? null : nilPrice.kind === "portal_rating" ? "portal" : "production",

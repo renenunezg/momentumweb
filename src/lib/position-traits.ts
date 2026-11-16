@@ -9,7 +9,7 @@ export const POSITION_ORDER = ["QB", "RB", "WR", "TE", "OL", "DL", "LB", "DB", "
 export type PositionGroup = (typeof POSITION_ORDER)[number];
 
 const GRADE_TIP =
-  "Projected talent on a 20 to 80 scale among qualified FBS players at the position this week. 50 is average; 10 points is one standard deviation. Quarterback, running back and defensive back grades include the talent level of the player's program. Early in the season, grades at every position except defensive back, offensive line and punter lean on last season's final grade, with a weight that fades to zero by week 13. The scale stops at 20 and 80. ± shows uncertainty.";
+  "Projected talent on a 20 to 80 scale among qualified FBS players at the position this week. 50 is average; 10 points is one standard deviation. Quarterback, running back and defensive back grades include the talent level of the player's program. Early in the season, grades at every position except defensive back, offensive line and punter lean on last season's final grade, with a weight that fades to zero by week 13. The scale stops at 20 and 80. ± shows uncertainty. Scouts QB #5, say, is his rank among quarterbacks on the Scouting Grade big board for the next NFL draft, a scouts' view the grade does not use.";
 
 const WAR_TIP =
   "Estimated wins above a replacement-level player at the position: points above replacement from opponent-adjusted play credit, at the league rate of about 50 points per win. Defensive value is understated because only tagged disruptions count.";
@@ -31,6 +31,15 @@ export const CFB_NIL_PRICE_TIP =
 
 export const CFB_NIL_WORTH_TIP =
   "What his projected wins next season are worth: the same revenue-share pay, read at his rank in projected wins above replacement among quarterbacks. Quarterbacks only; at other positions the projection did not beat portal ratings.";
+
+export const CFB_SCOUTS_TIP =
+  "His rank among prospects at his position on the Scouting Grade big board for the next NFL draft: what scouts who watch him think, which the grade does not use. Only draft-eligible players on the board have one.";
+
+export const CFB_EFFICIENCY_TIP =
+  "Opponent-adjusted EPA per play he was credited on: the per-play side of what WAR adds up, so a high-volume offense does not raise it. Quarterbacks, running backs and receivers only.";
+
+export const CFB_FORM_TIP =
+  "Opponent-adjusted EPA per game over his last three games, less his per-game average for the season. Positive means a hot stretch. Needs at least four games.";
 
 export const CFB_NIL_SURPLUS_TIP =
   "Worth minus price. Positive means his projected wins are worth more than the market's read of him would cost.";

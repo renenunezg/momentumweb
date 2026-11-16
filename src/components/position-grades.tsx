@@ -2,7 +2,7 @@
 
 import { Accordion } from "@base-ui/react/accordion";
 import { ChevronDown } from "lucide-react";
-import { Fragment, useDeferredValue, useEffect, useMemo, useState } from "react";
+import { Fragment, type ReactNode, useDeferredValue, useEffect, useMemo, useState } from "react";
 import { GRADE_ROWS, defaultPosition, formatGrade, type GradedPlayer, type GradedPlayerTrait, type GradeTeam, type PlayerIndexRow } from "@/lib/position-grades";
 import {
   CFB_SECTION_ORDER,
@@ -20,9 +20,11 @@ import {
   NFL_SPREAD_TIP,
   NFL_SURPLUS_TIP,
   NFL_VALUE_TIP,
+  CFB_EFFICIENCY_TIP,
+  CFB_FORM_TIP,
   CFB_NIL_PRICE_TIP,
+  CFB_SCOUTS_TIP,
   CFB_NIL_SURPLUS_TIP,
-  CFB_NIL_WORTH_TIP,
 } from "@/lib/position-traits";
 import { EMPTY, cn, formatNumber, formatSigned } from "@/lib/utils";
 import { InfoTip } from "@/components/info-tip";
@@ -131,14 +133,17 @@ function TraitRow({
               r {formatNumber(reliability, 2)}
             </span>
           )}
-          <span
-            className={cn(
-              "type-eyebrow whitespace-nowrap rounded-sm px-1 text-center",
-              inGrade ? "bg-muted text-positive" : "invisible"
-            )}
-          >
-            grade
-          </span>
+          {/* The CFB card already splits grade inputs from context, so only the NFL's measure sections tag them. */}
+          {sport === "nfl" && (
+            <span
+              className={cn(
+                "type-eyebrow whitespace-nowrap rounded-sm px-1 text-center",
+                inGrade ? "bg-muted text-positive" : "invisible"
+              )}
+            >
+              grade
+            </span>
+          )}
         </span>
       </span>
       <span className="h-1.5 overflow-hidden rounded-[1px] bg-grid">
@@ -225,11 +230,25 @@ function rangeSub(range: number | null): string {
   return range == null ? "rest of contract" : `±${formatMillions(Math.abs(range))} · rest of contract`;
 }
 
+// One grid for every headline on the card, so the columns line up however
+// many there are. NFL cards wrap past three into rows of two on a phone; CFB
+// cards show their first three there and the rest from the small breakpoint.
 const HEADLINE_GRID: Record<number, string> = {
   1: "grid-cols-1",
-  2: "grid-cols-2 divide-x divide-border",
-  3: "grid-cols-3 divide-x divide-border",
-  4: "grid-cols-2 gap-y-3",
+  2: "grid-cols-2",
+  3: "grid-cols-3",
+  4: "grid-cols-2 sm:grid-cols-4",
+  // On a phone the fifth headline spans the row rather than sit alone in a half.
+  5: "grid-cols-2 sm:grid-cols-5 [&>*:last-child]:col-span-2 sm:[&>*:last-child]:col-span-1",
+  6: "grid-cols-2 sm:grid-cols-3",
+};
+const PHONE_GRID: Record<number, string> = { 1: "grid-cols-1", 2: "grid-cols-2", 3: "grid-cols-3" };
+const WIDE_GRID: Record<number, string> = {
+  1: "sm:grid-cols-1",
+  2: "sm:grid-cols-2",
+  3: "sm:grid-cols-3",
+  4: "sm:grid-cols-4",
+  5: "sm:grid-cols-5",
 };
 
 function Headline({
@@ -239,16 +258,18 @@ function Headline({
   value,
   sub,
   tone,
+  className,
 }: {
   label: string;
   tip: string;
   tipLabel: string;
   value: string;
-  sub: string;
+  sub: ReactNode;
   tone?: string;
+  className?: string;
 }) {
   return (
-    <div className="flex min-w-0 flex-col items-center gap-1 text-center">
+    <div className={cn("flex min-w-0 flex-col items-center gap-1 text-center", className)}>
       <span className="type-eyebrow inline-flex items-center gap-1 text-muted-foreground">
         {label} <InfoTip text={tip} label={tipLabel} />
       </span>
@@ -256,6 +277,31 @@ function Headline({
       <span className="font-mono text-[11px] tabular-nums text-muted-foreground">{sub}</span>
     </div>
   );
+}
+
+// The grade's sub line: uncertainty and percentile.
+function gradeSub(player: GradedPlayer | undefined, percentile: number | null): string {
+  return [
+    player?.uncertainty == null ? null : `±${formatNumber(player.uncertainty, 1)}`,
+    percentile == null ? null : `pct ${Math.round(percentile)}`,
+  ].filter(Boolean).join(" · ");
+}
+
+function signTone(value: number | null | undefined): string | undefined {
+  if (value == null || value === 0) return undefined;
+  return value > 0 ? "text-positive" : "text-destructive";
+}
+
+// The NIL figures are estimates, so the card shows them as one muted line
+// below the headlines rather than as headlines.
+function nilLine(player: GradedPlayer): string {
+  const range = player.nilPriceRange == null ? "" : ` ±${formatPay(player.nilPriceRange)}`;
+  const source = player.nilPriceSource === "portal" ? " portal" : " est.";
+  return [
+    `NIL ${formatPay(player.nilPrice)}${range}${source}`,
+    player.nilWorth == null ? null : `worth ${formatPay(player.nilWorth)}`,
+    player.nilSurplus == null ? null : `surplus ${formatPay(player.nilSurplus, true)}`,
+  ].filter(Boolean).join(" · ");
 }
 
 function GradeCard({
@@ -300,8 +346,19 @@ function GradeCard({
   const priced = sport === "nfl" && player?.spreadValue != null;
   const valued = sport === "nfl" && player?.playerValue != null;
   const nilPriced = sport === "cfb" && player?.nilPrice != null;
-  const nilWorthed = nilPriced && player?.nilWorth != null;
-  const headlines = 2 + Number(rated) + Number(priced);
+  const cfb = sport === "cfb";
+  const scouted = cfb && player?.scoutRank != null;
+  const efficient = cfb && player?.efficiency != null;
+  const inForm = cfb && player?.form != null;
+  const headlines =
+    cfb
+      ? 2 + Number(rated) + Number(scouted) + Number(efficient) + Number(inForm)
+      : 2 + Number(rated) + Number(priced) + (valued ? 2 : 0);
+  // A CFB phone card keeps grade and WAR and adds one more: scouts, else form, else efficiency.
+  const phoneThird = scouted ? "scouts" : inForm ? "form" : efficient ? "efficiency" : null;
+  const wideOnly = (key: string) => (phoneThird === key ? undefined : "hidden sm:flex");
+  const phoneHeadlines = Math.min(3, headlines);
+  const headlineGrid = cfb ? cn(PHONE_GRID[phoneHeadlines], WIDE_GRID[headlines]) : HEADLINE_GRID[headlines];
   // A long card folds its sections on a phone so the stat lines stay in reach;
   // a short one keeps every row open.
   const folded = !desktop && lines.length > FOLD_ROWS;
@@ -318,16 +375,13 @@ function GradeCard({
       <div id={panelId} className={cn("space-y-3 p-3 md:block md:space-y-5 md:px-6 md:py-5", open ? "border-t border-border md:border-t-0" : "hidden")}>
         {open && <>
         {!desktop && (
-          <div className={cn("grid gap-2 py-1", HEADLINE_GRID[headlines])}>
+          <div className={cn("grid gap-x-3 gap-y-5 py-1", headlineGrid)}>
             <Headline
               label="Grade"
               tip={copy.gradeTip}
               tipLabel="What is the grade?"
               value={formatGrade(grade)}
-              sub={[
-                player?.uncertainty == null ? null : `±${formatNumber(player.uncertainty, 1)}`,
-                row.percentile == null ? null : `pct ${Math.round(row.percentile)}`,
-              ].filter(Boolean).join(" · ")}
+              sub={gradeSub(player, row.percentile)}
             />
             {rated && (
               <Headline
@@ -349,10 +403,46 @@ function GradeCard({
                   ? failed ? "unavailable" : "loading"
                   : player.pointsAboveReplacement == null
                     ? "no credited plays"
-                    : `${formatSigned(player.pointsAboveReplacement, 0)} season pts`
+                    : [
+                        `${formatSigned(player.pointsAboveReplacement, 0)} pts`,
+                        player.warPercentile == null ? null : `pct ${Math.round(player.warPercentile)}`,
+                      ].filter(Boolean).join(" · ")
               }
               tone={player?.war != null && player.war > 0 ? "text-positive" : undefined}
             />
+            {scouted && (
+              <Headline
+                label="Scouts"
+                tip={CFB_SCOUTS_TIP}
+                tipLabel="What is the scouts' rank?"
+                value={`${player.scoutPosition} #${player.scoutRank}`}
+                sub="draft board"
+              />
+            )}
+            {efficient && (
+              <Headline
+                label="Efficiency"
+                tip={CFB_EFFICIENCY_TIP}
+                tipLabel="What is efficiency?"
+                value={formatSigned(player.efficiency, 2)}
+                sub={[
+                  "EPA per play",
+                  player.efficiencyPercentile == null ? null : `pct ${Math.round(player.efficiencyPercentile)}`,
+                ].filter(Boolean).join(" · ")}
+                className={wideOnly("efficiency")}
+              />
+            )}
+            {inForm && (
+              <Headline
+                label="Form"
+                tip={CFB_FORM_TIP}
+                tipLabel="What is form?"
+                value={formatSigned(player.form, 1)}
+                sub="last 3 vs season"
+                tone={signTone(player.form)}
+                className={wideOnly("form")}
+              />
+            )}
             {priced && (
               <Headline
                 label="PSR"
@@ -362,10 +452,8 @@ function GradeCard({
                 sub="pts if ruled out"
               />
             )}
-          </div>
-        )}
-        {!desktop && valued && (
-          <div className={cn("grid gap-2 py-1", HEADLINE_GRID[2])}>
+            {valued && (
+              <>
             <Headline
               label="Contract value"
               tip={NFL_VALUE_TIP}
@@ -381,37 +469,14 @@ function GradeCard({
               sub={rangeSub(player.contractSurplusRange)}
               tone={surplusTone(player.contractSurplus, player.contractSurplusRange)}
             />
-          </div>
-        )}
-        {!desktop && nilPriced && (
-          <div className={cn("grid gap-2 py-1", HEADLINE_GRID[nilWorthed ? 3 : 1])}>
-            <Headline
-              label="NIL price"
-              tip={CFB_NIL_PRICE_TIP}
-              tipLabel="What is NIL price?"
-              value={formatPay(player.nilPrice)}
-              sub={paySub(player)}
-            />
-            {nilWorthed && (
-              <>
-                <Headline
-                  label="Worth"
-                  tip={CFB_NIL_WORTH_TIP}
-                  tipLabel="What is worth?"
-                  value={formatPay(player.nilWorth)}
-                  sub="projected wins"
-                />
-                <Headline
-                  label="Surplus"
-                  tip={CFB_NIL_SURPLUS_TIP}
-                  tipLabel="What is surplus?"
-                  value={formatPay(player.nilSurplus, true)}
-                  sub="worth minus price"
-                  tone={surplusTone(player.nilSurplus)}
-                />
               </>
             )}
           </div>
+        )}
+        {!desktop && nilPriced && (
+          <p className="flex flex-wrap items-center justify-center gap-1 text-center font-mono text-[11px] text-muted-foreground">
+            {nilLine(player)} <InfoTip text={CFB_NIL_PRICE_TIP} label="What is NIL price?" />
+          </p>
         )}
         {player == null && failed && (
           <p className="text-xs text-muted-foreground">This player&apos;s card could not be loaded. Reload the page to try again.</p>
@@ -489,7 +554,10 @@ function GradeCard({
           </TableCell>
           <TableCell className="text-center">{row.positionGroup}</TableCell>
           <TableCell className="text-center">{formatNumber(row.games, 0)}</TableCell>
-          <TableCell className="text-center font-bold text-primary">{formatGrade(grade)}</TableCell>
+          <TableCell className="text-center">
+            <div className="font-bold text-primary">{formatGrade(grade)}</div>
+            {player?.scoutRank != null && <div className="text-[11px] font-bold text-foreground">Scouts {player.scoutPosition} #{player.scoutRank}</div>}
+          </TableCell>
           <TableCell className="text-center">{player?.uncertainty == null ? EMPTY : `±${formatNumber(player.uncertainty, 1)}`}</TableCell>
           <TableCell className="text-center">{row.percentile == null ? EMPTY : Math.round(row.percentile)}</TableCell>
           {desktopTraits.map((name) => {
@@ -613,12 +681,8 @@ function ComparePanel({
   }
   const headline = (row: PlayerIndexRow, player: GradedPlayer | undefined, align: "left" | "right") => {
     const grade = player?.grade ?? row.grade;
-    const gradeSub = [
-      player?.uncertainty == null ? null : `±${formatNumber(player.uncertainty, 1)}`,
-      row.percentile == null ? null : `pct ${Math.round(row.percentile)}`,
-    ].filter(Boolean).join(" · ");
-    const items = [
-      { label: "grade", value: formatGrade(grade), sub: gradeSub },
+    const items: { label: string; value: string; sub: ReactNode; tone?: string }[] = [
+      { label: "grade", value: formatGrade(grade), sub: gradeSub(player, row.percentile) },
       ...(rating && player?.rating != null
         ? [{ label: rating.label, value: formatSigned(player.rating, 2), sub: rating.unit }]
         : []),
@@ -632,14 +696,17 @@ function ComparePanel({
             { label: "Surplus", value: formatMillions(player.contractSurplus, true), sub: rangeSub(player.contractSurplusRange), tone: surplusTone(player.contractSurplus, player.contractSurplusRange) },
           ]
         : []),
+      ...(sport === "cfb" && player?.scoutRank != null
+        ? [{ label: "Scouts", value: `${player.scoutPosition} #${player.scoutRank}`, sub: "Scouting Grade board" }]
+        : []),
+      ...(sport === "cfb" && player?.efficiency != null
+        ? [{ label: "Efficiency", value: formatSigned(player.efficiency, 2), sub: "EPA per play" }]
+        : []),
+      ...(sport === "cfb" && player?.form != null
+        ? [{ label: "Form", value: formatSigned(player.form, 1), sub: "EPA/g last 3 vs season", tone: signTone(player.form) }]
+        : []),
       ...(sport === "cfb" && player?.nilPrice != null
         ? [{ label: "NIL price", value: formatPay(player.nilPrice), sub: paySub(player) }]
-        : []),
-      ...(sport === "cfb" && player?.nilWorth != null
-        ? [
-            { label: "Worth", value: formatPay(player.nilWorth), sub: "projected wins" },
-            { label: "NIL surplus", value: formatPay(player.nilSurplus, true), sub: "worth minus price", tone: surplusTone(player.nilSurplus) },
-          ]
         : []),
     ];
     return (
