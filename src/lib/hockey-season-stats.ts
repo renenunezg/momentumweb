@@ -12,6 +12,7 @@ const SKATER = [
   "games", "goals", "assists", "points", "shots", "pim", "hits", "blocks",
   "toi:10", "toi_pp:10", "toi_pk:10", "ixg:10", "faceoffs_won", "faceoffs_lost",
   "cf_5v5", "ca_5v5", "xgf_5v5:10", "xga_5v5:10", "oz_starts", "dz_starts",
+  "plus_minus",
 ] as const;
 const GOALIE = ["games", "toi:10", "shots_against", "ga", "xga:10", "hd_shots", "hd_ga"] as const;
 
@@ -52,6 +53,7 @@ function skater(s: Raw): { box: SeasonStat[]; advanced: SeasonStat[] } {
       stat("Goals", count(s.goals), null),
       stat("Assists", count(s.assists), null),
       stat("Points", count(s.points), null),
+      stat("+/-", formatSigned(s.plus_minus, 0), "Plus/minus: +1 when his team scores while he is on the ice, -1 when the other team does. Power-play goals count for neither side. The NHL's official figure."),
       stat("Shots", count(s.shots), "Shots on goal, goals included."),
       stat("Shot%", pct(ratio(s.goals, s.shots)), "Goals divided by shots on goal."),
       stat("PIM", count(s.pim), "Penalty minutes."),
