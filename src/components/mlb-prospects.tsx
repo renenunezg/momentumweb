@@ -34,6 +34,7 @@ import {
 } from "@/lib/prospect-values";
 import { MLB_POSITION_ORDER, formatMillions } from "@/lib/player-values";
 import { mlbTeamIdentity } from "@/lib/mlb-teams";
+import { mlbPlayerHeadshotUrl } from "@/lib/player-headshots";
 import { EMPTY, cn, formatNumber, formatSigned } from "@/lib/utils";
 import { InfoTip } from "@/components/info-tip";
 import { Notice } from "@/components/notice";
@@ -71,7 +72,7 @@ function identity(row: ProspectRow) {
   return (
     <PlayerCell
       athleteId={String(row.player_id)}
-      headshotUrl={row.headshot_url}
+      headshotUrl={mlbPlayerHeadshotUrl(row.player_id)}
       name={name}
       team={[row.org, levelLabel(row.level)].filter(Boolean).join(" · ") || "Unassigned"}
       position={row.position_group}
@@ -575,12 +576,12 @@ export default function MlbProspects({
       image: (
         <PlayerHeadshot
           name={row.player_name ?? String(row.player_id)}
-          src={row.headshot_url}
+          src={mlbPlayerHeadshotUrl(row.player_id)}
           className="h-11 w-11"
           fallback={<TeamLogo team={mlbTeamIdentity(row.org)} name={row.org ?? ""} className="h-7 w-7" />}
         />
       ),
-      headshotUrl: row.headshot_url,
+      headshotUrl: mlbPlayerHeadshotUrl(row.player_id),
       stat: formatMillions(value, 0),
       tone: value >= 0 ? "positive" : "destructive",
     };

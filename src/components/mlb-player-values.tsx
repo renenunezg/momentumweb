@@ -19,6 +19,7 @@ import {
   traitLabel,
 } from "@/lib/player-values";
 import { mlbTeamIdentity } from "@/lib/mlb-teams";
+import { mlbPlayerHeadshotUrl } from "@/lib/player-headshots";
 import { EMPTY, cn, formatNumber, formatSigned } from "@/lib/utils";
 import { InfoTip } from "@/components/info-tip";
 import { NavigationLink as Link } from "@/components/navigation-link";
@@ -382,7 +383,7 @@ function MlbComparison({
           <div key={row.player_id} className="min-w-0">
             <PlayerCell
               athleteId={String(row.player_id)}
-              headshotUrl={row.headshot_url}
+              headshotUrl={mlbPlayerHeadshotUrl(row.player_id)}
               name={row.player_name ?? String(row.player_id)}
               team={row.team || "FA"}
               position={row.position_group}
@@ -532,7 +533,7 @@ export default function MlbPlayerValues({
       const leader: PositionLeader = {
         name: best.player_name ?? String(best.player_id),
         short: surname(best.player_name ?? String(best.player_id)),
-        headshotUrl: best.headshot_url,
+        headshotUrl: mlbPlayerHeadshotUrl(best.player_id),
         ...(byValue
           ? { stat: formatMillions(value, 0), tone: value >= 0 ? "positive" : "destructive" }
           : { stat: formatNumber(best.grade, 0) }),
@@ -696,7 +697,7 @@ export default function MlbPlayerValues({
                 rank={offset + i + 1}
                 identity={<PlayerCell
                   athleteId={String(row.player_id)}
-                  headshotUrl={row.headshot_url}
+                  headshotUrl={mlbPlayerHeadshotUrl(row.player_id)}
                   name={name}
                   team={row.team || "FA"}
                   position={row.position_group}
@@ -754,7 +755,7 @@ export default function MlbPlayerValues({
                     <TableCell className="min-w-48">
                       <PlayerCell
                         athleteId={String(row.player_id)}
-                        headshotUrl={row.headshot_url}
+                        headshotUrl={mlbPlayerHeadshotUrl(row.player_id)}
                         name={name}
                         team={row.team || "FA"}
                         position={row.position_group}

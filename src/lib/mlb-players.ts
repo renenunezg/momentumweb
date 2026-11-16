@@ -15,7 +15,7 @@ export type PlayerTraitRow = Tables<"mlb", "player_traits">;
 
 // bat and fld are the table's two skill columns, from skillColumns, so every
 // player sorts on them without his detail loaded.
-export type PlayerValueIndex = Omit<PlayerValueRow, "outlook" | "tip"> & { bat: number | null; fld: number | null };
+export type PlayerValueIndex = Omit<PlayerValueRow, "outlook" | "tip" | "headshot_url"> & { bat: number | null; fld: number | null };
 
 export interface OutlookYear {
   season: number;
@@ -48,7 +48,7 @@ export interface PlayerValues {
 }
 
 const INDEX_COLUMNS =
-  "player_id, player_name, team, team_id, level, position_group, secondary_positions, age, bats, throws, status, as_of, model_version, season, grade, grade_low, grade_high, grade_percentile, grade_reason, projected_war, trade_value_musd, trade_value_low, trade_value_high, market_value_musd, impact_war, impact_runs, playing_time, service_time, contract_status, fa_year, control_years, salary_current_musd, owed_through_control_musd, headshot_url, updated_at";
+  "player_id, player_name, team, team_id, level, position_group, secondary_positions, age, bats, throws, status, as_of, model_version, season, grade, grade_low, grade_high, grade_percentile, grade_reason, projected_war, trade_value_musd, trade_value_low, trade_value_high, market_value_musd, impact_war, impact_runs, playing_time, service_time, contract_status, fa_year, control_years, salary_current_musd, owed_through_control_musd, updated_at";
 const PAGE = 1000;
 export const DETAIL_IDS = 40;
 

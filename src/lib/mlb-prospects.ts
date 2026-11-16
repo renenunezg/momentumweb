@@ -14,7 +14,7 @@ type ProspectValueRow = Tables<"mlb", "prospect_values">;
 export type TipInput = [input: string, contribution: number];
 
 export interface ProspectRow
-  extends Omit<ProspectValueRow, "tip" | "trait_grades" | "trait_pcts" | "as_of" | "model_version" | "org_id" | "updated_at"> {
+  extends Omit<ProspectValueRow, "tip" | "trait_grades" | "trait_pcts" | "as_of" | "model_version" | "org_id" | "updated_at" | "headshot_url"> {
   tip: TipInput[];
   trait_grades: (number | null)[];
   trait_pcts: (number | null)[];
@@ -27,7 +27,7 @@ export interface ProspectPage {
   total: number | null;
 }
 
-export type ProspectLeader = Pick<ProspectRow, "player_id" | "player_name" | "org" | "position_group" | "headshot_url" | "trade_value_musd">;
+export type ProspectLeader = Pick<ProspectRow, "player_id" | "player_name" | "org" | "position_group" | "trade_value_musd">;
 
 export interface ProspectSummary {
   updatedAt: string | null;
@@ -39,7 +39,7 @@ export interface ProspectSummary {
 const TRAIT_COUNT = 9;
 
 const COLUMNS =
-  "player_id, player_name, org, team, team_id, level, position_group, age, bats, throws, headshot_url, season, draft_year, draft_round, draft_pick, signing_bonus_musd, acquired, peak_grade, peak_grade_low, peak_grade_high, peak_grade_percentile, grade_reason, p_regular, p_mlb, eta_season, trade_value_musd, trade_value_low, trade_value_high, market_value_musd, expected_control_war, peak_war, risk, on_40_man, mlb_ab_or_ip, service_days, season_sample, sample, tracked_share, trait_grades, trait_pcts, tip";
+  "player_id, player_name, org, team, team_id, level, position_group, age, bats, throws, season, draft_year, draft_round, draft_pick, signing_bonus_musd, acquired, peak_grade, peak_grade_low, peak_grade_high, peak_grade_percentile, grade_reason, p_regular, p_mlb, eta_season, trade_value_musd, trade_value_low, trade_value_high, market_value_musd, expected_control_war, peak_war, risk, on_40_man, mlb_ab_or_ip, service_days, season_sample, sample, tracked_share, trait_grades, trait_pcts, tip";
 
 type OrderColumn = "trade_value_musd" | "peak_grade" | "p_regular" | "eta_season";
 
@@ -165,7 +165,7 @@ export async function fetchProspectSummary(): Promise<ProspectSummary> {
     MLB_POSITION_ORDER.map((position) =>
       supabase
         .from("prospect_values")
-        .select("player_id, player_name, org, position_group, headshot_url, trade_value_musd, season, updated_at")
+        .select("player_id, player_name, org, position_group, trade_value_musd, season, updated_at")
         .eq("position_group", position)
         .not("trade_value_musd", "is", null)
         .order("trade_value_musd", { ascending: false })
@@ -184,7 +184,6 @@ export async function fetchProspectSummary(): Promise<ProspectSummary> {
       player_name: row.player_name,
       org: row.org,
       position_group: row.position_group,
-      headshot_url: row.headshot_url,
       trade_value_musd: row.trade_value_musd,
     })),
   };
