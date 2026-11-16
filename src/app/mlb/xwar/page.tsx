@@ -69,7 +69,6 @@ export default async function MlbXwarPage() {
         firstSeason={study.first_season}
         regular={{ hitters: hitter.min_balls, pitchers: pitcher.min_balls }}
         runsPerWin={study.runs_per_win}
-        homeRunRuns={study.home_run_runs}
         projectionSeason={projectionSeason}
       />
 

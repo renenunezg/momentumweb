@@ -65,12 +65,12 @@ const sideColumns: Record<View, Column[]> = {
   hitters: [
     { key: "woba", label: "wOBAcon", format: rate, from: "md", tip: "wOBA on his tracked balls in play, as they turned out." },
     {
-      key: "expected_woba", label: "xwOBAcon", format: rate, from: "md",
-      tip: "wOBA those balls called for, from their exit velocity, their launch angle and his sprint speed.",
+      key: "expected_woba", label: "Exp wOBAcon", format: rate, from: "md",
+      tip: "wOBA balls hit like his usually produce, from exit velocity, launch angle and his sprint speed. This is our contact model, so it can differ from Baseball Savant's xwOBAcon.",
     },
     {
-      key: "kept", label: "Kept", format: signedRuns, from: "lg",
-      tip: "Runs of the gap between the two that his own record supports. He keeps them; the rest is treated as luck.",
+      key: "kept", label: "Skill", format: signedRuns, from: "lg",
+      tip: "Runs of the difference between the two that he also showed in his other seasons. It is his doing and stays in his WAR; the rest is treated as luck.",
     },
   ],
   pitchers: [
@@ -82,108 +82,69 @@ const sideColumns: Record<View, Column[]> = {
   ],
 };
 
-interface Stat {
-  label: string;
-  // A shorter label for a phone.
-  short?: string;
-  tip: string;
-  value: string;
-  // The number the side is about.
-  strong?: boolean;
-}
-
-// One side of a player's season: a title with its sample, then a tile per step from his results to the change in his WAR.
-function Side({ title, note, stats }: { title: string; note: string; stats: Stat[] }) {
+// One side of a player's season: a title with its sample, then how its contact moved his WAR, in words. The
+// numbers the sentence starts from are the row's own columns, so the panel explains them instead of repeating them.
+function Side({ title, note, summary }: { title: string; note: string; summary: string }) {
   return (
-    <section className="space-y-2">
+    <section className="space-y-1">
       <header className="flex flex-wrap items-baseline gap-x-3 gap-y-1">
         <h3 className="type-eyebrow font-bold">{title}</h3>
         <span className="type-meta text-muted-foreground">{note}</span>
       </header>
-      <dl className="grid grid-cols-3 gap-2 sm:grid-cols-6">
-        {stats.map((stat) => (
-          <div key={stat.label} className={cn("min-w-0 rounded-sm border px-3 py-2", stat.strong ? "border-primary/60" : "border-border")}>
-            <dt className="type-meta flex items-center gap-1 text-muted-foreground">
-              <span className={cn("truncate", stat.short && "hidden sm:inline")}>{stat.label}</span>
-              {stat.short && <span className="sm:hidden">{stat.short}</span>}
-              <InfoTip text={stat.tip} label={`What is ${stat.label}?`} />
-            </dt>
-            <dd className={cn("font-mono text-base tabular-nums", stat.strong && "font-semibold text-primary")}>{stat.value}</dd>
-          </div>
-        ))}
-      </dl>
+      <p className="type-body max-w-3xl">{summary}</p>
     </section>
   );
 }
 
-// How one player's fWAR becomes his xWAR: this season's contact on each side (what happened, what it called for,
-// the gap, what he keeps, the luck that is left, the change to his WAR).
-function Breakdown({
-  player,
-  firstSeason,
-  runsPerWin,
-  homeRunRuns,
-}: {
-  player: XwarRow;
-  firstSeason: number;
-  runsPerWin: number;
-  homeRunRuns: number;
-}) {
-  const { balls, realized_gap_runs: gap, earned_gap_runs: kept, woba_contact: woba, expected_woba_contact: expectedWoba,
-    balls_allowed: allowed, home_runs_allowed: homeRuns, expected_home_runs: expected, home_run_gap: homeRunGap,
+const one = (v: number) => Math.abs(v).toFixed(1);
+const luckWord = (helped: boolean) => (helped ? "good luck" : "bad luck");
+const winsMoved = (v: number) =>
+  `Taking the luck out ${v >= 0 ? "raises" : "lowers"} his WAR by ${Math.abs(v).toFixed(2)} ${Math.abs(v) === 1 ? "win" : "wins"}.`;
+
+// The plate side in words: what his balls in play did against what balls hit like them usually do, how much of
+// the difference his other seasons support, and the luck that is left. Luck is positive when it helped him.
+function plateStory(player: XwarRow, gap: number, kept: number, firstSeason: number): string {
+  const luck = gap - kept;
+  const { woba_contact: woba, expected_woba_contact: expected } = player;
+  const rates = woba == null || expected == null ? "" : ` (a ${rate(woba)} wOBA, where ${rate(expected)} is usual)`;
+  const opening = `His balls in play produced ${one(gap)} ${gap >= 0 ? "more" : "fewer"} runs than balls hit like them usually do${rates}.`;
+  if (Math.abs(kept) < 0.05) return `${opening} None of it showed up in his other seasons, so all of it counts as ${luckWord(luck >= 0)}.`;
+  if (Math.sign(kept) === Math.sign(gap) && Math.abs(kept) <= Math.abs(gap)) {
+    return `${opening} His seasons since ${firstSeason} show the same pattern, so ${one(kept)} runs of it are counted as his own doing and the other ${one(luck)} as ${luckWord(luck >= 0)}.`;
+  }
+  return `${opening} His seasons since ${firstSeason} say he usually runs ${kept >= 0 ? "ahead of" : "behind"} his contact, by ${one(kept)} runs over that many balls, so ${one(luck)} runs count as ${luckWord(luck >= 0)}.`;
+}
+
+// The mound side in words. A home run above expected hurt him.
+function moundStory(gap: number, kept: number): string {
+  const opening = `He allowed ${one(gap)} ${gap >= 0 ? "more" : "fewer"} home runs than the contact he gave up usually produces, with the park removed.`;
+  const luck = gap - kept;
+  if (Math.abs(kept) < 0.05) {
+    return `${opening} A pitcher's home runs against expected do not carry from one season to the next, so all of it counts as ${luckWord(luck <= 0)}.`;
+  }
+  return `${opening} ${one(kept)} of them match his other seasons and count as his own doing; the other ${one(luck)} count as ${luckWord(luck <= 0)}.`;
+}
+
+// How one player's fWAR becomes his xWAR, one side at a time.
+function Breakdown({ player, firstSeason, runsPerWin }: { player: XwarRow; firstSeason: number; runsPerWin: number }) {
+  const { balls, realized_gap_runs: gap, earned_gap_runs: kept, balls_allowed: allowed, home_run_gap: homeRunGap,
     earned_home_runs: keptHomeRuns } = player;
   const batted = balls != null && balls > 0 && gap != null && kept != null;
-  const pitched = allowed != null && allowed > 0 && homeRuns != null && expected != null && homeRunGap != null && keptHomeRuns != null;
-  // Luck in runs, positive when it helped him. A home run above expected is bad luck for a pitcher.
-  const plateLuck = batted ? gap - kept : 0;
-  const moundLuck = pitched ? -homeRunRuns * (homeRunGap - keptHomeRuns) : 0;
+  const pitched = allowed != null && allowed > 0 && homeRunGap != null && keptHomeRuns != null;
   // The two sides' moves in wins add up to the published xWAR exactly: the mound takes whatever the plate leaves.
   const move = player.xwar - player.war;
-  const plateMove = batted ? (pitched ? -plateLuck / runsPerWin : move) : 0;
+  const plateMove = batted ? (pitched ? (kept - gap) / runsPerWin : move) : 0;
   const moundMove = pitched ? move - plateMove : 0;
   const sample = (n: number) => counted(n, "tracked ball in play", "tracked balls in play");
-  const change = (v: number): Stat => ({
-    label: "Change to his WAR", short: "WAR", strong: true, value: formatSigned(v, 2),
-    tip: `The luck in wins, at ${runsPerWin.toFixed(2)} runs a win.`,
-  });
   return (
     <div className="space-y-4 font-sans">
       {batted && (
-        <Side
-          title="At the plate"
-          note={sample(balls)}
-          stats={[
-            { label: "wOBA on contact", short: "wOBA", value: woba == null ? EMPTY : rate(woba), tip: "What his balls in play did." },
-            {
-              label: "xwOBA on contact", short: "xwOBA", value: expectedWoba == null ? EMPTY : rate(expectedWoba),
-              tip: "What their exit velocity, their launch angle and his speed called for.",
-            },
-            { label: "Gap, in runs", short: "Gap", value: formatSigned(gap, 1), tip: "The difference between the two in runs, with the park removed." },
-            { label: "Kept", value: formatSigned(kept, 1), tip: `The part of the gap his record since ${firstSeason} supports.` },
-            { label: "Luck, in runs", short: "Luck", value: formatSigned(plateLuck, 1), tip: "The gap minus what he kept." },
-            change(plateMove),
-          ]}
-        />
+        <Side title="At the plate" note={sample(balls)}
+          summary={`${plateStory(player, gap, kept, firstSeason)} ${winsMoved(plateMove)}`} />
       )}
       {pitched && (
-        <Side
-          title="On the mound"
-          note={sample(allowed)}
-          stats={[
-            { label: "Home runs allowed", short: "HR", value: homeRuns.toFixed(0), tip: "Home runs allowed on tracked balls in play." },
-            { label: "xHR", value: expected.toFixed(1), tip: "Home runs the exit velocity and launch angle he allowed called for." },
-            { label: "Gap, in home runs", short: "Gap", value: formatSigned(homeRunGap, 1), tip: "The difference between the two, with the park removed." },
-            {
-              label: "Kept", value: formatSigned(keptHomeRuns, 1),
-              tip: keptHomeRuns === 0 ? "A pitcher's gap does not repeat, so he keeps none of it." : "The part of the gap his record supports.",
-            },
-            {
-              label: "Luck, in runs", short: "Luck", value: formatSigned(moundLuck, 1),
-              tip: `The gap he did not keep, at ${homeRunRuns.toFixed(2)} runs a home run.`,
-            },
-            change(moundMove),
-          ]}
-        />
+        <Side title="On the mound" note={sample(allowed)}
+          summary={`${moundStory(homeRunGap, keptHomeRuns)} ${winsMoved(moundMove)}`} />
       )}
     </div>
   );
@@ -195,7 +156,6 @@ export function XwarLeaderboard({
   firstSeason,
   regular,
   runsPerWin,
-  homeRunRuns,
   projectionSeason,
 }: {
   players: XwarRow[];
@@ -205,8 +165,6 @@ export function XwarLeaderboard({
   // Tracked balls in play that make a regular on each view: the sample the study measured the gap on.
   regular: Record<View, number>;
   runsPerWin: number;
-  // Runs fWAR's pitching formula charges for a home run.
-  homeRunRuns: number;
   // The season the grade model's projections are for, or null when there are none to show.
   projectionSeason: number | null;
 }) {
@@ -369,7 +327,7 @@ export function XwarLeaderboard({
                 {expanded && (
                   <TableRow className="hover:bg-transparent">
                     <TableCell id={panelId} colSpan={span} className="whitespace-normal bg-muted/20 px-3 py-4 sm:px-5">
-                      <Breakdown player={player} firstSeason={firstSeason} runsPerWin={runsPerWin} homeRunRuns={homeRunRuns} />
+                      <Breakdown player={player} firstSeason={firstSeason} runsPerWin={runsPerWin} />
                     </TableCell>
                   </TableRow>
                 )}
