@@ -232,59 +232,61 @@ function PlayerCard({ row, detail, failed, onRetry, links }: {
           <span>owed {formatMillions(row.owed_through_control_musd)} over {row.control_years} control year{row.control_years === 1 ? "" : "s"}</span>
         )}
       </div>
-      <div className="grid grid-cols-2 divide-x divide-border border-y border-border py-3 text-center md:max-w-xl [&>div]:min-w-0 [&>div]:px-1.5 sm:[&>div]:px-3">
-        <div>
-          <div className="type-eyebrow flex min-h-8 items-center justify-center gap-1 text-muted-foreground">
-            {head.label} <InfoTip text={`${head.tip} ${PRICE_TIP}`} label={`What is ${head.label}?`} />
+      <div className="grid gap-4 lg:grid-cols-[15rem_minmax(0,1fr)] lg:items-start lg:gap-10">
+        <div className="grid grid-cols-2 divide-x divide-border border-y border-border text-center lg:grid-cols-1 lg:divide-x-0 lg:divide-y [&>div]:min-w-0 [&>div]:px-1.5 [&>div]:py-3 sm:[&>div]:px-3">
+          <div>
+            <div className="type-eyebrow flex min-h-8 items-center justify-center gap-1 text-muted-foreground">
+              {head.label} <InfoTip text={`${head.tip} ${PRICE_TIP}`} label={`What is ${head.label}?`} />
+            </div>
+            <div className={cn("font-mono text-lg font-bold tabular-nums sm:text-2xl", valueTone(row))}>
+              {graded ? formatMillions(head.value) : EMPTY}
+            </div>
+            <div className="font-mono text-[11px] text-muted-foreground">
+              {!graded
+                ? "Not enough data"
+                : head.label === "Trade value" && row.trade_value_low != null
+                  ? `${formatMillions(row.trade_value_low)} to ${formatMillions(row.trade_value_high)} · ${row.control_years} yrs`
+                  : `${formatNumber(row.projected_war, 1)} projected WAR`}
+            </div>
           </div>
-          <div className={cn("font-mono text-lg font-bold tabular-nums sm:text-2xl", valueTone(row))}>
-            {graded ? formatMillions(head.value) : EMPTY}
-          </div>
-          <div className="font-mono text-[11px] text-muted-foreground">
-            {!graded
-              ? "Not enough data"
-              : head.label === "Trade value" && row.trade_value_low != null
-                ? `${formatMillions(row.trade_value_low)} to ${formatMillions(row.trade_value_high)} · ${row.control_years} yrs`
-                : `${formatNumber(row.projected_war, 1)} projected WAR`}
+          <div>
+            <div className="type-eyebrow flex min-h-8 items-center justify-center gap-1 text-muted-foreground">
+              Impact <InfoTip text={IMPACT_TIP} label="What is Impact?" />
+            </div>
+            <div className="font-mono text-lg font-bold tabular-nums sm:text-2xl">{row.impact_war == null ? EMPTY : formatSigned(row.impact_war, 1)}</div>
+            <div className="font-mono text-[11px] text-muted-foreground">
+              {row.impact_runs == null
+                ? pitcher ? `no batters faced in ${row.season - 1}` : `no plate appearances in ${row.season - 1}`
+                : `${formatSigned(row.impact_runs, 1)} runs · ${row.season - 1} season`}
+            </div>
           </div>
         </div>
-        <div>
-          <div className="type-eyebrow flex min-h-8 items-center justify-center gap-1 text-muted-foreground">
-            Impact <InfoTip text={IMPACT_TIP} label="What is Impact?" />
-          </div>
-          <div className="font-mono text-lg font-bold tabular-nums sm:text-2xl">{row.impact_war == null ? EMPTY : formatSigned(row.impact_war, 1)}</div>
-          <div className="font-mono text-[11px] text-muted-foreground">
-            {row.impact_runs == null
-              ? pitcher ? `no batters faced in ${row.season - 1}` : `no plate appearances in ${row.season - 1}`
-              : `${formatSigned(row.impact_runs, 1)} runs · ${row.season - 1} season`}
-          </div>
-        </div>
-      </div>
-      {detail == null ? (
-        <DetailStatus failed={failed} onRetry={onRetry} />
-      ) : (
-        <div className="grid grid-cols-1 gap-x-8 gap-y-4 md:grid-cols-2">
-          {panels.map((panel) => {
-            // A trait with no grade that would not count toward the grade says nothing, so it is left out.
-            const traits = detail.traits
-              .filter((t) => t.panel === panel && (t.grade != null || t.in_grade))
-              .sort((a, b) => Number(b.in_grade) - Number(a.in_grade) || a.trait.localeCompare(b.trait));
-            if (traits.length === 0) return null;
-            return (
-              <div key={panel} className="space-y-1.5">
-                <div className="type-eyebrow flex items-center justify-between text-muted-foreground">
-                  <span>{PANEL_LABELS[panel] ?? panel}</span>
-                  {/* A panel whose traits are all outside the grade (a pitcher's durability) has no grade of its own. */}
-                  {panelMean(detail.traits, panel) != null && <span className="font-mono">{formatNumber(panelMean(detail.traits, panel), 0)}</span>}
+        {detail == null ? (
+          <DetailStatus failed={failed} onRetry={onRetry} />
+        ) : (
+          <div className={cn("grid grid-cols-1 gap-x-8 gap-y-4 md:grid-cols-2", panels.length > 2 && "2xl:grid-cols-3")}>
+            {panels.map((panel) => {
+              // A trait with no grade that would not count toward the grade says nothing, so it is left out.
+              const traits = detail.traits
+                .filter((t) => t.panel === panel && (t.grade != null || t.in_grade))
+                .sort((a, b) => Number(b.in_grade) - Number(a.in_grade) || a.trait.localeCompare(b.trait));
+              if (traits.length === 0) return null;
+              return (
+                <div key={panel} className="space-y-1.5">
+                  <div className="type-eyebrow flex items-center justify-between text-muted-foreground">
+                    <span>{PANEL_LABELS[panel] ?? panel}</span>
+                    {/* A panel whose traits are all outside the grade (a pitcher's durability) has no grade of its own. */}
+                    {panelMean(detail.traits, panel) != null && <span className="font-mono">{formatNumber(panelMean(detail.traits, panel), 0)}</span>}
+                  </div>
+                  {traits.map((t) => (
+                    <TraitRow key={t.trait} trait={t} />
+                  ))}
                 </div>
-                {traits.map((t) => (
-                  <TraitRow key={t.trait} trait={t} />
-                ))}
-              </div>
-            );
-          })}
-        </div>
-      )}
+              );
+            })}
+          </div>
+        )}
+      </div>
       {stats && <SeasonStatsPanel stats={stats} />}
       {detail != null && detail.outlook.length > 0 && (
         <div className="space-y-1.5">
