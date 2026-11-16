@@ -44,6 +44,9 @@ export const CFB_FORM_TIP =
 export const CFB_NIL_SURPLUS_TIP =
   "Worth minus price. Positive means his projected wins are worth more than the market's read of him would cost.";
 
+export const NFL_POSITION_RANK_TIP =
+  "His place by grade among every graded player at his position this week, across the league and whatever filter is on.";
+
 export const NFL_SPREAD_TIP =
   "Point spread rating: how many points his team's projected line for the next game gives up if he is ruled out, from his opponent-adjusted play credit above a replacement times his share of the team's recent games. It measures what his absence costs for one game, not his talent; the grade does that. Quarterbacks are priced separately and the offensive line only as a unit.";
 

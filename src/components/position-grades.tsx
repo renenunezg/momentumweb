@@ -17,6 +17,7 @@ import {
   type GradeSport,
   type TraitSection,
   type PositionGroup,
+  NFL_POSITION_RANK_TIP,
   NFL_SPREAD_TIP,
   NFL_SURPLUS_TIP,
   NFL_VALUE_TIP,
@@ -241,14 +242,22 @@ const HEADLINE_GRID: Record<number, string> = {
   // On a phone the fifth headline spans the row rather than sit alone in a half.
   5: "grid-cols-2 sm:grid-cols-5 [&>*:last-child]:col-span-2 sm:[&>*:last-child]:col-span-1",
   6: "grid-cols-2 sm:grid-cols-3",
+  7: "grid-cols-2 sm:grid-cols-4 [&>*:last-child]:col-span-2 sm:[&>*:last-child]:col-span-1",
 };
-const PHONE_GRID: Record<number, string> = { 1: "grid-cols-1", 2: "grid-cols-2", 3: "grid-cols-3" };
+const PHONE_GRID: Record<number, string> = {
+  1: "grid-cols-1",
+  2: "grid-cols-2",
+  3: "grid-cols-3",
+  4: "grid-cols-2",
+  5: "grid-cols-3",
+};
 const WIDE_GRID: Record<number, string> = {
   1: "sm:grid-cols-1",
   2: "sm:grid-cols-2",
   3: "sm:grid-cols-3",
   4: "sm:grid-cols-4",
   5: "sm:grid-cols-5",
+  6: "sm:grid-cols-3",
 };
 
 function Headline({
@@ -304,6 +313,27 @@ function nilLine(player: GradedPlayer): string {
   ].filter(Boolean).join(" · ");
 }
 
+type PositionRank = { rank: number; of: number };
+
+// Each graded player's place by grade at his position across the whole index,
+// so a filter or search does not move it; tied grades share a place.
+function rankByPosition(index: PlayerIndexRow[]): Map<string, PositionRank> {
+  const groups = new Map<string, PlayerIndexRow[]>();
+  for (const row of index) {
+    if (row.grade == null) continue;
+    groups.set(row.positionGroup, [...(groups.get(row.positionGroup) ?? []), row]);
+  }
+  const ranks = new Map<string, PositionRank>();
+  for (const rows of groups.values()) {
+    rows.sort((a, b) => b.grade! - a.grade!);
+    rows.forEach((row, i) => {
+      const rank = i > 0 && row.grade === rows[i - 1].grade ? ranks.get(rows[i - 1].athleteId)!.rank : i + 1;
+      ranks.set(row.athleteId, { rank, of: rows.length });
+    });
+  }
+  return ranks;
+}
+
 function GradeCard({
   desktop = false,
   showForecast = false,
@@ -316,6 +346,7 @@ function GradeCard({
   failed = false,
   sport,
   rank,
+  positionRank,
   row,
   player,
   lines,
@@ -332,6 +363,7 @@ function GradeCard({
   failed?: boolean;
   sport: GradeSport;
   rank: number;
+  positionRank: PositionRank | undefined;
   row: PlayerIndexRow;
   player: GradedPlayer | undefined;
   lines: TraitLine[];
@@ -350,20 +382,30 @@ function GradeCard({
   const scouted = cfb && player?.scoutRank != null;
   const efficient = cfb && player?.efficiency != null;
   const inForm = cfb && player?.form != null;
-  const cfbExtras = Number(scouted) + Number(efficient) + Number(inForm);
+  const ranked = sport === "nfl" && positionRank != null;
+  const extras = Number(ranked) + Number(scouted) + Number(efficient) + Number(inForm);
   const headlines =
     cfb
-      ? 2 + Number(rated) + cfbExtras
-      : 2 + Number(rated) + Number(priced) + (valued ? 2 : 0);
-  // A CFB phone card keeps grade and WAR and adds one more: scouts, else form, else efficiency.
-  const phoneThird = scouted ? "scouts" : inForm ? "form" : efficient ? "efficiency" : null;
-  const wideOnly = (key: string) => (desktop || phoneThird === key ? undefined : "hidden sm:flex");
-  const phoneHeadlines = Math.min(3, headlines);
+      ? 2 + Number(rated) + extras
+      : 2 + Number(rated) + extras + Number(priced) + (valued ? 2 : 0);
+  // A CFB phone card keeps grade and WAR and adds scouts and form; efficiency
+  // stands in only for a player with neither.
+  const phoneEfficiency = efficient && !scouted && !inForm;
+  const phoneHeadlines = 2 + Number(rated) + Number(scouted) + Number(inForm) + Number(phoneEfficiency);
   const headlineGrid = cfb ? cn(PHONE_GRID[phoneHeadlines], WIDE_GRID[headlines]) : HEADLINE_GRID[headlines];
-  // Scouts, efficiency and form: headlines on the phone card and the desktop panel alike,
-  // since the desktop row has columns for grade and WAR but not for these.
-  const cfbHeadlines = (
+  // Position rank, scouts, efficiency and form: headlines on the phone card and the
+  // desktop panel alike, since the desktop row has columns for grade and WAR but not for these.
+  const extraHeadlines = (
     <>
+      {ranked && (
+        <Headline
+          label="Position rank"
+          tip={NFL_POSITION_RANK_TIP}
+          tipLabel="What is the position rank?"
+          value={`${row.positionGroup} #${positionRank.rank}`}
+          sub={`of ${positionRank.of} graded`}
+        />
+      )}
       {scouted && (
         <Headline
           label="Scouts"
@@ -383,7 +425,7 @@ function GradeCard({
             "EPA per play",
             player.efficiencyPercentile == null ? null : `pct ${Math.round(player.efficiencyPercentile)}`,
           ].filter(Boolean).join(" · ")}
-          className={wideOnly("efficiency")}
+          className={desktop || phoneEfficiency ? undefined : "hidden sm:flex"}
         />
       )}
       {inForm && (
@@ -394,7 +436,6 @@ function GradeCard({
           value={formatSigned(player.form, 1)}
           sub="last 3 vs season"
           tone={signTone(player.form)}
-          className={wideOnly("form")}
         />
       )}
     </>
@@ -409,12 +450,12 @@ function GradeCard({
     if (last && last.kind === line.kind) last.names.push(line.name);
     else sections.push({ kind: line.kind, names: [line.name] });
   }
-  // On the desktop card the CFB headlines fill the space under the shorter
+  // On the desktop card the extra headlines fill the space under the shorter
   // second section when there are exactly two; otherwise they lead the card.
   const besideContext = desktop && sections.length === 2 && !folded;
   const desktopHeadlines = (
     <div className={cn("flex flex-wrap gap-x-12 gap-y-4 [&>*]:items-start [&>*]:text-left", besideContext && "col-start-2 border-t border-border pt-4")}>
-      {cfbHeadlines}
+      {extraHeadlines}
     </div>
   );
   const details = (
@@ -458,7 +499,7 @@ function GradeCard({
               }
               tone={player?.war != null && player.war > 0 ? "text-positive" : undefined}
             />
-            {cfbHeadlines}
+            {extraHeadlines}
             {priced && (
               <Headline
                 label="PSR"
@@ -489,7 +530,7 @@ function GradeCard({
             )}
           </div>
         )}
-        {desktop && cfbExtras > 0 && !besideContext && desktopHeadlines}
+        {desktop && extras > 0 && !besideContext && desktopHeadlines}
         {!desktop && nilPriced && (
           <p className="flex flex-wrap items-center justify-center gap-1 text-center font-mono text-[11px] text-muted-foreground">
             {nilLine(player)} <InfoTip text={CFB_NIL_PRICE_TIP} label="What is NIL price?" />
@@ -520,7 +561,7 @@ function GradeCard({
                 return (
                   <section
                     key={section.kind ?? "traits"}
-                    className={cn("min-w-0 border-t border-border", lone && "col-span-2", besideContext && cfbExtras > 0 && section === sections[0] && "row-span-2")}
+                    className={cn("min-w-0 border-t border-border", lone && "col-span-2", besideContext && extras > 0 && section === sections[0] && "row-span-2")}
                   >
                     <div className="flex min-h-11 items-center gap-2">
                       <h3 className="font-mono text-xs">{label}</h3>
@@ -548,7 +589,7 @@ function GradeCard({
                 </Accordion.Item>
               );
             })}
-            {besideContext && cfbExtras > 0 && desktopHeadlines}
+            {besideContext && extras > 0 && desktopHeadlines}
           </Accordion.Root>
         )}
         {player && <BarLegend traits={player.traits.filter((t) => lines.some((line) => line.name === t.trait))} />}
@@ -824,6 +865,7 @@ export default function PositionGrades({
   const [compare, setCompare] = useState<string[]>([]);
   const [compareOpen, setCompareOpen] = useState(false);
   const byId = useMemo(() => new Map(index.map((row) => [row.athleteId, row] as const)), [index]);
+  const positionRanks = useMemo(() => (sport === "nfl" ? rankByPosition(index) : new Map<string, PositionRank>()), [index, sport]);
 
   const comparisonPlayers = useMemo(() => index.map((row) => ({ id: row.athleteId, label: `${row.name} · ${row.team} · ${row.positionGroup}`, group: row.positionGroup })), [index]);
 
@@ -953,6 +995,7 @@ export default function PositionGrades({
       failed={failed.has(row.athleteId)}
       sport={sport}
       rank={i + 1}
+      positionRank={positionRanks.get(row.athleteId)}
       row={row}
       player={loaded[row.athleteId]}
       lines={linesFor(row.positionGroup)}
