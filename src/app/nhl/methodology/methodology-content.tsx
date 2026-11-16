@@ -76,6 +76,12 @@ export function MethodologyContent() {
             come from ESPN&apos;s public odds data and are used only to check
             the model against the market.
           </li>
+          <li>
+            Player grades read MoneyPuck&apos;s skater and goalie game logs and
+            its shot file, and the NHL&apos;s shift charts for who was on the
+            ice. Where the shift-chart feed is missing a game, the NHL&apos;s
+            time-on-ice report for that game fills it.
+          </li>
         </ul>
       </Section>
 
@@ -252,6 +258,94 @@ export function MethodologyContent() {
           spreadsheet model&apos;s totals showed no edge at any threshold, and
           the current model&apos;s totals have not shown one either.
         </p>
+      </Section>
+
+      <Section id="players" title="Player Grades">
+        <p className={p}>
+          The{" "}
+          <Link className={link} href="/nhl/players">players page</Link> grades
+          every qualified forward, defenseman and goalie, refreshed on Mondays
+          and Thursdays. The grades are separate from the game model: no
+          forecast or prediction reads them.
+        </p>
+        <p className={p}>
+          A skater&apos;s rating starts from who was on the ice. Shift charts
+          and shot times cut each game into stretches with the same ten skaters,
+          and each side&apos;s expected goals are summed within them. A
+          penalized regression over the last one and two years of those
+          stretches gives each skater an offense effect and a defense effect on
+          expected goals per hour, with his linemates and opponents held
+          constant. One-man advantages get the same treatment for the power
+          play and the penalty kill.
+        </p>
+        <p className={p}>
+          A second model, fitted on the 2022-23 through 2025-26 seasons and
+          then frozen, combines those effects with his own shot and point
+          rates, ice time and zone starts into the effect expected of him next
+          game. That is multiplied by the ice time he has been getting at even
+          strength, on the power play and on the penalty kill. Finishing is
+          added on top: his goals beyond the expected goals of his shots over
+          his last three seasons, pulled toward average. The result is goals
+          per 82 games above an average skater at his position, split into
+          offense and defense. The page calls the sum Impact.
+        </p>
+        <p className={p}>
+          A goalie&apos;s rating is goals saved per 60 minutes above what the
+          shots he faced were expected to yield. Recent games count more (a
+          game 40 appearances back counts half), the result is pulled toward
+          average until he has played a lot, and an age curve takes off about
+          0.016 goals per 60 for each year past 30 or short of 25. Those
+          settings were fitted on goalie seasons back to 2008-09.
+        </p>
+        <p className={p}>
+          The grade places each player by his rank at his position on a bell
+          curve: 50 is the median, 10 points is one standard deviation, and the
+          scale stops at 20 and 80. A skater qualifies with 8 games this season
+          and a goalie with 4. I rank because skater value is lopsided. Grading
+          the goals themselves put seven of about 400 forwards at 80. The
+          Impact number keeps the size of the gaps.
+        </p>
+        <p className={p}>
+          How it tested, each time with weights fitted only on earlier
+          seasons:
+        </p>
+        <ul className={list}>
+          <li>
+            Predicting 5-on-5 expected goals stretch by stretch, the skater
+            rating beat a simpler on-ice rating plus team strength in both
+            2024-25 and 2025-26. The gain came from the defense side.
+          </li>
+          <li>
+            The ratings are not squeezed toward average. In 2025-26, with one
+            of the 31 top-rated skaters on the ice at 5-on-5 his team was
+            predicted to lead by 0.49 expected goals per hour and led by 0.52. With one of
+            the 31 lowest-rated it was predicted to trail by 0.42 and trailed
+            by 0.46.
+          </li>
+          <li>
+            Defense ratings are spread a little too wide: each expected goal
+            of predicted difference between defenders showed up as about 0.8.
+          </li>
+          <li>
+            Skaters who changed teams are the weak point. The rating predicted
+            them better than the simpler one in 2024-25 and worse in 2025-26,
+            so some of a rating still belongs to the team around him.
+          </li>
+          <li>
+            Goalie ratings are weak, because goalie results repeat little. The
+            rating&apos;s correlation with a goalie&apos;s next 25 games was
+            0.31 in 2024-25 and 0.16 in 2025-26. Averaged over 14 seasons it
+            reached 0.20, against 0.15 for a simpler estimate from his last 40
+            appearances. A goalie&apos;s grade
+            carries a ± for how much of it rests on his own record; skater
+            grades have none yet.
+          </li>
+          <li>
+            Everything but finishing is measured in expected goals, so what a
+            skater does to shot quality beyond what the expected-goal model
+            sees is not counted.
+          </li>
+        </ul>
       </Section>
 
       <Section id="limits" title="Limits">

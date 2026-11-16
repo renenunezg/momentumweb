@@ -10,6 +10,7 @@ const sections = [
   { id: "market", label: "Market Blend" },
   { id: "picks", label: "Pricing and Predictions" },
   { id: "backtest", label: "Backtest" },
+  { id: "players", label: "Player Grades" },
   { id: "limits", label: "Limits" },
   { id: "stack", label: "Tech Stack" },
 ];
