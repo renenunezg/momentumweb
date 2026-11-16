@@ -30,7 +30,7 @@ const NFL_WAR_TIP =
   "Estimated wins above a replacement-level player at the position, using opponent-adjusted credit on competitive plays and game leverage. Defensive plays are weighted by how closely each kind tracks a defender's on-field impact; coverage that never shows up on a tagged play is not counted.";
 
 const NHL_GRADE_TIP =
-  "Talent on a 20 to 80 scale among qualified NHL players at the position. 50 is average; 10 points is one standard deviation. Forwards, defensemen and goalies are each graded against their own position. A skater qualifies with 8 games this season (fewer in the opening weeks), a goalie with 4. The scale stops at 20 and 80. ± shows uncertainty, published for goalies only so far.";
+  "Talent on a 20 to 80 scale among qualified NHL players at the position. Each player is placed by his rank there on a bell curve: 50 is the median and 10 points is one standard deviation, so about one player in six grades above 60 and one in forty above 70. Forwards, defensemen and goalies are each graded against their own position. A skater qualifies with 8 games this season (fewer in the opening weeks), a goalie with 4. The scale stops at 20 and 80. ± shows uncertainty, published for goalies only so far.";
 
 export const NFL_VALUE_TIP =
   "What his projected wins are worth over the rest of his contract, in millions of this season's cap dollars, at the league's price of a win. A longer contract holds more value. ± is the range of the projection.";
