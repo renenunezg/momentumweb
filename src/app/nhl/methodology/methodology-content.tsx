@@ -146,8 +146,12 @@ export function MethodologyContent() {
           For games the books have priced, the published win probability is
           the market&apos;s no-vig probability from each book that quotes both
           sides (the two implied probabilities scaled to sum to one), averaged
-          over DraftKings and FanDuel and moved 0.19 in log-odds against a
-          team on the second night of a back-to-back. The model total is
+          over DraftKings and FanDuel and moved 0.15 in log-odds against a
+          team on the second night of a back-to-back. That is the size of the
+          effect against closing lines over the four backtest seasons.
+          Against opening lines it is 0.19, but the market closes part of
+          that gap during the day, and the morning prices a prediction is
+          made at already sit close to the closing line. The model total is
           averaged halfway with a market total that reads the juice as well as
           the line. Each book&apos;s no-vig over probability is converted to
           the average goal total that makes it true on a Poisson curve, and
@@ -225,8 +229,14 @@ export function MethodologyContent() {
             positive expected value.
           </li>
           <li>
-            nhl-picks-v3 (current): the rules described above, with moneylines
-            priced at the market consensus and its back-to-back shift.
+            nhl-picks-v3 (November 2 to 17): moneylines priced at the market
+            consensus and a back-to-back shift of 0.19, the size fitted
+            against opening lines. It overstated the edge on the later prices
+            the predictions are made at.
+          </li>
+          <li>
+            nhl-picks-v3.1 (current): the rules described above, with the
+            back-to-back shift at 0.15.
           </li>
         </ul>
       </Section>
