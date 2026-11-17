@@ -20,11 +20,24 @@ import {
   type NhlAccuracy,
   type NhlAccuracyPeriod,
   type NhlAccuracySlice,
+  type NhlFavoriteBin,
 } from "@/lib/nhl";
 import { cn, formatDate, formatNumber, formatPct, formatSigned } from "@/lib/utils";
 
 const num = "text-right font-mono tabular-nums";
 const COIN_FLIP_LOG_LOSS = Math.LN2;
+const FAVORITE_BINS = ["50–55%", "55–60%", "60–65%", "65–70%", "70–75%", "75% and up"];
+
+function difference(a: number | null | undefined, b: number | null | undefined) {
+  return a != null && b != null ? a - b : null;
+}
+
+// A gap to the close with one standard error beside it, so its size can be
+// read against its uncertainty.
+function gapText(gap: number | null, se: number | null | undefined, decimals: number) {
+  if (gap == null) return formatSigned(gap, decimals);
+  return se == null ? formatSigned(gap, decimals) : `${formatSigned(gap, decimals)} ± ${formatNumber(se, decimals)}`;
+}
 
 const TREND_PANELS: TrendPanel[] = [
   {
@@ -76,13 +89,13 @@ function seasonLabel(season: number | undefined) {
   return `${season}-${String((season ?? 0) + 1).slice(2)}`;
 }
 
-function SourceToggle({ source, page }: { source: "live" | "backtest"; page: string }) {
+function SourceToggle({ source }: { source: "live" | "backtest" }) {
   return (
     <nav aria-label="Forecast source" className="type-eyebrow flex gap-1">
       {(["live", "backtest"] as const).map((key) => (
         <Link
           key={key}
-          href={`/nhl/${page}?view=accuracy&source=${key}`}
+          href={`/nhl/performance?source=${key}`}
           aria-current={source === key ? "page" : undefined}
           className={cn(
             "border-b-2 px-3 py-2",
@@ -205,6 +218,7 @@ function MarketComparison({
   const blended =
     overall.pure_model_log_loss_on_market_games !==
     overall.model_log_loss_on_market_games;
+  const accuracyGap = difference(overall.model_accuracy_on_market_games, overall.market_accuracy);
   return (
     <section className="space-y-4">
       <div className="space-y-2">
@@ -238,50 +252,58 @@ function MarketComparison({
           </p>
         </HowGraded>
       </div>
-      <div className="grid grid-cols-2 gap-4 border-y border-rule-strong py-4 sm:grid-cols-3 lg:grid-cols-6">
-        <KpiCard
-          label="Model log loss"
-          value={formatNumber(overall.model_log_loss_on_market_games, 4)}
-          sub={`${overall.market_n} games`}
-        />
-        <KpiCard
-          label="Market log loss"
-          value={formatNumber(overall.market_log_loss, 4)}
-          sub="closing moneyline"
-        />
-        <KpiCard
-          label="Gap to market"
-          value={formatSigned(
-            overall.model_log_loss_on_market_games != null && overall.market_log_loss != null
-              ? overall.model_log_loss_on_market_games - overall.market_log_loss
-              : null,
-            4,
+      <Table>
+        <TableCaption className="sr-only">Forecast and closing line on the same games</TableCaption>
+        <TableHeader>
+          <TableRow>
+            <TableHead>On the same {overall.market_n} games</TableHead>
+            <TableHead className="text-right">Log loss</TableHead>
+            <TableHead className="text-right">Brier</TableHead>
+            <TableHead className="text-right">Winners</TableHead>
+            <TableHead className="text-right">Total MAE</TableHead>
+          </TableRow>
+        </TableHeader>
+        <TableBody>
+          <TableRow>
+            <TableCell>{source === "live" ? "Published forecast" : "Pure model"}</TableCell>
+            <TableCell className={num}>{formatNumber(overall.model_log_loss_on_market_games, 4)}</TableCell>
+            <TableCell className={num}>{formatNumber(overall.model_brier_on_market_games, 4)}</TableCell>
+            <TableCell className={num}>{formatPct(overall.model_accuracy_on_market_games)}</TableCell>
+            <TableCell className={num}>{formatNumber(overall.model_total_mae_on_market_games, 2)}</TableCell>
+          </TableRow>
+          {blended && (
+            <TableRow>
+              <TableCell>Pure model, no market price</TableCell>
+              <TableCell className={num}>{formatNumber(overall.pure_model_log_loss_on_market_games, 4)}</TableCell>
+              <TableCell className={num}>–</TableCell>
+              <TableCell className={num}>–</TableCell>
+              <TableCell className={num}>{formatNumber(overall.pure_model_total_mae_on_market_games, 2)}</TableCell>
+            </TableRow>
           )}
-          sub="lower is better"
-          tooltip="Model log loss minus closing-market log loss. Positive means the market predicted winners better."
-        />
-        <KpiCard
-          label="Model total MAE"
-          value={formatNumber(overall.model_total_mae_on_market_games, 2)}
-          sub={`${overall.market_total_n} games`}
-        />
-        <KpiCard
-          label="Market total MAE"
-          value={formatNumber(overall.market_total_mae, 2)}
-          sub="closing total"
-        />
-        <KpiCard
-          label="Gap to market"
-          value={formatSigned(
-            overall.model_total_mae_on_market_games != null && overall.market_total_mae != null
-              ? overall.model_total_mae_on_market_games - overall.market_total_mae
-              : null,
-            2,
-          )}
-          sub="goals"
-          tooltip="Model total error minus closing-total error. Positive means the market was closer to the goals scored."
-        />
-      </div>
+          <TableRow>
+            <TableCell>Closing line</TableCell>
+            <TableCell className={num}>{formatNumber(overall.market_log_loss, 4)}</TableCell>
+            <TableCell className={num}>{formatNumber(overall.market_brier, 4)}</TableCell>
+            <TableCell className={num}>{formatPct(overall.market_accuracy)}</TableCell>
+            <TableCell className={num}>{formatNumber(overall.market_total_mae, 2)}</TableCell>
+          </TableRow>
+          <TableRow className="font-semibold">
+            <TableCell>{source === "live" ? "Forecast" : "Model"} minus close</TableCell>
+            <TableCell className={num}>
+              {gapText(difference(overall.model_log_loss_on_market_games, overall.market_log_loss), overall.log_loss_gap_se, 4)}
+            </TableCell>
+            <TableCell className={num}>
+              {gapText(difference(overall.model_brier_on_market_games, overall.market_brier), overall.brier_gap_se, 4)}
+            </TableCell>
+            <TableCell className={num}>
+              {accuracyGap == null ? "–" : `${formatSigned(accuracyGap * 100, 1)} pts`}
+            </TableCell>
+            <TableCell className={num}>
+              {gapText(difference(overall.model_total_mae_on_market_games, overall.market_total_mae), overall.total_mae_gap_se, 2)}
+            </TableCell>
+          </TableRow>
+        </TableBody>
+      </Table>
       {accuracy.by_season.length > 1 && (
         <Table>
           <TableCaption className="sr-only">Model against the closing line by season</TableCaption>
@@ -312,6 +334,79 @@ function MarketComparison({
         </Table>
       )}
       <OverUnder accuracy={accuracy} overall={overall} />
+    </section>
+  );
+}
+
+// Whether the forecast or the close has predicted winners better, said only
+// as firmly as the paired standard error allows.
+function Verdict({ overall, subject }: { overall: NhlAccuracySlice; subject: "forecast" | "model" }) {
+  const gap = difference(overall.model_log_loss_on_market_games, overall.market_log_loss);
+  const se = overall.log_loss_gap_se;
+  if (gap == null || se == null) return null;
+  const clear = Math.abs(gap) > 2 * se;
+  return (
+    <Notice>
+      On the {overall.market_n} games with a recorded close, the {subject}&apos;s
+      log loss is {formatNumber(Math.abs(gap), 4)} {gap < 0 ? "lower" : "higher"} than
+      the closing line&apos;s, with a standard error of {formatNumber(se, 4)}.{" "}
+      {clear
+        ? gap < 0
+          ? `The ${subject} has predicted winners better than the close.`
+          : `The closing line has predicted winners better than the ${subject}.`
+        : "The gap is smaller than twice its standard error, so neither has been shown to predict winners better."}
+    </Notice>
+  );
+}
+
+function Favorites({ rows }: { rows: NhlFavoriteBin[] }) {
+  const market = new Map(rows.filter((r) => r.source === "market").map((r) => [r.bin, r]));
+  const model = rows.filter((r) => r.source === "model");
+  if (model.length === 0) return null;
+  return (
+    <section className="space-y-2">
+      <h2 className="type-section">Favorites</h2>
+      <p className="max-w-4xl text-sm text-muted-foreground">
+        How often the favorite won against how often it was expected to, by
+        how strong a favorite it was. The forecast covers every graded game
+        and the closing line the games with a recorded close. The margin is
+        one standard error for that many games, so a gap inside it is what
+        luck alone produces.
+      </p>
+      <Table>
+        <TableCaption className="sr-only">Favorite win rate by favorite strength</TableCaption>
+        <TableHeader>
+          <TableRow>
+            <TableHead>Favorite at</TableHead>
+            <TableHead className="text-right">Games</TableHead>
+            <TableHead className="text-right">Expected</TableHead>
+            <TableHead className="text-right">Won</TableHead>
+            <TableHead className="text-right">Margin</TableHead>
+            <TableHead className="text-right">Close games</TableHead>
+            <TableHead className="text-right">Close expected</TableHead>
+            <TableHead className="text-right">Close won</TableHead>
+          </TableRow>
+        </TableHeader>
+        <TableBody>
+          {model.map((row) => {
+            const close = market.get(row.bin);
+            return (
+              <TableRow key={row.bin}>
+                <TableCell className="font-mono">{FAVORITE_BINS[row.bin]}</TableCell>
+                <TableCell className={num}>{row.n}</TableCell>
+                <TableCell className={num}>{formatPct(row.predicted)}</TableCell>
+                <TableCell className={num}>{formatPct(row.observed)}</TableCell>
+                <TableCell className={num}>
+                  ± {formatNumber(Math.sqrt((row.predicted * (1 - row.predicted)) / row.n) * 100, 1)}
+                </TableCell>
+                <TableCell className={num}>{close?.n ?? 0}</TableCell>
+                <TableCell className={num}>{formatPct(close?.predicted)}</TableCell>
+                <TableCell className={num}>{formatPct(close?.observed)}</TableCell>
+              </TableRow>
+            );
+          })}
+        </TableBody>
+      </Table>
     </section>
   );
 }
@@ -358,13 +453,7 @@ function Cells({ m }: { m: NhlAccuracySlice }) {
   );
 }
 
-export async function NhlForecastAccuracy({
-  source,
-  page,
-}: {
-  source: "live" | "backtest";
-  page: "performance" | "history";
-}) {
+export async function NhlForecastAccuracy({ source }: { source: "live" | "backtest" }) {
   let accuracy: NhlAccuracy | null = null;
   try {
     accuracy = await fetchForecastAccuracy(source);
@@ -378,10 +467,16 @@ export async function NhlForecastAccuracy({
   const periods = ((period === "day" ? accuracy?.by_day : accuracy?.by_month) ?? []).filter(
     (row) => row.log_loss_sum != null,
   );
-  const detail = page === "performance";
+  const close = (overall?.market_n ?? 0) > 0;
+  // The forecast rescored on the close's games, under the market's own card.
+  // A response cached before the function published a figure lacks it.
+  const onCloseGames = (value: string | null, games = overall?.market_n) =>
+    close && value != null ? `forecast ${value} on the same ${games} games` : undefined;
+  const maybe = (value: number | null | undefined, format: (v: number) => string) =>
+    value == null ? null : format(value);
   return (
     <div className="space-y-section">
-      <SourceToggle source={source} page={page} />
+      <SourceToggle source={source} />
       <HowGraded
         lead={<>{source === "live" ? "Each game is graded on the last forecast published before puck drop, against the final score." : "The current pure model replayed through the 2022-23 to 2025-26 regular seasons, kept separate from live forecasts."}</>}
       >
@@ -409,13 +504,23 @@ export async function NhlForecastAccuracy({
         </Notice>
       ) : (
         <>
-          <div className="grid grid-cols-2 gap-4 border-y border-rule-strong py-4 sm:grid-cols-4 lg:grid-cols-7">
-            <KpiCard label="Games" value={String(overall.n)} />
+          <div className="grid grid-cols-2 gap-4 border-y border-rule-strong py-4 sm:grid-cols-3 lg:grid-cols-5">
+            <KpiCard
+              label="Games"
+              value={String(overall.n)}
+              sub={close ? `${overall.market_n} with a close` : "no close recorded yet"}
+            />
             <KpiCard
               label="Log loss"
               value={formatNumber(overall.log_loss, 4)}
               sub="coin flip 0.693"
               tooltip="Win-probability error that penalizes confident mistakes heavily. Lower is better."
+            />
+            <KpiCard
+              label="Market log loss"
+              value={formatNumber(overall.market_log_loss, 4)}
+              sub={onCloseGames(maybe(overall.model_log_loss_on_market_games, (v) => formatNumber(v, 4)))}
+              tooltip="The closing moneyline with the vig removed, scored on the games that have a recorded close. The forecast's figure underneath is rescored on those games only."
             />
             <KpiCard
               label="Brier"
@@ -424,21 +529,36 @@ export async function NhlForecastAccuracy({
               tooltip="Average squared error of home-win probabilities. Lower is better, and a coin flip scores 0.25."
             />
             <KpiCard
+              label="Market Brier"
+              value={formatNumber(overall.market_brier, 4)}
+              sub={onCloseGames(maybe(overall.model_brier_on_market_games, (v) => formatNumber(v, 4)))}
+              tooltip="The closing moneyline's squared error on the games that have a recorded close, with the forecast rescored on those games underneath."
+            />
+            <KpiCard
               label="Accuracy"
               value={formatPct(overall.accuracy)}
               tooltip="Share of games won by the model's favorite."
             />
             <KpiCard
-              label="Total MAE"
-              value={formatNumber(overall.total_mae, 2)}
-              sub="goals"
-              tooltip="Average total-goal error, including overtime and the shootout goal. Lower is better."
+              label="Market accuracy"
+              value={formatPct(overall.market_accuracy)}
+              sub={onCloseGames(maybe(overall.model_accuracy_on_market_games, (v) => formatPct(v)))}
+              tooltip="Share of games won by the closing line's favorite, on the games that have a recorded close."
             />
             <KpiCard
-              label="Total RMSE"
-              value={formatNumber(overall.total_rmse, 2)}
-              sub="goals"
-              tooltip="Root mean squared total-goal error, which weighs large misses more than MAE does. Lower is better."
+              label="Total MAE"
+              value={formatNumber(overall.total_mae, 2)}
+              sub={`goals · RMSE ${formatNumber(overall.total_rmse, 2)}`}
+              tooltip="Average total-goal error, including overtime and the shootout goal. RMSE weighs large misses more. Lower is better."
+            />
+            <KpiCard
+              label="Market total MAE"
+              value={formatNumber(overall.market_total_mae, 2)}
+              sub={onCloseGames(
+                maybe(overall.model_total_mae_on_market_games, (v) => formatNumber(v, 2)),
+                overall.market_total_n,
+              )}
+              tooltip="The closing total's average error in goals, on the games that have one."
             />
             <KpiCard
               label="Total bias"
@@ -447,6 +567,7 @@ export async function NhlForecastAccuracy({
               tooltip="Average predicted minus actual goals. Negative means the model predicts too few."
             />
           </div>
+          <Verdict overall={overall} subject={source === "live" ? "forecast" : "model"} />
           {periods.length > 0 && (
             <section className="space-y-2">
               <h2 className="type-section">Over time</h2>
@@ -483,7 +604,7 @@ export async function NhlForecastAccuracy({
             </Table>
           )}
           <MarketComparison accuracy={accuracy} overall={overall} source={source} />
-          {detail && (accuracy.total_errors?.length ?? 0) > 0 && (
+          {(accuracy.total_errors?.length ?? 0) > 0 && (
             <section className="space-y-2">
               <h2 className="type-section">Total error distribution</h2>
               <p className="text-sm text-muted-foreground">
@@ -499,6 +620,7 @@ export async function NhlForecastAccuracy({
               />
             </section>
           )}
+          <Favorites rows={accuracy.favorites ?? []} />
           {accuracy.calibration.length > 0 && (
             <section className="space-y-2">
               <h2 className="type-section">Calibration</h2>
@@ -518,7 +640,7 @@ export async function NhlForecastAccuracy({
               />
             </section>
           )}
-          {detail && periods.length > 0 && (
+          {periods.length > 0 && (
             <PeriodTable
               rows={[...periods].reverse()}
               period={period}

@@ -21,6 +21,8 @@ const nextConfig: NextConfig = {
       { source: "/api/live-scores", destination: "/mlb/api/live-scores", permanent: true },
       // Renamed to pair with Batting value (2026-11-14).
       { source: "/mlb/pitch-value", destination: "/mlb/pitching-value", permanent: true },
+      // The seven-day NHL schedule was retired for the daily games page (2026-11-17).
+      { source: "/nhl/schedule", destination: "/nhl/games", permanent: true },
     ];
   },
 };

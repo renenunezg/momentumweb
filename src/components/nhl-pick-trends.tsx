@@ -15,10 +15,11 @@ import {
   MARKET_LABELS,
   type NhlClosingRecord,
   type NhlPickDay,
+  type NhlPickPrice,
   type NhlPickRule,
   type PickMarket,
 } from "@/lib/nhl-picks";
-import { cn, formatDate, formatPct, formatSigned } from "@/lib/utils";
+import { cn, formatDate, formatNumber, formatPct, formatSigned } from "@/lib/utils";
 
 const num = "text-right font-mono tabular-nums";
 const THIN_SAMPLE = 30;
@@ -208,16 +209,76 @@ function RuleRecord({ rules }: { rules: NhlPickRule[] }) {
   );
 }
 
+// The current rule's settled moneylines by the price taken. A favorite at
+// -300 has to win three in four to break even, so a band's wins are read
+// against the wins its own probabilities expected, not against half.
+function PriceRecord({ prices }: { prices: NhlPickPrice[] }) {
+  return (
+    <PageSection>
+      <div className="space-y-2">
+        <h2 className="type-section">Moneyline by price</h2>
+        <p className="text-sm text-muted-foreground">
+          Settled moneyline predictions under the current rule
+          ({prices[0].rule}), by the price taken. Expected wins add up each
+          prediction&apos;s own win probability, and the edge is that
+          probability minus the price&apos;s break-even.
+        </p>
+      </div>
+      <Table>
+        <TableCaption className="sr-only">Moneyline record by the price taken</TableCaption>
+        <TableHeader>
+          <TableRow>
+            <TableHead>Price</TableHead>
+            <TableHead className="text-right">Predictions</TableHead>
+            <TableHead className="text-right">W-L</TableHead>
+            <TableHead className="text-right">Expected wins</TableHead>
+            <TableHead className="text-right">Average edge</TableHead>
+            <TableHead className="text-right">Profit</TableHead>
+          </TableRow>
+        </TableHeader>
+        <TableBody>
+          {prices.map((row) => {
+            const profit = units(row.profit_units);
+            return (
+              <TableRow key={row.ord}>
+                <TableCell className="font-mono font-semibold">
+                  {row.label}
+                  {row.picks < THIN_SAMPLE && (
+                    <span className="ml-2 font-sans text-xs font-normal text-muted-foreground">Small sample</span>
+                  )}
+                </TableCell>
+                <TableCell className={num}>{row.picks}</TableCell>
+                <TableCell className={num}>
+                  {row.wins}-{row.losses}
+                </TableCell>
+                <TableCell className={num}>{formatNumber(row.expected_wins, 1)}</TableCell>
+                <TableCell className={num}>
+                  {row.average_edge == null ? "–" : `${formatSigned(row.average_edge * 100, 1)} pts`}
+                </TableCell>
+                <TableCell className={cn(num, profit.tone && TONES[profit.tone])}>{profit.text}</TableCell>
+              </TableRow>
+            );
+          })}
+        </TableBody>
+      </Table>
+    </PageSection>
+  );
+}
+
 // The settled record over time: running units, the record by game date, how
-// the recorded prices compare with the close, and the record by pick rule.
+// the recorded prices compare with the close, the current rule's moneylines
+// by price, and the record by pick rule.
 export function NhlPickTrends({
   byDay,
   closing,
+  prices,
   rules,
   market,
 }: {
   byDay: NhlPickDay[];
   closing: NhlClosingRecord[];
+  // The rule in force's moneyline rows, shortest price first.
+  prices: NhlPickPrice[];
   // The selected market's rows, oldest rule first.
   rules: NhlPickRule[];
   market: PickMarket;
@@ -261,6 +322,7 @@ export function NhlPickTrends({
         />
       </PageSection>
       {closing.length > 0 && <ClosingRecord closing={closing} />}
+      {prices.length > 0 && <PriceRecord prices={prices} />}
       {rules.length > 1 && <RuleRecord rules={rules} />}
     </>
   );

@@ -75,7 +75,7 @@ export async function fetchProjections(
 }
 
 async function fetchSnapshotRows(
-  gameIds: string[], cutoffs: Record<string, string> = {},
+  gameIds: string[], cutoffs: Record<string, string>,
 ): Promise<NhlMarketSnapshot[]> {
   if (gameIds.length === 0) return [];
   const { data, error } = await supabaseNhl.rpc("latest_market_snapshots", {
@@ -86,28 +86,6 @@ async function fetchSnapshotRows(
     return [];
   }
   return data ?? [];
-}
-
-// Current quotes used on the schedule page.
-export async function fetchLatestSnapshots(
-  gameIds: string[],
-): Promise<Map<string, NhlMarketSnapshot[]>> {
-  const byGame = new Map<string, NhlMarketSnapshot[]>();
-  const rows = await fetchSnapshotRows(gameIds);
-  const now = Date.now();
-  const maxAge = 24 * 60 * 60 * 1000;
-  const seen = new Set<string>();
-  for (const row of rows) {
-    const key = `${row.game_id}:${row.provider_key}`;
-    if (seen.has(key)) continue;
-    seen.add(key);
-    // Fetching an old quote again does not make it a current book price.
-    const updated = Date.parse(row.provider_last_update ?? "");
-    const fetched = Date.parse(row.fetched_at);
-    if (!(updated <= fetched && fetched <= now && now - updated <= maxAge)) continue;
-    byGame.set(row.game_id, [...(byGame.get(row.game_id) ?? []), row]);
-  }
-  return byGame;
 }
 
 // Games compares both sides with the prices available at its forecast cutoff.
@@ -159,6 +137,27 @@ export type NhlAccuracySlice = {
   market_over_under_n?: number;
   market_over_under_log_loss?: number | null;
   model_over_under_log_loss_on_market_games?: number | null;
+  // The close's Brier score and winner accuracy with the forecast's on the
+  // same games, and one paired standard error for each gap to the close.
+  market_brier?: number | null;
+  model_brier_on_market_games?: number | null;
+  market_accuracy?: number | null;
+  model_accuracy_on_market_games?: number | null;
+  log_loss_gap_se?: number | null;
+  pure_log_loss_gap_se?: number | null;
+  brier_gap_se?: number | null;
+  total_mae_gap_se?: number | null;
+};
+
+// How often favorites won against how often they were expected to. Bin b
+// covers 50 + 5b percent up to the next bin; bin 5 is 75 percent and above.
+// The forecast's rows cover every graded game, the close's only its games.
+export type NhlFavoriteBin = {
+  source: "model" | "market";
+  bin: number;
+  n: number;
+  predicted: number;
+  observed: number;
 };
 
 // One game date or month, as sums so a window pools its games. The live
@@ -185,6 +184,7 @@ export type NhlAccuracy = {
   calibration: { bin: number; n: number; predicted: number; observed: number }[];
   by_day?: NhlAccuracyPeriod[];
   by_month?: NhlAccuracyPeriod[];
+  favorites?: NhlFavoriteBin[];
   // Predicted minus actual goals; bin b holds errors from b up to b + 1.
   total_errors?: { bin: number; n: number }[];
   missing_forecast: number;

@@ -81,7 +81,7 @@ export default async function Page({
         <Notice>
           {unavailable
             ? "Predictions are temporarily unavailable."
-            : "No NHL games today. Projections for the next week are on the schedule page."}
+            : "No NHL games today."}
         </Notice>
       </PageShell>
     );

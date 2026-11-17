@@ -48,6 +48,21 @@ export type NhlPickRule = {
   last_decision_at: string;
 };
 
+// Settled moneyline predictions one pick rule made in one band of the price
+// taken, with the wins their own probabilities expected.
+export type NhlPickPrice = {
+  rule: string;
+  ord: number;
+  label: string;
+  picks: number;
+  wins: number;
+  losses: number;
+  expected_wins: number;
+  staked_units: number;
+  profit_units: number;
+  average_edge: number | null;
+};
+
 type Summary = {
   metrics: NhlPickMetric[];
   seasons: number[];
@@ -55,6 +70,7 @@ type Summary = {
   roi_error?: NhlRoiError[];
   closing?: NhlClosingRecord[];
   by_rule?: NhlPickRule[];
+  by_price?: NhlPickPrice[];
 };
 type NhlPickHistoryRow = Omit<NhlPick, "pricing_weights">;
 // The history table never reads pricing_weights, so it stays behind.
@@ -115,6 +131,7 @@ export async function fetchNhlPickSummary(filters: PickFiltersValue) {
     roiError: result?.roi_error ?? [],
     closing: result?.closing ?? [],
     byRule: result?.by_rule ?? [],
+    byPrice: result?.by_price ?? [],
     latestSeason: result?.seasons?.[0] ?? new Date().getUTCFullYear(),
     unavailable: Boolean(error),
   };

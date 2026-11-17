@@ -12,7 +12,6 @@ const nhlLinks = [
   { href: "/nhl/ratings", label: "Ratings" },
   { href: "/nhl/players", label: "Players" },
   { href: "/nhl/games", label: "Games" },
-  { href: "/nhl/schedule", label: "Schedule" },
   { href: "/nhl/history", label: "History" },
   { href: "/nhl/performance", label: "Performance" },
   { href: "/nhl/methodology", label: "Methodology" },

@@ -24,7 +24,7 @@ export const revalidate = 3600;
 export const metadata: Metadata = {
   title: "NHL Model Performance",
   description:
-    "Win-probability and total-goals accuracy of the NHL model against the closing line, on the live season and the backtest, plus the record, units over time, ROI, and closing-line value of its moneyline and total predictions.",
+    "Whether the NHL forecast is reliable: its win-probability and total-goals error beside the closing line's on the same games, how often its favorites win, and the record, units, ROI, and closing-line value of its moneyline and total predictions.",
 };
 
 export default async function PerformancePage({
@@ -47,7 +47,7 @@ export default async function PerformancePage({
       <PageShell>
         <PageTitle>NHL Model Performance</PageTitle>
         <FootballPerformanceTabs sport="nhl" active="accuracy" query={query}>
-          <NhlForecastAccuracy source={source} page="performance" />
+          <NhlForecastAccuracy source={source} />
         </FootballPerformanceTabs>
       </PageShell>
     );
@@ -58,6 +58,7 @@ export default async function PerformancePage({
   const settled = (metric?.wins ?? 0) + (metric?.losses ?? 0) + (metric?.pushes ?? 0);
   // Oldest rule first, so the last row is the rule now making predictions.
   const rules = summary.byRule.filter((row) => row.market === market);
+  const prices = summary.byPrice.filter((row) => row.rule === rules.at(-1)?.rule);
 
   return (
     <PageShell>
@@ -123,7 +124,7 @@ export default async function PerformancePage({
               )}
             </p>
           )}
-          <NhlPickTrends byDay={summary.byDay} closing={summary.closing} rules={rules} market={market} />
+          <NhlPickTrends byDay={summary.byDay} closing={summary.closing} prices={prices} rules={rules} market={market} />
           {(["h2h", "totals"] as const)
             .filter((value) => market === "all" || value === market)
             .map((value) => (
@@ -147,12 +148,6 @@ export default async function PerformancePage({
             rows={summary.metrics
               .filter((m) => m.segment_kind === "month")
               .sort((a, b) => (a.segment ?? "").localeCompare(b.segment ?? ""))}
-          />
-          <PickBreakdown
-            title="By edge"
-            rows={summary.metrics
-              .filter((m) => m.segment_kind === "edge" && (m.picks ?? 0) > 0)
-              .sort((a, b) => (a.segment ?? "").localeCompare(b.segment ?? "", undefined, { numeric: true }))}
           />
         </div>
       </FootballPerformanceTabs>

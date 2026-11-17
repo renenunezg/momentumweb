@@ -30,7 +30,6 @@ const DATA_ROUTES = [
   "/nhl/games",
   "/nhl/ratings",
   "/nhl/players",
-  "/nhl/schedule",
   "/nhl/history",
   "/nhl/performance",
 ];

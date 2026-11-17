@@ -10,7 +10,6 @@ import {
 } from "@/components/football-picks";
 import { PickFilters } from "@/components/football-pick-filters";
 import { HistoryPager } from "@/components/graded-history";
-import { NhlForecastAccuracy } from "@/components/nhl-forecast-accuracy";
 import { NhlForecastHistory } from "@/components/nhl-forecast-history";
 import { Notice } from "@/components/notice";
 import {
@@ -25,9 +24,9 @@ import { pageNumber } from "@/lib/utils";
 
 export const revalidate = 3600;
 export const metadata: Metadata = {
-  title: "NHL Forecast and Prediction History",
+  title: "NHL Prediction History",
   description:
-    "Every graded NHL forecast with its accuracy and calibration, plus each moneyline and total prediction with the side, line and price recorded before puck drop.",
+    "Each NHL moneyline and total prediction with the side, line and price recorded before puck drop and its result, plus the graded games with the pregame forecast each was judged by.",
 };
 
 type Params = {
@@ -36,7 +35,6 @@ type Params = {
   page?: string;
   view?: string;
   period?: string;
-  source?: string;
 };
 
 export default async function HistoryPage({
@@ -45,23 +43,32 @@ export default async function HistoryPage({
   searchParams: Promise<Params>;
 }) {
   const params = await searchParams;
-  if (params.view !== "picks") {
-    const source = params.source === "backtest" ? "backtest" : "live";
+  // Accuracy figures live on the Performance page; this view is only the
+  // game-by-game list behind them.
+  if (params.view === "accuracy") {
     return (
       <PageShell>
         <PageHeader>
           <div>
-            <PageTitle>NHL Forecast History</PageTitle>
+            <PageTitle>NHL Graded Forecasts</PageTitle>
             <PageDescription>
-              Graded games with the pregame forecast each was judged by.
+              The most recent graded games with the pregame forecast each was
+              judged by.
             </PageDescription>
           </div>
-          <Link href="/nhl/history?view=picks" className="text-sm underline underline-offset-4">
+          <Link href="/nhl/history" className="text-sm underline underline-offset-4">
             Prediction history
           </Link>
         </PageHeader>
-        <NhlForecastAccuracy source={source} page="history" />
-        {source === "live" && <NhlForecastHistory />}
+        <NhlForecastHistory />
+        <p className="text-sm text-muted-foreground">
+          Accuracy, calibration and the comparison with the closing line are
+          on the{" "}
+          <Link href="/nhl/performance" className="underline underline-offset-4">
+            Performance page
+          </Link>
+          .
+        </p>
       </PageShell>
     );
   }
@@ -90,7 +97,7 @@ export default async function HistoryPage({
           </PageDescription>
         </div>
         <Link href="/nhl/history?view=accuracy" className="text-sm underline underline-offset-4">
-          Forecast &amp; backtest history
+          Graded forecasts
         </Link>
       </PageHeader>
       <PickFilters

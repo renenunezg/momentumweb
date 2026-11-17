@@ -163,11 +163,9 @@ export function MethodologyContent() {
           of the live win probability all come from that forecast.
         </p>
         <p className={p}>
-          The partner feed only prices the current day&apos;s games, so games
-          further out on the{" "}
-          <Link className={link} href="/nhl/schedule">schedule</Link> show the
-          model alone until the morning they are played. The halfway total
-          weight is my choice and was not fitted.
+          The partner feed only prices the current day&apos;s games, so a
+          forecast is published the morning its game is played. The halfway
+          total weight is my choice and was not fitted.
         </p>
       </Section>
 
