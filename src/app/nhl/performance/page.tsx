@@ -24,7 +24,7 @@ export const revalidate = 3600;
 export const metadata: Metadata = {
   title: "NHL Model Performance",
   description:
-    "Whether the NHL forecast is reliable: its win-probability and total-goals error beside the closing line's on the same games, how often its favorites win, and the record, units, ROI, and closing-line value of its moneyline and total predictions.",
+    "Whether the NHL forecast is reliable: its win-probability and goals error beside the closing line's on the same games, how often its favorites win, and the record, units, ROI, and closing-line value of its moneyline and total predictions.",
 };
 
 export default async function PerformancePage({

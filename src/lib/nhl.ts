@@ -147,6 +147,8 @@ export type NhlAccuracySlice = {
   pure_log_loss_gap_se?: number | null;
   brier_gap_se?: number | null;
   total_mae_gap_se?: number | null;
+  accuracy_gap_se?: number | null;
+  over_under_gap_se?: number | null;
 };
 
 // How often favorites won against how often they were expected to. Bin b
