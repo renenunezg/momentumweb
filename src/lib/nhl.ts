@@ -56,6 +56,30 @@ async function readLatestRatings(): Promise<{ ratings: NhlTeamRating[]; asOf: st
   return { ratings: data ?? [], asOf };
 }
 
+// Each team's rating in the newest snapshot published at least a week
+// before `asOf`, for the change column. A missed morning leaves a gap, so the
+// snapshot found can be older than seven days; its date is returned.
+export async function fetchRatingsWeekBefore(
+  asOf: string,
+): Promise<{ asOf: string | null; ratings: Map<string, number> }> {
+  const cutoff = new Date(`${asOf}T00:00:00Z`);
+  cutoff.setUTCDate(cutoff.getUTCDate() - 7);
+  const { data, error } = await supabaseNhl
+    .from("team_ratings")
+    .select("as_of, team_abbr, rating")
+    .lte("as_of", cutoff.toISOString().slice(0, 10))
+    .order("as_of", { ascending: false })
+    .limit(40);
+  if (error) throw error;
+  const previous = data?.[0]?.as_of ?? null;
+  return {
+    asOf: previous,
+    ratings: new Map(
+      (data ?? []).filter((row) => row.as_of === previous).map((row) => [row.team_abbr, row.rating]),
+    ),
+  };
+}
+
 export async function fetchProjections(
   from: string,
   to: string,

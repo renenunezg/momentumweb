@@ -145,6 +145,9 @@ export async function fetchNhlPickHistory(
     .from("recommendations")
     .select(NHL_HISTORY_COLUMNS)
     .match(pickHistoryMatch(filters))
+    // A No Play decision has nothing to grade, so the history lists only the
+    // predictions; the Performance page still counts the No Plays.
+    .eq("status", "recommended")
     .order("decision_at", { ascending: false })
     .order("game_id", { ascending: true })
     .order("market", { ascending: true })

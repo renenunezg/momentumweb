@@ -3,7 +3,7 @@ import type { Metadata } from "next";
 import { LastUpdated } from "@/components/last-updated";
 import { HowGraded } from "@/components/how-graded";
 import { NhlRatingsTable } from "@/components/nhl-ratings";
-import { fetchLatestRatings, fetchTeams } from "@/lib/nhl";
+import { fetchLatestRatings, fetchRatingsWeekBefore, fetchTeams } from "@/lib/nhl";
 import { formatDate } from "@/lib/utils";
 
 // Every read here is expired by the revalidation webhook when its table is
@@ -25,6 +25,8 @@ export default async function RatingsPage() {
     fetchLatestRatings(),
     fetchTeams(),
   ]);
+
+  const previous = asOf ? await fetchRatingsWeekBefore(asOf) : { asOf: null, ratings: new Map<string, number>() };
 
   if (ratings.length === 0) {
     return (
@@ -65,7 +67,7 @@ export default async function RatingsPage() {
           </div>
         </div>
       </PageHeader>
-      <NhlRatingsTable ratings={ratings} teams={teams} />
+      <NhlRatingsTable ratings={ratings} teams={teams} previous={previous} />
     </PageShell>
   );
 }

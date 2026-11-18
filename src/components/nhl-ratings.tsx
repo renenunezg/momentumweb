@@ -1,9 +1,10 @@
 import { TeamLogo } from "@/components/team-logo";
 import { RatingsHeatmapLegend } from "@/components/ratings-heatmap-legend";
-import { ratingHeatmap } from "@/lib/rating-heatmap";
+import { ratingHeatmap, sharedExtent } from "@/lib/rating-heatmap";
 import { EVEN_COLUMN_HEAD, HeatValue, evenColumns } from "@/components/heat-value";
 import { LimitedDataBadge } from "@/components/power-ratings-table";
 import { HeaderTip } from "@/components/info-tip";
+import { SignedBar } from "@/components/signed-bar";
 import {
   Table,
   TableBody,
@@ -13,7 +14,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { cn, formatNumber, formatSigned } from "@/lib/utils";
+import { cn, formatDate, formatNumber, formatSigned } from "@/lib/utils";
 import type { NhlTeamIdentity, NhlTeamRating } from "@/lib/types";
 
 const num = "text-right font-mono tabular-nums";
@@ -43,10 +44,20 @@ const COLUMNS = [
 export function NhlRatingsTable({
   ratings,
   teams,
+  previous,
 }: {
   ratings: NhlTeamRating[];
   teams: Map<string, NhlTeamIdentity>;
+  // Each team's rating in the snapshot from a week earlier, and its date.
+  previous: { asOf: string | null; ratings: Map<string, number> };
 }) {
+  const change = (row: NhlTeamRating) => {
+    const before = previous.ratings.get(row.team_abbr);
+    return before == null ? null : row.rating - before;
+  };
+  const showChange = previous.asOf != null;
+  // The same bar scale as the football ratings tables.
+  const changeExtent = sharedExtent([ratings.map(change)], 0.95);
   const columns = COLUMNS.map((column) => ({
     ...column,
     heatmap: ratingHeatmap(ratings.map((row) => row[column.key]), { lowerIsBetter: column.lowerIsBetter }),
@@ -54,7 +65,8 @@ export function NhlRatingsTable({
   return (
     <div className="space-y-2">
       <RatingsHeatmapLegend />
-      {/* Phones drop the window counts and show abbreviations so the ratings fit. */}
+      {/* Phones drop the weekly change and the window counts and show
+          abbreviations so the ratings fit. */}
       <Table
         density="compact"
         className="max-sm:[--table-cell-x:0.125rem] max-sm:[&_td]:text-xs"
@@ -70,6 +82,14 @@ export function NhlRatingsTable({
                 <HeaderTip full={column.label} short={column.short} tip={column.tip} />
               </TableHead>
             ))}
+            {showChange && (
+              <TableHead className="text-right max-sm:hidden">
+                <HeaderTip
+                  full={`Since ${formatDate(previous.asOf).replace(/, [0-9]{4}$/, "")}`}
+                  tip={`Change in rating since the ${formatDate(previous.asOf)} ratings, a week earlier.`}
+                />
+              </TableHead>
+            )}
             <TableHead className="text-right max-sm:hidden">
               <HeaderTip full="Window" tip="Home and road games behind the numbers, from each team's last 50." />
             </TableHead>
@@ -106,6 +126,11 @@ export function NhlRatingsTable({
                   </HeatValue>
                 </TableCell>
               ))}
+              {showChange && (
+                <TableCell className="text-right max-sm:hidden">
+                  <SignedBar value={change(r)} extent={changeExtent} tone="semantic" digits={2} />
+                </TableCell>
+              )}
               <TableCell className={`${num} text-muted-foreground max-sm:hidden`}>
                 {r.window_games_home}/{r.window_games_away}
               </TableCell>

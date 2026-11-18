@@ -3,7 +3,6 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import {
-  PickCountNote,
   PickKpis,
   PickPolicy,
   PickTable,
@@ -16,7 +15,6 @@ import {
   fetchNhlPickHistory,
   PICK_PAGE_SIZE,
   pickFilters,
-  pickHistoryCount,
   pickQuery,
   selectedPickMetric,
 } from "@/lib/nhl-picks";
@@ -77,7 +75,8 @@ export default async function HistoryPage({
   const page = pageNumber(params.page);
   const history = await fetchNhlPickHistory(filters, page);
   const metric = selectedPickMetric(history.metrics, market);
-  const count = pickHistoryCount(metric, market);
+  // No Play decisions are not listed, so the pages count predictions only.
+  const count = metric?.picks ?? 0;
   const totalPages = Math.max(1, Math.ceil(count / PICK_PAGE_SIZE));
   function pageUrl(value: number) {
     const query = pickQuery(filters);
@@ -116,15 +115,17 @@ export default async function HistoryPage({
         </Notice>
       ) : history.rows.length ? (
         <>
-          <PickTable rows={history.rows} caption="Recorded NHL decisions" />
-          <PickCountNote count={count} market={market} metric={metric} />
+          <PickTable rows={history.rows} caption="Recorded NHL predictions" />
+          <p className="type-meta text-muted-foreground">
+            {count} predictions across {metric?.unique_games ?? 0} unique games.
+            {metric?.no_plays ? ` ${metric.no_plays} No Play decisions are not listed.` : ""}
+          </p>
           <HistoryPager page={page} totalPages={totalPages} pageUrl={pageUrl} />
         </>
       ) : (
         <Notice>
-          {market === "all"
-            ? "No recorded decisions match this selection. Decisions appear each game-day morning once the season starts."
-            : "No predictions match this selection. No Play decisions are listed under All markets."}
+          No predictions match this selection. Predictions appear each
+          game-day morning once the season starts.
         </Notice>
       )}
       <PickPolicy sport="nhl" firstDecision={metric?.first_decision_at} />
