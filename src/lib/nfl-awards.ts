@@ -1,6 +1,7 @@
 import "server-only";
 import { TAGGED_READ_SECONDS, tableCacheTag } from "./cache-tags";
 import type { AwardBoard, AwardMeta, AwardKey, AwardLeader, AwardTrajectoryPoint } from "./nfl-awards-types";
+import { supabaseFetch } from "./supabase-fetch";
 
 export const TRAJECTORY_LINES = 8;
 
@@ -10,7 +11,7 @@ async function read<T>(table: string, query: Record<string, string>): Promise<T[
   const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
   const key = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
   if (!url || !key) throw new Error("NFL awards data connection is unavailable");
-  const response = await fetch(`${url}/rest/v1/${table}?${new URLSearchParams(query)}`, {
+  const response = await supabaseFetch(`${url}/rest/v1/${table}?${new URLSearchParams(query)}`, {
     headers: { apikey: key, Authorization: `Bearer ${key}`, "Accept-Profile": "nfl" },
     next: { revalidate: TAGGED_READ_SECONDS, tags: ["nfl", tableCacheTag("nfl", table)] },
   });

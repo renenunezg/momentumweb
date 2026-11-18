@@ -9,6 +9,7 @@ import type {
   RosterPlayer,
   PlayerPage,
 } from "./draft";
+import { supabaseFetch } from "./supabase-fetch";
 
 // Cache the source once per edition window. Compression keeps the full catalog
 // below the Data Cache item limit; only bounded results go to the browser.
@@ -24,7 +25,7 @@ const publication = unstable_cache(
       limit: "1",
       ...(year ? { draft_year: `eq.${year}` } : {}),
     });
-    const response = await fetch(
+    const response = await supabaseFetch(
       `${process.env.NEXT_PUBLIC_SUPABASE_URL}/rest/v1/draft_publications?${params}`,
       {
         headers: {

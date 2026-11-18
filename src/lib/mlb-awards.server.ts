@@ -1,5 +1,6 @@
 import "server-only";
 import { TAGGED_READ_SECONDS, tableCacheTag } from "./cache-tags";
+import { supabaseFetch } from "./supabase-fetch";
 
 export type AwardRow = {
   league: "AL" | "NL";
@@ -33,7 +34,7 @@ async function read<T>(table: string, query: Record<string, string>): Promise<T[
   const url = new URL(`/rest/v1/${table}`, process.env.NEXT_PUBLIC_SUPABASE_URL);
   url.search = new URLSearchParams(query).toString();
   const key = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!;
-  const response = await fetch(url, {
+  const response = await supabaseFetch(url, {
     headers: { apikey: key, Authorization: `Bearer ${key}`, "Accept-Profile": "mlb" },
     next: { revalidate: TAGGED_READ_SECONDS, tags: ["mlb", tableCacheTag("mlb", table)] },
     signal: AbortSignal.timeout(8000),

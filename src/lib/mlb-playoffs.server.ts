@@ -6,6 +6,7 @@ import {
   type PlayoffEdition,
   type PlayoffStage,
 } from "@/lib/mlb-playoffs";
+import { supabaseFetch } from "./supabase-fetch";
 
 // Every round's stored snapshot for the current season, in bracket order. A
 // failed read throws so ISR keeps the last good page.
@@ -20,7 +21,7 @@ export async function fetchPlayoffEditions(): Promise<PlayoffEdition[]> {
     season: `eq.${season}`,
   }).toString();
   const key = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!;
-  const response = await fetch(url, {
+  const response = await supabaseFetch(url, {
     headers: {
       apikey: key,
       Authorization: `Bearer ${key}`,

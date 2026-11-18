@@ -1,12 +1,15 @@
 import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
-  // Prerendering fans out to every page at once, and the Nano Supabase
-  // instance answers a burst of ~70 concurrent reads with statement timeouts,
-  // failing the deploy. Four pages at a time, each retried once, keeps the
-  // build inside what the database can serve.
+  // Prerendering reads Supabase for every page, and the Nano instance stalls
+  // under a burst of reads (2026-11-17: a build with two workers took the
+  // database down until Postgres was restarted). One worker, with
+  // src/lib/supabase-fetch.ts sending its reads one at a time, keeps the build
+  // to a single read in flight. Pages wait on each other's reads, so a page
+  // gets three minutes before the build gives up on it.
+  staticPageGenerationTimeout: 180,
   experimental: {
-    cpus: 2,
+    cpus: 1,
     staticGenerationMaxConcurrency: 2,
     staticGenerationRetryCount: 1,
   },

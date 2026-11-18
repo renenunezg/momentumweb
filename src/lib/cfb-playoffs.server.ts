@@ -2,6 +2,7 @@ import "server-only";
 import { TAGGED_READ_SECONDS, tableCacheTag } from "./cache-tags";
 import { parseCfbPlayoffPayload, type CfbPlayoffPayload } from "./cfb-playoffs";
 import type { Tables } from "@/lib/database-schema";
+import { supabaseFetch } from "./supabase-fetch";
 
 type ForecastRow = Tables<"cfb", "playoff_forecasts">;
 
@@ -19,7 +20,7 @@ export async function fetchCfbPlayoffForecast(): Promise<CfbPlayoffPayload | nul
     limit: "1",
   }).toString();
   const key = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!;
-  const response = await fetch(url, {
+  const response = await supabaseFetch(url, {
     headers: {
       apikey: key,
       Authorization: `Bearer ${key}`,

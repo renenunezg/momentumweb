@@ -1,6 +1,7 @@
 import { createClient } from "@supabase/supabase-js";
 import type { Database } from "@/lib/database.types";
 import { restCacheSeconds, restCacheTags } from "./cache-tags.ts";
+import { supabaseFetch } from "./supabase-fetch.ts";
 
 // These clients are anon and read-only: nothing here ever signs a user in, so
 // there is no session to persist or refresh, and no auth timers are wanted.
@@ -28,6 +29,7 @@ const anonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!;
 export const supabase = createClient<Database, "mlb">(url, anonKey, {
   db: { schema: "mlb" },
   auth: anonAuth("mlb"),
+  global: { fetch: supabaseFetch },
 });
 
 // Query URLs include every filter, so cached pages never share different
@@ -44,15 +46,15 @@ function cachedPublicFetch(sport: string): typeof fetch {
       typeof window === "undefined" &&
       method === "GET" &&
       String(input).startsWith(`${url}/rest/v1/`);
-    if (!restRead) return fetch(input, init);
+    if (!restRead) return supabaseFetch(input, init);
     const tags = restCacheTags(sport, new URL(String(input)));
     const options = { ...init, next: { revalidate: restCacheSeconds(tags), tags } };
-    const response = await fetch(input, options);
+    const response = await supabaseFetch(input, options);
     if (response.status < 500) return response;
     // A statement timeout on the Nano instance usually passes, so a read gets
     // one more try. The signal keeps React from answering the retry with the
     // failed response it memoized for this render.
-    return fetch(input, { ...options, signal: AbortSignal.timeout(RETRY_TIMEOUT_MS) });
+    return supabaseFetch(input, { ...options, signal: AbortSignal.timeout(RETRY_TIMEOUT_MS) });
   };
 }
 

@@ -2,6 +2,7 @@ import "server-only";
 import type { Tables } from "@/lib/database-schema";
 import { TAGGED_READ_SECONDS, tableCacheTag } from "./cache-tags";
 import { parseNflPlayoffPayload } from "./nfl-playoffs";
+import { supabaseFetch } from "./supabase-fetch";
 // A failed read throws so ISR keeps the last good page; null means nothing is
 // published for the season.
 export async function fetchNflPlayoffForecast() {
@@ -18,7 +19,7 @@ export async function fetchNflPlayoffForecast() {
     limit: "1",
   }).toString();
   const key = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!;
-  const response = await fetch(url, {
+  const response = await supabaseFetch(url, {
     headers: {
       apikey: key,
       Authorization: `Bearer ${key}`,
