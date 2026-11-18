@@ -32,7 +32,8 @@ export function MethodologyContent({ example }: { example: PickExample | null })
           all 32 teams. The engine is a Bayesian regression refit from scratch
           every Tuesday on the season&apos;s play-by-play, seeded by an
           offseason prior. Adjustments for
-          a changed starting quarterback and for other regulars ruled out move
+          a changed starting quarterback, for other regulars ruled out and for
+          a locked playoff seed move
           each game&apos;s line, and a capped blend toward the sportsbook
           market sets the published line, total and projected scores. The pure
           and blended lines are both graded against the closing spread. That
@@ -135,6 +136,17 @@ export function MethodologyContent({ example }: { example: PickExample | null })
           only as a unit, so they are left out. The loss moves the line and
           leaves the total alone, at a weight of about one point per point of
           value, fit on 2016 through 2021 the same way.
+        </p>
+        <p className={p}>
+          In the final week of the regular season, a team whose playoff seed
+          is locked is marked down 7.9 points. A seed is locked when the team
+          is in the field and gets the same seed whether it wins or loses,
+          whatever the other games do. Those teams rest starters, and the
+          rating still describes the team that earned the seed. The size is
+          how far the closing line moved against the 14 locked teams of 2016
+          through 2021, and results agreed. From 2022 through 2025 the line
+          moved 7.6 points against the 11 locked teams. The adjustment moves
+          the line and leaves the total alone.
         </p>
         <p className={p}>
           A rest adjustment for byes and short weeks is wired in, but
@@ -250,6 +262,14 @@ export function MethodologyContent({ example }: { example: PickExample | null })
           line with the others.
         </p>
         <p className={p}>
+          Removing the vig means deciding how a book split its margin between
+          the two sides. Splitting it in proportion to each price gives a long
+          underdog a higher probability than splitting it equally, and results
+          from 2016 through 2025 do not settle which is right. Each side is
+          priced at the lower of the two, so an offer has to beat the
+          consensus under both.
+        </p>
+        <p className={p}>
           When fewer than five games have a positive-EV offer, the best-priced
           remaining spread or moneyline sides fill a five-game weekly slate as
           ranked leans, one per game. A lean is close to a coin flip and its
@@ -277,12 +297,14 @@ export function MethodologyContent({ example }: { example: PickExample | null })
         </p>
         <p className={p}>
           The current policy is{" "}
-          <span className="font-mono">nfl-picks-v7</span>. Through November 1,
+          <span className="font-mono">nfl-picks-v8</span>. Through November 2,
           2026, v5 priced spreads and totals from the published blended numbers,
           required a two-point edge, and promoted floor predictions to reach
-          five a week. From November 2–6, v6 moved the market price 4.5
+          five a week. From November 3 to 10, v6 moved the market price 4.5
           percent of the way toward the model and filled the slate with the
-          model&apos;s sides.
+          model&apos;s sides. From November 10 to 17, v7 split the vig in
+          proportion only, which put long underdog moneylines over break-even
+          by margins smaller than the choice of split.
         </p>
       </Section>
 
