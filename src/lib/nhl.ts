@@ -80,6 +80,29 @@ export async function fetchRatingsWeekBefore(
   };
 }
 
+export type NhlComparisonGame = Pick<
+  NhlGameProjection,
+  | "game_id" | "game_date" | "start_date" | "as_of" | "home_team_abbr" | "away_team_abbr"
+  | "home_lambda" | "away_lambda" | "home_win_prob" | "away_win_prob" | "model_total"
+  | "pure_home_win_prob" | "market_home_prob"
+>;
+
+// The games the ratings day's run projected, for the ratings comparison.
+// Keyed to the ratings snapshot, not the clock, so a cached page never pairs
+// one day's ratings with another day's forecasts. A failed read throws so ISR
+// keeps the last good page.
+export async function fetchComparisonGames(ratingsAsOf: string): Promise<NhlComparisonGame[]> {
+  const { data, error } = await supabaseNhl
+    .from("game_projections")
+    .select(
+      "game_id, game_date, start_date, as_of, home_team_abbr, away_team_abbr, home_lambda, away_lambda, home_win_prob, away_win_prob, model_total, pure_home_win_prob, market_home_prob",
+    )
+    .gte("as_of", `${ratingsAsOf}T00:00:00Z`)
+    .order("start_date", { ascending: true });
+  if (error) throw error;
+  return data ?? [];
+}
+
 export async function fetchProjections(
   from: string,
   to: string,

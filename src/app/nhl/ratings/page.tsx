@@ -3,7 +3,9 @@ import type { Metadata } from "next";
 import { LastUpdated } from "@/components/last-updated";
 import { HowGraded } from "@/components/how-graded";
 import { NhlRatingsTable } from "@/components/nhl-ratings";
-import { fetchLatestRatings, fetchRatingsWeekBefore, fetchTeams } from "@/lib/nhl";
+import { NhlRatingsViews } from "@/components/nhl-ratings-views";
+import { NhlTeamComparison } from "@/components/nhl-team-comparison";
+import { fetchComparisonGames, fetchLatestRatings, fetchRatingsWeekBefore, fetchTeams } from "@/lib/nhl";
 import { formatDate } from "@/lib/utils";
 
 // Every read here is expired by the revalidation webhook when its table is
@@ -26,7 +28,9 @@ export default async function RatingsPage() {
     fetchTeams(),
   ]);
 
-  const previous = asOf ? await fetchRatingsWeekBefore(asOf) : { asOf: null, ratings: new Map<string, number>() };
+  const [previous, games] = asOf
+    ? await Promise.all([fetchRatingsWeekBefore(asOf), fetchComparisonGames(asOf)])
+    : [{ asOf: null, ratings: new Map<string, number>() }, []];
 
   if (ratings.length === 0) {
     return (
@@ -67,7 +71,10 @@ export default async function RatingsPage() {
           </div>
         </div>
       </PageHeader>
-      <NhlRatingsTable ratings={ratings} teams={teams} previous={previous} />
+      <NhlRatingsViews
+        table={<NhlRatingsTable ratings={ratings} teams={teams} previous={previous} />}
+        compare={<NhlTeamComparison ratings={ratings} teams={[...teams.values()]} games={games} />}
+      />
     </PageShell>
   );
 }
