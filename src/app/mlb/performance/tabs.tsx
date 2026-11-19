@@ -47,6 +47,7 @@ type View = (typeof VIEWS)[number]["key"];
 interface PerformanceTabsProps {
   evaluations: ModelEvaluation[];
   calibration: CalibrationBin[];
+  calibrationWindow: "season" | "season_v2";
   edgeBuckets: EdgeBucket[];
   residuals: number[];
   posteriorSigmas: PosteriorSigma[];
@@ -131,6 +132,7 @@ const MLB_ACCURACY_SERIES: AccuracySeries<ModelEvaluation>[] = [
 export function PerformanceTabs({
   evaluations,
   calibration,
+  calibrationWindow,
   edgeBuckets,
   residuals,
   posteriorSigmas,
@@ -303,7 +305,7 @@ export function PerformanceTabs({
 
             <Section
               title="Calibration"
-              note={latestCalDate ? `Season to date as of ${latestCalDate}, both model versions. The extreme bins hold few rows.` : undefined}
+              note={latestCalDate ? `Season to date as of ${latestCalDate}, ${calibrationWindow === "season_v2" ? "v2 only, the model in use" : "both model versions"}. The extreme bins hold few rows.` : undefined}
               details={<p>One point per team row. Points on the dashed diagonal are perfectly calibrated.</p>}
             >
               {latestCalibration.length > 0 ? (

@@ -73,7 +73,7 @@ export default async function PerformancePage() {
       .from("model_calibration")
       .select("*")
       .order("date", { ascending: false })
-      .limit(10),
+      .limit(20),
     supabase
       .from("model_edge_buckets")
       .select("*")
@@ -107,7 +107,16 @@ export default async function PerformancePage() {
   keepLastGood("MLB performance", readError || ledger === null);
   const evaluations = evalRes.data ?? [];
   const lastUpdated: string | null = latestRes.data?.[0]?.created_at ?? null;
-  const calibration = (calRes.data ?? []) as CalibrationBin[];
+  // Each date carries a pooled season curve and, once the evaluation writes
+  // it, a v2-only curve; v2 is the model in use, so its curve leads. Rows
+  // written before eval_window existed are the pooled season curve.
+  const calibrationRows = (calRes.data ?? []) as (CalibrationBin & { eval_window?: string | null })[];
+  const v2Calibration = calibrationRows.filter((row) => row.eval_window === "season_v2");
+  const calibrationWindow = v2Calibration.length > 0 ? "season_v2" : "season";
+  const calibration =
+    v2Calibration.length > 0
+      ? v2Calibration
+      : calibrationRows.filter((row) => (row.eval_window ?? "season") === "season");
   const edgeBuckets = (edgeRes.data ?? []) as EdgeBucket[];
   const posteriorSigmas = (sigmasRes.data ?? []) as PosteriorSigma[];
   const liveKpis = ledger === null ? null : aggregateLedger(ledger);
@@ -185,6 +194,7 @@ export default async function PerformancePage() {
       <PerformanceTabs
         evaluations={evaluations}
         calibration={calibration}
+        calibrationWindow={calibrationWindow}
         edgeBuckets={edgeBuckets}
         residuals={residuals}
         posteriorSigmas={posteriorSigmas}
