@@ -59,8 +59,11 @@ export const CFB_NIL_SURPLUS_TIP =
 export const NFL_POSITION_RANK_TIP =
   "His place by grade among every graded player at his position this week, across the league and whatever filter is on.";
 
+export const CFB_SPREAD_TIP =
+  "Point spread rating: the points the model's line moves against his team if he is ruled out of a regular-season game. 0.36 plus 0.72 for each point per game his play adds over a replacement, times his share of the team's games, fit to closing lines on 2020 to 2023 starter absences. Each team's starting quarterback only: the market did not move on other positions' absences.";
+
 export const NFL_SPREAD_TIP =
-  "Point spread rating: how many points his team's projected line for the next game gives up if he is ruled out, from his opponent-adjusted play credit above a replacement times his share of the team's recent games. It measures what his absence costs for one game, not his talent; the grade does that. Quarterbacks are priced separately and the offensive line only as a unit.";
+  "Point spread rating: the points the model's line for his team's next game gives up if he is ruled out. A quarterback is priced as the switch to the passer the forecast would start in his place; other players by their opponent-adjusted play credit above a replacement times their share of the team's recent games. The published line, half market, moves about half as far. Offensive linemen are priced only as a unit and have none, and kickers and punters are left out.";
 
 // Copy that differs between the sports: who the percentile pool is, and how
 // the grade and WAR explain themselves. A sport that publishes no WAR has no
@@ -70,16 +73,19 @@ export const SPORT_COPY: Record<GradeSport, {
   pool: string;
   gradeTip: string;
   warTip: string | null;
+  // A sport that publishes no PSR has no tip for it and the page shows none.
+  spreadTip: string | null;
   apiPath: string;
   groupLabel: string;
   tableTraits?: readonly string[];
 }> = {
-  cfb: { pool: "qualified FBS players", gradeTip: GRADE_TIP, warTip: WAR_TIP, apiPath: "/cfb/api/player-traits", groupLabel: "Conference" },
-  nfl: { pool: "qualified NFL players", gradeTip: NFL_GRADE_TIP, warTip: NFL_WAR_TIP, apiPath: "/nfl/api/player-traits", groupLabel: "Division" },
+  cfb: { pool: "qualified FBS players", gradeTip: GRADE_TIP, warTip: WAR_TIP, spreadTip: CFB_SPREAD_TIP, apiPath: "/cfb/api/player-traits", groupLabel: "Conference" },
+  nfl: { pool: "qualified NFL players", gradeTip: NFL_GRADE_TIP, warTip: NFL_WAR_TIP, spreadTip: NFL_SPREAD_TIP, apiPath: "/nfl/api/player-traits", groupLabel: "Division" },
   nhl: {
     pool: "qualified NHL players",
     gradeTip: NHL_GRADE_TIP,
     warTip: null,
+    spreadTip: null,
     apiPath: "/nhl/api/player-traits",
     groupLabel: "Division",
     tableTraits: ["offense", "defense"],

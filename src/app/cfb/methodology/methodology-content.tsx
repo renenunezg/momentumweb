@@ -962,7 +962,12 @@ export function MethodologyContent({ example, backtestVersion }: { example: Pick
             Injuries are never inferred from play-by-play or line movement. The
             one availability input is a sourced, timestamped report that a
             starting quarterback is out or doubtful, which lowers that
-            team&apos;s expected points by a fixed 1.5 (4.0 in the postseason).
+            team&apos;s expected points by his PSR on the player grades page:
+            0.36 points plus 0.72 for each point per game his play adds over a
+            replacement, scaled by his share of the team&apos;s games, fit to
+            closing lines on 2020 to 2023 starter absences. Bowl games add 2.24
+            for the opt-outs that come with them, and a starter with no PSR yet
+            costs 1.16, the average.
             For the SEC, Big Ten, ACC and Big 12 these reports are read from the
             conferences&apos; published availability reports, counting a listed
             quarterback only if he led the team in dropbacks the game before.

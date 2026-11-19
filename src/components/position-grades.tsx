@@ -20,7 +20,6 @@ import {
   type TraitSection,
   type PositionGroup,
   NFL_POSITION_RANK_TIP,
-  NFL_SPREAD_TIP,
   NFL_SURPLUS_TIP,
   NFL_VALUE_TIP,
   CFB_EFFICIENCY_TIP,
@@ -253,6 +252,7 @@ const PHONE_GRID: Record<number, string> = {
   3: "grid-cols-3",
   4: "grid-cols-2",
   5: "grid-cols-3",
+  6: "grid-cols-3",
 };
 const WIDE_GRID: Record<number, string> = {
   1: "sm:grid-cols-1",
@@ -261,6 +261,7 @@ const WIDE_GRID: Record<number, string> = {
   4: "sm:grid-cols-4",
   5: "sm:grid-cols-5",
   6: "sm:grid-cols-3",
+  7: "sm:grid-cols-4",
 };
 
 function Headline({
@@ -380,7 +381,7 @@ function GradeCard({
   const grade = player?.grade ?? row.grade;
   const rating = RATING_LABELS[row.positionGroup];
   const rated = rating != null && player?.rating != null;
-  const priced = sport === "nfl" && player?.spreadValue != null;
+  const priced = copy.spreadTip != null && player?.spreadValue != null;
   const valued = sport === "nfl" && player?.playerValue != null;
   const nilPriced = sport === "cfb" && player?.nilPrice != null;
   const cfb = sport === "cfb";
@@ -391,12 +392,12 @@ function GradeCard({
   const extras = Number(ranked) + Number(scouted) + Number(efficient) + Number(inForm);
   const headlines =
     cfb
-      ? 2 + Number(rated) + extras
+      ? 2 + Number(rated) + extras + Number(priced)
       : 1 + Number(copy.warTip != null) + Number(rated) + extras + Number(priced) + (valued ? 2 : 0);
   // A CFB phone card keeps grade and WAR and adds scouts and form; efficiency
   // stands in only for a player with neither.
   const phoneEfficiency = efficient && !scouted && !inForm;
-  const phoneHeadlines = 2 + Number(rated) + Number(scouted) + Number(inForm) + Number(phoneEfficiency);
+  const phoneHeadlines = 2 + Number(rated) + Number(scouted) + Number(inForm) + Number(phoneEfficiency) + Number(priced);
   const headlineGrid = cfb ? cn(PHONE_GRID[phoneHeadlines], WIDE_GRID[headlines]) : HEADLINE_GRID[headlines];
   // Position rank, scouts, efficiency and form: headlines on the phone card and the
   // desktop panel alike, since the desktop row has columns for grade and WAR but not for these.
@@ -511,7 +512,7 @@ function GradeCard({
             {priced && (
               <Headline
                 label="PSR"
-                tip={NFL_SPREAD_TIP}
+                tip={copy.spreadTip ?? ""}
                 tipLabel="What is PSR?"
                 value={formatPsr(player.spreadValue)}
                 sub="pts if ruled out"
@@ -756,7 +757,7 @@ function ComparePanel({
       ...(copy.warTip != null
         ? [{ label: "WAR", value: player?.war == null ? EMPTY : formatSigned(player.war, 2), sub: player?.pointsAboveReplacement == null ? "" : `${formatSigned(player.pointsAboveReplacement, 0)} season pts` }]
         : []),
-      ...(sport === "nfl" && player?.spreadValue != null
+      ...(copy.spreadTip != null && player?.spreadValue != null
         ? [{ label: "PSR", value: formatPsr(player.spreadValue), sub: "pts if ruled out" }]
         : []),
       ...(sport === "nfl" && player?.playerValue != null
@@ -991,7 +992,7 @@ export default function PositionGrades({
   // One position on screen shares one forecast unit, so the header carries it;
   // a search can mix positions, so each cell keeps its own.
   const headerRating = search ? null : RATING_LABELS[position] ?? null;
-  const showSpread = visible.some((row) => loaded[row.athleteId]?.spreadValue != null);
+  const showSpread = copy.spreadTip != null && visible.some((row) => loaded[row.athleteId]?.spreadValue != null);
   const showValue = visible.some((row) => loaded[row.athleteId]?.playerValue != null);
   const showNil = sport === "cfb" && visible.some((row) => loaded[row.athleteId]?.nilPrice != null);
   const showNilSurplus = sport === "cfb" && visible.some((row) => loaded[row.athleteId]?.nilSurplus != null);
@@ -1143,7 +1144,7 @@ export default function PositionGrades({
                     </TableHead>
                   )}
                   {copy.warTip != null && <TableHead className="text-center"><span className="inline-flex items-center gap-1">WAR <InfoTip text={copy.warTip} label="What is wins above replacement?" /></span></TableHead>}
-                  {showSpread && <TableHead className="text-center"><span className="inline-flex items-center gap-1">PSR <InfoTip text={NFL_SPREAD_TIP} label="What is PSR?" /></span></TableHead>}
+                  {showSpread && <TableHead className="text-center"><span className="inline-flex items-center gap-1">PSR <InfoTip text={copy.spreadTip ?? ""} label="What is PSR?" /></span></TableHead>}
                   {showValue && <TableHead className="whitespace-normal text-center leading-tight"><span className="inline-flex items-center gap-1">Contract value <InfoTip text={NFL_VALUE_TIP} label="What is contract value?" /></span></TableHead>}
                   {showValue && <TableHead className="text-center"><span className="inline-flex items-center gap-1">Surplus <InfoTip text={NFL_SURPLUS_TIP} label="What is contract surplus?" /></span></TableHead>}
                   {showNil && <TableHead className="text-center"><span className="inline-flex items-center gap-1">NIL price <InfoTip text={CFB_NIL_PRICE_TIP} label="What is NIL price?" /></span></TableHead>}
