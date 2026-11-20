@@ -1,4 +1,4 @@
-import { supabaseMlbCached, supabaseCfb, supabaseNfl } from "@/lib/supabase";
+import { supabaseMlbCached, supabaseCfb, supabaseLmbCached, supabaseNfl } from "@/lib/supabase";
 import { toPage, type CsvExport } from "@/lib/csv-export";
 
 // The export behind each /api/export route, with the columns a reader needs to
@@ -143,6 +143,59 @@ export const FOOTBALL_EXPORTS = {
     },
   },
 } satisfies Record<"cfb" | "nfl", Record<string, CsvExport>>;
+
+const LMB_LEDGER_COLUMNS = [
+  "game_pk", "date", "season", "team", "tier", "policy", "probability", "price", "fee",
+  "expected_value", "status", "won", "units",
+] as const;
+
+const LMB_FORECAST_COLUMNS = [
+  "game_pk", "date", "start_time", "team", "opponent", "is_home", "win_prob", "win_prob_p10",
+  "win_prob_p90", "sim_win_prob", "market_prob", "kalshi_bid", "kalshi_ask", "expected_runs",
+  "expected_runs_p10", "expected_runs_p50", "expected_runs_p90", "lineup_source", "prediction_updated_at",
+] as const;
+
+const LMB_GAME_COLUMNS = [
+  "game_pk", "game_date", "start_time", "season", "game_type", "home_team", "away_team", "status",
+  "home_score", "away_score",
+] as const;
+
+export const LMB_EXPORTS = {
+  ledger: {
+    filename: "lmb-pick-ledger.csv",
+    columns: LMB_LEDGER_COLUMNS,
+    page: (from, to) =>
+      toPage(supabaseLmbCached
+        .from("bet_ledger_v")
+        .select(LMB_LEDGER_COLUMNS.join(","))
+        .order("date", { ascending: true })
+        .order("game_pk", { ascending: true })
+        .range(from, to)),
+  },
+  forecasts: {
+    filename: "lmb-forecasts.csv",
+    columns: LMB_FORECAST_COLUMNS,
+    page: (from, to) =>
+      toPage(supabaseLmbCached
+        .from("model_outputs_season")
+        .select(LMB_FORECAST_COLUMNS.join(","))
+        .order("date", { ascending: true })
+        .order("game_pk", { ascending: true })
+        .order("team", { ascending: true })
+        .range(from, to)),
+  },
+  games: {
+    filename: "lmb-games.csv",
+    columns: LMB_GAME_COLUMNS,
+    page: (from, to) =>
+      toPage(supabaseLmbCached
+        .from("games")
+        .select(LMB_GAME_COLUMNS.join(","))
+        .order("game_date", { ascending: true })
+        .order("game_pk", { ascending: true })
+        .range(from, to)),
+  },
+} satisfies Record<string, CsvExport>;
 
 // Tables exported with select("*") take their column order from the first
 // row, which PostgREST returns in table order.

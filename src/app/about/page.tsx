@@ -85,6 +85,11 @@ const models = [
     href: "/nhl/methodology",
     body: "Team ratings from goals and expected goals and a Poisson goal model, with attack and defense strengths and public evaluation of win probabilities against the market.",
   },
+  {
+    name: "LMB",
+    href: "/lmb/methodology",
+    body: "Liga Mexicana de Béisbol game forecasts from Bayesian player skills and a lineup simulation, blended with and benchmarked against the Kalshi market.",
+  },
 ];
 
 function SectionLabel({ children }: { children: React.ReactNode }) {

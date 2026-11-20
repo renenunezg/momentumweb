@@ -45,23 +45,9 @@ export function gameStatus(matchup: GameMatchup): GameStatus {
     !isLive &&
     !(matchup.home.lineup_source ?? "").startsWith("lineup_live");
 
-  const liveLabel = (() => {
-    if (!isLive) return null;
-    const inning = matchup.current_inning;
-    const state = matchup.inning_state;
-    if (!inning) return matchup.status;
-    const half =
-      state === "Top"
-        ? "Top"
-        : state === "Bottom"
-          ? "Bot"
-          : state === "Middle"
-            ? "Mid"
-            : state === "End"
-              ? "End"
-              : "";
-    return half ? `${half} ${inning}` : `Inn ${inning}`;
-  })();
+  const liveLabel = isLive
+    ? inningLabel(matchup.status, matchup.current_inning, matchup.inning_state)
+    : null;
 
   const start = matchup.start_time ? new Date(matchup.start_time) : null;
   const startTime = start && !Number.isNaN(start.getTime())
@@ -81,4 +67,25 @@ export function gameStatus(matchup: GameMatchup): GameStatus {
     startTime,
     hasEvPlay,
   };
+}
+
+// "Top 3", "Mid 7": the half-inning of a live game, or its status before the
+// feed reports an inning.
+export function inningLabel(
+  status: string | null,
+  inning: number | null | undefined,
+  state: string | null | undefined,
+): string | null {
+  if (!inning) return status;
+  const half =
+    state === "Top"
+      ? "Top"
+      : state === "Bottom"
+        ? "Bot"
+        : state === "Middle"
+          ? "Mid"
+          : state === "End"
+            ? "End"
+            : "";
+  return half ? `${half} ${inning}` : `Inn ${inning}`;
 }

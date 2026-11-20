@@ -35,10 +35,12 @@ interface Props {
   homeWinProb: number;
   homeWinProbP10: number | null;
   homeWinProbP90: number | null;
-  totalLine: number | null;
-  totalMean: number;
-  totalP10: number;
-  totalP90: number;
+  // Absent for a league with no totals market (the LMB), which drops the
+  // total-runs note.
+  totalLine?: number | null;
+  totalMean?: number;
+  totalP10?: number;
+  totalP90?: number;
   startTimeUtc: string | null;
 }
 
@@ -226,6 +228,7 @@ export function MethodologyDistributionChart({
         </CardContent></Card>
       </div>
 
+      {totalMean != null && totalP10 != null && totalP90 != null && (
       <Notice className="text-xs leading-relaxed text-muted-foreground">
         <p>
           <span className="type-eyebrow">Total runs:</span>{" "}
@@ -238,6 +241,7 @@ export function MethodologyDistributionChart({
           Bars are the empirical PMF from the raw 10,000-sim run array, binned 0..20.
         </p>
       </Notice>
+      )}
     </div>
   );
 }

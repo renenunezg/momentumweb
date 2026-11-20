@@ -12,6 +12,7 @@ const links = [
   { href: SPORT_HOME.cfb, label: "CFB" },
   { href: SPORT_HOME.nfl, label: "NFL" },
   { href: SPORT_HOME.nhl, label: "NHL" },
+  { href: SPORT_HOME.lmb, label: "LMB" },
   { href: "/blog", label: "Blog" },
   { href: "/about", label: "About" },
 ];

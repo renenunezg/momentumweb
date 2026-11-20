@@ -7,7 +7,7 @@ import { tableCacheTag } from "@/lib/cache-tags";
 // pipeline writes a table the site reads. Expiring a source tag also expires
 // pages that consumed it, without invalidating unrelated pages or data.
 
-const SPORTS = new Set(["mlb", "cfb", "nfl", "nhl"]);
+const SPORTS = new Set(["mlb", "cfb", "nfl", "nhl", "lmb"]);
 
 // MLB's uncached Supabase client also serves live games, so its static pages
 // need explicit paths. Include consumers of the season-unified and ledger views.

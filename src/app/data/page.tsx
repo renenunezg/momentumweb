@@ -79,6 +79,29 @@ const EXPORTS: { sport: string; items: { href: string; table: string; schema: st
       },
     ],
   },
+  {
+    sport: "LMB",
+    items: [
+      {
+        href: "/lmb/api/export/ledger.csv",
+        table: "bet_ledger_v",
+        schema: "lmb",
+        recomputes: "Pick results: one row per moneyline pick with its tier, the frozen Kalshi ask and fee it was priced at, and its result at one unit.",
+      },
+      {
+        href: "/lmb/api/export/forecasts.csv",
+        table: "model_outputs_season",
+        schema: "lmb",
+        recomputes: "Forecast accuracy, with the games export: both team rows of every forecast frozen at first pitch, with the simulation, the Kalshi midpoint and prediction_updated_at against start_time.",
+      },
+      {
+        href: "/lmb/api/export/games.csv",
+        table: "games",
+        schema: "lmb",
+        recomputes: "The schedule and final scores the forecasts are graded against.",
+      },
+    ],
+  },
 ];
 
 // Precomputed tables and functions the pages also read; they are public but
@@ -88,11 +111,14 @@ const ALSO_PUBLIC = [
   { schema: "cfb", name: "closing_lines", kind: "table", note: "the kickoff capture's provider median per game, frozen once written" },
   { schema: "nfl", name: "closing_lines", kind: "table", note: "the live worker's pre-kickoff close per game, frozen once written" },
   { schema: "nhl", name: "closing_lines", kind: "table", note: "the last partner-book quote before puck drop per game, frozen once written" },
+  { schema: "lmb", name: "closing_lines", kind: "table", note: "the last Kalshi quote before first pitch per game, frozen once written" },
   { schema: "cfb", name: "performance_metrics", kind: "table", note: "live accuracy by prediction source and segment, computed by the model repo" },
   { schema: "nfl", name: "performance_metrics", kind: "table", note: "same contract as cfb.performance_metrics" },
   { schema: "nfl", name: "live_predictions", kind: "view", note: "the frozen forecast snapshot paired with each result" },
   { schema: "mlb", name: "model_evaluation", kind: "table", note: "the nightly evaluation rows the MLB accuracy tab shows" },
   { schema: "mlb", name: "model_calibration", kind: "table", note: "calibration bins with their row counts" },
+  { schema: "lmb", name: "model_evaluation", kind: "table", note: "the nightly evaluation rows the LMB performance page shows, with the Kalshi comparison on its own games" },
+  { schema: "lmb", name: "model_calibration", kind: "table", note: "the LMB calibration bins" },
   { schema: "mlb", name: "player_value_evaluation", kind: "view", note: "the grade's head-to-head with ZiPS, THE BAT X and Steamer" },
   { schema: "nfl", name: "position_grade_evaluation", kind: "table", note: "the NFL grade and QB rating comparisons" },
   { schema: "cfb", name: "player_grade_validation", kind: "table", note: "the CFB grade comparisons" },

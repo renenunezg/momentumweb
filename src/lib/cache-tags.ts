@@ -14,6 +14,7 @@ const UNTRIGGERED = new Set([
   "mlb:grading_rules",
   "mlb:rewritten_forecast_days",
   "nhl:market_snapshots",
+  "lmb:games",
 ]);
 const UNTRIGGERED_READ_SECONDS = 3600;
 
@@ -26,6 +27,7 @@ const LIVE_PREDICTION_TABLES = ["forecast_snapshots", "game_results", "closing_l
 const SEASON_OUTPUT_TABLES = ["games", "model_outputs_season", "model_outputs_season_v1_archive"];
 const VIEW_TABLES: Record<string, string[]> = {
   "cfb:current_recommendations": ["recommendation_decisions", "recommendations"],
+  "lmb:bet_ledger_v": ["games", "model_outputs_season"],
   "mlb:bet_ledger_v": [...SEASON_OUTPUT_TABLES, "grading_rules", "rewritten_forecast_days"],
   "mlb:model_outputs_season_unified": SEASON_OUTPUT_TABLES,
   "nfl:live_predictions": LIVE_PREDICTION_TABLES,
