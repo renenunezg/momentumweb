@@ -8,11 +8,13 @@ export function PlayerHeadshot({
   name,
   src,
   className,
+  imageClassName,
   fallback,
 }: {
   name: string;
   src: string | null;
   className?: string;
+  imageClassName?: string;
   fallback?: ReactNode;
 }) {
   const [failedSrc, setFailedSrc] = useState<string | null>(null);
@@ -20,7 +22,7 @@ export function PlayerHeadshot({
   const showImage = src?.startsWith("https://") && failedSrc !== src;
   return <span aria-hidden="true" className={cn("inline-flex h-12 w-12 shrink-0 items-center justify-center overflow-hidden rounded-full border bg-muted align-middle", className)}>
     {src && showImage ? <Image src={src} alt="" width={48} height={48} unoptimized
-      className="h-full w-full object-contain" onError={() => setFailedSrc(src)} />
+      className={cn("h-full w-full object-contain", imageClassName)} onError={() => setFailedSrc(src)} />
       : fallback ?? <span className="font-mono text-sm text-muted-foreground">{initials}</span>}
   </span>;
 }

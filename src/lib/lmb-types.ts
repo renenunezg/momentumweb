@@ -50,6 +50,7 @@ export type LmbModelOutputRow = {
   lineup_source: string;
   lineup_hash: string | null;
   prediction_updated_at: string;
+  // Carries `pick` (parsePick) and `starter` (parseStarter) in src/lib/lmb.ts.
   prediction_context: Json;
   updated_at: string;
 };

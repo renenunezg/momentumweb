@@ -25,3 +25,10 @@ export function nhlPlayerHeadshotUrl(playerId: string): string {
 export function mlbPlayerHeadshotUrl(playerId: number): string {
   return `https://img.mlbstatic.com/mlb-photos/image/upload/w_213,q_auto:best/v1/people/${playerId}/headshot/silo/current`;
 }
+
+// LMB players are minor leaguers to the Stats API, and the milb cut covers about 93% of
+// them (the MLB headshot only about 43%). It is an opaque 2:3 photo, so crop it to the
+// round frame. The d_ default makes the CDN answer MLB's silhouette for a missing photo.
+export function lmbPlayerHeadshotUrl(playerId: number): string {
+  return `https://img.mlbstatic.com/mlb-photos/image/upload/d_people:generic:headshot:67:current.png/w_120,q_auto:best/v1/people/${playerId}/headshot/milb/current`;
+}

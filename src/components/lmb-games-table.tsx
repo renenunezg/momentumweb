@@ -2,6 +2,7 @@ import { Fragment } from "react";
 import { GameMatchupHeader } from "@/components/games-table-layout";
 import { LmbRunDistribution } from "@/components/lmb-run-distribution";
 import { MlbBaseOutState } from "@/components/mlb-base-out-state";
+import { PlayerHeadshot } from "@/components/player-headshot";
 import { TeamLogo } from "@/components/team-logo";
 import {
   Table,
@@ -13,12 +14,14 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { inningLabel } from "@/lib/game-status";
+import { lmbPlayerHeadshotUrl } from "@/lib/player-headshots";
 import { SITE_TIME_ZONE } from "@/lib/site-time";
 import {
   TIER_LABELS,
   formatCents,
   lmbTeamLogo,
   lmbTeamName,
+  parseStarter,
   type LmbMatchup,
   type LmbPick,
 } from "@/lib/lmb";
@@ -36,6 +39,22 @@ function PickCell({ pick }: { pick: LmbPick }) {
         {TIER_LABELS[pick.tier]} &middot; EV {formatSigned(pick.expected_value * 100, 1)}%
       </span>
     </>
+  );
+}
+
+function Starter({ row }: { row: LmbModelOutputRow }) {
+  const starter = parseStarter(row.prediction_context);
+  if (!starter) return <span className="mt-1 block text-xs text-muted-foreground">TBD</span>;
+  return (
+    <span className="mt-1 flex items-center gap-1.5 text-xs">
+      <PlayerHeadshot
+        name={starter.name}
+        src={lmbPlayerHeadshotUrl(starter.id)}
+        className="h-6 w-6"
+        imageClassName="object-cover object-top"
+      />
+      {starter.name}
+    </span>
   );
 }
 
@@ -60,6 +79,7 @@ function TeamRow({
           </span>
         </div>
         <span className="mt-0.5 block text-xs leading-tight text-muted-foreground">{lmbTeamName(row.team)}</span>
+        <Starter row={row} />
       </TableCell>
       <TableCell className="text-right tabular-nums">
         {formatNumber(row.expected_runs)}

@@ -82,12 +82,17 @@ function isTier(value: unknown): value is LmbPickTier {
   return value === "value" || value === "lean" || value === "minimum";
 }
 
+function contextObject(context: Json, key: string): { [key: string]: Json | undefined } | null {
+  if (!context || typeof context !== "object" || Array.isArray(context)) return null;
+  const value = context[key];
+  return value && typeof value === "object" && !Array.isArray(value) ? value : null;
+}
+
 // prediction_context.pick, written on both of a game's rows. A pick missing a
 // field it is graded on is not shown, since it could not be the graded one.
 export function parsePick(context: Json): LmbPick | null {
-  if (!context || typeof context !== "object" || Array.isArray(context)) return null;
-  const pick = context.pick;
-  if (!pick || typeof pick !== "object" || Array.isArray(pick)) return null;
+  const pick = contextObject(context, "pick");
+  if (!pick) return null;
   const { team, probability, price, fee, expected_value, tier } = pick;
   if (
     typeof team !== "string" ||
@@ -100,6 +105,17 @@ export function parsePick(context: Json): LmbPick | null {
     return null;
   }
   return { team, probability, price, fee, expected_value, tier };
+}
+
+// The row's own team's probable starter, by Stats API person id; null until
+// one is announced.
+export type LmbStarter = { id: number; name: string };
+
+export function parseStarter(context: Json): LmbStarter | null {
+  const starter = contextObject(context, "starter");
+  if (!starter) return null;
+  const { id, name } = starter;
+  return typeof id === "number" && typeof name === "string" ? { id, name } : null;
 }
 
 export function tierLabel(tier: string | null): string {
