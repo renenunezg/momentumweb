@@ -1,6 +1,5 @@
 import { createClient } from "@supabase/supabase-js";
 import type { Database } from "@/lib/database.types";
-import type { LmbDatabase } from "@/lib/lmb-types";
 import { restCacheSeconds, restCacheTags } from "./cache-tags.ts";
 import { supabaseFetch } from "./supabase-fetch.ts";
 
@@ -88,13 +87,13 @@ export const supabaseNhl = createClient<Database, "nhl">(url, anonKey, {
 
 // LMB mirrors MLB: the uncached client serves the live games page, and the
 // cached one the performance and history pages.
-export const supabaseLmb = createClient<LmbDatabase, "lmb">(url, anonKey, {
+export const supabaseLmb = createClient<Database, "lmb">(url, anonKey, {
   db: { schema: "lmb" },
   auth: anonAuth("lmb"),
   global: { fetch: supabaseFetch },
 });
 
-export const supabaseLmbCached = createClient<LmbDatabase, "lmb">(url, anonKey, {
+export const supabaseLmbCached = createClient<Database, "lmb">(url, anonKey, {
   db: { schema: "lmb" },
   auth: anonAuth("lmb-cached"),
   global: { fetch: cachedPublicFetch("lmb") },

@@ -581,6 +581,36 @@ export type Database = {
         }
         Relationships: []
       }
+      line_timing: {
+        Row: {
+          closed: number[] | null
+          closed_at: string | null
+          decided: number[] | null
+          decided_at: string | null
+          game_id: number
+          opened: number[] | null
+          season: number
+        }
+        Insert: {
+          closed?: number[] | null
+          closed_at?: string | null
+          decided?: number[] | null
+          decided_at?: string | null
+          game_id: number
+          opened?: number[] | null
+          season: number
+        }
+        Update: {
+          closed?: number[] | null
+          closed_at?: string | null
+          decided?: number[] | null
+          decided_at?: string | null
+          game_id?: number
+          opened?: number[] | null
+          season?: number
+        }
+        Relationships: []
+      }
       live_win_probability: {
         Row: {
           game_id: number
@@ -1929,6 +1959,24 @@ export type Database = {
         }
         Relationships: []
       }
+      pick_line_value: {
+        Row: {
+          clv_points: number | null
+          clv_probability: number | null
+          game_id: number | null
+          market: string | null
+          market_move_points: number | null
+          outcome: string | null
+          point: number | null
+          policy_version: string | null
+          price: number | null
+          reason: string | null
+          season: number | null
+          side: string | null
+          week: number | null
+        }
+        Relationships: []
+      }
       recommendation_performance: {
         Row: {
           average_clv_market_points: number | null
@@ -2011,8 +2059,494 @@ export type Database = {
       [_ in never]: never
     }
   }
+  lmb: {
+    Tables: {
+      closing_lines: {
+        Row: {
+          away_yes_ask: number | null
+          away_yes_bid: number | null
+          fetched_at: string
+          game_pk: number
+          home_yes_ask: number | null
+          home_yes_bid: number | null
+          season: number
+          source: string
+          start_time: string
+        }
+        Insert: {
+          away_yes_ask?: number | null
+          away_yes_bid?: number | null
+          fetched_at: string
+          game_pk: number
+          home_yes_ask?: number | null
+          home_yes_bid?: number | null
+          season: number
+          source?: string
+          start_time: string
+        }
+        Update: {
+          away_yes_ask?: number | null
+          away_yes_bid?: number | null
+          fetched_at?: string
+          game_pk?: number
+          home_yes_ask?: number | null
+          home_yes_bid?: number | null
+          season?: number
+          source?: string
+          start_time?: string
+        }
+        Relationships: []
+      }
+      forecast_history: {
+        Row: {
+          game_pk: number
+          pick_price: number | null
+          pick_team: string | null
+          pick_tier: string | null
+          published_at: string
+          team: string
+          win_prob: number
+        }
+        Insert: {
+          game_pk: number
+          pick_price?: number | null
+          pick_team?: string | null
+          pick_tier?: string | null
+          published_at: string
+          team: string
+          win_prob: number
+        }
+        Update: {
+          game_pk?: number
+          pick_price?: number | null
+          pick_team?: string | null
+          pick_tier?: string | null
+          published_at?: string
+          team?: string
+          win_prob?: number
+        }
+        Relationships: []
+      }
+      games: {
+        Row: {
+          away_score: number | null
+          away_team: string
+          away_team_id: number
+          game_date: string
+          game_pk: number
+          game_type: string
+          home_score: number | null
+          home_team: string
+          home_team_id: number
+          scheduled_innings: number
+          season: number
+          start_time: string | null
+          status: string
+          updated_at: string
+          venue: string | null
+          venue_id: number
+        }
+        Insert: {
+          away_score?: number | null
+          away_team: string
+          away_team_id: number
+          game_date: string
+          game_pk: number
+          game_type: string
+          home_score?: number | null
+          home_team: string
+          home_team_id: number
+          scheduled_innings: number
+          season: number
+          start_time?: string | null
+          status: string
+          updated_at?: string
+          venue?: string | null
+          venue_id: number
+        }
+        Update: {
+          away_score?: number | null
+          away_team?: string
+          away_team_id?: number
+          game_date?: string
+          game_pk?: number
+          game_type?: string
+          home_score?: number | null
+          home_team?: string
+          home_team_id?: number
+          scheduled_innings?: number
+          season?: number
+          start_time?: string | null
+          status?: string
+          updated_at?: string
+          venue?: string | null
+          venue_id?: number
+        }
+        Relationships: []
+      }
+      model_calibration: {
+        Row: {
+          bin: number
+          mean_obs: number
+          mean_pred: number
+          n: number
+          season: number
+          updated_at: string
+        }
+        Insert: {
+          bin: number
+          mean_obs: number
+          mean_pred: number
+          n: number
+          season: number
+          updated_at?: string
+        }
+        Update: {
+          bin?: number
+          mean_obs?: number
+          mean_pred?: number
+          n?: number
+          season?: number
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      model_evaluation: {
+        Row: {
+          accuracy: number | null
+          as_of: string
+          brier: number | null
+          expected_runs_mae: number | null
+          kalshi_brier: number | null
+          kalshi_games: number
+          kalshi_log_loss: number | null
+          log_loss: number | null
+          model_brier_on_kalshi: number | null
+          model_log_loss_on_kalshi: number | null
+          n_games: number
+          pick_count: number
+          pick_units: number
+          pick_wins: number
+          season: number
+          updated_at: string
+          window: string
+        }
+        Insert: {
+          accuracy?: number | null
+          as_of: string
+          brier?: number | null
+          expected_runs_mae?: number | null
+          kalshi_brier?: number | null
+          kalshi_games?: number
+          kalshi_log_loss?: number | null
+          log_loss?: number | null
+          model_brier_on_kalshi?: number | null
+          model_log_loss_on_kalshi?: number | null
+          n_games: number
+          pick_count?: number
+          pick_units?: number
+          pick_wins?: number
+          season: number
+          updated_at?: string
+          window: string
+        }
+        Update: {
+          accuracy?: number | null
+          as_of?: string
+          brier?: number | null
+          expected_runs_mae?: number | null
+          kalshi_brier?: number | null
+          kalshi_games?: number
+          kalshi_log_loss?: number | null
+          log_loss?: number | null
+          model_brier_on_kalshi?: number | null
+          model_log_loss_on_kalshi?: number | null
+          n_games?: number
+          pick_count?: number
+          pick_units?: number
+          pick_wins?: number
+          season?: number
+          updated_at?: string
+          window?: string
+        }
+        Relationships: []
+      }
+      model_outputs: {
+        Row: {
+          date: string
+          expected_runs: number
+          expected_runs_p10: number | null
+          expected_runs_p50: number | null
+          expected_runs_p90: number | null
+          game_pk: number
+          is_home: boolean
+          kalshi_ask: number | null
+          kalshi_bid: number | null
+          lineup_hash: string | null
+          lineup_source: string
+          market_prob: number | null
+          opponent: string
+          prediction_context: Json
+          prediction_updated_at: string
+          runs_hist: number[]
+          sim_win_prob: number
+          start_time: string | null
+          team: string
+          updated_at: string
+          win_prob: number
+          win_prob_p10: number | null
+          win_prob_p90: number | null
+        }
+        Insert: {
+          date: string
+          expected_runs: number
+          expected_runs_p10?: number | null
+          expected_runs_p50?: number | null
+          expected_runs_p90?: number | null
+          game_pk: number
+          is_home: boolean
+          kalshi_ask?: number | null
+          kalshi_bid?: number | null
+          lineup_hash?: string | null
+          lineup_source: string
+          market_prob?: number | null
+          opponent: string
+          prediction_context?: Json
+          prediction_updated_at: string
+          runs_hist: number[]
+          sim_win_prob: number
+          start_time?: string | null
+          team: string
+          updated_at?: string
+          win_prob: number
+          win_prob_p10?: number | null
+          win_prob_p90?: number | null
+        }
+        Update: {
+          date?: string
+          expected_runs?: number
+          expected_runs_p10?: number | null
+          expected_runs_p50?: number | null
+          expected_runs_p90?: number | null
+          game_pk?: number
+          is_home?: boolean
+          kalshi_ask?: number | null
+          kalshi_bid?: number | null
+          lineup_hash?: string | null
+          lineup_source?: string
+          market_prob?: number | null
+          opponent?: string
+          prediction_context?: Json
+          prediction_updated_at?: string
+          runs_hist?: number[]
+          sim_win_prob?: number
+          start_time?: string | null
+          team?: string
+          updated_at?: string
+          win_prob?: number
+          win_prob_p10?: number | null
+          win_prob_p90?: number | null
+        }
+        Relationships: []
+      }
+      model_outputs_season: {
+        Row: {
+          date: string
+          expected_runs: number
+          expected_runs_p10: number | null
+          expected_runs_p50: number | null
+          expected_runs_p90: number | null
+          game_pk: number
+          is_home: boolean
+          kalshi_ask: number | null
+          kalshi_bid: number | null
+          lineup_hash: string | null
+          lineup_source: string
+          market_prob: number | null
+          opponent: string
+          prediction_context: Json
+          prediction_updated_at: string
+          runs_hist: number[]
+          sim_win_prob: number
+          start_time: string | null
+          team: string
+          updated_at: string
+          win_prob: number
+          win_prob_p10: number | null
+          win_prob_p90: number | null
+        }
+        Insert: {
+          date: string
+          expected_runs: number
+          expected_runs_p10?: number | null
+          expected_runs_p50?: number | null
+          expected_runs_p90?: number | null
+          game_pk: number
+          is_home: boolean
+          kalshi_ask?: number | null
+          kalshi_bid?: number | null
+          lineup_hash?: string | null
+          lineup_source: string
+          market_prob?: number | null
+          opponent: string
+          prediction_context?: Json
+          prediction_updated_at: string
+          runs_hist: number[]
+          sim_win_prob: number
+          start_time?: string | null
+          team: string
+          updated_at?: string
+          win_prob: number
+          win_prob_p10?: number | null
+          win_prob_p90?: number | null
+        }
+        Update: {
+          date?: string
+          expected_runs?: number
+          expected_runs_p10?: number | null
+          expected_runs_p50?: number | null
+          expected_runs_p90?: number | null
+          game_pk?: number
+          is_home?: boolean
+          kalshi_ask?: number | null
+          kalshi_bid?: number | null
+          lineup_hash?: string | null
+          lineup_source?: string
+          market_prob?: number | null
+          opponent?: string
+          prediction_context?: Json
+          prediction_updated_at?: string
+          runs_hist?: number[]
+          sim_win_prob?: number
+          start_time?: string | null
+          team?: string
+          updated_at?: string
+          win_prob?: number
+          win_prob_p10?: number | null
+          win_prob_p90?: number | null
+        }
+        Relationships: []
+      }
+      pick_slates: {
+        Row: {
+          date: string
+          game_pks: number[]
+          ranked_at: string
+        }
+        Insert: {
+          date: string
+          game_pks: number[]
+          ranked_at: string
+        }
+        Update: {
+          date?: string
+          game_pks?: number[]
+          ranked_at?: string
+        }
+        Relationships: []
+      }
+    }
+    Views: {
+      bet_ledger_v: {
+        Row: {
+          date: string | null
+          expected_value: number | null
+          fee: number | null
+          game_pk: number | null
+          policy: string | null
+          price: number | null
+          probability: number | null
+          season: number | null
+          status: string | null
+          team: string | null
+          tier: string | null
+          units: number | null
+          won: boolean | null
+        }
+        Relationships: []
+      }
+    }
+    Functions: {
+      [_ in never]: never
+    }
+    Enums: {
+      [_ in never]: never
+    }
+    CompositeTypes: {
+      [_ in never]: never
+    }
+  }
   mlb: {
     Tables: {
+      award_boards: {
+        Row: {
+          award: string
+          league: string
+          player_id: number
+          player_name: string
+          position: string
+          rank: number | null
+          season: number
+          stat_line: string
+          team: string | null
+          vote_share: number | null
+          win_probability: number | null
+          won: boolean | null
+        }
+        Insert: {
+          award: string
+          league: string
+          player_id: number
+          player_name: string
+          position?: string
+          rank?: number | null
+          season: number
+          stat_line?: string
+          team?: string | null
+          vote_share?: number | null
+          win_probability?: number | null
+          won?: boolean | null
+        }
+        Update: {
+          award?: string
+          league?: string
+          player_id?: number
+          player_name?: string
+          position?: string
+          rank?: number | null
+          season?: number
+          stat_line?: string
+          team?: string | null
+          vote_share?: number | null
+          win_probability?: number | null
+          won?: boolean | null
+        }
+        Relationships: []
+      }
+      award_models: {
+        Row: {
+          as_of: string
+          backtest: Json
+          model: string
+          model_version: string
+          season: number
+        }
+        Insert: {
+          as_of: string
+          backtest: Json
+          model: string
+          model_version: string
+          season: number
+        }
+        Update: {
+          as_of?: string
+          backtest?: Json
+          model?: string
+          model_version?: string
+          season?: number
+        }
+        Relationships: []
+      }
       batting_split_values: {
         Row: {
           contact_runs: number
@@ -4952,6 +5486,42 @@ export type Database = {
         }
         Relationships: []
       }
+      book_quotes: {
+        Row: {
+          fetched_at: string
+          game_id: string
+          market: string
+          point: number | null
+          price: number
+          provider_key: string
+          provider_last_update: string | null
+          selection: string
+          source: string
+        }
+        Insert: {
+          fetched_at: string
+          game_id: string
+          market: string
+          point?: number | null
+          price: number
+          provider_key: string
+          provider_last_update?: string | null
+          selection: string
+          source: string
+        }
+        Update: {
+          fetched_at?: string
+          game_id?: string
+          market?: string
+          point?: number | null
+          price?: number
+          provider_key?: string
+          provider_last_update?: string | null
+          selection?: string
+          source?: string
+        }
+        Relationships: []
+      }
       closing_lines: {
         Row: {
           away_moneyline: number | null
@@ -5009,24 +5579,6 @@ export type Database = {
         }
         Relationships: []
       }
-      forecast_input_objects: {
-        Row: {
-          compressed_content: string
-          recorded_at: string
-          sha256: string
-        }
-        Insert: {
-          compressed_content: string
-          recorded_at?: string
-          sha256: string
-        }
-        Update: {
-          compressed_content?: string
-          recorded_at?: string
-          sha256?: string
-        }
-        Relationships: []
-      }
       forecast_input_runs: {
         Row: {
           forecast_as_of: string
@@ -5057,6 +5609,7 @@ export type Database = {
       forecast_snapshots: {
         Row: {
           as_of: string
+          away_absence_adjustment: number | null
           away_qb_adjustment: number | null
           away_team: string
           away_team_abbr: string | null
@@ -5066,6 +5619,7 @@ export type Database = {
           expected_away_points: number | null
           expected_home_points: number | null
           game_id: string
+          home_absence_adjustment: number | null
           home_field_points: number | null
           home_margin: number | null
           home_qb_adjustment: number | null
@@ -5095,6 +5649,7 @@ export type Database = {
         }
         Insert: {
           as_of: string
+          away_absence_adjustment?: number | null
           away_qb_adjustment?: number | null
           away_team: string
           away_team_abbr?: string | null
@@ -5104,6 +5659,7 @@ export type Database = {
           expected_away_points?: number | null
           expected_home_points?: number | null
           game_id: string
+          home_absence_adjustment?: number | null
           home_field_points?: number | null
           home_margin?: number | null
           home_qb_adjustment?: number | null
@@ -5133,6 +5689,7 @@ export type Database = {
         }
         Update: {
           as_of?: string
+          away_absence_adjustment?: number | null
           away_qb_adjustment?: number | null
           away_team?: string
           away_team_abbr?: string | null
@@ -5142,6 +5699,7 @@ export type Database = {
           expected_away_points?: number | null
           expected_home_points?: number | null
           game_id?: string
+          home_absence_adjustment?: number | null
           home_field_points?: number | null
           home_margin?: number | null
           home_qb_adjustment?: number | null
@@ -5174,6 +5732,7 @@ export type Database = {
       game_projections: {
         Row: {
           as_of: string
+          away_absence_adjustment: number | null
           away_qb_adjustment: number | null
           away_team: string
           away_team_abbr: string | null
@@ -5183,6 +5742,7 @@ export type Database = {
           expected_away_points: number | null
           expected_home_points: number | null
           game_id: string
+          home_absence_adjustment: number | null
           home_field_points: number | null
           home_margin: number | null
           home_qb_adjustment: number | null
@@ -5210,6 +5770,7 @@ export type Database = {
         }
         Insert: {
           as_of: string
+          away_absence_adjustment?: number | null
           away_qb_adjustment?: number | null
           away_team: string
           away_team_abbr?: string | null
@@ -5219,6 +5780,7 @@ export type Database = {
           expected_away_points?: number | null
           expected_home_points?: number | null
           game_id: string
+          home_absence_adjustment?: number | null
           home_field_points?: number | null
           home_margin?: number | null
           home_qb_adjustment?: number | null
@@ -5246,6 +5808,7 @@ export type Database = {
         }
         Update: {
           as_of?: string
+          away_absence_adjustment?: number | null
           away_qb_adjustment?: number | null
           away_team?: string
           away_team_abbr?: string | null
@@ -5255,6 +5818,7 @@ export type Database = {
           expected_away_points?: number | null
           expected_home_points?: number | null
           game_id?: string
+          home_absence_adjustment?: number | null
           home_field_points?: number | null
           home_margin?: number | null
           home_qb_adjustment?: number | null
@@ -6497,6 +7061,60 @@ export type Database = {
         }
         Relationships: []
       }
+      teaser_legs: {
+        Row: {
+          away_points: number | null
+          books: number
+          decision_at: string
+          game_id: string
+          graded_at: string | null
+          home_points: number | null
+          outcome: string
+          point: number
+          recorded_at: string
+          season: number
+          side: string
+          start_date: string
+          team: string
+          teased_point: number
+          week: number
+        }
+        Insert: {
+          away_points?: number | null
+          books: number
+          decision_at: string
+          game_id: string
+          graded_at?: string | null
+          home_points?: number | null
+          outcome?: string
+          point: number
+          recorded_at?: string
+          season: number
+          side: string
+          start_date: string
+          team: string
+          teased_point: number
+          week: number
+        }
+        Update: {
+          away_points?: number | null
+          books?: number
+          decision_at?: string
+          game_id?: string
+          graded_at?: string | null
+          home_points?: number | null
+          outcome?: string
+          point?: number
+          recorded_at?: string
+          season?: number
+          side?: string
+          start_date?: string
+          team?: string
+          teased_point?: number
+          week?: number
+        }
+        Relationships: []
+      }
     }
     Views: {
       graded_game_ledger: {
@@ -7012,10 +7630,13 @@ export type Database = {
         Row: {
           away_price: number | null
           away_puck_price: number | null
+          away_regulation_price: number | null
+          draw_price: number | null
           fetched_at: string
           game_id: string
           home_price: number | null
           home_puck_price: number | null
+          home_regulation_price: number | null
           over_price: number | null
           provider_key: string
           provider_last_update: string | null
@@ -7027,10 +7648,13 @@ export type Database = {
         Insert: {
           away_price?: number | null
           away_puck_price?: number | null
+          away_regulation_price?: number | null
+          draw_price?: number | null
           fetched_at: string
           game_id: string
           home_price?: number | null
           home_puck_price?: number | null
+          home_regulation_price?: number | null
           over_price?: number | null
           provider_key: string
           provider_last_update?: string | null
@@ -7042,10 +7666,13 @@ export type Database = {
         Update: {
           away_price?: number | null
           away_puck_price?: number | null
+          away_regulation_price?: number | null
+          draw_price?: number | null
           fetched_at?: string
           game_id?: string
           home_price?: number | null
           home_puck_price?: number | null
+          home_regulation_price?: number | null
           over_price?: number | null
           provider_key?: string
           provider_last_update?: string | null
@@ -7053,6 +7680,36 @@ export type Database = {
           quote_verifications?: Json
           total_line?: number | null
           under_price?: number | null
+        }
+        Relationships: []
+      }
+      morning_rosters: {
+        Row: {
+          fetched_at: string
+          game_date: string
+          game_id: string
+          goalie_ids: number[]
+          skater_ids: number[]
+          start_date: string
+          team_abbr: string
+        }
+        Insert: {
+          fetched_at: string
+          game_date: string
+          game_id: string
+          goalie_ids: number[]
+          skater_ids: number[]
+          start_date: string
+          team_abbr: string
+        }
+        Update: {
+          fetched_at?: string
+          game_date?: string
+          game_id?: string
+          goalie_ids?: number[]
+          skater_ids?: number[]
+          start_date?: string
+          team_abbr?: string
         }
         Relationships: []
       }
@@ -7490,10 +8147,13 @@ export type Database = {
         Returns: {
           away_price: number | null
           away_puck_price: number | null
+          away_regulation_price: number | null
+          draw_price: number | null
           fetched_at: string
           game_id: string
           home_price: number | null
           home_puck_price: number | null
+          home_regulation_price: number | null
           over_price: number | null
           provider_key: string
           provider_last_update: string | null
@@ -7707,6 +8367,9 @@ export type CompositeTypes<
 
 export const Constants = {
   cfb: {
+    Enums: {},
+  },
+  lmb: {
     Enums: {},
   },
   mlb: {
