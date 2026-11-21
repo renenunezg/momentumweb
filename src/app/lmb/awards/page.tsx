@@ -48,10 +48,19 @@ export default async function LmbAwardsPage() {
   const race = (award: string) => rows.filter((row) => row.award === award);
   const late = (award: string) => models.find((model) => model.award === award)?.after_announcement === true;
   const allLate = awards.every(({ award }) => late(award));
+  // The one stat each award's baseline picks the leader in (BASELINE in momentumlmb's backend/awards/features.py);
+  // a tie for the lead splits the hit, so a count can be fractional.
+  const BASELINE: Record<string, string> = {
+    MVP: "batting runs",
+    POY: "wins",
+    REL: "saves",
+    ROY: "batting or pitching runs",
+    MOY: "win pct",
+  };
   const track = awards.flatMap(({ award, short }) => {
     const model = models.find((candidate) => candidate.award === award);
     const fit = model ? parseAwardValidation(model.backtest) : null;
-    return fit ? [{ label: short, fit, years: fit.years }] : [];
+    return fit ? [{ label: short, fit: { ...fit, baseline: BASELINE[award] }, years: fit.years }] : [];
   });
   const years = track.flatMap((row) => row.years);
   const frozen = models.reduce((latest, model) => (model.as_of > latest ? model.as_of : latest), models[0].as_of);
@@ -87,12 +96,12 @@ export default async function LmbAwardsPage() {
       {track.length > 0 && (
         <PageSection>
           <h2 className="type-section">Track record</h2>
-          <HowGraded lead={<>How often each model&apos;s favorite won in past seasons, against a simple baseline.</>}>
+          <HowGraded lead={<>How often each model&apos;s favorite won in past seasons, against picking the leader in one stat.</>}>
             <p>
               Races from {Math.min(...years)} to {Math.max(...years)}; the 2020 season was not played.
             </p>
           </HowGraded>
-          <AwardTrackRecord rows={track} comparison="Baseline" />
+          <AwardTrackRecord rows={track} />
         </PageSection>
       )}
 
