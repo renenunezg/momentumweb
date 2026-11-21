@@ -11,6 +11,8 @@ export interface PositionLeader {
   // A unit row (an offensive line) shows its team logo instead of a headshot, set in the same circle.
   image?: ReactNode;
   headshotUrl: string | null;
+  // An opaque portrait (the LMB's milb cut) is cropped to the round frame.
+  imageClassName?: string;
   // The figure the table ranks by, already formatted.
   stat: string;
   tone?: "primary" | "positive" | "destructive";
@@ -102,7 +104,7 @@ export function PositionLeaderTabs<K extends string>({
                     {leader.image ? (
                       <span className="flex h-12 w-12 items-center justify-center rounded-full bg-muted">{leader.image}</span>
                     ) : (
-                      <PlayerHeadshot name={leader.name} src={leader.headshotUrl} className="h-12 w-12" />
+                      <PlayerHeadshot name={leader.name} src={leader.headshotUrl} className="h-12 w-12" imageClassName={leader.imageClassName} />
                     )}
                   </span>
                   <span

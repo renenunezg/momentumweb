@@ -266,3 +266,32 @@ export function parseAwardValidation(backtest: Json): LmbAwardValidation | null 
   }
   return { hits, races, baseline_hits, years: years as number[] };
 }
+
+// The parts of lmb.player_rating_model.details the players page explains
+// itself with: the season's runs per win, the team-wins check, replacement
+// level and the position adjustment per 162 games.
+export type LmbRatingModel = {
+  runsPerWin: number | null;
+  reconciliation: { r: number; teams: number } | null;
+  replacementWinPct: number | null;
+  positional: Record<string, number>;
+};
+
+const finite = (value: Json | undefined): number | null =>
+  typeof value === "number" && Number.isFinite(value) ? value : null;
+
+export function parseRatingModel(details: Json, season: number): LmbRatingModel {
+  const check = contextObject(contextObject(details, "validation") ?? {}, "team_reconciliation");
+  const r = finite(check?.r);
+  const teams = finite(check?.teams);
+  const positional = Object.entries(contextObject(details, "positional_runs_per_162") ?? {}).flatMap(([pos, runs]) => {
+    const value = finite(runs);
+    return value == null ? [] : [[pos, value] as const];
+  });
+  return {
+    runsPerWin: finite(contextObject(details, "runs_per_win")?.[String(season)]),
+    reconciliation: r != null && teams != null ? { r, teams } : null,
+    replacementWinPct: finite(contextObject(details, "replacement")?.team),
+    positional: Object.fromEntries(positional),
+  };
+}

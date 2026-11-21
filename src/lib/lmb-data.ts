@@ -8,6 +8,8 @@ import type {
   LmbGameRow,
   LmbLedgerRow,
   LmbModelOutputRow,
+  LmbPlayerRatingModelRow,
+  LmbPlayerRatingRow,
   LmbPlayoffOddsRow,
   LmbProspectRow,
 } from "./lmb-types";
@@ -207,4 +209,29 @@ export async function fetchLmbAwards(): Promise<{
     .order("rank", { ascending: true, nullsFirst: false });
   if (!cachedOutcome("LMB award boards", [rows.error])) return empty;
   return { season, models: (models.data ?? []).filter((model) => model.season === season), rows: rows.data ?? [] };
+}
+
+// The newest season's player ratings and the model row behind them. The
+// table sits near the REST API's 1000-row page, so it is read a page at a time.
+const RATING_PAGE = 1000;
+
+export async function fetchLmbPlayerRatings(): Promise<{
+  model: LmbPlayerRatingModelRow | null;
+  rows: LmbPlayerRatingRow[];
+}> {
+  const model = await supabaseLmbCached.from("player_rating_model").select("*").eq("id", 1).maybeSingle();
+  if (!cachedOutcome("LMB player rating model", [model.error])) return { model: null, rows: [] };
+  const rows: LmbPlayerRatingRow[] = [];
+  for (let from = 0; ; from += RATING_PAGE) {
+    const page = await supabaseLmbCached
+      .from("player_ratings")
+      .select("*")
+      .order("season", { ascending: false })
+      .order("player_id", { ascending: true })
+      .range(from, from + RATING_PAGE - 1);
+    if (!cachedOutcome("LMB player ratings", [page.error])) return { model: null, rows: [] };
+    rows.push(...(page.data ?? []));
+    if ((page.data?.length ?? 0) < RATING_PAGE) break;
+  }
+  return { model: model.data, rows: rows.filter((row) => row.season === rows[0].season) };
 }

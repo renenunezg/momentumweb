@@ -9,6 +9,7 @@ export const metadata: Metadata = {
 };
 
 const lmbLinks = [
+  { href: "/lmb/players", label: "Players" },
   { href: "/lmb/prospects", label: "Prospects" },
   { href: "/lmb/games", label: "Games" },
   { href: "/lmb/playoffs", label: "Playoffs" },

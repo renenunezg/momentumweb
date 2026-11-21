@@ -21,6 +21,7 @@ import {
 import { mlbTeamIdentity } from "@/lib/mlb-teams";
 import { mlbPlayerHeadshotUrl } from "@/lib/player-headshots";
 import { EMPTY, cn, formatNumber, formatSigned } from "@/lib/utils";
+import { GradeBar } from "@/components/grade-bar";
 import { InfoTip } from "@/components/info-tip";
 import { NavigationLink as Link } from "@/components/navigation-link";
 import { Pager } from "@/components/pager";
@@ -32,6 +33,7 @@ import { ToggleGroup } from "@/components/toggle-group";
 import { PositionLeaderTabs, surname, type PositionLeader } from "@/components/position-leader-tabs";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { SeasonStatsPanel } from "@/components/season-stats-panel";
+import { SortHeader } from "@/components/sort-header";
 import { seasonStats } from "@/lib/season-stats";
 import { useLinkedPlayerId } from "@/components/use-linked-player";
 
@@ -135,15 +137,6 @@ function sortValue(row: PlayerValueIndex, key: SortKey): number | null {
     case "fld":
       return row.fld;
   }
-}
-
-function GradeBar({ grade }: { grade: number | null }) {
-  const width = grade == null ? 0 : ((grade - 20) / 60) * 100;
-  return (
-    <span className="inline-block h-1.5 w-14 overflow-hidden rounded-[1px] bg-grid align-middle">
-      <span className="block h-full bg-primary" style={{ width: `${width}%` }} />
-    </span>
-  );
 }
 
 function TraitRow({ trait }: { trait: PlayerTrait }) {
@@ -413,38 +406,6 @@ function MlbComparison({
         <DetailStatus failed={failed} onRetry={onRetry} loadingText="Loading comparison traits…" />
       )}
     </section>
-  );
-}
-
-function SortHeader({
-  label,
-  sortKey,
-  active,
-  dir,
-  onSort,
-  tip,
-  className,
-}: {
-  label: string;
-  sortKey: SortKey;
-  active: boolean;
-  dir: "asc" | "desc";
-  onSort: (key: SortKey) => void;
-  tip?: string;
-  className?: string;
-}) {
-  return (
-    <TableHead className={cn("whitespace-nowrap", className)} aria-sort={active ? (dir === "desc" ? "descending" : "ascending") : undefined}>
-      <button
-        type="button"
-        onClick={() => onSort(sortKey)}
-        className={cn("type-eyebrow inline-flex items-center gap-1", active ? "text-primary" : "text-muted-foreground hover:text-foreground")}
-      >
-        {label}
-        {active && <span aria-hidden="true">{dir === "desc" ? "▼" : "▲"}</span>}
-      </button>
-      {tip && <InfoTip text={tip} label={`What is ${label}?`} className="ml-1" />}
-    </TableHead>
   );
 }
 

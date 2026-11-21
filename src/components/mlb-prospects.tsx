@@ -36,6 +36,7 @@ import { MLB_POSITION_ORDER, formatMillions } from "@/lib/player-values";
 import { mlbTeamIdentity } from "@/lib/mlb-teams";
 import { mlbPlayerHeadshotUrl } from "@/lib/player-headshots";
 import { EMPTY, cn, formatNumber, formatSigned } from "@/lib/utils";
+import { GradeBar } from "@/components/grade-bar";
 import { InfoTip } from "@/components/info-tip";
 import { Notice } from "@/components/notice";
 import { PlayerCell } from "@/components/player-cell";
@@ -56,15 +57,6 @@ const SELECT = "h-10 min-w-0 rounded-md border border-input bg-background px-2 t
 
 function percent(value: number | null): string {
   return value == null ? EMPTY : `${Math.round(value * 100)}%`;
-}
-
-function GradeBar({ grade }: { grade: number | null }) {
-  const width = grade == null ? 0 : Math.max(0, Math.min(100, ((grade - 20) / 60) * 100));
-  return (
-    <span className="inline-block h-1.5 w-14 overflow-hidden rounded-[1px] bg-grid align-middle">
-      <span className="block h-full bg-primary" style={{ width: `${width}%` }} />
-    </span>
-  );
 }
 
 function identity(row: ProspectRow) {

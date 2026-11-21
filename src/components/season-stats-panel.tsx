@@ -27,11 +27,12 @@ function TippedLabel({ label, tip }: { label: string; tip: string }) {
   );
 }
 
-export function SeasonStatsPanel({ stats }: { stats: SeasonStatsData }) {
+// `title` replaces the season stats heading when the block is another tally (the LMB WAR ledger).
+export function SeasonStatsPanel({ stats, title }: { stats: SeasonStatsData; title?: string }) {
   return (
     <section aria-label="Season stats" className="space-y-3 border-t border-border pt-4">
       <div className="flex flex-wrap items-baseline justify-between gap-x-4 gap-y-1">
-        <h3 className="text-xs font-semibold">{stats.season} season stats</h3>
+        <h3 className="text-xs font-semibold">{title ?? `${stats.season} season stats`}</h3>
         <p className="font-mono text-[11px] text-muted-foreground">{stats.context}</p>
       </div>
       {stats.tiers.map(({ label, stats: metrics }) => (
