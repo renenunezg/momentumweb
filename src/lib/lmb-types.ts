@@ -16,3 +16,8 @@ export type LmbPlayoffOddsRow = Lmb["Tables"]["playoff_odds"]["Row"];
 export type LmbProspectRow = Omit<Lmb["Tables"]["prospects"]["Row"], "raw_score">;
 export type LmbAwardBoardRow = Lmb["Tables"]["award_boards"]["Row"];
 export type LmbAwardModelRow = Lmb["Tables"]["award_models"]["Row"];
+// The WAR ledger columns (batting through replacement) are runs; war is their
+// sum over the season's runs per win. grade is 20 to 80 for grade_season, with
+// an 80% band in grade_lo and grade_hi.
+export type LmbPlayerRatingRow = Lmb["Tables"]["player_ratings"]["Row"];
+export type LmbPlayerRatingModelRow = Lmb["Tables"]["player_rating_model"]["Row"];

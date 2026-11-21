@@ -2508,6 +2508,105 @@ export type Database = {
         }
         Relationships: []
       }
+      player_rating_model: {
+        Row: {
+          details: Json
+          id: number
+          model_version: string
+          season: number
+          updated_at: string
+        }
+        Insert: {
+          details: Json
+          id?: number
+          model_version: string
+          season: number
+          updated_at?: string
+        }
+        Update: {
+          details?: Json
+          id?: number
+          model_version?: string
+          season?: number
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      player_ratings: {
+        Row: {
+          age: number | null
+          baserunning: number
+          batting: number
+          bf: number
+          fielding: number
+          grade: number | null
+          grade_hi: number | null
+          grade_lo: number | null
+          grade_season: number
+          leverage: number
+          name: string
+          pa: number
+          pitching: number
+          player_id: number
+          pos: string
+          positional: number
+          proj_war: number | null
+          replacement: number
+          season: number
+          team_id: number | null
+          updated_at: string
+          war: number
+        }
+        Insert: {
+          age?: number | null
+          baserunning: number
+          batting: number
+          bf: number
+          fielding: number
+          grade?: number | null
+          grade_hi?: number | null
+          grade_lo?: number | null
+          grade_season: number
+          leverage: number
+          name: string
+          pa: number
+          pitching: number
+          player_id: number
+          pos: string
+          positional: number
+          proj_war?: number | null
+          replacement: number
+          season: number
+          team_id?: number | null
+          updated_at?: string
+          war: number
+        }
+        Update: {
+          age?: number | null
+          baserunning?: number
+          batting?: number
+          bf?: number
+          fielding?: number
+          grade?: number | null
+          grade_hi?: number | null
+          grade_lo?: number | null
+          grade_season?: number
+          leverage?: number
+          name?: string
+          pa?: number
+          pitching?: number
+          player_id?: number
+          pos?: string
+          positional?: number
+          proj_war?: number | null
+          replacement?: number
+          season?: number
+          team_id?: number | null
+          updated_at?: string
+          war?: number
+        }
+        Relationships: []
+      }
       playoff_odds: {
         Row: {
           as_of: string
