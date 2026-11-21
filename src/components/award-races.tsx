@@ -1,11 +1,30 @@
 import { PlayerHeadshot } from "@/components/player-headshot";
 import { ProbabilityBar } from "@/components/probability-bar";
-import { TeamLogo } from "@/components/team-logo";
+import { TeamLogo, type TeamLogoSource } from "@/components/team-logo";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import type { AwardModel, AwardRow } from "@/lib/mlb-awards.server";
+import type { AwardRow } from "@/lib/mlb-awards.server";
 import { mlbPlayerHeadshotUrl } from "@/lib/player-headshots";
 import { mlbTeamCodeByName, mlbTeamIdentity } from "@/lib/mlb-teams";
 import { cn } from "@/lib/utils";
+
+// What every sport's award board row carries; MLB adds leagues, Gold Glove
+// positions and forecast vote shares.
+export type AwardCandidate = Pick<AwardRow, "player_id" | "player_name" | "team" | "rank" | "win_probability" | "stat_line" | "won"> & {
+  league?: string;
+  vote_share?: number | null;
+};
+
+// Where a sport's portraits and team logos come from.
+export type AwardPortraits = {
+  headshot: (playerId: number) => string;
+  logo: (team: string) => TeamLogoSource | undefined;
+  imageClassName?: string;
+};
+
+const MLB_PORTRAITS: AwardPortraits = {
+  headshot: mlbPlayerHeadshotUrl,
+  logo: (team) => mlbTeamIdentity(mlbTeamCodeByName(team)),
+};
 
 const SHOWN = 5;
 // Fixed strings, so Tailwind sees every class. Past these a candidate joins "the rest".
@@ -30,19 +49,19 @@ function Won() {
   return <span className="ml-2 rounded-sm bg-primary/15 px-1.5 py-0.5 type-meta font-medium text-primary">Won</span>;
 }
 
-function Headshot({ row, className }: { row: AwardRow; className?: string }) {
-  return <PlayerHeadshot name={row.player_name} src={mlbPlayerHeadshotUrl(row.player_id)} className={className} />;
+function Headshot({ row, className, portraits = MLB_PORTRAITS }: { row: AwardCandidate; className?: string; portraits?: AwardPortraits }) {
+  return <PlayerHeadshot name={row.player_name} src={portraits.headshot(row.player_id)} className={className} imageClassName={portraits.imageClassName} />;
 }
 
-function Candidate({ row }: { row: AwardRow }) {
+function Candidate({ row, portraits }: { row: AwardCandidate; portraits: AwardPortraits }) {
   const team = row.team ?? "";
   return (
     <div className="flex items-center gap-2.5">
-      <Headshot row={row} className="h-10 w-10" />
+      <Headshot row={row} portraits={portraits} className="h-10 w-10" />
       <div className="min-w-0">
         <div className="font-medium">{row.player_name}{row.won === true && <Won />}</div>
         <div className="type-meta whitespace-normal text-muted-foreground">
-          {team && <TeamLogo team={mlbTeamIdentity(mlbTeamCodeByName(team))} name={team} className="mr-1 h-3.5 w-3.5" />}
+          {team && <TeamLogo team={portraits.logo(team)} name={team} className="mr-1 h-3.5 w-3.5" />}
           {row.stat_line || "Off the frozen board"}
         </div>
       </div>
@@ -50,18 +69,19 @@ function Candidate({ row }: { row: AwardRow }) {
   );
 }
 
-// The eight favorites, each linking down to its race.
-export function AwardFavorites({ races }: { races: { id: string; title: string; rows: AwardRow[] }[] }) {
+// Each race's favorite, linking down to its race. A sport without leagues
+// names the favorite's team where MLB names his league.
+export function AwardFavorites({ races, portraits = MLB_PORTRAITS, className }: { races: { id: string; title: string; rows: AwardCandidate[] }[]; portraits?: AwardPortraits; className?: string }) {
   return (
-    <div className="grid gap-x-6 gap-y-6 border-y border-rule-strong py-5 sm:grid-cols-2 lg:grid-cols-4">
+    <div className={cn("grid gap-x-6 gap-y-6 border-y border-rule-strong py-5 sm:grid-cols-2 lg:grid-cols-4", className)}>
       {races.map(({ id, title, rows }) => (
         <a key={id} href={`#${id}`} className="group min-w-0 space-y-3 rounded-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring">
           <p className="type-eyebrow text-muted-foreground group-hover:text-foreground">{title}</p>
           {rows.map((row) => (
             <div key={row.player_id} className="flex items-center gap-3">
-              <Headshot row={row} className="h-16 w-16" />
+              <Headshot row={row} portraits={portraits} className="h-16 w-16" />
               <div className="min-w-0">
-                <div className="type-meta text-muted-foreground">{row.league}</div>
+                <div className="type-meta text-muted-foreground">{row.league ?? row.team}</div>
                 <div className="font-medium leading-tight">{row.player_name}</div>
                 <div className="type-subsection tabular-nums">{chance(row.win_probability)}</div>
               </div>
@@ -73,17 +93,22 @@ export function AwardFavorites({ races }: { races: { id: string; title: string; 
   );
 }
 
-// Each model against the one number a reader would otherwise pick the winner by.
-export function AwardTrackRecord({ rows }: { rows: { label: string; model: AwardModel }[] }) {
+export type AwardFit = { hits: number; races: number; baseline_hits: number; baseline?: string };
+
+// Each model against the one number a reader would otherwise pick the winner
+// by, or against a sport's unnamed baseline, whose split ties can leave a
+// fraction of a race.
+export function AwardTrackRecord({ rows, comparison = "Single-stat leader" }: { rows: { label: string; fit: AwardFit }[]; comparison?: string }) {
   const stat = (name: string) => (name === "war" ? "fWAR" : name === "oaa" ? "OAA" : name);
+  const count = (value: number) => (Number.isInteger(value) ? String(value) : value.toFixed(1));
   return (
     <div className="space-y-3">
       <div className="flex flex-wrap gap-4 type-meta text-muted-foreground">
         <span className="inline-flex items-center gap-1.5"><span aria-hidden="true" className="h-2 w-2 rounded-full bg-chart-primary" />Model</span>
-        <span className="inline-flex items-center gap-1.5"><span aria-hidden="true" className="h-2 w-2 rounded-full bg-chart-comparison" />Single-stat leader</span>
+        <span className="inline-flex items-center gap-1.5"><span aria-hidden="true" className="h-2 w-2 rounded-full bg-chart-comparison" />{comparison}</span>
       </div>
       <ul className="space-y-2.5">
-        {rows.map(({ label, model: { backtest: fit } }) => (
+        {rows.map(({ label, fit }) => (
           <li key={label} className="grid grid-cols-[7.5rem_1fr_6rem] items-center gap-x-3 sm:grid-cols-[11rem_1fr_11rem]">
             <span className="type-label">{label}</span>
             <span aria-hidden="true" className="space-y-1">
@@ -92,7 +117,7 @@ export function AwardTrackRecord({ rows }: { rows: { label: string; model: Award
             </span>
             <span className="type-meta tabular-nums text-muted-foreground">
               <span className="block text-foreground">{fit.hits} of {fit.races}</span>
-              <span className="block">{stat(fit.baseline)} {fit.baseline_hits}</span>
+              <span className="block">{fit.baseline ? stat(fit.baseline) : comparison} {count(fit.baseline_hits)}</span>
             </span>
           </li>
         ))}
@@ -101,7 +126,7 @@ export function AwardTrackRecord({ rows }: { rows: { label: string; model: Award
   );
 }
 
-function VoteStrip({ rows, label, value }: { rows: AwardRow[]; label: string; value: (row: AwardRow) => number }) {
+function VoteStrip({ rows, label, value }: { rows: AwardCandidate[]; label: string; value: (row: AwardCandidate) => number }) {
   const named = rows.slice(0, SERIES.length);
   const total = rows.reduce((sum, row) => sum + value(row), 0);
   return (
@@ -116,7 +141,7 @@ function VoteStrip({ rows, label, value }: { rows: AwardRow[]; label: string; va
   );
 }
 
-function RaceRows({ rows, offset, withVote, withChance, keyed }: { rows: AwardRow[]; offset: number; withVote: boolean; withChance: boolean; keyed: boolean }) {
+function RaceRows({ rows, offset, withVote, withChance, keyed, portraits }: { rows: AwardCandidate[]; offset: number; withVote: boolean; withChance: boolean; keyed: boolean; portraits: AwardPortraits }) {
   return rows.map((row, index) => (
     <TableRow key={row.player_id}>
       <TableCell className="w-8 align-middle font-mono tabular-nums text-muted-foreground">
@@ -125,14 +150,15 @@ function RaceRows({ rows, offset, withVote, withChance, keyed }: { rows: AwardRo
           {row.rank ?? "–"}
         </span>
       </TableCell>
-      <TableCell className="whitespace-normal"><Candidate row={row} /></TableCell>
+      <TableCell className="whitespace-normal"><Candidate row={row} portraits={portraits} /></TableCell>
       {withVote && <TableCell className="hidden text-right align-middle font-mono tabular-nums sm:table-cell text-muted-foreground">{row.vote_share == null ? "–" : `${Math.round(row.vote_share * 100)}%`}</TableCell>}
       {withChance && <TableCell className="text-right align-middle"><ProbabilityBar value={row.win_probability} label={chance(row.win_probability)} /></TableCell>}
     </TableRow>
   ));
 }
 
-export function AwardRace({ title, rows, strip = false }: { title: string; rows: AwardRow[]; strip?: boolean }) {
+// A board with no probabilities is ranked only: no Win column and no strip.
+export function AwardRace({ title, rows, strip = false, portraits = MLB_PORTRAITS }: { title: string; rows: AwardCandidate[]; strip?: boolean; portraits?: AwardPortraits }) {
   const withVote = rows.some((row) => row.vote_share != null);
   const withChance = rows.some((row) => row.win_probability != null);
   const ranked = rows.filter((row) => row.rank != null);
@@ -150,12 +176,12 @@ export function AwardRace({ title, rows, strip = false }: { title: string; rows:
     <div className="min-w-0 space-y-3">
       {strip && (withVote
         ? <VoteStrip rows={ranked} label="Forecast share of ballot points" value={(row) => row.vote_share ?? 0} />
-        : <VoteStrip rows={ranked} label="Chance of winning" value={(row) => row.win_probability ?? 0} />)}
-      <Table>{head}<TableBody><RaceRows rows={first} offset={0} withVote={withVote} withChance={withChance} keyed={strip} /></TableBody></Table>
+        : withChance && <VoteStrip rows={ranked} label="Chance of winning" value={(row) => row.win_probability ?? 0} />)}
+      <Table>{head}<TableBody><RaceRows rows={first} offset={0} withVote={withVote} withChance={withChance} keyed={strip && (withVote || withChance)} portraits={portraits} /></TableBody></Table>
       {rest.length > 0 && (
         <details>
           <summary className="cursor-pointer type-meta text-muted-foreground">Next {rest.length} candidates</summary>
-          <Table className="mt-2">{head}<TableBody><RaceRows rows={rest} offset={SHOWN} withVote={withVote} withChance={withChance} keyed={false} /></TableBody></Table>
+          <Table className="mt-2">{head}<TableBody><RaceRows rows={rest} offset={SHOWN} withVote={withVote} withChance={withChance} keyed={false} portraits={portraits} /></TableBody></Table>
         </details>
       )}
     </div>

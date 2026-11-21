@@ -45,12 +45,32 @@ export function lmbTeamCode(statsApiId: number | undefined): string | undefined 
   return statsApiId == null ? undefined : CODE_BY_ID.get(statsApiId);
 }
 
-// The Stats API's logo CDN carries every LMB club under its team id.
-export function lmbTeamLogo(code: string): TeamLogoSource | undefined {
-  const team = LMB_TEAMS[code];
-  if (!team) return undefined;
-  const url = `https://www.mlbstatic.com/team-logos/${team.id}.svg`;
+// Accents and case dropped, since the Stats API's names come without accents.
+const fold = (name: string) => name.normalize("NFD").replace(/\p{M}/gu, "").toLowerCase();
+const CODE_BY_NAME = new Map(Object.entries(LMB_TEAMS).map(([code, team]) => [fold(team.name), code]));
+
+// The code for a club's full name as the Stats API spells it ("Diablos Rojos del Mexico").
+export function lmbTeamCodeByName(name: string | null | undefined): string | undefined {
+  return name ? CODE_BY_NAME.get(fold(name)) : undefined;
+}
+
+// The Stats API's logo CDN carries every club it serves under its team id:
+// the LMB, the Mexican Pacific League and the affiliated minors.
+export function statsApiTeamLogo(teamId: number | null | undefined): TeamLogoSource | undefined {
+  if (teamId == null) return undefined;
+  const url = `https://www.mlbstatic.com/team-logos/${teamId}.svg`;
   return { logo_light: url, logo_dark: url };
+}
+
+export function lmbTeamLogo(code: string): TeamLogoSource | undefined {
+  return statsApiTeamLogo(LMB_TEAMS[code]?.id);
+}
+
+// lmb.prospects levels join the leagues a prospect played in with "+".
+const LEVEL_LABELS: Record<string, string> = { lmb: "LMB", lmp: "LMP", milb: "MiLB" };
+
+export function lmbLevelLabel(level: string): string {
+  return level.split("+").map((part) => LEVEL_LABELS[part] ?? part.toUpperCase()).join(" + ");
 }
 
 // Kalshi quotes yes contracts in dollars; a price of 0.54 is 54 cents and
@@ -224,4 +244,25 @@ export function ledgerByTier(rows: LmbLedgerRow[]): TierRecord[] {
   return [...records.values()]
     .map((record) => ({ ...record, meanPrice: record.picks ? (record.meanPrice ?? 0) / record.picks : null }))
     .sort((a, b) => (order.indexOf(a.tier) + 1 || 99) - (order.indexOf(b.tier) + 1 || 99));
+}
+
+// The validation block of an lmb.award_models backtest: how often the model's
+// favorite won the held-out races, beside a baseline that names no stat.
+export type LmbAwardValidation = { hits: number; races: number; baseline_hits: number; years: number[] };
+
+export function parseAwardValidation(backtest: Json): LmbAwardValidation | null {
+  const validation = contextObject(backtest, "validation");
+  if (!validation) return null;
+  const { hits, races, baseline_hits, years } = validation;
+  if (
+    typeof hits !== "number" ||
+    typeof races !== "number" ||
+    races <= 0 ||
+    typeof baseline_hits !== "number" ||
+    !Array.isArray(years) ||
+    !years.every((year) => typeof year === "number")
+  ) {
+    return null;
+  }
+  return { hits, races, baseline_hits, years: years as number[] };
 }

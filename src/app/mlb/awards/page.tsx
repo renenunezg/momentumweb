@@ -1,6 +1,6 @@
 import { PageHeader, PageSection, PageShell, PageTitle } from "@/components/page-layout";
 import type { Metadata } from "next";
-import { AwardFavorites, AwardRace, AwardTrackRecord, GoldGloveField } from "@/components/mlb-awards";
+import { AwardFavorites, AwardRace, AwardTrackRecord, GoldGloveField } from "@/components/award-races";
 import { fetchAwards } from "@/lib/mlb-awards.server";
 import { HowGraded } from "@/components/how-graded";
 
@@ -42,7 +42,7 @@ export default async function MlbAwardsPage() {
   const pitchers = models.find((model) => model.model === "GG_P")?.backtest;
   const track = TRACK_RECORD.flatMap(({ key, label }) => {
     const model = models.find((candidate) => candidate.model === key);
-    return model ? [{ label, model }] : [];
+    return model ? [{ label, fit: model.backtest }] : [];
   });
 
   return (

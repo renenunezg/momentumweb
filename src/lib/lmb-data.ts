@@ -1,11 +1,15 @@
 import { keepLastGood } from "./keep-last-good";
 import { notPublished } from "./lmb";
 import type {
+  LmbAwardBoardRow,
+  LmbAwardModelRow,
   LmbCalibrationRow,
   LmbEvaluationRow,
   LmbGameRow,
   LmbLedgerRow,
   LmbModelOutputRow,
+  LmbPlayoffOddsRow,
+  LmbProspectRow,
 } from "./lmb-types";
 import { supabaseLmb, supabaseLmbCached } from "./supabase";
 
@@ -155,4 +159,52 @@ export async function fetchLmbPickHistory(page: number): Promise<{
     picks: picks.map((row) => ({ ...row, game: row.game_pk == null ? null : results.get(row.game_pk) ?? null })),
     totalPicks: res.count ?? 0,
   };
+}
+
+// The latest snapshot of playoff odds: twenty clubs a snapshot, so two
+// snapshots' worth of rows always holds the whole newest one.
+export async function fetchLmbPlayoffOdds(): Promise<LmbPlayoffOddsRow[]> {
+  const res = await supabaseLmbCached
+    .from("playoff_odds")
+    .select("*")
+    .order("as_of", { ascending: false })
+    .order("p_playoffs", { ascending: false })
+    .limit(40);
+  if (!cachedOutcome("LMB playoff odds", [res.error])) return [];
+  const rows = res.data ?? [];
+  return rows.filter((row) => row.as_of === rows[0].as_of);
+}
+
+// Every prospect of the newest snapshot, in rank order. raw_score is left out
+// of the read: it is uncalibrated and the page shows ranks only.
+export async function fetchLmbProspects(): Promise<LmbProspectRow[]> {
+  const res = await supabaseLmbCached
+    .from("prospects")
+    .select("snapshot_season,player_id,name,role,age,team_id,team,level,mexican_born,role_rank,model_version,scored_at")
+    .order("snapshot_season", { ascending: false })
+    .order("role_rank", { ascending: true })
+    .limit(2000);
+  if (!cachedOutcome("LMB prospects", [res.error])) return [];
+  const rows = res.data ?? [];
+  return rows.filter((row) => row.snapshot_season === rows[0].snapshot_season);
+}
+
+// The newest frozen season's award boards and their models.
+export async function fetchLmbAwards(): Promise<{
+  season: number | null;
+  models: LmbAwardModelRow[];
+  rows: LmbAwardBoardRow[];
+}> {
+  const empty = { season: null, models: [], rows: [] };
+  const models = await supabaseLmbCached.from("award_models").select("*").order("season", { ascending: false }).limit(20);
+  if (!cachedOutcome("LMB award models", [models.error])) return empty;
+  const season = models.data?.[0]?.season ?? null;
+  if (season == null) return empty;
+  const rows = await supabaseLmbCached
+    .from("award_boards")
+    .select("*")
+    .eq("season", season)
+    .order("rank", { ascending: true, nullsFirst: false });
+  if (!cachedOutcome("LMB award boards", [rows.error])) return empty;
+  return { season, models: (models.data ?? []).filter((model) => model.season === season), rows: rows.data ?? [] };
 }
