@@ -2061,6 +2061,69 @@ export type Database = {
   }
   lmb: {
     Tables: {
+      award_boards: {
+        Row: {
+          award: string
+          player_id: number
+          player_name: string
+          rank: number | null
+          season: number
+          stat_line: string
+          team: string | null
+          win_probability: number | null
+          won: boolean | null
+        }
+        Insert: {
+          award: string
+          player_id: number
+          player_name: string
+          rank?: number | null
+          season: number
+          stat_line?: string
+          team?: string | null
+          win_probability?: number | null
+          won?: boolean | null
+        }
+        Update: {
+          award?: string
+          player_id?: number
+          player_name?: string
+          rank?: number | null
+          season?: number
+          stat_line?: string
+          team?: string | null
+          win_probability?: number | null
+          won?: boolean | null
+        }
+        Relationships: []
+      }
+      award_models: {
+        Row: {
+          after_announcement: boolean
+          as_of: string
+          award: string
+          backtest: Json
+          model_version: string
+          season: number
+        }
+        Insert: {
+          after_announcement: boolean
+          as_of: string
+          award: string
+          backtest: Json
+          model_version: string
+          season: number
+        }
+        Update: {
+          after_announcement?: boolean
+          as_of?: string
+          award?: string
+          backtest?: Json
+          model_version?: string
+          season?: number
+        }
+        Relationships: []
+      }
       closing_lines: {
         Row: {
           away_yes_ask: number | null
@@ -2442,6 +2505,102 @@ export type Database = {
           date?: string
           game_pks?: number[]
           ranked_at?: string
+        }
+        Relationships: []
+      }
+      playoff_odds: {
+        Row: {
+          as_of: string
+          losses: number
+          p_champion: number
+          p_final: number
+          p_playoffs: number
+          p_zone_final: number
+          p_zone_series: number
+          proj_losses: number
+          proj_wins: number
+          season: number
+          team: string
+          wins: number
+          zone: string
+        }
+        Insert: {
+          as_of: string
+          losses: number
+          p_champion: number
+          p_final: number
+          p_playoffs: number
+          p_zone_final: number
+          p_zone_series: number
+          proj_losses: number
+          proj_wins: number
+          season: number
+          team: string
+          wins: number
+          zone: string
+        }
+        Update: {
+          as_of?: string
+          losses?: number
+          p_champion?: number
+          p_final?: number
+          p_playoffs?: number
+          p_zone_final?: number
+          p_zone_series?: number
+          proj_losses?: number
+          proj_wins?: number
+          season?: number
+          team?: string
+          wins?: number
+          zone?: string
+        }
+        Relationships: []
+      }
+      prospects: {
+        Row: {
+          age: number
+          level: string
+          mexican_born: boolean
+          model_version: string
+          name: string
+          player_id: number
+          raw_score: number
+          role: string
+          role_rank: number
+          scored_at: string
+          snapshot_season: number
+          team: string | null
+          team_id: number | null
+        }
+        Insert: {
+          age: number
+          level: string
+          mexican_born: boolean
+          model_version: string
+          name: string
+          player_id: number
+          raw_score: number
+          role: string
+          role_rank: number
+          scored_at: string
+          snapshot_season: number
+          team?: string | null
+          team_id?: number | null
+        }
+        Update: {
+          age?: number
+          level?: string
+          mexican_born?: boolean
+          model_version?: string
+          name?: string
+          player_id?: number
+          raw_score?: number
+          role?: string
+          role_rank?: number
+          scored_at?: string
+          snapshot_season?: number
+          team?: string | null
+          team_id?: number | null
         }
         Relationships: []
       }
