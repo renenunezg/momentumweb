@@ -40,8 +40,9 @@ export default async function LmbProspectsPage() {
       </PageHeader>
 
       <p className="max-w-4xl text-sm text-muted-foreground leading-relaxed">
-        Young players in the LMB, the Mexican Pacific League (LMP) and the affiliated minors (MiLB), batters and pitchers
-        ranked separately. The model orders them; it does not give a chance of reaching any level.
+        Young players in the LMB and Mexican-born players in the Mexican Pacific League (LMP) and affiliated minors
+        (MiLB), batters and pitchers ranked separately. Select a row for the player card and season stats; the model
+        orders them without showing an uncalibrated probability.
       </p>
 
       <LmbProspects rows={rows} />

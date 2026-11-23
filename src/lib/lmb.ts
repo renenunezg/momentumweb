@@ -2,6 +2,7 @@ import type { TeamLogoSource } from "@/components/team-logo";
 import type { Json } from "./database.types";
 import { toLiveScore, type LiveScore, type MlbScheduleGame } from "./mlb-live-scores";
 import type { LmbLedgerRow, LmbModelOutputRow } from "./lmb-types";
+import type { SeasonStat, SeasonStatsData } from "./season-stats";
 import { EMPTY } from "./utils";
 
 // The Stats API serves the LMB as sport 23, league 125. These game types are
@@ -293,5 +294,237 @@ export function parseRatingModel(details: Json, season: number): LmbRatingModel 
     reconciliation: r != null && teams != null ? { r, teams } : null,
     replacementWinPct: finite(contextObject(details, "replacement")?.team),
     positional: Object.fromEntries(positional),
+  };
+}
+
+const MILB_LEVEL_LABELS: Record<number, string> = {
+  1: "Rookie",
+  2: "Single-A",
+  3: "High-A",
+  4: "Double-A",
+  5: "Triple-A",
+};
+
+export function milbLevelName(level: number): string | null {
+  return MILB_LEVEL_LABELS[level] ?? null;
+}
+
+export type LmbProspectStatLine = {
+  source?: string;
+  g: number;
+  gs?: number;
+  pa?: number;
+  ab?: number;
+  h: number;
+  d2?: number;
+  d3?: number;
+  hr: number;
+  bb: number;
+  hbp: number;
+  so: number;
+  bf?: number;
+  outs?: number;
+};
+
+export type LmbProspectDetails = {
+  position: string | null;
+  throws: string | null;
+  milbLevel: number;
+  ageRel: number | null;
+  windowOpp: number;
+  seasonOpp: number;
+  oppBySource: { lmb: number; lmp: number; milb: number };
+  drivers: [string, number][];
+  percentiles: Record<string, number>;
+  seasonStats: LmbProspectStatLine | null;
+  splits: LmbProspectStatLine[];
+};
+
+function parseStatLine(value: Json | undefined): LmbProspectStatLine | null {
+  if (!value || typeof value !== "object" || Array.isArray(value)) return null;
+  const g = finite(value.g);
+  const h = finite(value.h);
+  const hr = finite(value.hr);
+  const bb = finite(value.bb);
+  const hbp = finite(value.hbp);
+  const so = finite(value.so);
+  if (g == null || h == null || hr == null || bb == null || hbp == null || so == null) return null;
+  return {
+    source: typeof value.source === "string" ? value.source : undefined,
+    g,
+    gs: finite(value.gs) ?? undefined,
+    pa: finite(value.pa) ?? undefined,
+    ab: finite(value.ab) ?? undefined,
+    h,
+    d2: finite(value.d2) ?? undefined,
+    d3: finite(value.d3) ?? undefined,
+    hr,
+    bb,
+    hbp,
+    so,
+    bf: finite(value.bf) ?? undefined,
+    outs: finite(value.outs) ?? undefined,
+  };
+}
+
+export function parseProspectDetails(details: Json): LmbProspectDetails | null {
+  if (!details || typeof details !== "object" || Array.isArray(details)) return null;
+  const opp = contextObject(details, "opp_by_source");
+  const rawDrivers = Array.isArray(details.drivers) ? details.drivers : [];
+  const drivers: [string, number][] = [];
+  for (const entry of rawDrivers) {
+    if (Array.isArray(entry) && typeof entry[0] === "string" && typeof entry[1] === "number" && Number.isFinite(entry[1])) {
+      drivers.push([entry[0], entry[1]]);
+    }
+  }
+  const rawPcts = contextObject(details, "percentiles") ?? {};
+  const percentiles: Record<string, number> = {};
+  for (const [key, val] of Object.entries(rawPcts)) {
+    const n = finite(val);
+    if (n != null) percentiles[key] = n;
+  }
+  const rawSplits = Array.isArray(details.splits) ? details.splits : [];
+  const splits = rawSplits.map((item) => parseStatLine(item)).filter((item): item is LmbProspectStatLine => item != null);
+  return {
+    position: typeof details.position === "string" ? details.position : null,
+    throws: typeof details.throws === "string" ? details.throws : null,
+    milbLevel: finite(details.milb_level) ?? 0,
+    ageRel: finite(details.age_rel),
+    windowOpp: finite(details.window_opp) ?? 0,
+    seasonOpp: finite(details.season_opp) ?? 0,
+    oppBySource: {
+      lmb: finite(opp?.lmb) ?? 0,
+      lmp: finite(opp?.lmp) ?? 0,
+      milb: finite(opp?.milb) ?? 0,
+    },
+    drivers,
+    percentiles,
+    seasonStats: parseStatLine(details.season_stats),
+    splits,
+  };
+}
+
+const fmtRate = (v: number | null) => (v == null ? null : v >= 1 ? v.toFixed(3) : v.toFixed(3).replace(/^0/, ""));
+const fmtPct = (v: number | null) => (v == null ? null : `${v.toFixed(1)}%`);
+const fmtFixed = (v: number | null, digits: number) => (v == null ? null : v.toFixed(digits));
+const fmtInt = (v: number | null | undefined) => (v == null ? null : v.toLocaleString("en-US"));
+const fmtInnings = (outs: number) => `${Math.floor(outs / 3)}.${outs % 3}`;
+const statCell = (label: string, value: string | null, tip: string | null): SeasonStat => ({ label, value, tip });
+
+function hitterSlash(s: LmbProspectStatLine): { avg: number | null; obp: number | null; slg: number | null; ops: number | null } {
+  const ab = s.ab ?? 0;
+  const d2 = s.d2 ?? 0;
+  const d3 = s.d3 ?? 0;
+  const obpDen = ab + s.bb + s.hbp;
+  const avg = ab > 0 ? s.h / ab : null;
+  const obp = obpDen > 0 ? (s.h + s.bb + s.hbp) / obpDen : null;
+  const slg = ab > 0 ? (s.h + d2 + 2 * d3 + 3 * s.hr) / ab : null;
+  const ops = obp != null && slg != null ? obp + slg : null;
+  return { avg, obp, slg, ops };
+}
+
+export function lmbProspectSeasonStats(
+  details: LmbProspectDetails,
+  season: number,
+  level: string,
+  role: string,
+): SeasonStatsData | null {
+  const s = details.seasonStats;
+  if (!s) return null;
+  const leagueLabel = lmbLevelLabel(level);
+
+  if (role === "P") {
+    const bf = s.bf ?? 0;
+    const outs = s.outs ?? 0;
+    if (bf <= 0) return null;
+    const kPct = (100 * s.so) / bf;
+    const bbPct = (100 * s.bb) / bf;
+    const whip = outs > 0 ? (s.bb + s.h) / (outs / 3) : null;
+    const per9 = (count: number) => (outs > 0 ? (27 * count) / outs : null);
+    const splitNote =
+      details.splits.length > 1
+        ? `${season} splits: ${details.splits
+            .map((sp) => `${lmbLevelLabel(sp.source ?? "")} ${fmtInnings(sp.outs ?? 0)} IP (${sp.so} K, ${sp.bb} BB)`)
+            .join(", ")}.`
+        : "Season totals from the MLB Stats API across the leagues listed above.";
+    return {
+      season,
+      context: `${leagueLabel} · ${fmtInnings(outs)} IP · ${fmtInt(bf)} BF`,
+      tiers: [
+        {
+          label: "Production",
+          stats: [
+            statCell("IP", fmtInnings(outs), "Innings pitched. The .2 means two outs, not two tenths of an inning."),
+            statCell("BF", fmtInt(bf), "Batters faced across the leagues listed above."),
+            statCell("G", fmtInt(s.g), "Games pitched."),
+            statCell("GS", fmtInt(s.gs ?? 0), "Games started."),
+            statCell("WHIP", fmtFixed(whip, 2), "Walks plus hits allowed per inning."),
+            statCell("K", fmtInt(s.so), null),
+            statCell("BB", fmtInt(s.bb), "Walks allowed."),
+            statCell("HR", fmtInt(s.hr), "Home runs allowed."),
+          ],
+        },
+        {
+          label: "Rate stats",
+          stats: [
+            statCell("K%", fmtPct(kPct), "Strikeouts divided by batters faced."),
+            statCell("BB%", fmtPct(bbPct), "Walks divided by batters faced."),
+            statCell("K−BB%", fmtPct(kPct - bbPct), "Strikeout rate minus walk rate, in percentage points. Primary pitching skill input in the prospect model."),
+            statCell("K/9", fmtFixed(per9(s.so), 1), "Strikeouts per nine innings."),
+            statCell("BB/9", fmtFixed(per9(s.bb), 1), "Walks per nine innings."),
+            statCell("H/9", fmtFixed(per9(s.h), 1), "Hits allowed per nine innings."),
+            statCell("HR/9", fmtFixed(per9(s.hr), 2), "Home runs allowed per nine innings."),
+          ],
+        },
+      ],
+      note: splitNote,
+    };
+  }
+
+  const pa = s.pa ?? 0;
+  if (pa <= 0) return null;
+  const { avg, obp, slg, ops } = hitterSlash(s);
+  const kPct = (100 * s.so) / pa;
+  const bbPct = (100 * s.bb) / pa;
+  const xbh = (s.d2 ?? 0) + (s.d3 ?? 0) + s.hr;
+  const splitNote =
+    details.splits.length > 1
+      ? `${season} splits: ${details.splits
+          .map((sp) => {
+            const sl = hitterSlash(sp);
+            return `${lmbLevelLabel(sp.source ?? "")} ${sp.pa ?? 0} PA (${fmtRate(sl.avg) ?? EMPTY}/${fmtRate(sl.obp) ?? EMPTY}/${fmtRate(sl.slg) ?? EMPTY}, ${sp.hr} HR)`;
+          })
+          .join(", ")}.`
+      : "Season totals from the MLB Stats API across the leagues listed above.";
+  return {
+    season,
+    context: `${leagueLabel} · ${fmtInt(s.g)} G · ${fmtInt(pa)} PA`,
+    tiers: [
+      {
+        label: "Production",
+        stats: [
+          statCell("PA", fmtInt(pa), "Plate appearances across the leagues listed above."),
+          statCell("AVG", fmtRate(avg), "Hits divided by at-bats."),
+          statCell("OBP", fmtRate(obp), "Hits, walks and hit-by-pitches divided by at-bats, walks and hit-by-pitches."),
+          statCell("SLG", fmtRate(slg), "Total bases per at-bat."),
+          statCell("OPS", fmtRate(ops), "On-base percentage plus slugging percentage."),
+          statCell("HR", fmtInt(s.hr), null),
+          statCell("XBH", fmtInt(xbh), "Doubles, triples and home runs."),
+          statCell("G", fmtInt(s.g), "Games played."),
+        ],
+      },
+      {
+        label: "Plate discipline",
+        stats: [
+          statCell("K%", fmtPct(kPct), "Strikeouts divided by plate appearances."),
+          statCell("BB%", fmtPct(bbPct), "Walks divided by plate appearances."),
+          statCell("K−BB%", fmtPct(kPct - bbPct), "Strikeout rate minus walk rate; lower is better for hitters."),
+          statCell("H", fmtInt(s.h), "Total hits."),
+          statCell("BB", fmtInt(s.bb), "Total walks."),
+          statCell("SO", fmtInt(s.so), "Total strikeouts."),
+        ],
+      },
+    ],
+    note: splitNote,
   };
 }

@@ -182,7 +182,7 @@ export async function fetchLmbPlayoffOdds(): Promise<LmbPlayoffOddsRow[]> {
 export async function fetchLmbProspects(): Promise<LmbProspectRow[]> {
   const res = await supabaseLmbCached
     .from("prospects")
-    .select("snapshot_season,player_id,name,role,age,team_id,team,level,mexican_born,role_rank,model_version,scored_at")
+    .select("snapshot_season,player_id,name,role,age,team_id,team,level,mexican_born,role_rank,model_version,scored_at,details")
     .order("snapshot_season", { ascending: false })
     .order("role_rank", { ascending: true })
     .limit(2000);

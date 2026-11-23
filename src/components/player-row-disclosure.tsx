@@ -34,14 +34,14 @@ export function PlayerRowDisclosure({ name, rank, identity, grade, open, panelId
   );
 }
 
-export function PlayerRowHeader() {
+export function PlayerRowHeader({ metricLabel = "Grade" }: { metricLabel?: string } = {}) {
   return (
     <div className="md:hidden">
       <p className="pb-2 text-xs text-muted-foreground">Tap a row for the full player card.</p>
       <div className="type-eyebrow grid grid-cols-[1.25rem_minmax(0,1fr)_2.75rem_1rem] items-center gap-2 border-y border-rule-strong px-1 py-2 text-muted-foreground">
         <span>#</span>
         <span>Player</span>
-        <span className="text-center">Grade</span>
+        <span className="text-center">{metricLabel}</span>
         <span aria-hidden="true" />
       </div>
     </div>

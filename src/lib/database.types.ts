@@ -2658,6 +2658,7 @@ export type Database = {
       prospects: {
         Row: {
           age: number
+          details: Json | null
           level: string
           mexican_born: boolean
           model_version: string
@@ -2673,6 +2674,7 @@ export type Database = {
         }
         Insert: {
           age: number
+          details?: Json | null
           level: string
           mexican_born: boolean
           model_version: string
@@ -2688,6 +2690,7 @@ export type Database = {
         }
         Update: {
           age?: number
+          details?: Json | null
           level?: string
           mexican_born?: boolean
           model_version?: string
