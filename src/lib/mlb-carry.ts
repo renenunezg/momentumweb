@@ -63,10 +63,19 @@ export interface CarryStudy {
   season: number;
   model_version: string;
   puzzle: { balls: PuzzleBall[]; every_ball: Record<string, [expected: number, actual: number][]> };
-  repeatability: { split_half: number; full_season: number; year_to_year: number; hitters: number };
+  repeatability: {
+    split_half: number;
+    full_season: number;
+    year_to_year: number;
+    year_to_year_recent?: number;
+    pairs?: number;
+    hitters: number;
+  };
   air: {
     ft_per_density_measured: number;
     ft_per_density_model: number;
+    ft_per_density_measured_no_coors?: number;
+    ft_per_density_model_no_coors?: number;
     league_density: number;
     by_density: [density: number, carry: number, n: number][];
     parks: { venue: string; elevation: number; measured: number; air: number; n: number }[];

@@ -197,7 +197,7 @@ export default async function MlbCarryPage() {
         <KpiCard compact label="Repeatable" value={`r = ${study.repeatability.full_season.toFixed(2)}`} sub="estimated full-season reliability"
           tooltip={`One half of a hitter's season predicts the other half at ${study.repeatability.split_half.toFixed(2)}; scaled to a full season (Spearman-Brown) that is ${study.repeatability.full_season.toFixed(2)}.`} />
         <KpiCard compact label="Swing physics explains" value={pct(ex.share)} sub={`${pct(ex.ceiling)} ceiling`}
-          tooltip={`Share of the differences between hitters' season carry that the swing's collision and flight physics predicts in ${season - 1}, a season not used to fit the slope. ${season - 1} was also the check season while the physics constants and about twenty candidate explanations were screened, so this is a validation score, not an untouched holdout. Sampling noise caps any model near ${pct(ex.ceiling)} of the same variance, so the swing covers ${pct(ex.share / ex.ceiling)} of what is explainable.`} />
+          tooltip={`Share of the differences between hitters' season carry that the swing's collision and flight physics predicts in ${season - 1}, a season not used to fit the slope. All three bat-tracking seasons (2024 to ${season}) informed model refinement, so this is a validation score, not an untouched holdout. Sampling noise caps any model near ${pct(ex.ceiling)} of the same variance, so the swing covers ${pct(ex.share / ex.ceiling)} of what is explainable.`} />
       </div>
 
       <Section id="puzzle" question="The puzzle" title="Balls hit the same way land at different distances">
@@ -231,11 +231,13 @@ export default async function MlbCarryPage() {
       </Section>
 
       <Section id="skill" question="Is it real?" title="Carry is a repeatable hitter skill">
-        <Explain lead={<>Among {qualified.length} hitters with {QUALIFIED}+ balls in the air, one season predicts the next at {study.repeatability.year_to_year.toFixed(2)}.</>}>
+        <Explain lead={<>Across 2021 to {season} ({study.repeatability.pairs ? `${study.repeatability.pairs} consecutive-season pairs` : `${qualified.length} qualified hitters`}, {QUALIFIED}+ balls in the air), one season predicts the next at {study.repeatability.year_to_year.toFixed(2)}.</>}>
           <p>
-            One half of a season predicts the other at {study.repeatability.split_half.toFixed(2)}, which puts a full season&apos;s
-            reliability near {study.repeatability.full_season.toFixed(2)}. Here carry also removes the ballpark, the month, and the
-            direction of the ball, so a hitter&apos;s home park and summer air do not count as his.
+            In {season} ({qualified.length} qualified hitters), one half of a season predicts the other at{" "}
+            {study.repeatability.split_half.toFixed(2)}, which puts a full season&apos;s reliability near{" "}
+            {study.repeatability.full_season.toFixed(2)}
+            {study.repeatability.year_to_year_recent != null && ` (2024 to ${season} year-to-year r = ${study.repeatability.year_to_year_recent.toFixed(2)})`}.
+            Here carry also removes the ballpark, the month, and the direction of the ball, so a hitter&apos;s home park and summer air do not count as his.
           </p>
         </Explain>
         <CarryDistribution values={qualified.map((h) => h.carry)} marks={marks.map((h) => ({ name: h.player_name, carry: h.carry }))} />
@@ -248,7 +250,9 @@ export default async function MlbCarryPage() {
             The flight model, built from published drag and lift
             measurements plus a low-speed drag rise fitted to distances, predicts {Math.abs(study.air.ft_per_density_model).toFixed(0)} feet per unit of air density (kg/m³); the
             data measure {Math.abs(study.air.ft_per_density_measured).toFixed(0)}.
-            {coors && ` At Coors Field balls carry ${signed(coors.measured)} feet against the league, and the flight model credits its thin air alone with ${signed(coors.air)}, in line with the model's density effect running stronger than the data's.`}{" "}
+            {study.air.ft_per_density_measured_no_coors != null && study.air.ft_per_density_model_no_coors != null &&
+              ` Outside Coors Field, the data measure ${Math.abs(study.air.ft_per_density_measured_no_coors).toFixed(0)} against a modeled ${Math.abs(study.air.ft_per_density_model_no_coors).toFixed(0)}.`}
+            {coors && ` At Coors Field balls carry ${signed(coors.measured)} feet against the league, and the flight model credits its thin air alone with ${signed(coors.air)}, reflecting humidor and park effects at altitude.`}{" "}
             In a separate check, the posted game-time wind barely registers in the data: about 0.5 feet per m/s of tailwind where the flight model expects 5 to 10, so it is left out.
           </p>
         </Explain>
@@ -294,19 +298,20 @@ export default async function MlbCarryPage() {
         <TiltCarry points={qualified.filter((h) => h.tilt != null).map((h) => ({ name: h.player_name, x: h.tilt!, y: h.carry }))} highlight={highlight} />
       </Section>
 
-      <Section id="explained" question="How much does the swing explain?" title="A bit over half, with the rest unexplained">
+      <Section id="explained" question="How much does the swing explain?" title="About two thirds, with a repeatable remainder">
         <Explain lead="These shares are validation scores and have no untouched holdout.">
           <p>
-            Measured swing physics predicts {pct(ex.share_without_steep_correction)}{" "}of hitters&apos; carry differences in {season - 1}, a season
-            not used to fit the slope. {season - 1} was also the check season while the physics constants and about twenty candidate explanations
-            were screened. Steep swings carry less than their measured attack angle implies, consistent with a steep barrel still rising faster
-            at contact than it is measured just before; correcting for it, on the same hitters and the same carry, lifts the share to{" "}
-            {pct(ex.share)}. Sampling noise caps any model near {pct(ex.ceiling)} of that same variance, so the swing accounts for about{" "}
-            {pct(ex.share / ex.ceiling)} of the carry that is explainable at all.
+            Pure bat-in-plane collision and flight physics predicts {pct(ex.share_without_steep_correction)} of hitters&apos; carry differences in{" "}
+            {season - 1}, a season not used to fit the slope. Adding a small steep-swing correction ({study.physics.tilt_attack_correction}° of extra
+            barrel rise per degree of relative tilt) lifts the share to {pct(ex.share)} on the same hitters and the same carry. All three bat-tracking
+            seasons (2024 to {season}) informed model refinement, so there is no untouched holdout until {season + 1}. Sampling noise caps any model
+            near {pct(ex.ceiling)} of that same variance, so the swing accounts for about {pct(ex.share / ex.ceiling)} of the carry that is
+            explainable at all.
           </p>
           <p>
             The rest is not all noise: what physics leaves unexplained still repeats from one season to the next (r ={" "}
-            {ex.leftover_year_to_year.toFixed(2)}), and in earlier checks it lined up with no swing measurement Statcast publishes. Where on the barrel the ball is struck, the bat itself, and the hand path are candidates public data cannot see.
+            {ex.leftover_year_to_year.toFixed(2)}), with a modest correlation to swing length and small remaining residuals in attack direction and pull.
+            Where on the barrel the ball is struck, the bat itself, and the hand path are candidates public data cannot see.
           </p>
         </Explain>
         <ExplainedBars explained={ex} />
@@ -360,9 +365,9 @@ export default async function MlbCarryPage() {
           Method: regular-season Statcast from 2021 (carry), 2023 (bat tracking for swing types and changers, partial that season) and
           2024 (swing physics). Flight uses Nathan&apos;s drag and lift coefficients (Analysis
           of Baseball Trajectories, 2017) with a fitted drag rise below about {study.physics.cd_transition_mph} mph; the collision follows Cross
-          and Nathan (2006) and Kensrud, Nathan and Smith (2016). Spin is estimated, so rpm figures are relative to the league. The drag rise, spin scale and steep-swing
-          correction were set on 2026 batted balls and checked on 2024 and 2025, as were the spin-ball launch window (10° to 40°) and the
-          bat axis tilt, after about twenty candidate explanations were screened the same way.
+          and Nathan (2006) and Kensrud, Nathan and Smith (2017) with the cylindrical bat lying in the swing plane. Spin is estimated, so rpm figures
+          are relative to the league. The drag rise, spin scale, spin-ball launch window (10° to 40°), and steep-swing correction
+          ({study.physics.tilt_attack_correction}°) were refined across 2024 to {season}.
           {bottom && ` Least carry this season: ${bottom.player_name} (${signed(bottom.carry)} ft).`}
         </p>
       </HowGraded>
