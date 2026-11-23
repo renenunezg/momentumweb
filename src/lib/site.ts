@@ -15,5 +15,5 @@ export const SPORT_HOME = {
   cfb: "/cfb/ratings",
   nfl: "/nfl/ratings",
   nhl: "/nhl/ratings",
-  lmb: "/lmb/games",
+  lmb: "/lmb/players",
 } as const;
