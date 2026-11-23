@@ -51,7 +51,6 @@ function Starter({ row }: { row: LmbModelOutputRow }) {
         name={starter.name}
         src={lmbPlayerHeadshotUrl(starter.id)}
         className="h-6 w-6"
-        imageClassName="object-cover object-top"
       />
       {starter.name}
     </span>

@@ -38,7 +38,6 @@ function ProspectRanks({ rows, noun }: { rows: LmbProspectRow[]; noun: string })
                 <PlayerCell
                   athleteId={String(row.player_id)}
                   headshotUrl={lmbPlayerHeadshotUrl(row.player_id)}
-                  imageClassName="object-cover object-top"
                   name={row.name}
                   team={[row.team, lmbLevelLabel(row.level)].filter(Boolean).join(" · ")}
                   position={null}

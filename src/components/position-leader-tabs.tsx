@@ -12,7 +12,6 @@ export interface PositionLeader {
   image?: ReactNode;
   headshotUrl: string | null;
   // An opaque portrait (the LMB's milb cut) is cropped to the round frame.
-  imageClassName?: string;
   // The figure the table ranks by, already formatted.
   stat: string;
   tone?: "primary" | "positive" | "destructive";
@@ -104,7 +103,7 @@ export function PositionLeaderTabs<K extends string>({
                     {leader.image ? (
                       <span className="flex h-12 w-12 items-center justify-center rounded-full bg-muted">{leader.image}</span>
                     ) : (
-                      <PlayerHeadshot name={leader.name} src={leader.headshotUrl} className="h-12 w-12" imageClassName={leader.imageClassName} />
+                      <PlayerHeadshot name={leader.name} src={leader.headshotUrl} className="h-12 w-12" />
                     )}
                   </span>
                   <span

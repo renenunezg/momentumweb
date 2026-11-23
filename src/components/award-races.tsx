@@ -18,7 +18,6 @@ export type AwardCandidate = Pick<AwardRow, "player_id" | "player_name" | "team"
 export type AwardPortraits = {
   headshot: (playerId: number) => string;
   logo: (team: string) => TeamLogoSource | undefined;
-  imageClassName?: string;
 };
 
 const MLB_PORTRAITS: AwardPortraits = {
@@ -50,7 +49,7 @@ function Won() {
 }
 
 function Headshot({ row, className, portraits = MLB_PORTRAITS }: { row: AwardCandidate; className?: string; portraits?: AwardPortraits }) {
-  return <PlayerHeadshot name={row.player_name} src={portraits.headshot(row.player_id)} className={className} imageClassName={portraits.imageClassName} />;
+  return <PlayerHeadshot name={row.player_name} src={portraits.headshot(row.player_id)} className={className} />;
 }
 
 function Candidate({ row, portraits }: { row: AwardCandidate; portraits: AwardPortraits }) {

@@ -27,8 +27,6 @@ import { EMPTY, cn, foldSearch, formatNumber, formatSigned } from "@/lib/utils";
 
 const PAGE_ROWS = 40;
 const ALL = "all";
-// The milb cut is an opaque 2:3 photo, cropped to the round frame.
-const PORTRAIT = "object-cover object-top";
 const PRESETS = [
   { key: "best", label: "Best" },
   { key: "war", label: "Most WAR" },
@@ -210,7 +208,6 @@ function Identity({ row }: { row: LmbPlayerRatingRow }) {
     <PlayerCell
       athleteId={String(row.player_id)}
       headshotUrl={lmbPlayerHeadshotUrl(row.player_id)}
-      imageClassName={PORTRAIT}
       name={row.name}
       team={code ?? EMPTY}
       position={row.pos}
@@ -285,7 +282,6 @@ export default function LmbPlayerRatings({ rows, model }: { rows: LmbPlayerRatin
         name: best.name,
         short: surname(best.name),
         headshotUrl: lmbPlayerHeadshotUrl(best.player_id),
-        imageClassName: PORTRAIT,
         ...(byWar
           ? { stat: formatSigned(best.war, 1), tone: best.war >= 0 ? "positive" : "destructive" }
           : { stat: formatNumber(best.grade, 0) }),

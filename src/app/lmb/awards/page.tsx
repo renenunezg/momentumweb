@@ -26,14 +26,12 @@ const AWARDS = [
 const CANDIDATE: Record<string, string> = { MOY: "Manager", POY: "Pitcher", REL: "Reliever", ROY: "Rookie" };
 const FROZEN_DATE = new Intl.DateTimeFormat("en-US", { month: "short", day: "numeric", year: "numeric", timeZone: "America/New_York" });
 
-// The milb cut is an opaque 2:3 photo, cropped to the round frame as on the games page.
 const PORTRAITS: AwardPortraits = {
   headshot: lmbPlayerHeadshotUrl,
   logo: (team) => {
     const code = lmbTeamCodeByName(team);
     return code ? lmbTeamLogo(code) : undefined;
   },
-  imageClassName: "object-cover object-top",
 };
 
 function Unavailable({ children }: { children: React.ReactNode }) {
