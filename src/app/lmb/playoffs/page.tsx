@@ -93,7 +93,9 @@ export default async function LmbPlayoffsPage() {
       {rows.length > 0 ? (
         <div className="min-w-0 space-y-6">
           <p className="type-meta text-muted-foreground">
-            {rows[0].season} outlook · Results as of {formatDate(rows[0].as_of)}
+            {rows.every((row) => row.wins + row.losses === 0)
+              ? `${rows[0].season} preseason outlook · Opening day ${formatDate(rows[0].as_of)}`
+              : `${rows[0].season} outlook · Results as of ${formatDate(rows[0].as_of)}`}
           </p>
           <h2 className="type-section">Zone races</h2>
           <div className="grid gap-6">
