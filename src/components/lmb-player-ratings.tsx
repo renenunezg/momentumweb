@@ -15,12 +15,12 @@ import { SeasonStatsPanel } from "@/components/season-stats-panel";
 import { SortHeader } from "@/components/sort-header";
 import { ToggleGroup } from "@/components/toggle-group";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { lmbTeamCode, lmbTeamLogo, lmbTeamName, type LmbRatingModel } from "@/lib/lmb";
+import { lmbComparisonMetrics, lmbPlayingTime, lmbTeamCode, lmbTeamLogo, lmbTeamName, type LmbRatingModel } from "@/lib/lmb";
 import type { LmbPlayerRatingRow } from "@/lib/lmb-types";
 import { lmbPlayerHeadshotUrl } from "@/lib/player-headshots";
 import { MLB_POSITION_ORDER, PITCHER_GROUPS } from "@/lib/player-values";
 import type { SeasonStat } from "@/lib/season-stats";
-import { EMPTY, cn, foldSearch, formatNumber, formatSigned } from "@/lib/utils";
+import { EMPTY, cn, foldSearch, formatNumber, formatSigned, slug } from "@/lib/utils";
 
 // The MLB player grades table, read from lmb.player_ratings: the same
 // position leaders, filters, columns and card, with the WAR ledger in place of
@@ -73,11 +73,6 @@ function totalRuns(row: LmbPlayerRatingRow): number {
   return row.batting + row.baserunning + row.fielding + row.positional + row.pitching + row.leverage + row.replacement;
 }
 
-function playingTime(row: LmbPlayerRatingRow): string {
-  const parts = [row.pa > 0 && `${row.pa} PA`, row.bf > 0 && `${row.bf} BF`].filter(Boolean);
-  return parts.length > 0 ? parts.join(" · ") : EMPTY;
-}
-
 // The ledger lines a player has: the plate side if he batted or plays the
 // field, the mound side if he pitched, fielding for everyone.
 function ledger(row: LmbPlayerRatingRow, model: LmbRatingModel): SeasonStat[] {
@@ -127,7 +122,7 @@ function LmbPlayerCard({ row, model }: { row: LmbPlayerRatingRow; model: LmbRati
       <div className="flex flex-wrap gap-x-6 gap-y-1 font-mono text-[11px] text-muted-foreground">
         {code && <span>{lmbTeamName(code)}</span>}
         {row.age != null && <span>Age {row.age}</span>}
-        <span>{playingTime(row)} in {row.season}</span>
+        <span>{lmbPlayingTime(row)} in {row.season}</span>
         {graded && (
           <span>
             {row.grade_season} grade range {formatNumber(row.grade_lo, 0)} to {formatNumber(row.grade_hi, 0)}
@@ -169,28 +164,17 @@ function LmbPlayerCard({ row, model }: { row: LmbPlayerRatingRow; model: LmbRati
 }
 
 function LmbComparison({ rows }: { rows: [LmbPlayerRatingRow, LmbPlayerRatingRow] }) {
-  const pair = (value: (row: LmbPlayerRatingRow) => string): [string, string] => [value(rows[0]), value(rows[1])];
-  const metrics: ComparisonMetric[] = [
-    { label: "Grade", values: pair((row) => formatNumber(row.grade, 0)) },
-    { label: "Projected WAR", values: pair((row) => formatNumber(row.proj_war, 1)) },
-    { label: `${rows[0].season} WAR`, values: pair((row) => formatSigned(row.war, 1)) },
-    { label: "Playing time", values: pair(playingTime) },
-    ...(
-      [
-        ["Batting runs", "batting"],
-        ["Baserunning runs", "baserunning"],
-        ["Fielding runs", "fielding"],
-        ["Positional runs", "positional"],
-        ["Pitching runs", "pitching"],
-        ["Leverage runs", "leverage"],
-        ["Replacement runs", "replacement"],
-      ] as const
-    )
-      .filter(([, key]) => rows.some((row) => row[key] !== 0))
-      .map(([label, key]) => ({ label, values: pair((row) => runs(row[key])) })),
-  ];
+  const metrics: ComparisonMetric[] = lmbComparisonMetrics(rows);
   return (
     <section aria-label="Player comparison" className="space-y-4 rounded-lg border border-rule-strong p-4">
+      <div className="flex items-center justify-between gap-2">
+        <span className="type-eyebrow text-muted-foreground">Comparison</span>
+        <DownloadCardLink
+          compact
+          href={`/lmb/players/card/vs/${rows[0].player_id}/${rows[1].player_id}`}
+          filename={`lmb-${slug(rows[0].name)}-vs-${slug(rows[1].name)}.png`}
+        />
+      </div>
       <div className="grid grid-cols-2 gap-4">
         {rows.map((row) => (
           <div key={row.player_id} className="min-w-0">
@@ -341,11 +325,18 @@ export default function LmbPlayerRatings({ rows, model }: { rows: LmbPlayerRatin
         <div className="flex flex-wrap items-center gap-3">
           {/* Phones sort from the menu above the list, which covers both presets. */}
           <ToggleGroup label="Sort" options={PRESETS} value={preset} onChange={choosePreset} variant="pill" className="hidden md:inline-flex" />
-          <select aria-label="Team" value={team} onChange={(e) => { setTeam(e.target.value); setPage(0); }} className="h-10 min-w-0 rounded-md border border-input bg-background px-2 text-sm">
+          {/* Capped on phones so the download link keeps its place beside it. */}
+          <select aria-label="Team" value={team} onChange={(e) => { setTeam(e.target.value); setPage(0); }} className="h-10 min-w-0 rounded-md border border-input bg-background px-2 text-sm max-sm:max-w-[12rem]">
             {teams.map((option) => (
               <option key={option.key} value={option.key}>{option.label}</option>
             ))}
           </select>
+          <DownloadCardLink
+            href={`/lmb/players/card/${position.toLowerCase()}`}
+            filename={`lmb-${position.toLowerCase()}-grades.png`}
+            label={`${position} top 10 PNG`}
+            className="h-10 border border-input bg-background px-3 text-foreground"
+          />
           <input
             type="search"
             value={query}
@@ -353,12 +344,6 @@ export default function LmbPlayerRatings({ rows, model }: { rows: LmbPlayerRatin
             placeholder="Search player or team"
             aria-label="Search player or team"
             className="h-10 w-full min-w-0 rounded-md border border-input bg-background px-2 text-sm sm:w-56"
-          />
-          <DownloadCardLink
-            href={`/lmb/players/card/${position.toLowerCase()}`}
-            filename={`lmb-${position.toLowerCase()}-grades.png`}
-            label={`${position} top 10 PNG`}
-            className="h-10 border border-input bg-background px-3 text-foreground"
           />
         </div>
       </div>

@@ -89,3 +89,55 @@ export function formatMillions(value: number | null | undefined, decimals = 1): 
   const text = `$${Math.abs(rounded).toFixed(decimals)}M`;
   return rounded < 0 ? `-${text}` : text;
 }
+
+// What the value columns need of a player_values row.
+export interface ValuedPlayer {
+  grade: number | null;
+  projected_war: number | null;
+  trade_value_musd: number | null;
+  market_value_musd: number | null;
+  salary_current_musd: number | null;
+  control_years: number | null;
+  impact_war: number | null;
+  contract_status: string | null;
+}
+
+export function marketPriced(row: Pick<ValuedPlayer, "control_years" | "contract_status">): boolean {
+  return row.control_years === 0 || row.contract_status === "free_agent";
+}
+
+// A player with no control years is shopped at his market value for one season.
+export function headlineValue(row: ValuedPlayer): { label: string; value: number | null; tip: string } {
+  if (marketPriced(row)) {
+    return { label: "Market value", value: row.market_value_musd, tip: MARKET_VALUE_TIP };
+  }
+  return { label: "Trade value", value: row.trade_value_musd, tip: TRADE_VALUE_TIP };
+}
+
+// The value rows of a two-player comparison; a row neither player has is left out.
+export function mlbComparisonMetrics(rows: [ValuedPlayer, ValuedPlayer]): { label: string; values: [string, string] }[] {
+  const dash = "–";
+  const pair = (value: (row: ValuedPlayer) => string): [string, string] => [value(rows[0]), value(rows[1])];
+  return [
+    { label: "Grade", values: pair((row) => (row.grade == null ? dash : row.grade.toFixed(0))) },
+    { label: "Projected WAR", values: pair((row) => (row.projected_war == null ? dash : row.projected_war.toFixed(1))) },
+    {
+      label: "Trade value",
+      values: pair((row) => (row.grade != null && headlineValue(row).label === "Trade value" ? formatMillions(row.trade_value_musd) : dash)),
+    },
+    {
+      label: "Market value",
+      values: pair((row) => (row.grade != null && headlineValue(row).label === "Market value" ? formatMillions(row.market_value_musd) : dash)),
+    },
+    { label: "Salary", values: pair((row) => formatMillions(row.salary_current_musd)) },
+    { label: "Control years", values: pair((row) => String(row.control_years)) },
+    { label: "Impact WAR", values: pair((row) => (row.impact_war == null ? dash : row.impact_war.toFixed(1))) },
+  ].filter((metric) => metric.values.some((value) => value !== dash));
+}
+
+// Graded traits in card order: by panel, then by name.
+export function orderTraits<T extends { panel: string; trait: string }>(traits: T[]): T[] {
+  const panels = Object.keys(PANEL_LABELS);
+  const rank = (panel: string) => (panels.indexOf(panel) + panels.length + 1) % (panels.length + 1);
+  return [...traits].sort((a, b) => rank(a.panel) - rank(b.panel) || traitLabel(a.trait).label.localeCompare(traitLabel(b.trait).label));
+}

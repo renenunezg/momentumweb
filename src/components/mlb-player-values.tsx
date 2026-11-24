@@ -15,12 +15,15 @@ import {
   PRICE_TIP,
   TRADE_VALUE_TIP,
   formatMillions,
+  headlineValue,
+  marketPriced,
+  mlbComparisonMetrics,
   panelMean,
   traitLabel,
 } from "@/lib/player-values";
 import { mlbTeamIdentity } from "@/lib/mlb-teams";
 import { mlbPlayerHeadshotUrl } from "@/lib/player-headshots";
-import { EMPTY, cn, formatNumber, formatSigned } from "@/lib/utils";
+import { EMPTY, cn, formatNumber, formatSigned, slug } from "@/lib/utils";
 import { GradeBar } from "@/components/grade-bar";
 import { InfoTip } from "@/components/info-tip";
 import { NavigationLink as Link } from "@/components/navigation-link";
@@ -75,18 +78,6 @@ const PHYSICAL_FILL = {
 
 function onTeam(row: PlayerValueIndex, team: string): boolean {
   return team === ALL || (team === FREE_AGENTS ? !row.team : row.team === team);
-}
-
-function marketPriced(row: PlayerValueIndex): boolean {
-  return row.control_years === 0 || row.contract_status === "free_agent";
-}
-
-// A player with no control years is shopped at his market value for one season.
-function headlineValue(row: PlayerValueIndex): { label: string; value: number | null; tip: string } {
-  if (marketPriced(row)) {
-    return { label: "Market value", value: row.market_value_musd, tip: MARKET_VALUE_TIP };
-  }
-  return { label: "Trade value", value: row.trade_value_musd, tip: TRADE_VALUE_TIP };
 }
 
 // What sorting by value ranks: surplus over the contract. A market salary is a
@@ -333,47 +324,20 @@ function MlbComparison({
       ),
     ),
   ];
-  const pair = <T,>(value: (row: PlayerValueIndex) => T): [T, T] => [value(rows[0]), value(rows[1])];
-  const metrics: ComparisonMetric[] = [
-    { label: "Grade", values: pair((row) => formatNumber(row.grade, 0)) },
-    {
-      label: "Projected WAR",
-      values: pair((row) => formatNumber(row.projected_war, 1)),
-    },
-    {
-      label: "Trade value",
-      values: pair((row) =>
-        row.grade != null && headlineValue(row).label === "Trade value"
-          ? formatMillions(row.trade_value_musd)
-          : EMPTY,
-      ),
-    },
-    {
-      label: "Market value",
-      values: pair((row) =>
-        row.grade != null && headlineValue(row).label === "Market value"
-          ? formatMillions(row.market_value_musd)
-          : EMPTY,
-      ),
-    },
-    {
-      label: "Salary",
-      values: pair((row) => formatMillions(row.salary_current_musd)),
-    },
-    {
-      label: "Control years",
-      values: pair((row) => String(row.control_years)),
-    },
-    {
-      label: "Impact WAR",
-      values: pair((row) => formatNumber(row.impact_war, 1)),
-    },
-  ].filter((metric) => metric.values.some((value) => value !== EMPTY));
+  const metrics: ComparisonMetric[] = mlbComparisonMetrics(rows);
   return (
     <section
       aria-label="Player comparison"
       className="space-y-4 rounded-lg border border-rule-strong p-4"
     >
+      <div className="flex items-center justify-between gap-2">
+        <span className="type-eyebrow text-muted-foreground">Comparison</span>
+        <DownloadCardLink
+          compact
+          href={`/mlb/players/card/vs/${rows[0].player_id}/${rows[1].player_id}`}
+          filename={`mlb-${slug(rows[0].player_name ?? String(rows[0].player_id))}-vs-${slug(rows[1].player_name ?? String(rows[1].player_id))}.png`}
+        />
+      </div>
       <div className="grid grid-cols-2 gap-4">
         {rows.map((row) => (
           <div key={row.player_id} className="min-w-0">
@@ -593,11 +557,18 @@ export default function MlbPlayerValues({
         <div className="flex flex-wrap items-center gap-3">
           {/* Phones sort from the menu above the list, which covers both presets. */}
           <ToggleGroup label="Sort" options={PRESETS} value={preset} onChange={choosePreset} variant="pill" className="hidden md:inline-flex" />
-          <select aria-label="Team" value={team} onChange={(e) => { setTeam(e.target.value); setPage(0); }} className="h-10 min-w-0 rounded-md border border-input bg-background px-2 text-sm">
+          {/* Capped on phones so the download link keeps its place beside it. */}
+          <select aria-label="Team" value={team} onChange={(e) => { setTeam(e.target.value); setPage(0); }} className="h-10 min-w-0 rounded-md border border-input bg-background px-2 text-sm max-sm:max-w-[12rem]">
             {teams.map((option) => (
               <option key={option.key} value={option.key}>{option.label}</option>
             ))}
           </select>
+          <DownloadCardLink
+            href={`/mlb/players/card/${position.toLowerCase()}`}
+            filename={`mlb-${position.toLowerCase()}-grades.png`}
+            label={`${position} top 10 PNG`}
+            className="h-10 border border-input bg-background px-3 text-foreground"
+          />
           <input
             type="search"
             value={query}
@@ -605,12 +576,6 @@ export default function MlbPlayerValues({
             placeholder="Search player or team"
             aria-label="Search player or team"
             className="h-10 w-full min-w-0 rounded-md border border-input bg-background px-2 text-sm sm:w-56"
-          />
-          <DownloadCardLink
-            href={`/mlb/players/card/${position.toLowerCase()}`}
-            filename={`mlb-${position.toLowerCase()}-grades.png`}
-            label={`${position} top 10 PNG`}
-            className="h-10 border border-input bg-background px-3 text-foreground"
           />
         </div>
         {notice && <p role="status" className="text-sm text-muted-foreground">{notice}</p>}

@@ -115,6 +115,29 @@ export async function fetchPlayerGradeLeaders(position: string, count: number): 
   return data ?? [];
 }
 
+export type ComparedPlayer = Pick<
+  PlayerValueRow,
+  | "player_id" | "player_name" | "team" | "position_group" | "season" | "grade" | "projected_war" | "trade_value_musd"
+  | "market_value_musd" | "salary_current_musd" | "control_years" | "impact_war" | "contract_status"
+>;
+export type ComparedTrait = Pick<PlayerTraitRow, "player_id" | "panel" | "trait" | "grade">;
+
+// Two players' value rows and graded traits, for the downloadable comparison:
+// their own rows through the tagged client, which the publish webhook expires.
+export async function fetchPlayerComparison(ids: [number, number]): Promise<{ players: ComparedPlayer[]; traits: ComparedTrait[] }> {
+  const [players, traits] = await Promise.all([
+    supabaseMlbCached
+      .from("player_values")
+      .select("player_id, player_name, team, position_group, season, grade, projected_war, trade_value_musd, market_value_musd, salary_current_musd, control_years, impact_war, contract_status")
+      .in("player_id", ids)
+      .limit(2),
+    supabaseMlbCached.from("player_traits").select("player_id, panel, trait, grade").in("player_id", ids).not("grade", "is", null).limit(100),
+  ]);
+  if (players.error) throw new Error(`Player comparison read failed: ${players.error.message}`);
+  if (traits.error) throw new Error(`Player comparison traits read failed: ${traits.error.message}`);
+  return { players: players.data ?? [], traits: traits.data ?? [] };
+}
+
 export const fetchPlayerValues = cache(async (): Promise<PlayerValues> => {
   const [rows, byPlayer] = await Promise.all([fetchIndexRows(), fetchSkillTraits()]);
   const index: PlayerValueIndex[] = rows.map((row) => ({

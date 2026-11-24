@@ -1,9 +1,9 @@
 import type { TeamLogoSource } from "@/components/team-logo";
 import type { Json } from "./database.types";
 import { toLiveScore, type LiveScore, type MlbScheduleGame } from "./mlb-live-scores";
-import type { LmbLedgerRow, LmbModelOutputRow } from "./lmb-types";
+import type { LmbLedgerRow, LmbModelOutputRow, LmbPlayerRatingRow } from "./lmb-types";
 import type { SeasonStat, SeasonStatsData } from "./season-stats";
-import { EMPTY } from "./utils";
+import { EMPTY, formatNumber, formatSigned } from "./utils";
 
 // The Stats API serves the LMB as sport 23, league 125. These game types are
 // the ones lmb.games accepts (regular season and the playoff rounds), which
@@ -527,4 +527,39 @@ export function lmbProspectSeasonStats(
     ],
     note: splitNote,
   };
+}
+
+type RatedPlayer = Pick<
+  LmbPlayerRatingRow,
+  "season" | "grade" | "proj_war" | "war" | "pa" | "bf" | "batting" | "baserunning" | "fielding" | "positional" | "pitching" | "leverage" | "replacement"
+>;
+
+export function lmbPlayingTime(row: Pick<RatedPlayer, "pa" | "bf">): string {
+  const parts = [row.pa > 0 && `${row.pa} PA`, row.bf > 0 && `${row.bf} BF`].filter(Boolean);
+  return parts.length > 0 ? parts.join(" · ") : EMPTY;
+}
+
+// The rows of a two-player comparison: grade and wins, then each part of the
+// runs ledger either player has.
+export function lmbComparisonMetrics(rows: [RatedPlayer, RatedPlayer]): { label: string; values: [string, string] }[] {
+  const pair = (value: (row: RatedPlayer) => string): [string, string] => [value(rows[0]), value(rows[1])];
+  return [
+    { label: "Grade", values: pair((row) => formatNumber(row.grade, 0)) },
+    { label: "Projected WAR", values: pair((row) => formatNumber(row.proj_war, 1)) },
+    { label: `${rows[0].season} WAR`, values: pair((row) => formatSigned(row.war, 1)) },
+    { label: "Playing time", values: pair(lmbPlayingTime) },
+    ...(
+      [
+        ["Batting runs", "batting"],
+        ["Baserunning runs", "baserunning"],
+        ["Fielding runs", "fielding"],
+        ["Positional runs", "positional"],
+        ["Pitching runs", "pitching"],
+        ["Leverage runs", "leverage"],
+        ["Replacement runs", "replacement"],
+      ] as const
+    )
+      .filter(([, key]) => rows.some((row) => row[key] !== 0))
+      .map(([label, key]) => ({ label, values: pair((row) => formatSigned(row[key], 0)) })),
+  ];
 }

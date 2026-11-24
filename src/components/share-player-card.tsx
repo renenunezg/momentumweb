@@ -14,6 +14,7 @@ import {
   type CardHeadline,
 } from "@/lib/player-card";
 import { cfbPlayerHeadshotUrl } from "@/lib/player-headshots";
+import type { TeamLogoSource } from "@/components/team-logo";
 import type { GradedPlayer, GradedPlayerTrait, GradeTeam, PlayerIndexRow, PositionGrades } from "@/lib/position-grades";
 import { POSITION_LABELS, SPORT_COPY, TRAIT_SECTION_LABELS, isUnitRow, traitLabel, type GradeSport } from "@/lib/position-traits";
 import type { SeasonStat } from "@/lib/season-stats";
@@ -46,14 +47,22 @@ const PERCENTILE_NOTE_HEIGHT = 24;
 // How to read a bar, said once above them. The model repos publish every
 // lower-is-better stat (sacks, interceptions, fumbles) flipped, so a longer bar
 // is the better result on all but the style and role sections.
-function PercentileNote({ sport, centered = false }: { sport: GradeSport; centered?: boolean }) {
+function BarNote({ lead, rest, centered = false }: { lead: string; rest: string; centered?: boolean }) {
   return (
     <div style={{ display: "flex", alignItems: "center", justifyContent: centered ? "center" : "flex-start", gap: 8, height: PERCENTILE_NOTE_HEIGHT, fontSize: 17 }}>
-      <div style={{ fontWeight: 600, color: C.green }}>Bars are percentiles.</div>
-      <div style={{ color: C.gray }}>
-        {sport === "nhl" ? "Longer is better on every stat." : "Longer is better, and on sacks or turnovers longer means fewer."}
-      </div>
+      <div style={{ fontWeight: 600, color: C.green }}>{lead}</div>
+      <div style={{ color: C.gray }}>{rest}</div>
     </div>
+  );
+}
+
+function PercentileNote({ sport, centered = false }: { sport: GradeSport; centered?: boolean }) {
+  return (
+    <BarNote
+      lead="Bars are percentiles."
+      rest={sport === "nhl" ? "Longer is better on every stat." : "Longer is better, and on sacks or turnovers longer means fewer."}
+      centered={centered}
+    />
   );
 }
 
@@ -412,25 +421,32 @@ const COMPARE_BODY_HEIGHT = 1740 - CHROME_HEIGHT;
 const ROOMY_TRAIT_HEIGHT = 20;
 const SIDE_COLORS = [C.green, C.blue];
 
+const pairOf = <T,>(make: (at: 0 | 1) => T): [T, T] => [make(0), make(1)];
+
+// One player of a comparison header: his face or club mark, name and the line
+// under it.
+interface CompareFace {
+  name: string;
+  sub: string;
+  team: string;
+  logo: TeamLogoSource | undefined;
+  portrait: string | null;
+}
+
 function CompareIdentity({
-  row,
-  logo,
-  portrait,
+  face,
   side,
   size,
 }: {
-  row: PlayerIndexRow;
-  logo: GradeTeam | undefined;
-  portrait: string | null;
+  face: CompareFace;
   side: 0 | 1;
   // The name's type size, shared by both players so the header stays even.
   size: number;
 }) {
   const right = side === 1;
-  const unit = isUnitRow(row.athleteId);
   return (
     <div style={{ display: "flex", flexDirection: right ? "row-reverse" : "row", alignItems: "center", gap: 18, flex: 1 }}>
-      {portrait ? (
+      {face.portrait ? (
         <div
           style={{
             display: "flex",
@@ -443,20 +459,121 @@ function CompareIdentity({
           }}
         >
           {/* eslint-disable-next-line @next/next/no-img-element -- Satori draws only <img>; next/image cannot render in an ImageResponse */}
-          <img src={portrait} width={FACE - 6} height={FACE - 6} alt="" style={{ objectFit: "contain" }} />
+          <img src={face.portrait} width={FACE - 6} height={FACE - 6} alt="" style={{ objectFit: "contain" }} />
         </div>
       ) : (
-        <ShareLogo team={logo} name={row.team} size={FACE - 12} />
+        <ShareLogo team={face.logo} name={face.team} size={FACE - 12} />
       )}
       <div style={{ display: "flex", flexDirection: "column", flex: 1, gap: 6, alignItems: right ? "flex-end" : "flex-start" }}>
-        <div style={{ maxWidth: COMPARE_NAME_WIDTH, fontSize: size, fontWeight: 600, lineHeight: 1.05, ...ELLIPSIS }}>
-          {displayName(row)}
-        </div>
+        <div style={{ maxWidth: COMPARE_NAME_WIDTH, fontSize: size, fontWeight: 600, lineHeight: 1.05, ...ELLIPSIS }}>{face.name}</div>
         <div style={{ display: "flex", flexDirection: right ? "row-reverse" : "row", alignItems: "center", gap: 8, fontSize: 20, color: C.gray }}>
-          {!unit && portrait && <ShareLogo team={logo} name={row.team} size={24} />}
-          {`${unit ? "Unit" : row.team} · ${formatNumber(row.games, 0)} games`}
+          {face.portrait && <ShareLogo team={face.logo} name={face.team} size={24} />}
+          {face.sub}
         </div>
       </div>
+    </div>
+  );
+}
+
+function CompareHeader({ faces }: { faces: [CompareFace, CompareFace] }) {
+  const size = Math.min(...faces.map((face) => nameSize(face.name, COMPARE_NAME_WIDTH, 36, 22)));
+  return (
+    <div style={{ display: "flex", alignItems: "center", gap: 20, height: FACE }}>
+      <CompareIdentity face={faces[0]} side={0} size={size} />
+      <div style={{ fontSize: 20, color: C.gray, letterSpacing: 2, textTransform: "uppercase" }}>vs</div>
+      <CompareIdentity face={faces[1]} side={1} size={size} />
+    </div>
+  );
+}
+
+// A value for each player either side of its label.
+function CompareValueRow({ label, values, subs, tones }: { label: string; values: [string, string]; subs?: [string, string]; tones?: [string | undefined, string | undefined] }) {
+  const cell = (side: 0 | 1) => (
+    <div style={{ display: "flex", flexDirection: side === 1 ? "row-reverse" : "row", alignItems: "baseline", gap: 10, flex: 1 }}>
+      <div style={{ fontSize: 26, fontWeight: 600, color: (tones?.[side] && TONES[tones[side]!]) || C.white }}>{values[side]}</div>
+      {subs && <div style={{ maxWidth: 250, fontSize: 14, color: C.gray, ...ELLIPSIS }}>{subs[side] || " "}</div>}
+    </div>
+  );
+  return (
+    <div style={{ display: "flex", alignItems: "center", height: HEADLINE_ROW, borderTop: `1.5px solid ${C.rule}` }}>
+      {cell(0)}
+      <div style={{ display: "flex", justifyContent: "center", width: 200, fontSize: 15, color: C.gray, letterSpacing: 1.5, textTransform: "uppercase", whiteSpace: "nowrap" }}>
+        {label}
+      </div>
+      {cell(1)}
+    </div>
+  );
+}
+
+// One measure as a pair of bars growing out from its label, the first player's
+// to the left. `shares` are each bar's fill from 0 to 100.
+function MirrorRow({
+  label,
+  texts,
+  shares,
+  height,
+  size,
+  neutral = false,
+  dimmed = false,
+}: {
+  label: string;
+  texts: [string, string];
+  shares: [number, number];
+  height: number;
+  size: number;
+  // A bar that says how much, drawn in gray on both sides.
+  neutral?: boolean;
+  dimmed?: boolean;
+}) {
+  const side = (at: 0 | 1) => {
+    const number = (
+      <div style={{ display: "flex", width: 34, justifyContent: at === 0 ? "flex-start" : "flex-end", fontSize: size - 2, color: C.gray }}>{texts[at]}</div>
+    );
+    const bar = (
+      <div style={{ display: "flex", flex: 1, height: 8, borderRadius: 2, background: C.grid, justifyContent: at === 0 ? "flex-end" : "flex-start" }}>
+        <div
+          style={{
+            width: `${Math.max(0, Math.min(100, shares[at]))}%`,
+            height: "100%",
+            borderRadius: 2,
+            background: neutral ? C.gray : SIDE_COLORS[at],
+            opacity: dimmed ? 0.4 : 1,
+          }}
+        />
+      </div>
+    );
+    return (
+      <div style={{ display: "flex", alignItems: "center", gap: 10, flex: 1 }}>
+        {at === 0 ? number : bar}
+        {at === 0 ? bar : number}
+      </div>
+    );
+  };
+  return (
+    <div style={{ display: "flex", alignItems: "center", gap: 14, height, color: dimmed ? C.gray : C.white }}>
+      {side(0)}
+      <div style={{ display: "flex", justifyContent: "center", width: 270, fontSize: size, ...ELLIPSIS }}>{label}</div>
+      {side(1)}
+    </div>
+  );
+}
+
+function CompareSectionTitle({ children }: { children: string }) {
+  return (
+    <div
+      style={{
+        display: "flex",
+        alignItems: "flex-end",
+        justifyContent: "center",
+        height: SECTION_TITLE_HEIGHT,
+        paddingBottom: 4,
+        fontSize: 15,
+        fontWeight: 600,
+        letterSpacing: 1.5,
+        textTransform: "uppercase",
+      }}
+    >
+      {children}
     </div>
   );
 }
@@ -518,7 +635,6 @@ export async function renderComparisonCard({
     height: CHROME_HEIGHT + footerExtra(note) + Math.min(COMPARE_BODY_HEIGHT, used + traitRows * traitHeight),
   };
   const trait = (side: number, name: string) => sides[side].player.traits.find((t) => t.trait === name);
-  const faceName = Math.min(...sides.map(({ row }) => nameSize(displayName(row), COMPARE_NAME_WIDTH, 36, 22)));
 
   return renderShareFrame({
     eyebrow: `${league} · ${positionName(first.row.positionGroup)}`,
@@ -526,32 +642,31 @@ export async function renderComparisonCard({
     headers: POSTER_HEADERS,
     body: (
       <Section gap={GAP}>
-        <div style={{ display: "flex", alignItems: "center", gap: 20, height: FACE }}>
-          <CompareIdentity row={first.row} logo={teams.find((t) => t.team === first.row.team)} portrait={portraits[0]} side={0} size={faceName} />
-          <div style={{ fontSize: 20, color: C.gray, letterSpacing: 2, textTransform: "uppercase" }}>vs</div>
-          <CompareIdentity row={second.row} logo={teams.find((t) => t.team === second.row.team)} portrait={portraits[1]} side={1} size={faceName} />
-        </div>
+        <CompareHeader
+          faces={pairOf((at) => {
+            const { row } = sides[at];
+            const unit = isUnitRow(row.athleteId);
+            return {
+              name: displayName(row),
+              sub: `${unit ? "Unit" : row.team} · ${formatNumber(row.games, 0)} games`,
+              team: row.team,
+              logo: teams.find((t) => t.team === row.team),
+              portrait: portraits[at],
+            };
+          })}
+        />
 
         <Section>
           {labels.map((label) => {
-            const cell = (side: number) => {
-              const item = headlines[side].find((entry) => entry.label === label);
-              const right = side === 1;
-              return (
-                <div style={{ display: "flex", flexDirection: right ? "row-reverse" : "row", alignItems: "baseline", gap: 10, flex: 1 }}>
-                  <div style={{ fontSize: 26, fontWeight: 600, color: (item?.tone && TONES[item.tone]) || C.white }}>{item?.value ?? EMPTY}</div>
-                  <div style={{ maxWidth: 250, fontSize: 14, color: C.gray, ...ELLIPSIS }}>{item?.sub || " "}</div>
-                </div>
-              );
-            };
+            const items = [0, 1].map((at) => headlines[at].find((entry) => entry.label === label));
             return (
-              <div key={label} style={{ display: "flex", alignItems: "center", height: HEADLINE_ROW, borderTop: `1.5px solid ${C.rule}` }}>
-                {cell(0)}
-                <div style={{ display: "flex", justifyContent: "center", width: 200, fontSize: 15, color: C.gray, letterSpacing: 1.5, textTransform: "uppercase" }}>
-                  {label}
-                </div>
-                {cell(1)}
-              </div>
+              <CompareValueRow
+                key={label}
+                label={label}
+                values={[items[0]?.value ?? EMPTY, items[1]?.value ?? EMPTY]}
+                subs={[items[0]?.sub ?? "", items[1]?.sub ?? ""]}
+                tones={[items[0]?.tone, items[1]?.tone]}
+              />
             );
           })}
         </Section>
@@ -559,60 +674,22 @@ export async function renderComparisonCard({
         <Section>
           <PercentileNote sport={sport} centered />
           {sections.flatMap((section) => [
-            section.kind && (
-              <div
-                key={`title-${section.kind}`}
-                style={{
-                  display: "flex",
-                  alignItems: "flex-end",
-                  justifyContent: "center",
-                  height: SECTION_TITLE_HEIGHT,
-                  paddingBottom: 4,
-                  fontSize: 15,
-                  fontWeight: 600,
-                  letterSpacing: 1.5,
-                  textTransform: "uppercase",
-                }}
-              >
-                {sectionTitle(section.kind)}
-              </div>
-            ),
+            section.kind && <CompareSectionTitle key={`title-${section.kind}`}>{sectionTitle(section.kind)}</CompareSectionTitle>,
             ...section.names.map((name) => {
               const look = barLook(trait(0, name) ?? trait(1, name));
               const { label, short = label } = traitLabel(name, sport);
-              const side = (at: number) => {
-                const pct = trait(at, name)?.percentile ?? null;
-                const number = (
-                  <div style={{ display: "flex", width: 34, justifyContent: at === 0 ? "flex-start" : "flex-end", fontSize: traitSize - 2, color: C.gray }}>
-                    {pct == null ? EMPTY : Math.round(pct)}
-                  </div>
-                );
-                const bar = (
-                  <div style={{ display: "flex", flex: 1, height: 8, borderRadius: 2, background: C.grid, justifyContent: at === 0 ? "flex-end" : "flex-start" }}>
-                    <div
-                      style={{
-                        width: `${pct ?? 0}%`,
-                        height: "100%",
-                        borderRadius: 2,
-                        background: look.style ? C.gray : SIDE_COLORS[at],
-                        opacity: look.dimmed ? 0.4 : 1,
-                      }}
-                    />
-                  </div>
-                );
-                return (
-                  <div style={{ display: "flex", alignItems: "center", gap: 10, flex: 1 }}>
-                    {at === 0 ? number : bar}
-                    {at === 0 ? bar : number}
-                  </div>
-                );
-              };
+              const pct = [0, 1].map((at) => trait(at, name)?.percentile ?? null);
               return (
-                <div key={name} style={{ display: "flex", alignItems: "center", gap: 14, height: traitHeight, color: look.dimmed ? C.gray : C.white }}>
-                  {side(0)}
-                  <div style={{ display: "flex", justifyContent: "center", width: 270, fontSize: traitSize, ...ELLIPSIS }}>{short}</div>
-                  {side(1)}
-                </div>
+                <MirrorRow
+                  key={name}
+                  label={short}
+                  texts={[pct[0] == null ? EMPTY : String(Math.round(pct[0])), pct[1] == null ? EMPTY : String(Math.round(pct[1]))]}
+                  shares={[pct[0] ?? 0, pct[1] ?? 0]}
+                  height={traitHeight}
+                  size={traitSize}
+                  neutral={look.style}
+                  dimmed={look.dimmed}
+                />
               );
             }),
           ])}
@@ -660,3 +737,71 @@ export async function renderComparisonCard({
     ),
   });
 }
+
+export interface ComparisonPlayer {
+  name: string;
+  sub: string;
+  team: string;
+  logo: TeamLogoSource | undefined;
+  portraitUrl: string | null;
+}
+
+// Two players side by side from rows of values, as the baseball comparisons
+// show them, with trait grades as mirrored bars on the 20 to 80 scale where
+// the league publishes them.
+export async function renderMetricsComparison({
+  league,
+  context,
+  players,
+  metrics,
+  grades = [],
+}: {
+  league: string;
+  context: string;
+  players: [ComparisonPlayer, ComparisonPlayer];
+  metrics: { label: string; values: [string, string] }[];
+  grades?: { label: string; values: [number | null, number | null] }[];
+}) {
+  const portraits = await Promise.all(players.map((player) => (player.portraitUrl ? loadPortrait(player.portraitUrl) : null)));
+  const gradesHeight = grades.length ? GAP + PERCENTILE_NOTE_HEIGHT + SECTION_TITLE_HEIGHT : 0;
+  const used = FACE + GAP + metrics.length * HEADLINE_ROW + gradesHeight;
+  const rowHeight = Math.max(20, Math.min(COMPARE_TRAIT_HEIGHT, Math.floor((COMPARE_BODY_HEIGHT - used) / Math.max(1, grades.length))));
+  const size = { width: POSTER_SIZE.width, height: CHROME_HEIGHT + Math.min(COMPARE_BODY_HEIGHT, used + grades.length * rowHeight) };
+  return renderShareFrame({
+    eyebrow: league,
+    size,
+    headers: POSTER_HEADERS,
+    body: (
+      <Section gap={GAP}>
+        <CompareHeader
+          faces={pairOf((at) => ({ ...players[at], portrait: portraits[at] }))}
+        />
+        <Section>
+          {metrics.map((metric) => (
+            <CompareValueRow key={metric.label} label={metric.label} values={metric.values} />
+          ))}
+        </Section>
+        {grades.length > 0 && (
+          <Section>
+            <BarNote lead="Bars are grades." rest="20 to 80 at the position; 50 is average." centered />
+            <CompareSectionTitle>Trait grades</CompareSectionTitle>
+            {grades.map((grade) => (
+              <MirrorRow
+                key={grade.label}
+                label={grade.label}
+                texts={[formatNumber(grade.values[0], 0), formatNumber(grade.values[1], 0)]}
+                shares={[gradeShare(grade.values[0]), gradeShare(grade.values[1])]}
+                height={rowHeight}
+                size={Math.max(15, Math.min(20, Math.round(rowHeight * 0.6)))}
+              />
+            ))}
+          </Section>
+        )}
+      </Section>
+    ),
+    footer: <div style={{ display: "flex", maxWidth: 740, fontSize: 19, lineHeight: 1.3, color: C.gray }}>{context}</div>,
+  });
+}
+
+// A grade's fill on the 20 to 80 scale.
+const gradeShare = (grade: number | null) => (grade == null ? 0 : ((grade - 20) / 60) * 100);
