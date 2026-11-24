@@ -31,7 +31,8 @@ export function ViewTabs<K extends string>({
       onValueChange={(next) => onValueChange(next as K)}
       className={cn("space-y-section", className)}
     >
-      <div className="flex items-center gap-3">
+      {/* The row carries the baseline too, so it runs on under the action instead of stopping short of it. */}
+      <div className="flex items-center gap-3 shadow-[inset_0_-1px_0_var(--border)]">
         <Tabs.List
           aria-label={label}
           className={cn(TAB_LIST, "min-w-0 flex-1")}

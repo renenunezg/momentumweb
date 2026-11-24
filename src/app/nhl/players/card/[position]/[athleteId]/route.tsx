@@ -1,5 +1,5 @@
 import { renderPlayerCard } from "@/components/share-player-card";
-import { buildNhlGradedPlayers, fetchNhlPlayerTraitRows, fetchNhlPositionGrades, fetchTeams, seasonLabel } from "@/lib/nhl";
+import { fetchNhlGradedPlayers, fetchNhlPositionGrades, fetchTeams, seasonLabel } from "@/lib/nhl";
 import { formatDate } from "@/lib/utils";
 
 // One image per player, drawn on its first request and rebuilt by the grades
@@ -18,6 +18,6 @@ export async function GET(_request: Request, { params }: { params: Promise<{ pos
     context: grades.season == null ? "" : `${seasonLabel(grades.season)} · As of ${formatDate(grades.asOf)}`,
     grades,
     teams: [...teams.values()].map((t) => ({ team: t.team_abbr, logo_light: t.logo_light, logo_dark: t.logo_dark })),
-    loadPlayer: async (season, id) => buildNhlGradedPlayers(await fetchNhlPlayerTraitRows(season, [id]))[id],
+    loadPlayers: fetchNhlGradedPlayers,
   });
 }

@@ -321,3 +321,54 @@ export function cardHeadlines({
   }
   return out;
 }
+
+export interface CompareHeadline {
+  label: string;
+  value: string;
+  sub: string;
+  tone?: string;
+}
+
+// The headline numbers of one side of a two-player comparison.
+export function compareHeadlines({
+  sport,
+  row,
+  player,
+}: {
+  sport: GradeSport;
+  row: PlayerIndexRow;
+  player: GradedPlayer | undefined;
+}): CompareHeadline[] {
+  const copy = SPORT_COPY[sport];
+  const rating = RATING_LABELS[row.positionGroup];
+  return [
+    { label: "grade", value: formatGrade(player?.grade ?? row.grade), sub: gradeSub(player, row.percentile) },
+    ...(rating && player?.rating != null
+      ? [{ label: rating.label, value: formatSigned(player.rating, rating.digits ?? 2), sub: rating.unit }]
+      : []),
+    ...(copy.warTip != null
+      ? [{ label: "WAR", value: player?.war == null ? EMPTY : formatSigned(player.war, 2), sub: player?.pointsAboveReplacement == null ? "" : `${formatSigned(player.pointsAboveReplacement, 0)} season pts` }]
+      : []),
+    ...(copy.spreadTip != null && player?.spreadValue != null
+      ? [{ label: "PSR", value: formatPsr(player.spreadValue), sub: "pts if ruled out" }]
+      : []),
+    ...(sport === "nfl" && player?.playerValue != null
+      ? [
+          { label: "Contract value", value: formatMillions(player.playerValue), sub: rangeSub(player.playerValueRange) },
+          { label: "Surplus", value: formatMillions(player.contractSurplus, true), sub: rangeSub(player.contractSurplusRange), tone: surplusTone(player.contractSurplus, player.contractSurplusRange) },
+        ]
+      : []),
+    ...(sport === "cfb" && player?.scoutRank != null
+      ? [{ label: "Scouts", value: `${player.scoutPosition} #${player.scoutRank}`, sub: "Scouting Grade board" }]
+      : []),
+    ...(sport === "cfb" && player?.efficiency != null
+      ? [{ label: "Efficiency", value: formatSigned(player.efficiency, 2), sub: "EPA per play" }]
+      : []),
+    ...(sport === "cfb" && player?.form != null
+      ? [{ label: "Form", value: formatSigned(player.form, 1), sub: "EPA/g last 3 vs season", tone: signTone(player.form) }]
+      : []),
+    ...(sport === "cfb" && player?.nilPrice != null
+      ? [{ label: "NIL price", value: formatPay(player.nilPrice), sub: paySub(player) }]
+      : []),
+  ];
+}

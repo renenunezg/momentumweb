@@ -419,6 +419,12 @@ export async function withScoutRanks(
   return out;
 }
 
+// The full card rows of the given players, as the grades page models them.
+export async function fetchGradedPlayers(season: number, ids: string[]): Promise<Record<string, GradedPlayer>> {
+  const { traits, stats } = await fetchPlayerTraitRows(season, ids);
+  return withScoutRanks(buildGradedPlayers(traits, stats), season);
+}
+
 // Each team's conference in the season's latest ratings week, for the grade
 // filters.
 async function fetchGradeConferences(season: number): Promise<Map<string, string | null>> {

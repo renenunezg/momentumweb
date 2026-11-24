@@ -26,15 +26,12 @@ import { PlayerCell } from "@/components/player-cell";
 import {
   barLook,
   cardHeadlines,
+  compareHeadlines,
   formatMillions,
   formatPay,
   formatPsr,
-  gradeSub,
   nilLine,
-  paySub,
-  rangeSub,
   rankByPosition,
-  signTone,
   surplusTone,
   traitLines,
   traitSections,
@@ -541,46 +538,15 @@ function ComparePanel({
   failed: boolean;
 }) {
   const copy = SPORT_COPY[sport];
-  const rating = RATING_LABELS[rows[0].positionGroup];
   const sections = traitSections(lines);
   const headline = (row: PlayerIndexRow, player: GradedPlayer | undefined, align: "left" | "right") => {
-    const grade = player?.grade ?? row.grade;
-    const items: { label: string; value: string; sub: ReactNode; tone?: string }[] = [
-      { label: "grade", value: formatGrade(grade), sub: gradeSub(player, row.percentile) },
-      ...(rating && player?.rating != null
-        ? [{ label: rating.label, value: formatSigned(player.rating, rating.digits ?? 2), sub: rating.unit }]
-        : []),
-      ...(copy.warTip != null
-        ? [{ label: "WAR", value: player?.war == null ? EMPTY : formatSigned(player.war, 2), sub: player?.pointsAboveReplacement == null ? "" : `${formatSigned(player.pointsAboveReplacement, 0)} season pts` }]
-        : []),
-      ...(copy.spreadTip != null && player?.spreadValue != null
-        ? [{ label: "PSR", value: formatPsr(player.spreadValue), sub: "pts if ruled out" }]
-        : []),
-      ...(sport === "nfl" && player?.playerValue != null
-        ? [
-            { label: "Contract value", value: formatMillions(player.playerValue), sub: rangeSub(player.playerValueRange) },
-            { label: "Surplus", value: formatMillions(player.contractSurplus, true), sub: rangeSub(player.contractSurplusRange), tone: surplusTone(player.contractSurplus, player.contractSurplusRange) },
-          ]
-        : []),
-      ...(sport === "cfb" && player?.scoutRank != null
-        ? [{ label: "Scouts", value: `${player.scoutPosition} #${player.scoutRank}`, sub: "Scouting Grade board" }]
-        : []),
-      ...(sport === "cfb" && player?.efficiency != null
-        ? [{ label: "Efficiency", value: formatSigned(player.efficiency, 2), sub: "EPA per play" }]
-        : []),
-      ...(sport === "cfb" && player?.form != null
-        ? [{ label: "Form", value: formatSigned(player.form, 1), sub: "EPA/g last 3 vs season", tone: signTone(player.form) }]
-        : []),
-      ...(sport === "cfb" && player?.nilPrice != null
-        ? [{ label: "NIL price", value: formatPay(player.nilPrice), sub: paySub(player) }]
-        : []),
-    ];
+    const items = compareHeadlines({ sport, row, player });
     return (
       <div className={cn("grid gap-3 sm:flex sm:flex-wrap", align === "right" ? "justify-end text-right" : "text-left")}>
         {items.map((item) => (
           <div key={item.label} className={cn("flex flex-col", align === "right" ? "items-end" : "items-start")}>
             <span className="type-eyebrow text-muted-foreground">{item.label}</span>
-            <span className={cn("font-mono text-lg font-bold tabular-nums leading-tight", "tone" in item && item.tone)}>{item.value}</span>
+            <span className={cn("font-mono text-lg font-bold tabular-nums leading-tight", item.tone)}>{item.value}</span>
             <span className="font-mono text-[11px] tabular-nums text-muted-foreground">{item.sub}</span>
           </div>
         ))}
@@ -595,13 +561,22 @@ function ComparePanel({
           <span className="type-eyebrow text-muted-foreground">
             {rows[0].positionGroup} comparison
           </span>
-          <button
-            type="button"
-            onClick={onClear}
-            className="type-eyebrow rounded-sm border border-border px-1.5 py-0.5 text-muted-foreground hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
-          >
-            clear
-          </button>
+          <span className="flex items-center gap-2">
+            {players[0] && players[1] && (
+              <DownloadCardLink
+                compact
+                href={`/${sport}/players/card/${rows[0].positionGroup.toLowerCase()}/${encodeURIComponent(rows[0].athleteId)}/vs/${encodeURIComponent(rows[1].athleteId)}`}
+                filename={`${sport}-${slug(rows[0].name)}-vs-${slug(rows[1].name)}.png`}
+              />
+            )}
+            <button
+              type="button"
+              onClick={onClear}
+              className="type-eyebrow rounded-sm border border-border px-1.5 py-0.5 text-muted-foreground hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+            >
+              clear
+            </button>
+          </span>
         </div>
         <div className="min-w-0">
           <Identity row={rows[1]} logo={logoFor(rows[1].team)} />
@@ -831,7 +806,7 @@ export default function PositionGrades({
             href={`/${sport}/players/card/${position.toLowerCase()}`}
             filename={`${sport}-${position.toLowerCase()}-grades-${season}.png`}
             label={`${position} top 10 PNG`}
-            className="h-10 max-sm:col-span-2"
+            className="h-10 border border-input bg-background px-3 text-foreground max-sm:col-span-2"
           />
         </div>
       </div>

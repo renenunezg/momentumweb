@@ -337,6 +337,11 @@ export function buildNhlGradedPlayers({ traits, stats }: { traits: NhlPositionTr
   return buildGradedPlayers(shaped, stats);
 }
 
+// The full card rows of the given players, as the grades page models them.
+export async function fetchNhlGradedPlayers(season: number, ids: string[]): Promise<Record<string, GradedPlayer>> {
+  return buildNhlGradedPlayers(await fetchNhlPlayerTraitRows(season, ids));
+}
+
 // The grade index and trait rows throw on a failed read so ISR keeps the last
 // good page.
 export const fetchNhlPositionGrades = cache(readNhlPositionGrades);

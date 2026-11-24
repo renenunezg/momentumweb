@@ -1,6 +1,5 @@
 import { renderPlayerCard } from "@/components/share-player-card";
-import { fetchGradeTeams, fetchPlayerTraitRows, fetchPositionGrades, withScoutRanks } from "@/lib/cfb";
-import { buildGradedPlayers } from "@/lib/position-grades";
+import { fetchGradeTeams, fetchGradedPlayers, fetchPositionGrades } from "@/lib/cfb";
 
 // One image per player, drawn on its first request and rebuilt by the grades
 // publish webhook, like the player grades page.
@@ -17,10 +16,7 @@ export async function GET(_request: Request, { params }: { params: Promise<{ pos
     athleteId,
     context: `${grades.season} · Through week ${grades.week}`,
     grades,
-    teams,
-    loadPlayer: async (season, id) => {
-      const { traits, stats } = await fetchPlayerTraitRows(season, [id]);
-      return (await withScoutRanks(buildGradedPlayers(traits, stats), season))[id];
-    },
+    teams: teams,
+    loadPlayers: fetchGradedPlayers,
   });
 }

@@ -11,6 +11,7 @@ import {
   rankIndex,
   readAllPages,
   toIndexRow,
+  type GradedPlayer,
   type GradeTeam,
   type IndexRow,
   type PlayerSeasonStatsRow,
@@ -284,6 +285,12 @@ export async function fetchNflPlayerTraitRows(
     stats.push(...(statsRes.data ?? []));
   }
   return { traits, stats };
+}
+
+// The full card rows of the given players, as the grades page models them.
+export async function fetchNflGradedPlayers(season: number, ids: string[]): Promise<Record<string, GradedPlayer>> {
+  const { traits, stats } = await fetchNflPlayerTraitRows(season, ids);
+  return buildGradedPlayers(traits, stats);
 }
 
 // Each team's division in the season's latest ratings week, for the grade

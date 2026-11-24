@@ -3,9 +3,18 @@ import { renderShareFrame, ShareLogo, SHARE_COLORS as C } from "@/components/sha
 import { ELLIPSIS, NOT_FOUND, POSTER_HEADERS, POSTER_SIZE, gradeStrength, heatFill, loadPortrait } from "@/components/share-poster";
 import { footballSeasonStats } from "@/lib/football-season-stats";
 import { hockeySeasonStats } from "@/lib/hockey-season-stats";
-import { barLook, cardHeadlines, nilLine, rankByPosition, traitLines, traitSections, type CardHeadline } from "@/lib/player-card";
+import {
+  barLook,
+  cardHeadlines,
+  compareHeadlines,
+  nilLine,
+  rankByPosition,
+  traitLines,
+  traitSections,
+  type CardHeadline,
+} from "@/lib/player-card";
 import { cfbPlayerHeadshotUrl } from "@/lib/player-headshots";
-import type { GradedPlayer, GradedPlayerTrait, GradeTeam, PositionGrades } from "@/lib/position-grades";
+import type { GradedPlayer, GradedPlayerTrait, GradeTeam, PlayerIndexRow, PositionGrades } from "@/lib/position-grades";
 import { POSITION_LABELS, SPORT_COPY, TRAIT_SECTION_LABELS, isUnitRow, traitLabel, type GradeSport } from "@/lib/position-traits";
 import type { SeasonStat } from "@/lib/season-stats";
 import { EMPTY, formatNumber } from "@/lib/utils";
@@ -106,6 +115,43 @@ function Section({ children, gap = 0 }: { children: ReactNode; gap?: number }) {
   return <div style={{ display: "flex", flexDirection: "column", gap }}>{children}</div>;
 }
 
+interface CardSource {
+  league: string;
+  sport: GradeSport;
+  position: string;
+  context: string;
+  grades: PositionGrades;
+  teams: GradeTeam[];
+  // Full card rows for players the page's own read did not carry.
+  loadPlayers: (season: number, athleteIds: string[]) => Promise<Record<string, GradedPlayer>>;
+}
+
+// Each requested player's index row and full rows, in order; a player who is
+// not graded at the position comes back undefined.
+async function findPlayers(
+  { position, grades, loadPlayers }: Pick<CardSource, "position" | "grades" | "loadPlayers">,
+  athleteIds: string[],
+): Promise<({ row: PlayerIndexRow; player: GradedPlayer } | undefined)[]> {
+  const rows = athleteIds.map((athleteId) => {
+    const id = decodeURIComponent(athleteId);
+    return grades.index.find((r) => r.athleteId === id && r.positionGroup.toLowerCase() === position.toLowerCase());
+  });
+  const missing = rows.flatMap((row) => (row && !grades.details[row.athleteId] ? [row.athleteId] : []));
+  const loaded = grades.season != null && missing.length ? await loadPlayers(grades.season, missing) : {};
+  return rows.map((row) => {
+    const player = row && (grades.details[row.athleteId] ?? loaded[row.athleteId]);
+    return row && player ? { row, player } : undefined;
+  });
+}
+
+// A unit has no face, and a player's may be missing from the CDN.
+function loadFace(row: PlayerIndexRow): Promise<string | null> {
+  return isUnitRow(row.athleteId) ? Promise.resolve(null) : loadPortrait(row.headshotUrl ?? cfbPlayerHeadshotUrl(row.athleteId, 320));
+}
+
+const positionName = (group: string) => POSITION_LABELS[group as keyof typeof POSITION_LABELS] ?? group;
+const displayName = (row: PlayerIndexRow) => (isUnitRow(row.athleteId) ? `${row.team} offensive line` : row.name);
+
 export async function renderPlayerCard({
   league,
   sport,
@@ -114,27 +160,16 @@ export async function renderPlayerCard({
   context,
   grades,
   teams,
-  loadPlayer,
-}: {
-  league: string;
-  sport: GradeSport;
-  position: string;
-  athleteId: string;
-  context: string;
-  grades: PositionGrades;
-  teams: GradeTeam[];
-  // A player's full rows when the page's own read did not carry them.
-  loadPlayer: (season: number, athleteId: string) => Promise<GradedPlayer | undefined>;
-}) {
-  const id = decodeURIComponent(athleteId);
-  const row = grades.index.find((r) => r.athleteId === id && r.positionGroup.toLowerCase() === position.toLowerCase());
-  if (!row || grades.season == null) return NOT_FOUND();
-  const player = grades.details[id] ?? (await loadPlayer(grades.season, id));
-  if (!player) return NOT_FOUND();
+  loadPlayers,
+}: CardSource & { athleteId: string }) {
+  const [found] = await findPlayers({ position, grades, loadPlayers }, [athleteId]);
+  if (!found) return NOT_FOUND();
+  const { row, player } = found;
+  const id = row.athleteId;
 
   const unit = isUnitRow(id);
   const logo = teams.find((t) => t.team === row.team);
-  const portrait = unit ? null : await loadPortrait(row.headshotUrl ?? cfbPlayerHeadshotUrl(id, 320));
+  const portrait = await loadFace(row);
   const [grade, ...headlines] = cardHeadlines({
     sport,
     row,
@@ -190,10 +225,10 @@ export async function renderPlayerCard({
             <ShareLogo team={logo} name={row.team} size={PORTRAIT - 16} />
           )}
           <div style={{ display: "flex", flexDirection: "column", flex: 1, gap: 8 }}>
-            <div style={{ fontSize: 54, fontWeight: 600, lineHeight: 1.05, ...ELLIPSIS }}>{unit ? `${row.team} offensive line` : row.name}</div>
+            <div style={{ fontSize: 54, fontWeight: 600, lineHeight: 1.05, ...ELLIPSIS }}>{displayName(row)}</div>
             <div style={{ display: "flex", alignItems: "center", gap: 10, fontSize: 24, color: C.gray }}>
               {!unit && portrait && <ShareLogo team={logo} name={row.team} size={30} />}
-              {`${unit ? "Unit" : row.team} · ${POSITION_LABELS[row.positionGroup as keyof typeof POSITION_LABELS] ?? row.positionGroup} · ${formatNumber(row.games, 0)} games`}
+              {`${unit ? "Unit" : row.team} · ${positionName(row.positionGroup)} · ${formatNumber(row.games, 0)} games`}
             </div>
           </div>
           <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 6 }}>
@@ -300,6 +335,245 @@ export async function renderPlayerCard({
                 ))}
               </Section>
             ))}
+          </Section>
+        )}
+      </Section>
+    ),
+    footer: (
+      <div style={{ display: "flex", maxWidth: 740, fontSize: 19, lineHeight: 1.3, color: C.gray }}>
+        {`${context} | Bars are percentiles among ${SPORT_COPY[sport].pool} at the position`}
+      </div>
+    ),
+  });
+}
+
+const FACE = 104;
+const HEADLINE_ROW = 46;
+const COMPARE_TRAIT_HEIGHT = 34;
+const COMPARE_STAT_ROW = 28;
+const COMPARE_STAT_TITLE = 30;
+// A pair carries two players' rows, each stat on a row of its own, so its
+// image may run taller than the 4:5 poster before the rows are squeezed.
+const COMPARE_BODY_HEIGHT = 1650 - CHROME_HEIGHT;
+// Trait rows at least this tall leave room for a further tier of stats.
+const ROOMY_TRAIT_HEIGHT = 20;
+const SIDE_COLORS = [C.green, C.blue];
+
+function CompareIdentity({ row, logo, portrait, side }: { row: PlayerIndexRow; logo: GradeTeam | undefined; portrait: string | null; side: 0 | 1 }) {
+  const right = side === 1;
+  const unit = isUnitRow(row.athleteId);
+  return (
+    <div style={{ display: "flex", flexDirection: right ? "row-reverse" : "row", alignItems: "center", gap: 18, flex: 1 }}>
+      {portrait ? (
+        <div
+          style={{
+            display: "flex",
+            width: FACE,
+            height: FACE,
+            borderRadius: FACE / 2,
+            overflow: "hidden",
+            background: C.rule,
+            border: `3px solid ${SIDE_COLORS[side]}`,
+          }}
+        >
+          {/* eslint-disable-next-line @next/next/no-img-element -- Satori draws only <img>; next/image cannot render in an ImageResponse */}
+          <img src={portrait} width={FACE - 6} height={FACE - 6} alt="" style={{ objectFit: "contain" }} />
+        </div>
+      ) : (
+        <ShareLogo team={logo} name={row.team} size={FACE - 12} />
+      )}
+      <div style={{ display: "flex", flexDirection: "column", flex: 1, gap: 6, alignItems: right ? "flex-end" : "flex-start" }}>
+        <div style={{ maxWidth: 330, fontSize: 36, fontWeight: 600, lineHeight: 1.05, ...ELLIPSIS }}>{displayName(row)}</div>
+        <div style={{ display: "flex", flexDirection: right ? "row-reverse" : "row", alignItems: "center", gap: 8, fontSize: 20, color: C.gray }}>
+          {!unit && portrait && <ShareLogo team={logo} name={row.team} size={24} />}
+          {`${unit ? "Unit" : row.team} · ${formatNumber(row.games, 0)} games`}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// Two players of one position side by side, as the comparison on the player
+// grades page: each headline number across one row, and each trait as a bar
+// growing out from the middle, the first player's to the left.
+export async function renderComparisonCard({
+  league,
+  sport,
+  position,
+  athleteIds,
+  context,
+  grades,
+  teams,
+  loadPlayers,
+}: CardSource & { athleteIds: [string, string] }) {
+  const [first, second] = await findPlayers({ position, grades, loadPlayers }, athleteIds);
+  if (!first || !second || first.row.athleteId === second.row.athleteId) return NOT_FOUND();
+  const sides = [first, second];
+  const portraits = await Promise.all(sides.map(({ row }) => loadFace(row)));
+
+  const headlines = sides.map(({ row, player }) => compareHeadlines({ sport, row, player }));
+  // One row per headline either player has, in card order.
+  const labels = [...new Set(headlines.flatMap((items) => items.map((item) => item.label)))];
+  const sections = traitSections(traitLines(sport, sides.map(({ player }) => player)));
+  const slots = Math.max(1, sections.reduce((sum, section) => sum + section.names.length + (section.kind ? 1 : 0), 0));
+
+  // Each tier of the season line with both players' values, matched by stat.
+  const seasons = sides.map(({ player }) =>
+    sport === "nhl" ? hockeySeasonStats(player.seasonStats) : footballSeasonStats(sport, player.seasonStats),
+  );
+  const statTiers = [...new Set(seasons.flatMap((season) => season?.tiers.map((tier) => tier.label) ?? []))]
+    .map((label) => {
+      const lists = seasons.map((season) => season?.tiers.find((tier) => tier.label === label)?.stats ?? []);
+      const names = [...new Set(lists.flatMap((list) => list.map((stat) => stat.label)))];
+      return { label, rows: names.map((name) => ({ name, values: lists.map((list) => list.find((stat) => stat.label === name)?.value ?? null) })) };
+    })
+    .filter((tier) => tier.rows.length > 0);
+  // The box score always shows; a further tier only while the trait rows keep
+  // a comfortable height.
+  let used = FACE + GAP + labels.length * HEADLINE_ROW + GAP;
+  const tiers: typeof statTiers = [];
+  for (const tier of statTiers) {
+    const height = (tiers.length ? 0 : GAP) + COMPARE_STAT_TITLE + tier.rows.length * COMPARE_STAT_ROW;
+    if (tiers.length && (COMPARE_BODY_HEIGHT - used - height) / slots < ROOMY_TRAIT_HEIGHT) break;
+    tiers.push(tier);
+    used += height;
+  }
+  const season = seasons.find(Boolean)?.season;
+  // A quarterback pair runs to some forty rows, so the rows may sit closer
+  // here than on a single card.
+  const traitHeight = Math.max(17, Math.min(COMPARE_TRAIT_HEIGHT, Math.floor((COMPARE_BODY_HEIGHT - used) / slots)));
+  const traitSize = Math.max(15, Math.min(20, Math.round(traitHeight * 0.6)));
+  const size = { width: POSTER_SIZE.width, height: CHROME_HEIGHT + Math.min(COMPARE_BODY_HEIGHT, used + slots * traitHeight) };
+  const trait = (side: number, name: string) => sides[side].player.traits.find((t) => t.trait === name);
+
+  return renderShareFrame({
+    eyebrow: `${league} · ${positionName(first.row.positionGroup)}`,
+    size,
+    headers: POSTER_HEADERS,
+    body: (
+      <Section gap={GAP}>
+        <div style={{ display: "flex", alignItems: "center", gap: 20, height: FACE }}>
+          <CompareIdentity row={first.row} logo={teams.find((t) => t.team === first.row.team)} portrait={portraits[0]} side={0} />
+          <div style={{ fontSize: 20, color: C.gray, letterSpacing: 2, textTransform: "uppercase" }}>vs</div>
+          <CompareIdentity row={second.row} logo={teams.find((t) => t.team === second.row.team)} portrait={portraits[1]} side={1} />
+        </div>
+
+        <Section>
+          {labels.map((label) => {
+            const cell = (side: number) => {
+              const item = headlines[side].find((entry) => entry.label === label);
+              const right = side === 1;
+              return (
+                <div style={{ display: "flex", flexDirection: right ? "row-reverse" : "row", alignItems: "baseline", gap: 10, flex: 1 }}>
+                  <div style={{ fontSize: 26, fontWeight: 600, color: (item?.tone && TONES[item.tone]) || C.white }}>{item?.value ?? EMPTY}</div>
+                  <div style={{ maxWidth: 250, fontSize: 14, color: C.gray, ...ELLIPSIS }}>{item?.sub || " "}</div>
+                </div>
+              );
+            };
+            return (
+              <div key={label} style={{ display: "flex", alignItems: "center", height: HEADLINE_ROW, borderTop: `1.5px solid ${C.rule}` }}>
+                {cell(0)}
+                <div style={{ display: "flex", justifyContent: "center", width: 200, fontSize: 15, color: C.gray, letterSpacing: 1.5, textTransform: "uppercase" }}>
+                  {label}
+                </div>
+                {cell(1)}
+              </div>
+            );
+          })}
+        </Section>
+
+        <Section>
+          {sections.flatMap((section) => [
+            section.kind && (
+              <div
+                key={`title-${section.kind}`}
+                style={{
+                  display: "flex",
+                  alignItems: "flex-end",
+                  justifyContent: "center",
+                  height: traitHeight,
+                  paddingBottom: 4,
+                  fontSize: 15,
+                  fontWeight: 600,
+                  letterSpacing: 1.5,
+                  textTransform: "uppercase",
+                }}
+              >
+                {TRAIT_SECTION_LABELS[section.kind].label}
+              </div>
+            ),
+            ...section.names.map((name) => {
+              const look = barLook(trait(0, name) ?? trait(1, name));
+              const { label, short = label } = traitLabel(name, sport);
+              const side = (at: number) => {
+                const pct = trait(at, name)?.percentile ?? null;
+                const number = (
+                  <div style={{ display: "flex", width: 34, justifyContent: at === 0 ? "flex-start" : "flex-end", fontSize: traitSize - 2, color: C.gray }}>
+                    {pct == null ? EMPTY : Math.round(pct)}
+                  </div>
+                );
+                const bar = (
+                  <div style={{ display: "flex", flex: 1, height: 8, borderRadius: 2, background: C.grid, justifyContent: at === 0 ? "flex-end" : "flex-start" }}>
+                    <div
+                      style={{
+                        width: `${pct ?? 0}%`,
+                        height: "100%",
+                        borderRadius: 2,
+                        background: look.style ? C.gray : SIDE_COLORS[at],
+                        opacity: look.dimmed ? 0.4 : 1,
+                      }}
+                    />
+                  </div>
+                );
+                return (
+                  <div style={{ display: "flex", alignItems: "center", gap: 10, flex: 1 }}>
+                    {at === 0 ? number : bar}
+                    {at === 0 ? bar : number}
+                  </div>
+                );
+              };
+              return (
+                <div key={name} style={{ display: "flex", alignItems: "center", gap: 14, height: traitHeight, color: look.dimmed ? C.gray : C.white }}>
+                  {side(0)}
+                  <div style={{ display: "flex", justifyContent: "center", width: 270, fontSize: traitSize, ...ELLIPSIS }}>{short}</div>
+                  {side(1)}
+                </div>
+              );
+            }),
+          ])}
+        </Section>
+
+        {tiers.length > 0 && (
+          <Section>
+            {/* One table, each player's value on his own side as in the headline rows above. */}
+            {tiers.flatMap((tier) => [
+              <div
+                key={`title-${tier.label}`}
+                style={{
+                  display: "flex",
+                  alignItems: "flex-end",
+                  justifyContent: "center",
+                  height: COMPARE_STAT_TITLE,
+                  paddingBottom: 6,
+                  fontSize: 15,
+                  fontWeight: 600,
+                  letterSpacing: 1.5,
+                  textTransform: "uppercase",
+                }}
+              >
+                {`${season} ${tier.label}`}
+              </div>,
+              ...tier.rows.map((stat) => (
+                <div
+                  key={`${tier.label}-${stat.name}`}
+                  style={{ display: "flex", alignItems: "center", height: COMPARE_STAT_ROW, borderTop: `1.5px solid ${C.rule}` }}
+                >
+                  <div style={{ display: "flex", flex: 1, fontSize: 19, fontWeight: 600 }}>{stat.values[0] ?? EMPTY}</div>
+                  <div style={{ display: "flex", justifyContent: "center", width: 240, fontSize: 15, color: C.gray, whiteSpace: "nowrap" }}>{stat.name}</div>
+                  <div style={{ display: "flex", flex: 1, justifyContent: "flex-end", fontSize: 19, fontWeight: 600 }}>{stat.values[1] ?? EMPTY}</div>
+                </div>
+              )),
+            ])}
           </Section>
         )}
       </Section>
