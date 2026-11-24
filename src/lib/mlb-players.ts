@@ -1,5 +1,5 @@
 import { cache } from "react";
-import { supabase } from "@/lib/supabase";
+import { supabase, supabaseMlbCached } from "@/lib/supabase";
 import type { Tables } from "@/lib/database-schema";
 import { seasonStatsLine, type SeasonStatsLine } from "@/lib/season-stats";
 import { PITCHER_GROUPS, skillColumns, type GradedTrait } from "@/lib/player-values";
@@ -95,6 +95,24 @@ async function fetchIndexRows(): Promise<Omit<PlayerValueIndex, "bat" | "fld">[]
     if ((res.data?.length ?? 0) < PAGE) break;
   }
   return rows;
+}
+
+export type PlayerGradeLeader = Pick<PlayerValueRow, "player_id" | "player_name" | "team" | "position_group" | "age" | "season" | "grade">;
+
+// The best-graded players at one position, for the downloadable card: its ten
+// rows through the tagged client, which the publish webhook expires, where the
+// page reads the whole index.
+export async function fetchPlayerGradeLeaders(position: string, count: number): Promise<PlayerGradeLeader[]> {
+  const { data, error } = await supabaseMlbCached
+    .from("player_values")
+    .select("player_id, player_name, team, position_group, age, season, grade")
+    .eq("position_group", position)
+    .not("grade", "is", null)
+    .order("grade", { ascending: false })
+    .order("player_id", { ascending: true })
+    .limit(count);
+  if (error) throw new Error(`Player grade leaders read failed: ${error.message}`);
+  return data ?? [];
 }
 
 export const fetchPlayerValues = cache(async (): Promise<PlayerValues> => {

@@ -39,8 +39,31 @@ const MAX_TILES_PER_ROW = 5;
 const FOOTER_LINE_CHARS = 92;
 const FOOTER_LINE_HEIGHT = 26;
 
-const footerNote = (context: string, sport: GradeSport) =>
-  `${context} | Bars are percentiles among ${SPORT_COPY[sport].pool} at the position`;
+const footerNote = (context: string, sport: GradeSport) => `${context} | Among ${SPORT_COPY[sport].pool} at the position`;
+
+const PERCENTILE_NOTE_HEIGHT = 24;
+
+// How to read a bar, said once above them. The model repos publish every
+// lower-is-better stat (sacks, interceptions, fumbles) flipped, so a longer bar
+// is the better result on all but the style and role sections.
+function PercentileNote({ sport, centered = false }: { sport: GradeSport; centered?: boolean }) {
+  return (
+    <div style={{ display: "flex", alignItems: "center", justifyContent: centered ? "center" : "flex-start", gap: 8, height: PERCENTILE_NOTE_HEIGHT, fontSize: 17 }}>
+      <div style={{ fontWeight: 600, color: C.green }}>Bars are percentiles.</div>
+      <div style={{ color: C.gray }}>
+        {sport === "nhl" ? "Longer is better on every stat." : "Longer is better, and on sacks or turnovers longer means fewer."}
+      </div>
+    </div>
+  );
+}
+
+// A section's heading. Style and role bars measure how much a player does
+// something, so their heading says how to read them.
+function sectionTitle(kind: string | null): string {
+  if (!kind) return "Attributes";
+  const { label } = TRAIT_SECTION_LABELS[kind as keyof typeof TRAIT_SECTION_LABELS];
+  return kind === "style" || kind === "role" ? `${label} (longer means more)` : label;
+}
 const footerExtra = (note: string) => (note.length > FOOTER_LINE_CHARS ? FOOTER_LINE_HEIGHT : 0);
 
 // A name in one line: the type steps down for a long one.
@@ -217,14 +240,14 @@ export async function renderPlayerCard({
 
   const lines = traitLines(sport, [player]);
   const columns = lines.length
-    ? traitColumns(traitSections(lines), (kind) => (kind ? TRAIT_SECTION_LABELS[kind as keyof typeof TRAIT_SECTION_LABELS].label : "Attributes"))
+    ? traitColumns(traitSections(lines), sectionTitle)
     : [];
   // Rows and titles of the taller column; an untitled block still holds its
   // title's space so the two columns stay level.
   const traitRows = Math.max(1, ...columns.map((blocks) => blocks.reduce((sum, block) => sum + block.names.length, 0)));
   const titlesHeight = Math.max(0, ...columns.map((blocks) => blocks.length)) * SECTION_TITLE_HEIGHT;
   const used =
-    PORTRAIT + tileRows * (GAP + TILE_HEIGHT) + (nil ? 34 : 0) + (statsHeight ? GAP + statsHeight : 0) + GAP + 34 + titlesHeight;
+    PORTRAIT + tileRows * (GAP + TILE_HEIGHT) + (nil ? 34 : 0) + (statsHeight ? GAP + statsHeight : 0) + GAP + 34 + PERCENTILE_NOTE_HEIGHT + 10 + titlesHeight;
   const traitHeight = Math.max(20, Math.min(TRAIT_HEIGHT, Math.floor((BODY_HEIGHT - used) / traitRows)));
   // A card with few traits is a shorter image, so nothing floats in empty space.
   const size = {
@@ -291,6 +314,7 @@ export async function renderPlayerCard({
 
         {columns.length > 0 && (
           <Section gap={10}>
+            <PercentileNote sport={sport} />
             <div style={{ display: "flex", gap: 40 }}>
               {columns.map((blocks, at) => (
                 <div key={at} style={{ display: "flex", flexDirection: "column", flex: 1 }}>
@@ -475,7 +499,7 @@ export async function renderComparisonCard({
     .filter((tier) => tier.rows.length > 0);
   // The box score always shows; a further tier only while the trait rows keep
   // a comfortable height.
-  let used = FACE + GAP + labels.length * HEADLINE_ROW + GAP + titlesHeight;
+  let used = FACE + GAP + labels.length * HEADLINE_ROW + GAP + PERCENTILE_NOTE_HEIGHT + titlesHeight;
   const tiers: typeof statTiers = [];
   for (const tier of statTiers) {
     const height = (tiers.length ? 0 : GAP) + COMPARE_STAT_TITLE + tier.rows.length * COMPARE_STAT_ROW;
@@ -533,6 +557,7 @@ export async function renderComparisonCard({
         </Section>
 
         <Section>
+          <PercentileNote sport={sport} centered />
           {sections.flatMap((section) => [
             section.kind && (
               <div
@@ -549,7 +574,7 @@ export async function renderComparisonCard({
                   textTransform: "uppercase",
                 }}
               >
-                {TRAIT_SECTION_LABELS[section.kind].label}
+                {sectionTitle(section.kind)}
               </div>
             ),
             ...section.names.map((name) => {

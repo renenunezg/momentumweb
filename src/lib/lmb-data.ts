@@ -215,6 +215,25 @@ export async function fetchLmbAwards(): Promise<{
 // table sits near the REST API's 1000-row page, so it is read a page at a time.
 const RATING_PAGE = 1000;
 
+export type LmbGradeLeader = Pick<LmbPlayerRatingRow, "player_id" | "name" | "team_id" | "pos" | "season" | "grade" | "grade_season">;
+
+// The best-graded players at one position in the latest season, for the
+// downloadable card: its ten rows, where the page reads the whole table.
+export async function fetchLmbGradeLeaders(position: string, count: number): Promise<LmbGradeLeader[]> {
+  const { data, error } = await supabaseLmbCached
+    .from("player_ratings")
+    .select("player_id, name, team_id, pos, season, grade, grade_season")
+    .eq("pos", position)
+    .not("grade", "is", null)
+    .order("season", { ascending: false })
+    .order("grade", { ascending: false })
+    .order("player_id", { ascending: true })
+    .limit(count);
+  if (error) throw new Error(`LMB grade leaders read failed: ${error.message}`);
+  // Ordered newest season first, so an older season only fills a short list.
+  return (data ?? []).filter((row) => row.season === data![0].season);
+}
+
 export async function fetchLmbPlayerRatings(): Promise<{
   model: LmbPlayerRatingModelRow | null;
   rows: LmbPlayerRatingRow[];

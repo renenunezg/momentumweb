@@ -2,7 +2,7 @@ import type { ReactNode } from "react";
 import { renderShareFrame, ShareLogo, SHARE_COLORS as C } from "@/components/share-card";
 import type { TeamLogoSource } from "@/components/team-logo";
 import { cfbPlayerHeadshotUrl } from "@/lib/player-headshots";
-import { formatGrade, type GradeTeam, type PlayerIndexRow, type PositionGrades } from "@/lib/position-grades";
+import { formatGrade, type GradeTeam, type PositionGrades } from "@/lib/position-grades";
 import { POSITION_LABELS, POSITION_ORDER, isUnitRow } from "@/lib/position-traits";
 import { heatIntensity, ratingScale, sharedExtent } from "@/lib/rating-heatmap";
 import { formatNumber, formatSigned } from "@/lib/utils";
@@ -366,7 +366,7 @@ export function renderRatingsPoster({
   });
 }
 
-const GRADE_ROWS = 10;
+export const GRADE_ROWS = 10;
 const PORTRAIT = 68;
 
 // Satori has no fallback for an image that fails to load, and college
@@ -387,9 +387,60 @@ export async function loadPortrait(url: string): Promise<string | null> {
 // the average of 50.
 export const gradeStrength = (grade: number) => Math.max(-1, Math.min(1, (grade - 50) / 30));
 
-// The leaders of one position as the player grades page lists them. The
-// position comes from the URL, so one the sport does not grade is a 404.
-export async function renderGradesPoster({
+// One player of a top-10 image: who he is, the line under his name, and his
+// grade as the page prints it.
+export interface LeaderRow {
+  key: string;
+  name: string;
+  sub: string;
+  // His portrait, tried first; a miss shows the team logo in its place.
+  portraitUrl: string | null;
+  logo: TeamLogoSource | undefined;
+  team: string;
+  grade: number;
+  gradeText: string;
+}
+
+// The best-graded players of one position, ten to an image.
+export async function renderLeadersPoster({
+  league,
+  title,
+  context,
+  rows,
+}: {
+  league: string;
+  title: string;
+  context: string;
+  rows: LeaderRow[];
+}) {
+  if (rows.length === 0) return NOT_FOUND();
+  const portraits = await Promise.all(rows.map((row) => (row.portraitUrl ? loadPortrait(row.portraitUrl) : null)));
+  return renderShareFrame({
+    eyebrow: league,
+    size: POSTER_SIZE,
+    headers: POSTER_HEADERS,
+    body: (
+      <div style={{ display: "flex", flexDirection: "column", gap: 28 }}>
+        <PosterTitle title={title} context={context} />
+        <div style={{ display: "flex", flexDirection: "column" }}>
+          {rows.map((row, i) => (
+            <LeaderLine key={row.key} rank={i + 1} row={row} portrait={portraits[i]} />
+          ))}
+        </div>
+      </div>
+    ),
+    footer: (
+      <div style={{ display: "flex", fontSize: 20, color: C.gray }}>
+        {`Top ${rows.length} by grade on a 20 to 80 scale; 50 is average`}
+      </div>
+    ),
+  });
+}
+
+// The leaders of one position as the football and hockey player grades pages
+// list them. The position comes from the URL, so one the sport does not grade
+// is a 404.
+export function renderGradesPoster({
   league,
   position,
   context,
@@ -403,47 +454,33 @@ export async function renderGradesPoster({
   teams: GradeTeam[];
 }) {
   const group = POSITION_ORDER.find((key) => key.toLowerCase() === position.toLowerCase());
-  // The index is ranked best grade first.
-  const rows = grades.index.filter((row) => row.positionGroup === group && row.grade != null).slice(0, GRADE_ROWS);
-  if (!group || rows.length === 0) return NOT_FOUND();
+  if (!group) return NOT_FOUND();
   const logoOf = new Map(teams.map((t) => [t.team, t]));
-  const portraits = await Promise.all(
-    rows.map((row) => (isUnitRow(row.athleteId) ? null : loadPortrait(row.headshotUrl ?? cfbPlayerHeadshotUrl(row.athleteId, 160)))),
-  );
-  return renderShareFrame({
-    eyebrow: league,
-    size: POSTER_SIZE,
-    headers: POSTER_HEADERS,
-    body: (
-      <div style={{ display: "flex", flexDirection: "column", gap: 28 }}>
-        <PosterTitle title={`${league} Player Grades | ${POSITION_LABELS[group] ?? group}`} context={context} />
-        <div style={{ display: "flex", flexDirection: "column" }}>
-          {rows.map((row, i) => (
-            <GradeRow key={row.athleteId} rank={i + 1} row={row} logo={logoOf.get(row.team)} portrait={portraits[i]} />
-          ))}
-        </div>
-      </div>
-    ),
-    footer: (
-      <div style={{ display: "flex", fontSize: 20, color: C.gray }}>
-        {`Top ${rows.length} by grade on a 20 to 80 scale; 50 is average`}
-      </div>
-    ),
+  return renderLeadersPoster({
+    league,
+    title: `${league} Player Grades | ${POSITION_LABELS[group] ?? group}`,
+    context,
+    // The index is ranked best grade first.
+    rows: grades.index
+      .filter((row) => row.positionGroup === group && row.grade != null)
+      .slice(0, GRADE_ROWS)
+      .map((row) => {
+        const unit = isUnitRow(row.athleteId);
+        return {
+          key: row.athleteId,
+          name: unit ? `${row.team} offensive line` : row.name,
+          sub: `${unit ? "Unit" : row.team} · ${formatNumber(row.games, 0)} games`,
+          portraitUrl: unit ? null : (row.headshotUrl ?? cfbPlayerHeadshotUrl(row.athleteId, 160)),
+          logo: logoOf.get(row.team),
+          team: row.team,
+          grade: row.grade!,
+          gradeText: formatGrade(row.grade),
+        };
+      }),
   });
 }
 
-function GradeRow({
-  rank,
-  row,
-  logo,
-  portrait,
-}: {
-  rank: number;
-  row: PlayerIndexRow;
-  logo: TeamLogoSource | undefined;
-  portrait: string | null;
-}) {
-  const unit = isUnitRow(row.athleteId);
+function LeaderLine({ rank, row, portrait }: { rank: number; row: LeaderRow; portrait: string | null }) {
   return (
     <div style={{ display: "flex", alignItems: "center", gap: 18, height: 90, borderTop: `1.5px solid ${C.rule}` }}>
       <div style={{ display: "flex", width: 34, fontSize: 26, color: C.gray, justifyContent: "flex-end" }}>{rank}</div>
@@ -462,17 +499,17 @@ function GradeRow({
           <img src={portrait} width={PORTRAIT} height={PORTRAIT} alt="" style={{ objectFit: "contain" }} />
         </div>
       ) : (
-        <ShareLogo team={logo} name={row.team} size={PORTRAIT} />
+        <ShareLogo team={row.logo} name={row.team} size={PORTRAIT} />
       )}
       <div style={{ display: "flex", flexDirection: "column", flex: 1, gap: 2 }}>
-        <div style={{ fontSize: 32, fontWeight: 600, ...ELLIPSIS }}>{unit ? `${row.team} offensive line` : row.name}</div>
+        <div style={{ fontSize: 32, fontWeight: 600, ...ELLIPSIS }}>{row.name}</div>
         <div style={{ display: "flex", alignItems: "center", gap: 8, fontSize: 21, color: C.gray }}>
-          {!unit && portrait && <ShareLogo team={logo} name={row.team} size={24} />}
-          {`${unit ? "Unit" : row.team} · ${formatNumber(row.games, 0)} games`}
+          {portrait && <ShareLogo team={row.logo} name={row.team} size={24} />}
+          {row.sub}
         </div>
       </div>
-      <HeatCell strength={gradeStrength(row.grade!)} width={116} fontSize={32}>
-        {formatGrade(row.grade)}
+      <HeatCell strength={gradeStrength(row.grade)} width={116} fontSize={32}>
+        {row.gradeText}
       </HeatCell>
     </div>
   );

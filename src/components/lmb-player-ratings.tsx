@@ -7,6 +7,7 @@ import { InfoTip } from "@/components/info-tip";
 import { Pager } from "@/components/pager";
 import { PlayerCell } from "@/components/player-cell";
 import { ComparisonMetrics, type ComparisonMetric } from "@/components/player-comparison";
+import { DownloadCardLink } from "@/components/download-card-link";
 import { PlayerComparisonPicker } from "@/components/player-comparison-picker";
 import { PlayerRowDisclosure, PlayerRowHeader } from "@/components/player-row-disclosure";
 import { PositionLeaderTabs, surname, type PositionLeader } from "@/components/position-leader-tabs";
@@ -352,6 +353,12 @@ export default function LmbPlayerRatings({ rows, model }: { rows: LmbPlayerRatin
             placeholder="Search player or team"
             aria-label="Search player or team"
             className="h-10 w-full min-w-0 rounded-md border border-input bg-background px-2 text-sm sm:w-56"
+          />
+          <DownloadCardLink
+            href={`/lmb/players/card/${position.toLowerCase()}`}
+            filename={`lmb-${position.toLowerCase()}-grades.png`}
+            label={`${position} top 10 PNG`}
+            className="h-10 border border-input bg-background px-3 text-foreground"
           />
         </div>
       </div>

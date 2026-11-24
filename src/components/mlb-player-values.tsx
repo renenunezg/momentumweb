@@ -27,6 +27,7 @@ import { NavigationLink as Link } from "@/components/navigation-link";
 import { Pager } from "@/components/pager";
 import { PlayerRowDisclosure, PlayerRowHeader } from "@/components/player-row-disclosure";
 import { PlayerCell } from "@/components/player-cell";
+import { DownloadCardLink } from "@/components/download-card-link";
 import { PlayerComparisonPicker } from "@/components/player-comparison-picker";
 import { ComparisonGrades, ComparisonMetrics, type ComparisonMetric } from "@/components/player-comparison";
 import { ToggleGroup } from "@/components/toggle-group";
@@ -604,6 +605,12 @@ export default function MlbPlayerValues({
             placeholder="Search player or team"
             aria-label="Search player or team"
             className="h-10 w-full min-w-0 rounded-md border border-input bg-background px-2 text-sm sm:w-56"
+          />
+          <DownloadCardLink
+            href={`/mlb/players/card/${position.toLowerCase()}`}
+            filename={`mlb-${position.toLowerCase()}-grades.png`}
+            label={`${position} top 10 PNG`}
+            className="h-10 border border-input bg-background px-3 text-foreground"
           />
         </div>
         {notice && <p role="status" className="text-sm text-muted-foreground">{notice}</p>}
