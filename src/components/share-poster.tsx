@@ -193,6 +193,8 @@ export function unitLeaders<K extends string, U extends Record<K, number | null>
 }
 
 const TABLE_HEIGHT = 925;
+// The poster's height less its table rows: frame, title and column labels.
+const TABLE_CHROME = POSTER_SIZE.height - TABLE_HEIGHT;
 // A block's title takes this share of a team row.
 const TITLE_SHARE = 0.8;
 
@@ -230,31 +232,40 @@ export function renderRatingsPoster({
     ...layout.map((blocks) => blocks.reduce((sum, block) => sum + block.rows.length + (block.title ? TITLE_SHARE : 0), 0)),
   );
   const rowHeight = Math.min(64, Math.floor(TABLE_HEIGHT / lines));
-  // Type follows the row height, capped lower where several columns or a
-  // second table share the width.
-  const size = Math.max(17, Math.min(wide ? (columns.length > 4 ? 24 : 28) : 20, Math.round(rowHeight * 0.6)));
-  const gap = wide ? Math.round(size * 0.5) : 6;
-  const logo = Math.min(44, rowHeight - 6, Math.round(size * 1.6));
   const labelSize = wide ? 15 : 14;
-  const rankWidth = textWidth(2, size);
-  // A cell is as wide as its longest value or its spaced-out label.
-  const cells = columns.map((column, at) => {
-    const chars = Math.max(...rows.map((row) => row.cells[at].text.length));
-    const label = textWidth(column.label.length, labelSize) + column.label.length * LABEL_SPACING + 4;
-    return Math.max(label, column.kind === "heat" ? textWidth(chars, size) + 18 : textWidth(chars, size - 2));
-  });
+  const tableWidth = (POSTER_SIZE.width - FRAME_PADDING * 2 - TABLE_GAP * (layout.length - 1)) / layout.length;
+  const longestName = Math.max(...rows.map((row) => row.team.length));
+  // Everything that scales with the type size, and the width it takes.
+  const sized = (size: number) => {
+    const gap = wide ? Math.round(size * 0.5) : 6;
+    const logo = Math.min(44, rowHeight - 6, Math.round(size * 1.6));
+    const rankWidth = textWidth(2, size);
+    // A cell is as wide as its longest value or its spaced-out label.
+    const cells = columns.map((column, at) => {
+      const chars = Math.max(...rows.map((row) => row.cells[at].text.length));
+      const label = textWidth(column.label.length, labelSize) + column.label.length * LABEL_SPACING + 4;
+      return Math.max(label, column.kind === "heat" ? textWidth(chars, size) + 18 : textWidth(chars, size - 2));
+    });
+    const taken = rankWidth + logo + textWidth(longestName, size) + 8 + gap * (columns.length + 2) + cells.reduce((sum, width) => sum + width, 0);
+    return { size, gap, logo, rankWidth, cells, taken };
+  };
+  // Type follows the row height, capped lower where a second table shares the
+  // width, then steps down until the longest team name fits beside the columns.
+  let fit = sized(Math.max(17, Math.min(wide ? 28 : 20, Math.round(rowHeight * 0.6))));
+  while (fit.taken > tableWidth && fit.size > 17) fit = sized(fit.size - 1);
+  const { size, gap, logo, rankWidth, cells, taken } = fit;
   // Width the longest team name leaves over is shared among the columns, so a
   // short table spreads across the frame instead of leaving one gap after the
   // names. A cell sits centered in its share and a heat fill grows partway.
-  const tableWidth = (POSTER_SIZE.width - FRAME_PADDING * 2 - TABLE_GAP * (layout.length - 1)) / layout.length;
-  const nameWidth = textWidth(Math.max(...rows.map((row) => row.team.length)), size) + 8;
-  const taken = rankWidth + logo + nameWidth + gap * (columns.length + 2) + cells.reduce((sum, width) => sum + width, 0);
   const spare = Math.max(0, Math.floor((tableWidth - taken) / columns.length));
   const slots = cells.map((width) => width + Math.min(spare, Math.round(width * 1.2)));
   const widths = cells.map((width, at) => (columns[at].kind === "heat" ? Math.min(slots[at], Math.round(width * 1.4)) : width));
+  // A short table is a shorter image, so a small conference does not float in
+  // an empty frame.
+  const posterSize = { width: POSTER_SIZE.width, height: Math.min(POSTER_SIZE.height, TABLE_CHROME + Math.ceil(lines * rowHeight)) };
   return renderShareFrame({
     eyebrow: league,
-    size: POSTER_SIZE,
+    size: posterSize,
     headers: POSTER_HEADERS,
     body: (
       <div style={{ display: "flex", flexDirection: "column", gap: 24 }}>

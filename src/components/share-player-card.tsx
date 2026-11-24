@@ -31,23 +31,37 @@ const CHROME_HEIGHT = 260;
 // Room for the body in the tallest image, the 4:5 poster.
 const BODY_HEIGHT = POSTER_SIZE.height - CHROME_HEIGHT;
 const TRAIT_HEIGHT = 36;
+// A section title keeps this height however tight its rows are, so it never
+// sits on the row above it.
+const SECTION_TITLE_HEIGHT = 30;
 const MAX_TILES_PER_ROW = 5;
-// A lone headline keeps a tile's width instead of stretching across the card.
-const MIN_TILES_PER_ROW = 3;
+// The footer note wraps to a second line past about this many characters.
+const FOOTER_LINE_CHARS = 92;
+const FOOTER_LINE_HEIGHT = 26;
+
+const footerNote = (context: string, sport: GradeSport) =>
+  `${context} | Bars are percentiles among ${SPORT_COPY[sport].pool} at the position`;
+const footerExtra = (note: string) => (note.length > FOOTER_LINE_CHARS ? FOOTER_LINE_HEIGHT : 0);
+
+// A name in one line: the type steps down for a long one.
+const nameSize = (name: string, width: number, max: number, min: number) =>
+  Math.max(min, Math.min(max, Math.floor(width / (name.length * 0.54))));
 const MAX_STATS_PER_ROW = 8;
 const MAX_STAT_ROWS = 3;
 
 const TONES: Record<string, string> = { "text-positive": C.positive, "text-destructive": C.negative };
 
-function Tile({ headline, width }: { headline: CardHeadline; width: number }) {
+function Tile({ headline }: { headline: CardHeadline }) {
   return (
     <div
       style={{
         display: "flex",
         flexDirection: "column",
+        flex: 1,
+        alignItems: "center",
         justifyContent: "center",
+        textAlign: "center",
         gap: 2,
-        width,
         height: TILE_HEIGHT,
         padding: "0 14px",
         border: `1.5px solid ${C.rule}`,
@@ -91,6 +105,9 @@ type TraitBlock = { title: string | null; names: string[] };
 // the boundary that best balances them, and a lone section cut in half.
 function traitColumns(sections: { kind: string | null; names: string[] }[], label: (kind: string | null) => string): TraitBlock[][] {
   const blocks = sections.map((section) => ({ title: label(section.kind), names: section.names }));
+  // A single trait takes the full width; half a card would cut its label short
+  // beside an empty column.
+  if (blocks.length === 1 && blocks[0].names.length === 1) return [blocks];
   if (blocks.length === 1) {
     const half = Math.ceil(blocks[0].names.length / 2);
     return [[{ title: blocks[0].title, names: blocks[0].names.slice(0, half) }], [{ title: null, names: blocks[0].names.slice(half) }]];
@@ -178,10 +195,11 @@ export async function renderPlayerCard({
   });
   const nil = sport === "cfb" && player.nilPrice != null ? nilLine(player) : null;
 
+  // Headlines in even rows, each row filling the width.
   const tileRows = Math.ceil(headlines.length / MAX_TILES_PER_ROW);
-  const perRow = Math.max(MIN_TILES_PER_ROW, tileRows ? Math.ceil(headlines.length / tileRows) : 1);
-  const inner = POSTER_SIZE.width - 144;
-  const tileWidth = Math.floor((inner - 12 * (perRow - 1)) / perRow);
+  const perRow = tileRows ? Math.ceil(headlines.length / tileRows) : 1;
+  const tiles = Array.from({ length: tileRows }, (_, at) => headlines.slice(at * perRow, (at + 1) * perRow));
+  const note = footerNote(context, sport);
 
   const stats = sport === "nhl" ? hockeySeasonStats(player.seasonStats) : footballSeasonStats(sport, player.seasonStats);
   // Whole tiers of the season line, while they fit in a few rows; a tier too
@@ -201,11 +219,18 @@ export async function renderPlayerCard({
   const columns = lines.length
     ? traitColumns(traitSections(lines), (kind) => (kind ? TRAIT_SECTION_LABELS[kind as keyof typeof TRAIT_SECTION_LABELS].label : "Attributes"))
     : [];
-  const slots = Math.max(1, ...columns.map((blocks) => blocks.reduce((sum, block) => sum + block.names.length + 1, 0)));
-  const used = PORTRAIT + (tileRows ? GAP + tileRows * (TILE_HEIGHT + 12) : 0) + (nil ? 34 : 0) + (statsHeight ? GAP + statsHeight : 0) + GAP + 34;
-  const traitHeight = Math.max(20, Math.min(TRAIT_HEIGHT, Math.floor((BODY_HEIGHT - used) / slots)));
+  // Rows and titles of the taller column; an untitled block still holds its
+  // title's space so the two columns stay level.
+  const traitRows = Math.max(1, ...columns.map((blocks) => blocks.reduce((sum, block) => sum + block.names.length, 0)));
+  const titlesHeight = Math.max(0, ...columns.map((blocks) => blocks.length)) * SECTION_TITLE_HEIGHT;
+  const used =
+    PORTRAIT + tileRows * (GAP + TILE_HEIGHT) + (nil ? 34 : 0) + (statsHeight ? GAP + statsHeight : 0) + GAP + 34 + titlesHeight;
+  const traitHeight = Math.max(20, Math.min(TRAIT_HEIGHT, Math.floor((BODY_HEIGHT - used) / traitRows)));
   // A card with few traits is a shorter image, so nothing floats in empty space.
-  const size = { width: POSTER_SIZE.width, height: Math.min(POSTER_SIZE.height, CHROME_HEIGHT + used + slots * traitHeight) };
+  const size = {
+    width: POSTER_SIZE.width,
+    height: Math.min(POSTER_SIZE.height, CHROME_HEIGHT + footerExtra(note) + used + traitRows * traitHeight),
+  };
   const traitSize = Math.max(15, Math.min(21, Math.round(traitHeight * 0.62)));
   const looks = player.traits.filter((t) => lines.some((line) => line.name === t.trait)).map(barLook);
 
@@ -225,7 +250,9 @@ export async function renderPlayerCard({
             <ShareLogo team={logo} name={row.team} size={PORTRAIT - 16} />
           )}
           <div style={{ display: "flex", flexDirection: "column", flex: 1, gap: 8 }}>
-            <div style={{ fontSize: 54, fontWeight: 600, lineHeight: 1.05, ...ELLIPSIS }}>{displayName(row)}</div>
+            <div style={{ fontSize: nameSize(displayName(row), 590, 54, 34), fontWeight: 600, lineHeight: 1.05, ...ELLIPSIS }}>
+              {displayName(row)}
+            </div>
             <div style={{ display: "flex", alignItems: "center", gap: 10, fontSize: 24, color: C.gray }}>
               {!unit && portrait && <ShareLogo team={logo} name={row.team} size={30} />}
               {`${unit ? "Unit" : row.team} · ${positionName(row.positionGroup)} · ${formatNumber(row.games, 0)} games`}
@@ -253,13 +280,13 @@ export async function renderPlayerCard({
           </div>
         </div>
 
-        {headlines.length > 0 && (
-          <div style={{ display: "flex", flexWrap: "wrap", gap: 12 }}>
-            {headlines.map((headline) => (
-              <Tile key={headline.key} headline={headline} width={tileWidth} />
+        {tiles.map((row, at) => (
+          <div key={at} style={{ display: "flex", gap: 12 }}>
+            {row.map((headline) => (
+              <Tile key={headline.key} headline={headline} />
             ))}
           </div>
-        )}
+        ))}
         {nil && <div style={{ display: "flex", justifyContent: "center", fontSize: 18, color: C.gray }}>{nil}</div>}
 
         {columns.length > 0 && (
@@ -273,7 +300,7 @@ export async function renderPlayerCard({
                       style={{
                         display: "flex",
                         alignItems: "flex-end",
-                        height: traitHeight,
+                        height: SECTION_TITLE_HEIGHT,
                         paddingBottom: 4,
                         borderBottom: `1.5px solid ${C.rule}`,
                         fontSize: 15,
@@ -341,25 +368,40 @@ export async function renderPlayerCard({
     ),
     footer: (
       <div style={{ display: "flex", maxWidth: 740, fontSize: 19, lineHeight: 1.3, color: C.gray }}>
-        {`${context} | Bars are percentiles among ${SPORT_COPY[sport].pool} at the position`}
+        {note}
       </div>
     ),
   });
 }
 
 const FACE = 104;
+// What a name has beside its portrait, with "vs" between the two players.
+const COMPARE_NAME_WIDTH = 290;
 const HEADLINE_ROW = 46;
 const COMPARE_TRAIT_HEIGHT = 34;
 const COMPARE_STAT_ROW = 28;
 const COMPARE_STAT_TITLE = 30;
 // A pair carries two players' rows, each stat on a row of its own, so its
 // image may run taller than the 4:5 poster before the rows are squeezed.
-const COMPARE_BODY_HEIGHT = 1650 - CHROME_HEIGHT;
+const COMPARE_BODY_HEIGHT = 1740 - CHROME_HEIGHT;
 // Trait rows at least this tall leave room for a further tier of stats.
 const ROOMY_TRAIT_HEIGHT = 20;
 const SIDE_COLORS = [C.green, C.blue];
 
-function CompareIdentity({ row, logo, portrait, side }: { row: PlayerIndexRow; logo: GradeTeam | undefined; portrait: string | null; side: 0 | 1 }) {
+function CompareIdentity({
+  row,
+  logo,
+  portrait,
+  side,
+  size,
+}: {
+  row: PlayerIndexRow;
+  logo: GradeTeam | undefined;
+  portrait: string | null;
+  side: 0 | 1;
+  // The name's type size, shared by both players so the header stays even.
+  size: number;
+}) {
   const right = side === 1;
   const unit = isUnitRow(row.athleteId);
   return (
@@ -383,7 +425,9 @@ function CompareIdentity({ row, logo, portrait, side }: { row: PlayerIndexRow; l
         <ShareLogo team={logo} name={row.team} size={FACE - 12} />
       )}
       <div style={{ display: "flex", flexDirection: "column", flex: 1, gap: 6, alignItems: right ? "flex-end" : "flex-start" }}>
-        <div style={{ maxWidth: 330, fontSize: 36, fontWeight: 600, lineHeight: 1.05, ...ELLIPSIS }}>{displayName(row)}</div>
+        <div style={{ maxWidth: COMPARE_NAME_WIDTH, fontSize: size, fontWeight: 600, lineHeight: 1.05, ...ELLIPSIS }}>
+          {displayName(row)}
+        </div>
         <div style={{ display: "flex", flexDirection: right ? "row-reverse" : "row", alignItems: "center", gap: 8, fontSize: 20, color: C.gray }}>
           {!unit && portrait && <ShareLogo team={logo} name={row.team} size={24} />}
           {`${unit ? "Unit" : row.team} · ${formatNumber(row.games, 0)} games`}
@@ -415,7 +459,8 @@ export async function renderComparisonCard({
   // One row per headline either player has, in card order.
   const labels = [...new Set(headlines.flatMap((items) => items.map((item) => item.label)))];
   const sections = traitSections(traitLines(sport, sides.map(({ player }) => player)));
-  const slots = Math.max(1, sections.reduce((sum, section) => sum + section.names.length + (section.kind ? 1 : 0), 0));
+  const traitRows = Math.max(1, sections.reduce((sum, section) => sum + section.names.length, 0));
+  const titlesHeight = sections.filter((section) => section.kind).length * SECTION_TITLE_HEIGHT;
 
   // Each tier of the season line with both players' values, matched by stat.
   const seasons = sides.map(({ player }) =>
@@ -430,21 +475,26 @@ export async function renderComparisonCard({
     .filter((tier) => tier.rows.length > 0);
   // The box score always shows; a further tier only while the trait rows keep
   // a comfortable height.
-  let used = FACE + GAP + labels.length * HEADLINE_ROW + GAP;
+  let used = FACE + GAP + labels.length * HEADLINE_ROW + GAP + titlesHeight;
   const tiers: typeof statTiers = [];
   for (const tier of statTiers) {
     const height = (tiers.length ? 0 : GAP) + COMPARE_STAT_TITLE + tier.rows.length * COMPARE_STAT_ROW;
-    if (tiers.length && (COMPARE_BODY_HEIGHT - used - height) / slots < ROOMY_TRAIT_HEIGHT) break;
+    if (tiers.length && (COMPARE_BODY_HEIGHT - used - height) / traitRows < ROOMY_TRAIT_HEIGHT) break;
     tiers.push(tier);
     used += height;
   }
   const season = seasons.find(Boolean)?.season;
   // A quarterback pair runs to some forty rows, so the rows may sit closer
   // here than on a single card.
-  const traitHeight = Math.max(17, Math.min(COMPARE_TRAIT_HEIGHT, Math.floor((COMPARE_BODY_HEIGHT - used) / slots)));
+  const traitHeight = Math.max(17, Math.min(COMPARE_TRAIT_HEIGHT, Math.floor((COMPARE_BODY_HEIGHT - used) / traitRows)));
   const traitSize = Math.max(15, Math.min(20, Math.round(traitHeight * 0.6)));
-  const size = { width: POSTER_SIZE.width, height: CHROME_HEIGHT + Math.min(COMPARE_BODY_HEIGHT, used + slots * traitHeight) };
+  const note = footerNote(context, sport);
+  const size = {
+    width: POSTER_SIZE.width,
+    height: CHROME_HEIGHT + footerExtra(note) + Math.min(COMPARE_BODY_HEIGHT, used + traitRows * traitHeight),
+  };
   const trait = (side: number, name: string) => sides[side].player.traits.find((t) => t.trait === name);
+  const faceName = Math.min(...sides.map(({ row }) => nameSize(displayName(row), COMPARE_NAME_WIDTH, 36, 22)));
 
   return renderShareFrame({
     eyebrow: `${league} · ${positionName(first.row.positionGroup)}`,
@@ -453,9 +503,9 @@ export async function renderComparisonCard({
     body: (
       <Section gap={GAP}>
         <div style={{ display: "flex", alignItems: "center", gap: 20, height: FACE }}>
-          <CompareIdentity row={first.row} logo={teams.find((t) => t.team === first.row.team)} portrait={portraits[0]} side={0} />
+          <CompareIdentity row={first.row} logo={teams.find((t) => t.team === first.row.team)} portrait={portraits[0]} side={0} size={faceName} />
           <div style={{ fontSize: 20, color: C.gray, letterSpacing: 2, textTransform: "uppercase" }}>vs</div>
-          <CompareIdentity row={second.row} logo={teams.find((t) => t.team === second.row.team)} portrait={portraits[1]} side={1} />
+          <CompareIdentity row={second.row} logo={teams.find((t) => t.team === second.row.team)} portrait={portraits[1]} side={1} size={faceName} />
         </div>
 
         <Section>
@@ -491,7 +541,7 @@ export async function renderComparisonCard({
                   display: "flex",
                   alignItems: "flex-end",
                   justifyContent: "center",
-                  height: traitHeight,
+                  height: SECTION_TITLE_HEIGHT,
                   paddingBottom: 4,
                   fontSize: 15,
                   fontWeight: 600,
@@ -580,7 +630,7 @@ export async function renderComparisonCard({
     ),
     footer: (
       <div style={{ display: "flex", maxWidth: 740, fontSize: 19, lineHeight: 1.3, color: C.gray }}>
-        {`${context} | Bars are percentiles among ${SPORT_COPY[sport].pool} at the position`}
+        {note}
       </div>
     ),
   });
