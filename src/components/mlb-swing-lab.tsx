@@ -97,7 +97,7 @@ export function SwingLab({ study, hitters }: { study: LabStudy; hitters: CarryHi
             onKeyDown={(e) => {
               if (e.key === "Enter" && matches[0]) choose(String(matches[0].player_id));
             }}
-            placeholder={hitter ? "Search another hitter" : "Search a hitter, or stay generic"}
+            placeholder={hitter ? "Switch hitter" : "Search any MLB hitter, or use a generic profile"}
             className="w-full rounded-md border border-border bg-background px-2 py-1.5 text-sm"
           />
         </label>
@@ -120,7 +120,9 @@ export function SwingLab({ study, hitters }: { study: LabStudy; hitters: CarryHi
           </ul>
         )}
         {needle && matches.length === 0 && (
-          <p className="text-xs text-muted-foreground">No match. The lab covers {options.length} hitters with {study.lab.min_balls}+ spin balls this season.</p>
+          <p className="text-xs text-muted-foreground">
+            No match. Includes {options.length} hitters with {study.lab.min_balls}+ tracked air balls in {study.season}.
+          </p>
         )}
         {hitter && (
           <div className="flex flex-wrap items-center justify-between gap-2">
@@ -128,7 +130,7 @@ export function SwingLab({ study, hitters }: { study: LabStudy; hitters: CarryHi
               team={hitter.team ?? "–"} position={line ? `${line.ops.toFixed(3).replace(/^0/, "")} OPS, ${hitter.hr} HR` : null}
               logo={mlbTeamIdentity(hitter.team)} />
             <button type="button" onClick={() => choose(GENERIC)} className="text-xs text-muted-foreground underline-offset-4 hover:text-foreground hover:underline">
-              Back to the generic hitter
+              Reset to generic hitter
             </button>
           </div>
         )}
@@ -169,7 +171,7 @@ export function SwingLab({ study, hitters }: { study: LabStudy; hitters: CarryHi
           <p className="type-eyebrow text-muted-foreground">Carry change</p>
           <p className="font-mono text-2xl tabular-nums">{signed(carry)} ft</p>
           <p className="text-xs text-muted-foreground">
-            Per ball in the air, with his current contact and the new swing&apos;s spin.
+            Per ball in the air, keeping exit velocity and launch angle the same and changing only the spin from the new swing.
           </p>
         </div>
         <table className="w-full text-sm">
@@ -177,8 +179,8 @@ export function SwingLab({ study, hitters }: { study: LabStudy; hitters: CarryHi
             <tr className="text-left text-xs text-muted-foreground">
               <th className="py-1 font-normal">Season line</th>
               {line && <th className="py-1 text-right font-normal">{study.season}</th>}
-              <th className="py-1 text-right font-normal">Change</th>
-              {line && <th className="py-1 text-right font-normal">With the swing change</th>}
+              <th className="py-1 text-right font-normal">Typical shift</th>
+              {line && <th className="py-1 text-right font-normal">New line</th>}
             </tr>
           </thead>
           <tbody>
@@ -208,23 +210,22 @@ export function SwingLab({ study, hitters }: { study: LabStudy; hitters: CarryHi
         </table>
         {extrapolating && (
           <p className="text-xs text-negative">
-            Beyond ±{NATURAL_CHANGE}°: few hitters have changed this much in a year, so these numbers extend the observed pattern past the data.
+            Beyond ±{NATURAL_CHANGE}°: few MLB hitters change this much from one season to the next, so these numbers go past what we have seen in real games.
           </p>
         )}
         <HowGraded label="How this works"
-          lead={<>What tended to follow a natural swing change, on average.</>}
+          lead={<>Carry comes from ball-flight physics. The batting line comes from MLB hitters who actually changed their swing.</>}
         >
           <p>
-            Carry is per ball in the air, from rerunning the collision and flight physics on {hitter ? "his own" : "the league's"} {study.season} batted
-            balls with every ball&apos;s exit velocity and launch angle held fixed, scaled by how much modeled spin translates into observed carry
-            across hitters. It is what the same contact would carry with the spin the new swing puts on it. The contact a new swing would make
-            is not forecast, and the season line shows what hitters did.
+            To estimate carry, we take {hitter ? `${hitter.player_name}'s` : "the league's"} {study.season} fly balls and liners, keep the
+            exit velocity and launch angle the same, and recalculate how much backspin and sidespin the new swing plane would put on the ball.
+            That isolates how much farther or shorter the exact same contact would fly.
           </p>
           <p>
-            Season-line changes come from {coefs.n} season-to-season changes by {coefs.n_hitters} hitters, holding bat speed and the prior
-            season&apos;s line constant so a rebound from an unusual year is not credited to the swing, shown with a one-standard-error range
-            that carries the fitted coefficients&apos; correlation and treats each hitter&apos;s seasons as one cluster. Those swings changed
-            naturally, so the numbers describe what tended to follow a change.
+            To estimate the batting line, we look at {coefs.n} year-to-year swing changes by {coefs.n_hitters} MLB hitters (2023 to {study.season}),
+            holding bat speed and the prior season&apos;s stats steady so a normal bounce-back year is not credited to the swing. The range in
+            parentheses is the typical margin of error (±1 standard error, grouped by hitter). Because these were real-life swing changes rather than
+            controlled experiments, they show what tended to follow on average.
           </p>
         </HowGraded>
       </div>

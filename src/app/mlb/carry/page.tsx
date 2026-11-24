@@ -301,17 +301,16 @@ export default async function MlbCarryPage() {
       <Section id="explained" question="How much does the swing explain?" title="About two thirds, with a repeatable remainder">
         <Explain lead="These shares are validation scores and have no untouched holdout.">
           <p>
-            Pure bat-in-plane collision and flight physics predicts {pct(ex.share_without_steep_correction)} of hitters&apos; carry differences in{" "}
-            {season - 1}, a season not used to fit the slope. Adding a small steep-swing correction ({study.physics.tilt_attack_correction}° of extra
-            barrel rise per degree of relative tilt) lifts the share to {pct(ex.share)} on the same hitters and the same carry. All three bat-tracking
-            seasons (2024 to {season}) informed model refinement, so there is no untouched holdout until {season + 1}. Sampling noise caps any model
-            near {pct(ex.ceiling)} of that same variance, so the swing accounts for about {pct(ex.share / ex.ceiling)} of the carry that is
-            explainable at all.
+            Modeling the bat lying in the swing plane predicts {pct(ex.share_without_steep_correction)} of the carry gap between hitters in{" "}
+            {season - 1}, a season not used to fit the slope. Adding a small adjustment for steeper barrels still rising slightly faster at contact
+            ({study.physics.tilt_attack_correction}° per degree of relative tilt) lifts that to {pct(ex.share)}, or {pct(ex.share / ex.ceiling)} of
+            what any model can explain given the {pct(ex.ceiling)} ceiling from single-season noise. Because all three bat-tracking seasons
+            (2024 to {season}) informed the model, there is no untouched test season until {season + 1}.
           </p>
           <p>
-            The rest is not all noise: what physics leaves unexplained still repeats from one season to the next (r ={" "}
-            {ex.leftover_year_to_year.toFixed(2)}), with a modest correlation to swing length and small remaining residuals in attack direction and pull.
-            Where on the barrel the ball is struck, the bat itself, and the hand path are candidates public data cannot see.
+            The remaining gap is not all noise: what the physics misses still repeats from one season to the next (r ={" "}
+            {ex.leftover_year_to_year.toFixed(2)}). Longer swings carry slightly more than the model predicts, and small differences remain with swing
+            direction and pull tendency. Where on the barrel the ball is struck, the bat itself, and hand path remain invisible in public data.
           </p>
         </Explain>
         <ExplainedBars explained={ex} />
