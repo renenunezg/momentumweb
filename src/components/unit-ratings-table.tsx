@@ -47,7 +47,7 @@ export function UnitRatingsTable<
   powerRank: Map<string | number, number>;
   intro: ReactNode;
   controls?: ReactNode;
-  // An action for the unit the table is sorted by, beside the controls.
+  // Actions for the unit the table is sorted by, beside the controls.
   action?: (sortKey: K) => ReactNode;
   badge?: (unit: U) => { label: string; note: string } | null;
   caption: string;
@@ -72,9 +72,10 @@ export function UnitRatingsTable<
           {intro}
         </p>
         {(controls || action) && (
-          <div className="flex shrink-0 items-center gap-3">
+          <div className="flex flex-wrap items-center gap-x-4 gap-y-1 sm:shrink-0 sm:justify-end">
             {controls}
-            {action?.(sortKey)}
+            {/* Kept together so they wrap as one row beneath the controls. */}
+            {action && <div className="flex items-center gap-x-4">{action(sortKey)}</div>}
           </div>
         )}
       </div>

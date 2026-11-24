@@ -127,9 +127,9 @@ export default function NflRatings({
     replaceLocation(url);
   }
 
-  // Every view but the comparison has a post-sized image; the units one needs
-  // published units.
-  const hasCard = view !== "compare" && (view !== "units" || units.length > 0);
+  // Every table view has one post-sized image, saved from the tab row. The
+  // units view has two, so they sit by its table with a label each.
+  const hasCard = view !== "compare" && view !== "units";
   const { season, week } = ratings[0];
 
   return (
@@ -144,7 +144,6 @@ export default function NflRatings({
             compact
             href={`/nfl/ratings/card/${view}`}
             filename={`nfl-ratings-${view}-${season}-week-${week}.png`}
-            label={view === "units" ? "Top 5 PNG" : undefined}
           />
         )
       }
@@ -196,12 +195,18 @@ export default function NflRatings({
               powerRank={powerRank}
               caption="NFL unit ratings"
               action={(key) => (
-                <DownloadCardLink
-                  compact
-                  href={`/nfl/ratings/card/${key}`}
-                  filename={`nfl-ratings-${key}-${season}-week-${week}.png`}
-                  label={`${UNIT_COLUMNS.find((column) => column.key === key)?.label} PNG`}
-                />
+                <>
+                  <DownloadCardLink
+                    href={`/nfl/ratings/card/${key}`}
+                    filename={`nfl-ratings-${key}-${season}-week-${week}.png`}
+                    label={`${UNIT_COLUMNS.find((column) => column.key === key)?.label} ranking`}
+                  />
+                  <DownloadCardLink
+                    href="/nfl/ratings/card/units"
+                    filename={`nfl-ratings-units-${season}-week-${week}.png`}
+                    label="Top 5 by unit"
+                  />
+                </>
               )}
               intro="Points per game above league average, opponent adjusted. They sit beside the power ratings and do not sum to Off and Def. The line ratings attribute outcomes without snap-level film data."
             />

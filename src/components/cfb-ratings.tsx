@@ -132,9 +132,10 @@ export default function CfbRatings({
     replaceLocation(url);
   }
 
-  // The top 25 and the unit leaders each have a post-sized image, and so does
-  // every conference, from its own heading. FBS and FCS are too long for one.
-  const hasCard = view === "top25" || (view === "units" && units.length > 0);
+  // The top 25 has a post-sized image, saved from the tab row; a conference
+  // has one at its own heading, and the units view two beside its table, with
+  // a label each. FBS and FCS are too long for one.
+  const hasCard = view === "top25";
   const { season, week } = ratings[0];
   const card = (name: string) => ({
     href: `/cfb/ratings/card/${name}`,
@@ -147,7 +148,7 @@ export default function CfbRatings({
       options={VIEWS}
       value={view}
       onValueChange={select}
-      aside={hasCard && <DownloadCardLink compact {...card(view)} label={view === "units" ? "Top 5 PNG" : undefined} />}
+      aside={hasCard && <DownloadCardLink compact {...card(view)} />}
     >
       <ViewTabPanel value={view}>
         {view === "compare" ? (
@@ -274,11 +275,13 @@ function CfbUnitRatings({
         </>
       }
       action={(key) => (
-        <DownloadCardLink
-          compact
-          {...card(`${key}-${classification}`)}
-          label={`${UNIT_COLUMNS.find((column) => column.key === key)?.label} PNG`}
-        />
+        <>
+          <DownloadCardLink
+            {...card(`${key}-${classification}`)}
+            label={`${UNIT_COLUMNS.find((column) => column.key === key)?.label} ranking`}
+          />
+          <DownloadCardLink {...card("units")} label="FBS top 5 by unit" />
+        </>
       )}
       controls={
         <ToggleGroup
