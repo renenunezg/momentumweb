@@ -28,6 +28,11 @@ import type {
 // The NHL model publishes daily: ratings keyed by date, projections keyed by
 // game, and every partner-feed read archived as a market snapshot.
 
+// The season is named by the year it opens in.
+export function seasonLabel(season: number): string {
+  return `${season}-${String((season + 1) % 100).padStart(2, "0")}`;
+}
+
 export async function fetchTeams(): Promise<Map<string, NhlTeamIdentity>> {
   const { data, error } = await supabaseNhl.from("teams").select("*");
   if (error) throw error;

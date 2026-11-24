@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useMemo, useState, type ReactNode } from "react";
 import { ChevronDown } from "lucide-react";
 import { formatNumber } from "@/lib/utils";
 import type { TeamLogoSource } from "@/components/team-logo";
@@ -36,6 +36,7 @@ export function GroupRatings<T extends PowerRatingRow>({
   overallRankLabel,
   initialGroup,
   onSelect,
+  action,
   limited,
   market,
   gap,
@@ -55,6 +56,8 @@ export function GroupRatings<T extends PowerRatingRow>({
   overallRankLabel: string;
   initialGroup?: string;
   onSelect: (name: string) => void;
+  // An action for the group shown, beside its average.
+  action?: (name: string) => ReactNode;
   limited: LimitedDataRule;
   market?: (row: T) => MarketStrength;
   gap?: RatingGap<T>;
@@ -127,9 +130,12 @@ export function GroupRatings<T extends PowerRatingRow>({
             </select>
           </span>
         </h2>
-        <span className="type-eyebrow text-muted-foreground">
-          Avg {formatNumber(selected.avg)}
-        </span>
+        <div className="flex shrink-0 items-center gap-3">
+          <span className="type-eyebrow text-muted-foreground">
+            Avg {formatNumber(selected.avg)}
+          </span>
+          {action?.(selected.name)}
+        </div>
       </div>
       <PowerRatingsTable
         rows={selected.teams}

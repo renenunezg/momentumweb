@@ -9,7 +9,7 @@ import {
 import { keepLastGood } from "@/lib/keep-last-good";
 import { fetchComparisonProjections } from "@/lib/football-comparison.server";
 import { fetchCfbPlayoffForecast } from "@/lib/cfb-playoffs.server";
-import { decodeCfbPlayoffs, type CfbPlayoffPayload } from "@/lib/cfb-playoffs";
+import { cfbStandings } from "@/lib/cfb-playoffs";
 import { LastUpdated } from "@/components/last-updated";
 import CfbRatings from "@/components/cfb-ratings";
 import { HowGraded } from "@/components/how-graded";
@@ -118,19 +118,8 @@ export default async function RatingsPage() {
         projections={projections}
         teams={[...teams.values()]}
         prior={prior}
-        standings={forecast ? standings(forecast) : {}}
+        standings={forecast ? cfbStandings(forecast) : {}}
       />
     </PageShell>
-  );
-}
-
-// Record and AP rank ride on the playoff forecast, which carries them for
-// every FBS team; only the short label crosses to the client.
-function standings(payload: CfbPlayoffPayload): Record<number, string> {
-  return Object.fromEntries(
-    decodeCfbPlayoffs(payload).teams.map((t) => [
-      t.id,
-      `${t.wins}-${t.losses}${t.ap_rank != null ? ` · AP ${t.ap_rank}` : ""}`,
-    ]),
   );
 }

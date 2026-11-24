@@ -316,3 +316,14 @@ export function parseCfbPlayoffPayload(
     return null;
   }
 }
+
+// Record and AP rank ride on the playoff forecast, which carries them for
+// every FBS team, keyed by team id as one short label.
+export function cfbStandings(payload: CfbPlayoffPayload): Record<number, string> {
+  return Object.fromEntries(
+    decodeCfbPlayoffs(payload).teams.map((t) => [
+      t.id,
+      `${t.wins}-${t.losses}${t.ap_rank != null ? ` · AP ${t.ap_rank}` : ""}`,
+    ]),
+  );
+}

@@ -15,12 +15,12 @@ import {
   type RatingChange,
 } from "@/components/power-ratings-table";
 import { ToggleGroup } from "@/components/toggle-group";
-import {
-  FootballTeamComparison,
-  FOOTBALL_UNIT_COLUMNS as UNIT_COLUMNS,
-} from "@/components/football-team-comparison";
+import { FootballTeamComparison } from "@/components/football-team-comparison";
+import { FOOTBALL_UNIT_COLUMNS as UNIT_COLUMNS } from "@/lib/football-units";
 import { UnitRatingsTable } from "@/components/unit-ratings-table";
 import { ViewTabPanel, ViewTabs } from "@/components/view-tabs";
+import { DownloadCardLink } from "@/components/download-card-link";
+import { slug } from "@/lib/utils";
 
 const VIEWS = [
   { key: "top25", label: "Top 25" },
@@ -132,8 +132,23 @@ export default function CfbRatings({
     replaceLocation(url);
   }
 
+  // The top 25 and the unit leaders each have a post-sized image, and so does
+  // every conference, from its own heading. FBS and FCS are too long for one.
+  const hasCard = view === "top25" || (view === "units" && units.length > 0);
+  const { season, week } = ratings[0];
+  const card = (name: string) => ({
+    href: `/cfb/ratings/card/${name}`,
+    filename: `cfb-ratings-${name}-${season}-week-${week}.png`,
+  });
+
   return (
-    <ViewTabs label="Ratings view" options={VIEWS} value={view} onValueChange={select}>
+    <ViewTabs
+      label="Ratings view"
+      options={VIEWS}
+      value={view}
+      onValueChange={select}
+      aside={hasCard && <DownloadCardLink compact {...card(view)} label={view === "units" ? "Top 5 PNG" : undefined} />}
+    >
       <ViewTabPanel value={view}>
         {view === "compare" ? (
           <FootballTeamComparison
@@ -159,13 +174,14 @@ export default function CfbRatings({
             overallRankLabel="D1 Rk"
             initialGroup={initialConference}
             onSelect={selectConference}
+            action={(conference) => <DownloadCardLink compact {...card(slug(conference))} />}
             market={marketStrength}
             limited={LIMITED}
             change={change}
             standing={standing}
           />
         ) : view === "units" ? (
-          <CfbUnitRatings units={units} ratings={ratings} logo={logo} />
+          <CfbUnitRatings units={units} ratings={ratings} logo={logo} card={card} />
         ) : (
           <PowerRatingsTable
             rows={visible}
@@ -199,10 +215,12 @@ function CfbUnitRatings({
   units,
   ratings,
   logo,
+  card,
 }: {
   units: CfbTeamUnitRating[];
   ratings: CfbTeamRating[];
   logo: (r: { team_id: number }) => CfbTeamIdentity | undefined;
+  card: (name: string) => { href: string; filename: string };
 }) {
   const [classification, setClassification] = useState<ClassKey>("fbs");
   const powerRank = useMemo(
@@ -255,6 +273,13 @@ function CfbUnitRatings({
             ))}
         </>
       }
+      action={(key) => (
+        <DownloadCardLink
+          compact
+          {...card(`${key}-${classification}`)}
+          label={`${UNIT_COLUMNS.find((column) => column.key === key)?.label} PNG`}
+        />
+      )}
       controls={
         <ToggleGroup
           label="Classification"

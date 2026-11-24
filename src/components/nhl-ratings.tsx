@@ -21,7 +21,7 @@ const num = "text-right font-mono tabular-nums";
 const WINDOW_NOTE =
   "Fewer than ten games in the window. This team's games are projected but not priced.";
 
-const COLUMNS = [
+export const NHL_RATING_COLUMNS = [
   { key: "rating", label: "Rating", short: "Rtg", digits: 3, lowerIsBetter: false,
     tip: "Twice attack minus twice defense. Zero is league average, and higher is better." },
   { key: "home_xgf", label: "Home xGF", short: null, digits: 2, lowerIsBetter: false,
@@ -58,7 +58,7 @@ export function NhlRatingsTable({
   const showChange = previous.asOf != null;
   // The same bar scale as the football ratings tables.
   const changeExtent = sharedExtent([ratings.map(change)], 0.95);
-  const columns = COLUMNS.map((column) => ({
+  const columns = NHL_RATING_COLUMNS.map((column) => ({
     ...column,
     heatmap: ratingHeatmap(ratings.map((row) => row[column.key]), { lowerIsBetter: column.lowerIsBetter }),
   }));
@@ -70,7 +70,7 @@ export function NhlRatingsTable({
       <Table
         density="compact"
         className="max-sm:[--table-cell-x:0.125rem] max-sm:[&_td]:text-xs"
-        style={evenColumns(COLUMNS.length)}
+        style={evenColumns(NHL_RATING_COLUMNS.length)}
       >
         <TableCaption className="sr-only">NHL model ratings</TableCaption>
         <TableHeader>

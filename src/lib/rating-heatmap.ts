@@ -5,7 +5,8 @@ type RatingValue = number | null | undefined;
 // Build the scale before search and sorting so neither recolors a team.
 // With `extent`, every column sharing it reads on one symmetric scale around
 // `center`; otherwise each side of the center spans its own observed range.
-export function ratingHeatmap(
+// A value's place on it runs from -1 (worst) to 1 (best).
+export function ratingScale(
   values: RatingValue[],
   {
     lowerIsBetter = false,
@@ -18,17 +19,28 @@ export function ratingHeatmap(
   const max = Math.max(...finite);
   const midpoint = center ?? (min + max) / 2;
 
-  return (value: RatingValue): CSSProperties | undefined => {
-    if (value == null || !Number.isFinite(value) || !finite.length || max === min) return undefined;
+  return (value: RatingValue): number | null => {
+    if (value == null || !Number.isFinite(value) || !finite.length || max === min) return null;
     const distance = value - midpoint;
     const span = extent ?? (distance >= 0 ? max - midpoint : midpoint - min);
     const position = span > 0 ? Math.max(-1, Math.min(1, distance / span)) : 0;
-    const strength = position * (lowerIsBetter ? -1 : 1);
+    return position * (lowerIsBetter ? -1 : 1);
+  };
+}
+
+// Near-center values stay a quiet tint; full saturation is for the extremes.
+export function heatIntensity(strength: number): number {
+  return Math.pow(Math.abs(strength), 1.2);
+}
+
+export function ratingHeatmap(values: RatingValue[], options: Parameters<typeof ratingScale>[1] = {}) {
+  const scale = ratingScale(values, options);
+  return (value: RatingValue): CSSProperties | undefined => {
+    const strength = scale(value);
+    if (strength == null) return undefined;
     const color = strength >= 0 ? "--better" : "--worse";
-    // Near-center values stay a quiet tint; full saturation is for the extremes.
-    const intensity = Math.pow(Math.abs(strength), 1.2) * 100;
     return {
-      backgroundColor: `color-mix(in oklab, var(${color}) ${intensity.toFixed(1)}%, var(--cell-neutral))`,
+      backgroundColor: `color-mix(in oklab, var(${color}) ${(heatIntensity(strength) * 100).toFixed(1)}%, var(--cell-neutral))`,
       color: "var(--on-fill)",
     };
   };

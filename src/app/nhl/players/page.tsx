@@ -1,6 +1,6 @@
 import { PageDescription, PageHeader, PageShell, PageTitle, PageMeta } from "@/components/page-layout";
 import type { Metadata } from "next";
-import { fetchNhlPositionGrades, fetchTeams } from "@/lib/nhl";
+import { fetchNhlPositionGrades, fetchTeams, seasonLabel } from "@/lib/nhl";
 import { LastUpdated } from "@/components/last-updated";
 import PositionGrades from "@/components/position-grades";
 
@@ -8,11 +8,6 @@ import PositionGrades from "@/components/position-grades";
 // published, and nothing on the page depends on the clock, so the week is only
 // a backstop.
 export const revalidate = 604800;
-
-// The season is named by the year it opens in.
-function seasonLabel(season: number): string {
-  return `${season}-${String((season + 1) % 100).padStart(2, "0")}`;
-}
 
 export async function generateMetadata(): Promise<Metadata> {
   const { season } = await fetchNhlPositionGrades();

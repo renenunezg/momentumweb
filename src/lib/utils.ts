@@ -46,6 +46,11 @@ export function formatFairOdds(probability: number | null | undefined): string {
   return Number.isFinite(odds) ? formatOdds(odds) : EMPTY;
 }
 
+// A name as a URL segment: "Big Ten" reads big-ten.
+export function slug(text: string): string {
+  return text.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "");
+}
+
 export function formatNumber(
   value: number | null | undefined,
   decimals = 1

@@ -33,6 +33,7 @@ export function UnitRatingsTable<
   powerRank,
   intro,
   controls,
+  action,
   badge,
   caption,
 }: {
@@ -46,6 +47,8 @@ export function UnitRatingsTable<
   powerRank: Map<string | number, number>;
   intro: ReactNode;
   controls?: ReactNode;
+  // An action for the unit the table is sorted by, beside the controls.
+  action?: (sortKey: K) => ReactNode;
   badge?: (unit: U) => { label: string; note: string } | null;
   caption: string;
 }) {
@@ -68,7 +71,12 @@ export function UnitRatingsTable<
         <p className="max-w-3xl text-xs leading-relaxed text-muted-foreground">
           {intro}
         </p>
-        {controls}
+        {(controls || action) && (
+          <div className="flex shrink-0 items-center gap-3">
+            {controls}
+            {action?.(sortKey)}
+          </div>
+        )}
       </div>
 
       <RatingsSearch

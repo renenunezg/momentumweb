@@ -2,6 +2,7 @@ import { PageDescription, PageHeader, PageShell, PageTitle, PageMeta } from "@/c
 import type { Metadata } from "next";
 import { LastUpdated } from "@/components/last-updated";
 import { HowGraded } from "@/components/how-graded";
+import { DownloadCardLink } from "@/components/download-card-link";
 import { NhlRatingsTable } from "@/components/nhl-ratings";
 import { NhlRatingsViews } from "@/components/nhl-ratings-views";
 import { NhlTeamComparison } from "@/components/nhl-team-comparison";
@@ -70,6 +71,7 @@ export default async function RatingsPage() {
             </HowGraded>
           </div>
         </div>
+        <DownloadCardLink href="/nhl/ratings/card/all" filename={`nhl-model-ratings-${asOf}.png`} />
       </PageHeader>
       <NhlRatingsViews
         table={<NhlRatingsTable ratings={ratings} teams={teams} previous={previous} />}

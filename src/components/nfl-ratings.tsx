@@ -15,12 +15,12 @@ import {
   type RatingChange,
   type RatingGap,
 } from "@/components/power-ratings-table";
-import {
-  FootballTeamComparison,
-  NFL_UNIT_COLUMNS as UNIT_COLUMNS,
-} from "@/components/football-team-comparison";
+import { FootballTeamComparison } from "@/components/football-team-comparison";
+import { NFL_UNIT_COLUMNS as UNIT_COLUMNS } from "@/lib/football-units";
+import { nflPureMinusMarket } from "@/lib/rating-gap";
 import { UnitRatingsTable } from "@/components/unit-ratings-table";
 import { ViewTabPanel, ViewTabs } from "@/components/view-tabs";
+import { DownloadCardLink } from "@/components/download-card-link";
 
 const VIEWS = [
   { key: "all", label: "All" },
@@ -49,10 +49,7 @@ const PURE_MINUS_MARKET: RatingGap<NflTeamRating> = {
   label: "Pure − market",
   title:
     "Fitted model rating, before the market blend, minus market-implied strength from earlier closing spreads, in points. It shows where the model and market disagree about a team and is not a betting edge on a game.",
-  value: (r) =>
-    r.market_rating == null
-      ? null
-      : r.power_rating - (r.forecast_alignment_points ?? 0) - r.market_rating,
+  value: nflPureMinusMarket,
 };
 
 export default function NflRatings({
@@ -130,8 +127,28 @@ export default function NflRatings({
     replaceLocation(url);
   }
 
+  // Every view but the comparison has a post-sized image; the units one needs
+  // published units.
+  const hasCard = view !== "compare" && (view !== "units" || units.length > 0);
+  const { season, week } = ratings[0];
+
   return (
-    <ViewTabs label="Ratings view" options={VIEWS} value={view} onValueChange={select}>
+    <ViewTabs
+      label="Ratings view"
+      options={VIEWS}
+      value={view}
+      onValueChange={select}
+      aside={
+        hasCard && (
+          <DownloadCardLink
+            compact
+            href={`/nfl/ratings/card/${view}`}
+            filename={`nfl-ratings-${view}-${season}-week-${week}.png`}
+            label={view === "units" ? "Top 5 PNG" : undefined}
+          />
+        )
+      }
+    >
       <ViewTabPanel value={view}>
         {view === "compare" ? (
           <FootballTeamComparison
@@ -178,6 +195,14 @@ export default function NflRatings({
               shortName={rowKey}
               powerRank={powerRank}
               caption="NFL unit ratings"
+              action={(key) => (
+                <DownloadCardLink
+                  compact
+                  href={`/nfl/ratings/card/${key}`}
+                  filename={`nfl-ratings-${key}-${season}-week-${week}.png`}
+                  label={`${UNIT_COLUMNS.find((column) => column.key === key)?.label} PNG`}
+                />
+              )}
               intro="Points per game above league average, opponent adjusted. They sit beside the power ratings and do not sum to Off and Def. The line ratings attribute outcomes without snap-level film data."
             />
           )

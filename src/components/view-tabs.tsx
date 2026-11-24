@@ -12,6 +12,7 @@ export function ViewTabs<K extends string>({
   options,
   value,
   onValueChange,
+  aside,
   className,
   children,
 }: {
@@ -19,6 +20,8 @@ export function ViewTabs<K extends string>({
   options: readonly { key: K; label: string }[];
   value: K;
   onValueChange: (value: K) => void;
+  // An action for the current view, at the end of the tab row.
+  aside?: ReactNode;
   className?: string;
   children: ReactNode;
 }) {
@@ -28,20 +31,23 @@ export function ViewTabs<K extends string>({
       onValueChange={(next) => onValueChange(next as K)}
       className={cn("space-y-section", className)}
     >
-      <Tabs.List
-        aria-label={label}
-        className={TAB_LIST}
-      >
-        {options.map((option) => (
-          <Tabs.Tab
-            key={option.key}
-            value={option.key}
-            className={cn(TAB_ITEM, TAB_OFF, "data-active:border-primary data-active:text-foreground")}
-          >
-            {option.label}
-          </Tabs.Tab>
-        ))}
-      </Tabs.List>
+      <div className="flex items-center gap-3">
+        <Tabs.List
+          aria-label={label}
+          className={cn(TAB_LIST, "min-w-0 flex-1")}
+        >
+          {options.map((option) => (
+            <Tabs.Tab
+              key={option.key}
+              value={option.key}
+              className={cn(TAB_ITEM, TAB_OFF, "data-active:border-primary data-active:text-foreground")}
+            >
+              {option.label}
+            </Tabs.Tab>
+          ))}
+        </Tabs.List>
+        {aside}
+      </div>
       {children}
     </Tabs.Root>
   );

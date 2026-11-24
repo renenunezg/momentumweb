@@ -1,7 +1,7 @@
 import { ImageResponse } from "next/og";
 import type { ReactNode } from "react";
 import { MomentumWordmark } from "@/components/momentum-wordmark";
-import { monogram } from "@/components/team-logo";
+import { monogram, type TeamLogoSource } from "@/components/team-logo";
 import type { LeagueRatings } from "@/lib/home-research.server";
 import { formatNumber } from "@/lib/utils";
 
@@ -32,13 +32,32 @@ export const SHARE_COLORS = {
   better: "#2aa575",
   worse: "#e2554e",
   onFill: "#07150d",
+  cellNeutral: "#c9cac7",
+  // The dark theme's --grid, --accent-blue, --positive and --destructive.
+  grid: "#2b2e33",
+  blue: "#8eaacb",
+  positive: "#69d3a7",
+  negative: "#ff918b",
 };
 const { carbon: CARBON, white: WHITE, gray: GRAY, rule: RULE, green: GREEN, better: BETTER, onFill: ON_FILL } = SHARE_COLORS;
 
 // One frame behind every opengraph-image route: link previews on X and
 // Reddit are the main referral channel, and a bare URL gets no clicks. Satori
-// needs display:flex on every multi-child box.
-export async function renderShareFrame({ eyebrow, body, footer }: { eyebrow: string; body: ReactNode; footer: ReactNode }) {
+// needs display:flex on every multi-child box. The downloadable posters
+// (share-poster) pass their own size and headers.
+export async function renderShareFrame({
+  eyebrow,
+  body,
+  footer,
+  size = SHARE_CARD_SIZE,
+  headers,
+}: {
+  eyebrow: string;
+  body: ReactNode;
+  footer: ReactNode;
+  size?: { width: number; height: number };
+  headers?: Record<string, string>;
+}) {
   const [regular, semibold] = await Promise.all([loadBarlow(400), loadBarlow(600)]);
   return new ImageResponse(
     (
@@ -79,7 +98,8 @@ export async function renderShareFrame({ eyebrow, body, footer }: { eyebrow: str
       </div>
     ),
     {
-      ...SHARE_CARD_SIZE,
+      ...size,
+      headers,
       fonts: [
         { name: "Barlow", data: regular, weight: 400, style: "normal" },
         { name: "Barlow", data: semibold, weight: 600, style: "normal" },
@@ -132,56 +152,60 @@ function LeagueTable({ name, league }: { name: string; league: LeagueRatings }) 
       <div style={{ display: "flex", fontSize: 20, color: GRAY, letterSpacing: 2, textTransform: "uppercase", paddingBottom: 10 }}>
         {`${name} power ratings | ${league.asOf}`}
       </div>
-      {league.teams.slice(0, CARD_ROWS).map((t, i) => {
-        const logo = t.logo?.logo_dark ?? t.logo?.logo_light;
-        return (
-          <div
-            key={t.key}
-            style={{ display: "flex", alignItems: "center", gap: 14, height: 54, borderTop: `1.5px solid ${RULE}` }}
-          >
-            <div style={{ display: "flex", width: 22, fontSize: 20, color: GRAY, justifyContent: "flex-end" }}>{i + 1}</div>
-            {logo ? (
-              // eslint-disable-next-line @next/next/no-img-element -- Satori draws only <img>; next/image cannot render in an ImageResponse
-              <img src={logo} width={36} height={36} alt="" style={{ objectFit: "contain" }} />
-            ) : (
-              <div
-                style={{
-                  display: "flex",
-                  width: 36,
-                  height: 36,
-                  borderRadius: 6,
-                  background: RULE,
-                  color: GRAY,
-                  fontSize: 14,
-                  alignItems: "center",
-                  justifyContent: "center",
-                }}
-              >
-                {monogram(t.team)}
-              </div>
-            )}
-            <div style={{ flex: 1, fontSize: 25, fontWeight: 600, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
-              {t.team}
-            </div>
-            <div
-              style={{
-                display: "flex",
-                minWidth: 86,
-                justifyContent: "center",
-                padding: "3px 12px",
-                borderRadius: 6,
-                background: BETTER,
-                color: ON_FILL,
-                fontSize: 24,
-                fontWeight: 600,
-              }}
-            >
-              {formatNumber(t.rating, league.digits)}
-            </div>
+      {league.teams.slice(0, CARD_ROWS).map((t, i) => (
+        <div
+          key={t.key}
+          style={{ display: "flex", alignItems: "center", gap: 14, height: 54, borderTop: `1.5px solid ${RULE}` }}
+        >
+          <div style={{ display: "flex", width: 22, fontSize: 20, color: GRAY, justifyContent: "flex-end" }}>{i + 1}</div>
+          <ShareLogo team={t.logo} name={t.team} size={36} />
+          <div style={{ flex: 1, fontSize: 25, fontWeight: 600, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
+            {t.team}
           </div>
-        );
-      })}
+          <div
+            style={{
+              display: "flex",
+              minWidth: 86,
+              justifyContent: "center",
+              padding: "3px 12px",
+              borderRadius: 6,
+              background: BETTER,
+              color: ON_FILL,
+              fontSize: 24,
+              fontWeight: 600,
+            }}
+          >
+            {formatNumber(t.rating, league.digits)}
+          </div>
+        </div>
+      ))}
       <div style={{ display: "flex", fontSize: 17, color: GRAY, paddingTop: 10, borderTop: `1.5px solid ${RULE}` }}>{league.measure}</div>
+    </div>
+  );
+}
+
+// A team's logo for the carbon ground, or its monogram when none is on file.
+export function ShareLogo({ team, name, size }: { team: TeamLogoSource | undefined; name: string; size: number }) {
+  const logo = team?.logo_dark ?? team?.logo_light;
+  if (logo) {
+    // eslint-disable-next-line @next/next/no-img-element -- Satori draws only <img>; next/image cannot render in an ImageResponse
+    return <img src={logo} width={size} height={size} alt="" style={{ objectFit: "contain" }} />;
+  }
+  return (
+    <div
+      style={{
+        display: "flex",
+        width: size,
+        height: size,
+        borderRadius: 6,
+        background: RULE,
+        color: GRAY,
+        fontSize: Math.round(size * 0.4),
+        alignItems: "center",
+        justifyContent: "center",
+      }}
+    >
+      {monogram(name)}
     </div>
   );
 }
