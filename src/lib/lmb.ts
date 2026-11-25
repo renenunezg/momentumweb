@@ -2,6 +2,7 @@ import type { TeamLogoSource } from "@/components/team-logo";
 import type { Json } from "./database.types";
 import { toLiveScore, type LiveScore, type MlbScheduleGame } from "./mlb-live-scores";
 import type { LmbLedgerRow, LmbModelOutputRow, LmbPlayerRatingRow } from "./lmb-types";
+import { MLB_POSITION_ORDER, PITCHER_GROUPS } from "./player-values";
 import type { SeasonStat, SeasonStatsData } from "./season-stats";
 import { EMPTY, formatNumber, formatSigned } from "./utils";
 
@@ -561,5 +562,83 @@ export function lmbComparisonMetrics(rows: [RatedPlayer, RatedPlayer]): { label:
     )
       .filter(([, key]) => rows.some((row) => row[key] !== 0))
       .map(([label, key]) => ({ label, values: pair((row) => formatSigned(row[key], 0)) })),
+  ];
+}
+
+type LedgerPlayer = RatedPlayer & Pick<LmbPlayerRatingRow, "pos">;
+
+export function lmbTotalRuns(row: RatedPlayer): number {
+  return row.batting + row.baserunning + row.fielding + row.positional + row.pitching + row.leverage + row.replacement;
+}
+
+// The ledger lines a player has: the plate side if he batted or plays the
+// field, the mound side if he pitched, fielding for everyone.
+export function lmbLedger(row: LedgerPlayer, model: LmbRatingModel): SeasonStat[] {
+  const onMound = PITCHER_GROUPS.has(row.pos);
+  const batter = !onMound || row.pa > 0;
+  const pitcher = onMound || row.bf > 0;
+  const positional = MLB_POSITION_ORDER.filter((pos) => model.positional[pos] != null)
+    .map((pos) => `${pos} ${formatSigned(model.positional[pos], 1)}`)
+    .join(", ");
+  const replacement =
+    model.replacementWinPct == null
+      ? ""
+      : ` A team of replacement-level players would win ${formatNumber(model.replacementWinPct * 100, 1)}% of its games.`;
+  const line = (label: string, value: number, tip: string): SeasonStat => ({ label, value: formatSigned(value, 0), tip });
+  return [
+    ...(batter
+      ? [
+          line("Batting", row.batting, "Runs above average at the plate, from play-by-play, adjusted for park and month."),
+          line("Baserunning", row.baserunning, "Runs above average on the bases, from play-by-play."),
+        ]
+      : []),
+    line("Fielding", row.fielding, "Runs above average in the field, from zone-based fielding."),
+    ...(batter
+      ? [
+          line(
+            "Positional",
+            row.positional,
+            `The adjustment for the difficulty of the positions he played.${positional ? ` Runs per 162 games: ${positional}.` : ""}`,
+          ),
+        ]
+      : []),
+    ...(pitcher
+      ? [
+          line("Pitching", row.pitching, "Runs saved against an average pitcher, from play-by-play, adjusted for park and month."),
+          line("Leverage", row.leverage, "The adjustment for how much a reliever's innings mattered."),
+        ]
+      : []),
+    line("Replacement", row.replacement, `What an average player is worth over a replacement-level one in his playing time.${replacement}`),
+    line("Total", lmbTotalRuns(row), "Runs above replacement. Divided by the season's runs per win, they are his WAR."),
+  ];
+}
+
+// The line of facts that opens a player's card.
+export function lmbFacts(row: Pick<LmbPlayerRatingRow, "team_id" | "age" | "pa" | "bf" | "season" | "grade" | "grade_season" | "grade_lo" | "grade_hi">): string[] {
+  const code = lmbTeamCode(row.team_id ?? undefined);
+  return [
+    code && lmbTeamName(code),
+    row.age != null && `Age ${row.age}`,
+    `${lmbPlayingTime(row)} in ${row.season}`,
+    row.grade != null && `${row.grade_season} grade range ${formatNumber(row.grade_lo, 0)} to ${formatNumber(row.grade_hi, 0)}`,
+  ].filter((fact): fact is string => Boolean(fact));
+}
+
+// The two headline numbers of a card: last season's wins and next season's projection.
+export function lmbHeadlines(row: RatedPlayer & Pick<LmbPlayerRatingRow, "grade_season">): { label: string; tip: string; value: string; sub: string; tone?: string }[] {
+  return [
+    {
+      label: `${row.season} WAR`,
+      tip: `Wins above replacement in the ${row.season} LMB season.`,
+      value: formatSigned(row.war, 1),
+      sub: `${formatSigned(lmbTotalRuns(row), 0)} runs · ${row.season} season`,
+    },
+    {
+      label: "Projected WAR",
+      tip: `Projected wins above replacement for the ${row.grade_season} season.`,
+      value: formatNumber(row.proj_war, 1),
+      sub: row.proj_war == null ? "Not enough data" : `${row.grade_season} season`,
+      tone: "text-primary",
+    },
   ];
 }

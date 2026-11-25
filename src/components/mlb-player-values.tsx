@@ -14,7 +14,14 @@ import {
   PLAYING_TIME_TIP,
   PRICE_TIP,
   TRADE_VALUE_TIP,
+  cardPanels,
   formatMillions,
+  impactSub,
+  outlookLines,
+  panelTraits,
+  playerFacts,
+  valueSub,
+  valueTone,
   headlineValue,
   marketPriced,
   mlbComparisonMetrics,
@@ -86,21 +93,6 @@ function surplusValue(row: PlayerValueIndex): number | null {
   return row.grade == null || marketPriced(row) ? null : row.trade_value_musd;
 }
 
-function valueTone(row: PlayerValueIndex): string {
-  if (row.grade == null) return "text-muted-foreground";
-  if (marketPriced(row)) return "text-foreground";
-  return (row.trade_value_musd ?? 0) >= 0 ? "text-positive" : "text-destructive";
-}
-
-// Service time is MLB's years.days, with 172 days to a year.
-function serviceText(value: number | null): string | null {
-  if (value == null) return null;
-  const years = Math.floor(value);
-  const days = Math.round((value - years) * 1000);
-  if (days > 171) return null;
-  return `${years} yr ${days} days service`;
-}
-
 function perWar(row: PlayerValueIndex): number | null {
   if (row.salary_current_musd == null || row.projected_war == null || row.projected_war <= 0.05) return null;
   return row.salary_current_musd / row.projected_war;
@@ -158,17 +150,13 @@ function TraitRow({ trait }: { trait: PlayerTrait }) {
 }
 
 function OutlookTile({ year, graded }: { year: OutlookYear; graded: boolean }) {
-  const faded = !year.in_control && year.salary_kind !== "buyout";
+  const lines = outlookLines(year, graded);
   return (
-    <div className={cn("min-w-0 rounded-sm border border-border px-2 py-1.5 text-center font-mono text-[11px]", faded && "opacity-45")}>
-      <div className="text-muted-foreground">{year.season} · {year.age}</div>
-      <div className="font-bold text-primary">{graded && year.war != null ? `${formatNumber(year.war, 1)} WAR` : EMPTY}</div>
-      <div className="text-muted-foreground">
-        {faded ? "free agent" : `${formatMillions(year.salary_musd)} ${year.salary_kind === "pre_arb" ? "min" : year.salary_kind === "arbitration" ? "arb" : year.salary_kind === "option" ? "opt" : year.salary_kind === "buyout" ? "buyout" : ""}`}
-      </div>
-      <div className={cn("font-bold", (year.surplus_musd ?? 0) >= 0 ? "text-positive" : "text-destructive")}>
-        {faded || !graded || year.surplus_musd == null ? EMPTY : `${formatSigned(year.surplus_musd, 1).replace(/^([+-])/, "$1$")}M`}
-      </div>
+    <div className={cn("min-w-0 rounded-sm border border-border px-2 py-1.5 text-center font-mono text-[11px]", lines.faded && "opacity-45")}>
+      <div className="text-muted-foreground">{lines.head}</div>
+      <div className="font-bold text-primary">{lines.war}</div>
+      <div className="text-muted-foreground">{lines.salary}</div>
+      <div className={cn("font-bold", lines.positive ? "text-positive" : "text-destructive")}>{lines.surplus}</div>
     </div>
   );
 }
@@ -194,7 +182,6 @@ function PlayerCard({ row, detail, failed, onRetry, links }: {
   const graded = row.grade != null;
   const head = headlineValue(row);
   const pitcher = PITCHER_GROUPS.has(row.position_group);
-  const service = serviceText(row.service_time);
   const lines = seasonStats(detail?.seasonStats, pitcher, false);
   // Impact above already shows last season's fWAR, from the valuation's own
   // source, so the season line leaves out its copy of the figure.
@@ -202,20 +189,13 @@ function PlayerCard({ row, detail, failed, onRetry, links }: {
     ...lines,
     tiers: lines.tiers.map((tier) => ({ ...tier, stats: tier.stats.filter((stat) => stat.label !== "fWAR") })),
   };
-  const panels = pitcher ? ["arsenal", "results", "durability"] : ["batting", "fielding"];
+  const panels = cardPanels(pitcher);
   return (
     <div className="min-w-0 space-y-4 py-3">
       <div className="flex flex-wrap gap-x-6 gap-y-1 font-mono text-[11px] text-muted-foreground">
-        <span>{row.bats ?? "?"}/{row.throws ?? "?"}</span>
-        {row.age != null && <span>Age {row.age}</span>}
-        {row.secondary_positions.length > 0 && <span>also {row.secondary_positions.join(", ")}</span>}
-        {service && <span>{service}</span>}
-        {row.fa_year != null && <span>free agent {row.fa_year}</span>}
-        {row.contract_status === "estimated" && <span>contract estimated from debut date</span>}
-        {row.contract_status === "unknown" && <span>contract not found</span>}
-        {row.owed_through_control_musd != null && row.control_years > 0 && (
-          <span>owed {formatMillions(row.owed_through_control_musd)} over {row.control_years} control year{row.control_years === 1 ? "" : "s"}</span>
-        )}
+        {playerFacts(row).map((fact) => (
+          <span key={fact}>{fact}</span>
+        ))}
       </div>
       <div className="grid gap-4 lg:grid-cols-[15rem_minmax(0,1fr)] lg:items-start lg:gap-10">
         <div className="grid grid-cols-2 divide-x divide-border border-y border-border text-center lg:grid-cols-1 lg:divide-x-0 lg:divide-y [&>div]:min-w-0 [&>div]:px-1.5 [&>div]:py-3 sm:[&>div]:px-3">
@@ -227,11 +207,7 @@ function PlayerCard({ row, detail, failed, onRetry, links }: {
               {graded ? formatMillions(head.value) : EMPTY}
             </div>
             <div className="font-mono text-[11px] text-muted-foreground">
-              {!graded
-                ? "Not enough data"
-                : head.label === "Trade value" && row.trade_value_low != null
-                  ? `${formatMillions(row.trade_value_low)} to ${formatMillions(row.trade_value_high)} · ${row.control_years} yrs`
-                  : `${formatNumber(row.projected_war, 1)} projected WAR`}
+              {valueSub(row)}
             </div>
           </div>
           <div>
@@ -240,9 +216,7 @@ function PlayerCard({ row, detail, failed, onRetry, links }: {
             </div>
             <div className="font-mono text-lg font-bold tabular-nums sm:text-2xl">{row.impact_war == null ? EMPTY : formatSigned(row.impact_war, 1)}</div>
             <div className="font-mono text-[11px] text-muted-foreground">
-              {row.impact_runs == null
-                ? pitcher ? `no batters faced in ${row.season - 1}` : `no plate appearances in ${row.season - 1}`
-                : `${formatSigned(row.impact_runs, 1)} runs · ${row.season - 1} season`}
+              {impactSub(row, pitcher)}
             </div>
           </div>
         </div>
@@ -251,10 +225,7 @@ function PlayerCard({ row, detail, failed, onRetry, links }: {
         ) : (
           <div className={cn("grid grid-cols-1 gap-x-8 gap-y-4 md:grid-cols-2", panels.length > 2 && "2xl:grid-cols-3")}>
             {panels.map((panel) => {
-              // A trait with no grade that would not count toward the grade says nothing, so it is left out.
-              const traits = detail.traits
-                .filter((t) => t.panel === panel && (t.grade != null || t.in_grade))
-                .sort((a, b) => Number(b.in_grade) - Number(a.in_grade) || a.trait.localeCompare(b.trait));
+              const traits = panelTraits(detail.traits, panel);
               if (traits.length === 0) return null;
               return (
                 <div key={panel} className="space-y-1.5">
@@ -283,6 +254,15 @@ function PlayerCard({ row, detail, failed, onRetry, links }: {
               <OutlookTile key={year.season} year={year} graded={graded} />
             ))}
           </div>
+        </div>
+      )}
+      {detail != null && (
+        <div className="flex justify-end">
+          <DownloadCardLink
+            href={`/mlb/players/card/${row.position_group.toLowerCase()}/${row.player_id}`}
+            filename={`mlb-${slug(row.player_name ?? String(row.player_id))}-card.png`}
+            label="Download card"
+          />
         </div>
       )}
       {links.length > 0 && (

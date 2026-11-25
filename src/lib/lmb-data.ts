@@ -234,8 +234,16 @@ export async function fetchLmbGradeLeaders(position: string, count: number): Pro
   return (data ?? []).filter((row) => row.season === data![0].season);
 }
 
-// Two players' rating rows in the latest season, for the downloadable comparison.
-export async function fetchLmbRatingPair(ids: [number, number]): Promise<LmbPlayerRatingRow[]> {
+// The model row behind the ratings: runs per win and the positional scale.
+export async function fetchLmbRatingModel(): Promise<LmbPlayerRatingModelRow | null> {
+  const { data, error } = await supabaseLmbCached.from("player_rating_model").select("*").eq("id", 1).maybeSingle();
+  if (error) throw new Error(`LMB rating model read failed: ${error.message}`);
+  return data;
+}
+
+// The given players' rating rows in the latest season, for the downloadable
+// card and comparison.
+export async function fetchLmbRatings(ids: number[]): Promise<LmbPlayerRatingRow[]> {
   const { data, error } = await supabaseLmbCached
     .from("player_ratings")
     .select("*")

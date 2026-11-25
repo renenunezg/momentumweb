@@ -1,6 +1,6 @@
 import { renderMetricsComparison, type ComparisonPlayer } from "@/components/share-player-card";
 import { lmbComparisonMetrics, lmbTeamCode, lmbTeamLogo } from "@/lib/lmb";
-import { fetchLmbRatingPair } from "@/lib/lmb-data";
+import { fetchLmbRatings } from "@/lib/lmb-data";
 import type { LmbPlayerRatingRow } from "@/lib/lmb-types";
 import { lmbPlayerHeadshotUrl } from "@/lib/player-headshots";
 
@@ -25,7 +25,7 @@ export async function GET(_request: Request, { params }: { params: Promise<{ pla
   const { playerId, otherId } = await params;
   const ids: [number, number] = [Number(playerId), Number(otherId)];
   if (!ids.every(Number.isInteger) || ids[0] === ids[1]) return new Response("Not found", { status: 404 });
-  const rows = await fetchLmbRatingPair(ids);
+  const rows = await fetchLmbRatings(ids);
   const first = rows.find((row) => row.player_id === ids[0]);
   const second = rows.find((row) => row.player_id === ids[1]);
   if (!first || !second) return new Response("Not found", { status: 404 });

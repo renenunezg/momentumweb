@@ -11,7 +11,6 @@ import {
   rankByPosition,
   traitLines,
   traitSections,
-  type CardHeadline,
 } from "@/lib/player-card";
 import { cfbPlayerHeadshotUrl } from "@/lib/player-headshots";
 import type { TeamLogoSource } from "@/components/team-logo";
@@ -81,9 +80,14 @@ const nameSize = (name: string, width: number, max: number, min: number) =>
 const MAX_STATS_PER_ROW = 8;
 const MAX_STAT_ROWS = 3;
 
-const TONES: Record<string, string> = { "text-positive": C.positive, "text-destructive": C.negative };
+const TONES: Record<string, string> = {
+  "text-positive": C.positive,
+  "text-destructive": C.negative,
+  "text-primary": C.green,
+  "text-muted-foreground": C.gray,
+};
 
-function Tile({ headline }: { headline: CardHeadline }) {
+function Tile({ headline }: { headline: { label: string; value: string; sub: string; tone?: string } }) {
   return (
     <div
       style={{
@@ -109,6 +113,170 @@ function Tile({ headline }: { headline: CardHeadline }) {
   );
 }
 
+// The top of a single-player card: his face or club mark, name, the line
+// under it, and his grade in a heat tile.
+function ProfileHeader({
+  name,
+  sub,
+  team,
+  logo,
+  portrait,
+  grade,
+}: {
+  name: string;
+  sub: string;
+  team: string;
+  logo: TeamLogoSource | undefined;
+  portrait: string | null;
+  grade: { label: string; text: string; sub: string; value: number | null };
+}) {
+  return (
+    <div style={{ display: "flex", alignItems: "center", gap: 24, height: PORTRAIT }}>
+      {portrait ? (
+        <div style={{ display: "flex", width: PORTRAIT, height: PORTRAIT, borderRadius: PORTRAIT / 2, overflow: "hidden", background: C.rule }}>
+          {/* eslint-disable-next-line @next/next/no-img-element -- Satori draws only <img>; next/image cannot render in an ImageResponse */}
+          <img src={portrait} width={PORTRAIT} height={PORTRAIT} alt="" style={{ objectFit: "contain" }} />
+        </div>
+      ) : (
+        <ShareLogo team={logo} name={team} size={PORTRAIT - 16} />
+      )}
+      <div style={{ display: "flex", flexDirection: "column", flex: 1, gap: 8 }}>
+        <div style={{ fontSize: nameSize(name, 590, 54, 34), fontWeight: 600, lineHeight: 1.05, ...ELLIPSIS }}>{name}</div>
+        <div style={{ display: "flex", alignItems: "center", gap: 10, fontSize: 24, color: C.gray }}>
+          {portrait && <ShareLogo team={logo} name={team} size={30} />}
+          {sub}
+        </div>
+      </div>
+      <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 6 }}>
+        <div style={{ fontSize: 15, color: C.gray, letterSpacing: 1.5, textTransform: "uppercase" }}>{grade.label}</div>
+        <div
+          style={{
+            display: "flex",
+            width: 150,
+            height: 76,
+            alignItems: "center",
+            justifyContent: "center",
+            borderRadius: 8,
+            background: heatFill(grade.value == null ? null : gradeStrength(grade.value)),
+            color: C.onFill,
+            fontSize: 50,
+            fontWeight: 600,
+          }}
+        >
+          {grade.text}
+        </div>
+        <div style={{ fontSize: 16, color: C.gray }}>{grade.sub || " "}</div>
+      </div>
+    </div>
+  );
+}
+
+type StatTier = { label: string; rows: SeasonStat[][] };
+
+// Whole tiers of a stat block, while they fit in a few rows; a tier too long
+// for one row splits evenly. Also the height the block takes.
+function statTiers(all: { label: string; stats: SeasonStat[] }[]): { tiers: StatTier[]; height: number } {
+  const tiers: StatTier[] = [];
+  let statRows = 0;
+  for (const tier of all) {
+    const rows = Math.ceil(tier.stats.length / MAX_STATS_PER_ROW);
+    if (rows === 0 || statRows + rows > MAX_STAT_ROWS) break;
+    const per = Math.ceil(tier.stats.length / rows);
+    tiers.push({ label: tier.label, rows: Array.from({ length: rows }, (_, at) => tier.stats.slice(at * per, (at + 1) * per)) });
+    statRows += rows;
+  }
+  return { tiers, height: tiers.length ? 30 + tiers.length * 24 + statRows * (STAT_HEIGHT + 6) : 0 };
+}
+
+function StatTiers({ title, context, tiers }: { title: string; context: string; tiers: StatTier[] }) {
+  return (
+    <Section gap={6}>
+      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-end", height: 24, fontSize: 17 }}>
+        <div style={{ fontWeight: 600 }}>{title}</div>
+        <div style={{ color: C.gray, fontSize: 15 }}>{context}</div>
+      </div>
+      {tiers.map((tier) => (
+        <Section key={tier.label} gap={6}>
+          <div style={{ fontSize: 13, color: C.gray, letterSpacing: 1.5, textTransform: "uppercase" }}>{tier.label}</div>
+          {tier.rows.map((row, at) => (
+            <div key={at} style={{ display: "flex", gap: 6 }}>
+              {row.map((stat) => (
+                <div
+                  key={stat.label}
+                  style={{
+                    display: "flex",
+                    flexDirection: "column",
+                    flex: 1,
+                    alignItems: "center",
+                    justifyContent: "center",
+                    height: STAT_HEIGHT,
+                    border: `1.5px solid ${C.rule}`,
+                    borderRadius: 6,
+                  }}
+                >
+                  <div style={{ fontSize: 13, color: C.gray, whiteSpace: "nowrap" }}>{stat.label}</div>
+                  <div style={{ fontSize: 21, fontWeight: 600 }}>{stat.value ?? EMPTY}</div>
+                </div>
+              ))}
+            </div>
+          ))}
+        </Section>
+      ))}
+    </Section>
+  );
+}
+
+// One measure of a single-player card: its name, a bar and the number beside it.
+function BarLine({
+  label,
+  share,
+  text,
+  color,
+  dimmed,
+  height,
+  size,
+}: {
+  label: string;
+  share: number;
+  text: string;
+  color: string;
+  dimmed: boolean;
+  height: number;
+  size: number;
+}) {
+  return (
+    <div style={{ display: "flex", alignItems: "center", gap: 12, height, color: dimmed ? C.gray : C.white }}>
+      <div style={{ flex: 1, fontSize: size, ...ELLIPSIS }}>{label}</div>
+      <div style={{ display: "flex", width: 150, height: 8, borderRadius: 2, background: C.grid }}>
+        <div style={{ width: `${Math.max(0, Math.min(100, share))}%`, height: "100%", borderRadius: 2, background: color, opacity: dimmed ? 0.4 : 1 }} />
+      </div>
+      <div style={{ display: "flex", width: 32, justifyContent: "flex-end", fontSize: size - 2, color: C.gray }}>{text}</div>
+    </div>
+  );
+}
+
+function BlockTitle({ children, aside }: { children: string; aside?: string }) {
+  return (
+    <div
+      style={{
+        display: "flex",
+        alignItems: "flex-end",
+        justifyContent: "space-between",
+        height: SECTION_TITLE_HEIGHT,
+        paddingBottom: 4,
+        borderBottom: `1.5px solid ${C.rule}`,
+        fontSize: 15,
+        fontWeight: 600,
+        letterSpacing: 1.5,
+        textTransform: "uppercase",
+      }}
+    >
+      {children}
+      {aside && <div style={{ color: C.gray }}>{aside}</div>}
+    </div>
+  );
+}
+
 function barColor(trait: GradedPlayerTrait | undefined): string {
   const look = barLook(trait);
   return look.inferred ? C.blue : look.style ? C.gray : C.green;
@@ -116,18 +284,17 @@ function barColor(trait: GradedPlayerTrait | undefined): string {
 
 function TraitBar({ sport, name, trait, height, size }: { sport: GradeSport; name: string; trait: GradedPlayerTrait | undefined; height: number; size: number }) {
   const { label, short = label } = traitLabel(name, sport);
-  const { dimmed } = barLook(trait);
   const pct = trait?.percentile ?? null;
   return (
-    <div style={{ display: "flex", alignItems: "center", gap: 12, height, color: dimmed ? C.gray : C.white }}>
-      <div style={{ flex: 1, fontSize: size, ...ELLIPSIS }}>{short}</div>
-      <div style={{ display: "flex", width: 150, height: 8, borderRadius: 2, background: C.grid }}>
-        <div style={{ width: `${pct ?? 0}%`, height: "100%", borderRadius: 2, background: barColor(trait), opacity: dimmed ? 0.4 : 1 }} />
-      </div>
-      <div style={{ display: "flex", width: 32, justifyContent: "flex-end", fontSize: size - 2, color: C.gray }}>
-        {pct == null ? EMPTY : Math.round(pct)}
-      </div>
-    </div>
+    <BarLine
+      label={short}
+      share={pct ?? 0}
+      text={pct == null ? EMPTY : String(Math.round(pct))}
+      color={barColor(trait)}
+      dimmed={barLook(trait).dimmed}
+      height={height}
+      size={size}
+    />
   );
 }
 
@@ -234,18 +401,7 @@ export async function renderPlayerCard({
   const note = footerNote(context, sport);
 
   const stats = sport === "nhl" ? hockeySeasonStats(player.seasonStats) : footballSeasonStats(sport, player.seasonStats);
-  // Whole tiers of the season line, while they fit in a few rows; a tier too
-  // long for one row splits evenly.
-  const tiers: { label: string; rows: SeasonStat[][] }[] = [];
-  let statRows = 0;
-  for (const tier of stats?.tiers ?? []) {
-    const rows = Math.ceil(tier.stats.length / MAX_STATS_PER_ROW);
-    if (rows === 0 || statRows + rows > MAX_STAT_ROWS) break;
-    const per = Math.ceil(tier.stats.length / rows);
-    tiers.push({ label: tier.label, rows: Array.from({ length: rows }, (_, at) => tier.stats.slice(at * per, (at + 1) * per)) });
-    statRows += rows;
-  }
-  const statsHeight = tiers.length ? 30 + tiers.length * 24 + statRows * (STAT_HEIGHT + 6) : 0;
+  const { tiers, height: statsHeight } = statTiers(stats?.tiers ?? []);
 
   const lines = traitLines(sport, [player]);
   const columns = lines.length
@@ -272,45 +428,14 @@ export async function renderPlayerCard({
     headers: POSTER_HEADERS,
     body: (
       <Section gap={GAP}>
-        <div style={{ display: "flex", alignItems: "center", gap: 24, height: PORTRAIT }}>
-          {portrait ? (
-            <div style={{ display: "flex", width: PORTRAIT, height: PORTRAIT, borderRadius: PORTRAIT / 2, overflow: "hidden", background: C.rule }}>
-              {/* eslint-disable-next-line @next/next/no-img-element -- Satori draws only <img>; next/image cannot render in an ImageResponse */}
-              <img src={portrait} width={PORTRAIT} height={PORTRAIT} alt="" style={{ objectFit: "contain" }} />
-            </div>
-          ) : (
-            <ShareLogo team={logo} name={row.team} size={PORTRAIT - 16} />
-          )}
-          <div style={{ display: "flex", flexDirection: "column", flex: 1, gap: 8 }}>
-            <div style={{ fontSize: nameSize(displayName(row), 590, 54, 34), fontWeight: 600, lineHeight: 1.05, ...ELLIPSIS }}>
-              {displayName(row)}
-            </div>
-            <div style={{ display: "flex", alignItems: "center", gap: 10, fontSize: 24, color: C.gray }}>
-              {!unit && portrait && <ShareLogo team={logo} name={row.team} size={30} />}
-              {`${unit ? "Unit" : row.team} · ${positionName(row.positionGroup)} · ${formatNumber(row.games, 0)} games`}
-            </div>
-          </div>
-          <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 6 }}>
-            <div style={{ fontSize: 15, color: C.gray, letterSpacing: 1.5, textTransform: "uppercase" }}>{grade.label}</div>
-            <div
-              style={{
-                display: "flex",
-                width: 150,
-                height: 76,
-                alignItems: "center",
-                justifyContent: "center",
-                borderRadius: 8,
-                background: heatFill(row.grade == null ? null : gradeStrength(row.grade)),
-                color: C.onFill,
-                fontSize: 50,
-                fontWeight: 600,
-              }}
-            >
-              {grade.value}
-            </div>
-            <div style={{ fontSize: 16, color: C.gray }}>{grade.sub || " "}</div>
-          </div>
-        </div>
+        <ProfileHeader
+          name={displayName(row)}
+          sub={`${unit ? "Unit" : row.team} · ${positionName(row.positionGroup)} · ${formatNumber(row.games, 0)} games`}
+          team={row.team}
+          logo={logo}
+          portrait={portrait}
+          grade={{ label: grade.label, text: grade.value, sub: grade.sub, value: row.grade }}
+        />
 
         {tiles.map((row, at) => (
           <div key={at} style={{ display: "flex", gap: 12 }}>
@@ -362,41 +487,7 @@ export async function renderPlayerCard({
           </Section>
         )}
 
-        {stats && tiers.length > 0 && (
-          <Section gap={6}>
-            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-end", height: 24, fontSize: 17 }}>
-              <div style={{ fontWeight: 600 }}>{`${stats.season} season stats`}</div>
-              <div style={{ color: C.gray, fontSize: 15 }}>{stats.context}</div>
-            </div>
-            {tiers.map((tier) => (
-              <Section key={tier.label} gap={6}>
-                <div style={{ fontSize: 13, color: C.gray, letterSpacing: 1.5, textTransform: "uppercase" }}>{tier.label}</div>
-                {tier.rows.map((row, at) => (
-                  <div key={at} style={{ display: "flex", gap: 6 }}>
-                    {row.map((stat) => (
-                      <div
-                        key={stat.label}
-                        style={{
-                          display: "flex",
-                          flexDirection: "column",
-                          flex: 1,
-                          alignItems: "center",
-                          justifyContent: "center",
-                          height: STAT_HEIGHT,
-                          border: `1.5px solid ${C.rule}`,
-                          borderRadius: 6,
-                        }}
-                      >
-                        <div style={{ fontSize: 13, color: C.gray, whiteSpace: "nowrap" }}>{stat.label}</div>
-                        <div style={{ fontSize: 21, fontWeight: 600 }}>{stat.value ?? EMPTY}</div>
-                      </div>
-                    ))}
-                  </div>
-                ))}
-              </Section>
-            ))}
-          </Section>
-        )}
+        {stats && tiers.length > 0 && <StatTiers title={`${stats.season} season stats`} context={stats.context} tiers={tiers} />}
       </Section>
     ),
     footer: (
@@ -805,3 +896,158 @@ export async function renderMetricsComparison({
 
 // A grade's fill on the 20 to 80 scale.
 const gradeShare = (grade: number | null) => (grade == null ? 0 : ((grade - 20) / 60) * 100);
+
+const OUTLOOK_HEIGHT = 96;
+const MAX_OUTLOOK = 6;
+const FACTS_HEIGHT = 26;
+
+export interface ProfilePanel {
+  title: string;
+  // The panel's own grade, where it has one.
+  grade?: string;
+  rows: { label: string; share: number; text: string; physical: boolean; dimmed: boolean }[];
+}
+
+// One baseball player's opened card: his grade, the facts line, headline
+// tiles, trait panels where the league grades them, his stat block and the
+// control-year outlook.
+export async function renderProfileCard({
+  league,
+  context,
+  player,
+  grade,
+  facts,
+  headlines,
+  panels = [],
+  stats,
+  outlook = [],
+}: {
+  league: string;
+  context: string;
+  player: ComparisonPlayer;
+  grade: { text: string; sub: string; value: number | null };
+  facts: string[];
+  headlines: { label: string; value: string; sub: string; tone?: string }[];
+  panels?: ProfilePanel[];
+  stats?: { title: string; context: string; tiers: { label: string; stats: SeasonStat[] }[] } | null;
+  outlook?: { head: string; war: string; salary: string; surplus: string; faded: boolean; positive: boolean }[];
+}) {
+  const portrait = player.portraitUrl ? await loadPortrait(player.portraitUrl) : null;
+  const { tiers, height: statsHeight } = statTiers(stats?.tiers ?? []);
+  const years = outlook.slice(0, MAX_OUTLOOK);
+  // Panels down two columns, split where the two come out most even.
+  const size = (list: ProfilePanel[]) => list.reduce((sum, panel) => sum + panel.rows.length + 1, 0);
+  let cut = Math.min(1, panels.length);
+  for (let at = 1; at < panels.length; at++) {
+    const gap = (i: number) => Math.abs(size(panels.slice(0, i)) - size(panels.slice(i)));
+    if (gap(at) < gap(cut)) cut = at;
+  }
+  const columns = panels.length > 1 ? [panels.slice(0, cut), panels.slice(cut)] : panels.length ? [panels] : [];
+  const traitRows = Math.max(0, ...columns.map((list) => list.reduce((sum, panel) => sum + panel.rows.length, 0)));
+  const titlesHeight = Math.max(0, ...columns.map((list) => list.length)) * SECTION_TITLE_HEIGHT;
+  const used =
+    PORTRAIT +
+    (facts.length ? GAP + FACTS_HEIGHT : 0) +
+    GAP + TILE_HEIGHT +
+    (columns.length ? GAP + PERCENTILE_NOTE_HEIGHT + 10 + titlesHeight + 10 + 24 : 0) +
+    (statsHeight ? GAP + statsHeight : 0) +
+    (years.length ? GAP + 24 + 6 + OUTLOOK_HEIGHT : 0);
+  const rowHeight = Math.max(20, Math.min(TRAIT_HEIGHT, Math.floor((BODY_HEIGHT - used) / Math.max(1, traitRows))));
+  const rowSize = Math.max(15, Math.min(21, Math.round(rowHeight * 0.62)));
+  const looks = panels.flatMap((panel) => panel.rows);
+  return renderShareFrame({
+    eyebrow: league,
+    size: { width: POSTER_SIZE.width, height: Math.min(POSTER_SIZE.height, CHROME_HEIGHT + used + traitRows * rowHeight) },
+    headers: POSTER_HEADERS,
+    body: (
+      <Section gap={GAP}>
+        <ProfileHeader name={player.name} sub={player.sub} team={player.team} logo={player.logo} portrait={portrait} grade={{ label: "Grade", ...grade }} />
+        {facts.length > 0 && (
+          <div style={{ display: "flex", alignItems: "center", height: FACTS_HEIGHT, fontSize: 18, color: C.gray, ...ELLIPSIS }}>{facts.join(" · ")}</div>
+        )}
+        <div style={{ display: "flex", gap: 12 }}>
+          {headlines.map((headline) => (
+            <Tile key={headline.label} headline={headline} />
+          ))}
+        </div>
+
+        {columns.length > 0 && (
+          <Section gap={10}>
+            <BarNote lead="Bars are percentiles." rest="The number beside each is his grade, 20 to 80 with 50 average." />
+            <div style={{ display: "flex", gap: 40 }}>
+              {columns.map((list, at) => (
+                <div key={at} style={{ display: "flex", flexDirection: "column", flex: 1 }}>
+                  {list.flatMap((panel) => [
+                    <BlockTitle key={`title-${panel.title}`} aside={panel.grade}>
+                      {panel.title}
+                    </BlockTitle>,
+                    ...panel.rows.map((row) => (
+                      <BarLine
+                        key={`${panel.title}-${row.label}`}
+                        label={row.label}
+                        share={row.share}
+                        text={row.text}
+                        color={row.physical ? C.blue : C.green}
+                        dimmed={row.dimmed}
+                        height={rowHeight}
+                        size={rowSize}
+                      />
+                    )),
+                  ])}
+                </div>
+              ))}
+            </div>
+            <div style={{ display: "flex", gap: 22, height: 24, alignItems: "center", fontSize: 15, color: C.gray }}>
+              {[
+                { label: "Counted from his plays", color: C.green, opacity: 1, show: true },
+                { label: "Physical measurement", color: C.blue, opacity: 1, show: looks.some((row) => row.physical) },
+                { label: "Not graded", color: C.green, opacity: 0.4, show: looks.some((row) => row.dimmed) },
+              ]
+                .filter((item) => item.show)
+                .map((item) => (
+                  <div key={item.label} style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                    <div style={{ width: 22, height: 8, borderRadius: 2, background: item.color, opacity: item.opacity }} />
+                    {item.label}
+                  </div>
+                ))}
+            </div>
+          </Section>
+        )}
+
+        {stats && tiers.length > 0 && <StatTiers title={stats.title} context={stats.context} tiers={tiers} />}
+
+        {years.length > 0 && (
+          <Section gap={6}>
+            <div style={{ display: "flex", alignItems: "flex-end", height: 24, fontSize: 17, fontWeight: 600 }}>Control-year outlook</div>
+            <div style={{ display: "flex", gap: 6 }}>
+              {years.map((year) => (
+                <div
+                  key={year.head}
+                  style={{
+                    display: "flex",
+                    flexDirection: "column",
+                    flex: 1,
+                    alignItems: "center",
+                    justifyContent: "center",
+                    gap: 1,
+                    height: OUTLOOK_HEIGHT,
+                    border: `1.5px solid ${C.rule}`,
+                    borderRadius: 6,
+                    opacity: year.faded ? 0.45 : 1,
+                    fontSize: 15,
+                  }}
+                >
+                  <div style={{ color: C.gray }}>{year.head}</div>
+                  <div style={{ fontSize: 17, fontWeight: 600, color: C.green }}>{year.war}</div>
+                  <div style={{ color: C.gray }}>{year.salary}</div>
+                  <div style={{ fontWeight: 600, color: year.positive ? C.positive : C.negative }}>{year.surplus}</div>
+                </div>
+              ))}
+            </div>
+          </Section>
+        )}
+      </Section>
+    ),
+    footer: <div style={{ display: "flex", maxWidth: 740, fontSize: 19, lineHeight: 1.3, color: C.gray }}>{context}</div>,
+  });
+}

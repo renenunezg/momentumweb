@@ -15,11 +15,10 @@ import { SeasonStatsPanel } from "@/components/season-stats-panel";
 import { SortHeader } from "@/components/sort-header";
 import { ToggleGroup } from "@/components/toggle-group";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { lmbComparisonMetrics, lmbPlayingTime, lmbTeamCode, lmbTeamLogo, lmbTeamName, type LmbRatingModel } from "@/lib/lmb";
+import { lmbComparisonMetrics, lmbFacts, lmbHeadlines, lmbLedger, lmbTeamCode, lmbTeamLogo, lmbTeamName, type LmbRatingModel } from "@/lib/lmb";
 import type { LmbPlayerRatingRow } from "@/lib/lmb-types";
 import { lmbPlayerHeadshotUrl } from "@/lib/player-headshots";
 import { MLB_POSITION_ORDER, PITCHER_GROUPS } from "@/lib/player-values";
-import type { SeasonStat } from "@/lib/season-stats";
 import { EMPTY, cn, foldSearch, formatNumber, formatSigned, slug } from "@/lib/utils";
 
 // The MLB player grades table, read from lmb.player_ratings: the same
@@ -69,82 +68,25 @@ function sortValue(row: LmbPlayerRatingRow, key: SortKey): number | null {
   }
 }
 
-function totalRuns(row: LmbPlayerRatingRow): number {
-  return row.batting + row.baserunning + row.fielding + row.positional + row.pitching + row.leverage + row.replacement;
-}
-
-// The ledger lines a player has: the plate side if he batted or plays the
-// field, the mound side if he pitched, fielding for everyone.
-function ledger(row: LmbPlayerRatingRow, model: LmbRatingModel): SeasonStat[] {
-  const batter = !isPitcher(row) || row.pa > 0;
-  const pitcher = isPitcher(row) || row.bf > 0;
-  const positional = MLB_POSITION_ORDER.filter((pos) => model.positional[pos] != null)
-    .map((pos) => `${pos} ${formatSigned(model.positional[pos], 1)}`)
-    .join(", ");
-  const replacement =
-    model.replacementWinPct == null
-      ? ""
-      : ` A team of replacement-level players would win ${formatNumber(model.replacementWinPct * 100, 1)}% of its games.`;
-  const line = (label: string, value: number, tip: string): SeasonStat => ({ label, value: runs(value), tip });
-  return [
-    ...(batter
-      ? [
-          line("Batting", row.batting, "Runs above average at the plate, from play-by-play, adjusted for park and month."),
-          line("Baserunning", row.baserunning, "Runs above average on the bases, from play-by-play."),
-        ]
-      : []),
-    line("Fielding", row.fielding, "Runs above average in the field, from zone-based fielding."),
-    ...(batter
-      ? [
-          line(
-            "Positional",
-            row.positional,
-            `The adjustment for the difficulty of the positions he played.${positional ? ` Runs per 162 games: ${positional}.` : ""}`,
-          ),
-        ]
-      : []),
-    ...(pitcher
-      ? [
-          line("Pitching", row.pitching, "Runs saved against an average pitcher, from play-by-play, adjusted for park and month."),
-          line("Leverage", row.leverage, "The adjustment for how much a reliever's innings mattered."),
-        ]
-      : []),
-    line("Replacement", row.replacement, `What an average player is worth over a replacement-level one in his playing time.${replacement}`),
-    line("Total", totalRuns(row), "Runs above replacement. Divided by the season's runs per win, they are his WAR."),
-  ];
-}
-
 function LmbPlayerCard({ row, model }: { row: LmbPlayerRatingRow; model: LmbRatingModel }) {
-  const code = teamCode(row);
-  const graded = row.grade != null;
   return (
     <div className="min-w-0 space-y-4 py-3">
       <div className="flex flex-wrap gap-x-6 gap-y-1 font-mono text-[11px] text-muted-foreground">
-        {code && <span>{lmbTeamName(code)}</span>}
-        {row.age != null && <span>Age {row.age}</span>}
-        <span>{lmbPlayingTime(row)} in {row.season}</span>
-        {graded && (
-          <span>
-            {row.grade_season} grade range {formatNumber(row.grade_lo, 0)} to {formatNumber(row.grade_hi, 0)}
-          </span>
-        )}
+        {lmbFacts(row).map((fact) => (
+          <span key={fact}>{fact}</span>
+        ))}
       </div>
       <div className="grid gap-4 lg:grid-cols-[15rem_minmax(0,1fr)] lg:items-start lg:gap-10">
         <div className="grid grid-cols-2 divide-x divide-border border-y border-border text-center lg:grid-cols-1 lg:divide-x-0 lg:divide-y [&>div]:min-w-0 [&>div]:px-1.5 [&>div]:py-3 sm:[&>div]:px-3">
-          <div>
-            <div className="type-eyebrow flex min-h-8 items-center justify-center gap-1 text-muted-foreground">
-              {row.season} WAR <InfoTip text={`Wins above replacement in the ${row.season} LMB season.`} label="What is WAR?" />
+          {lmbHeadlines(row).map((headline) => (
+            <div key={headline.label}>
+              <div className="type-eyebrow flex min-h-8 items-center justify-center gap-1 text-muted-foreground">
+                {headline.label} <InfoTip text={headline.tip} label={`What is ${headline.label}?`} />
+              </div>
+              <div className={cn("font-mono text-lg font-bold tabular-nums sm:text-2xl", headline.tone)}>{headline.value}</div>
+              <div className="font-mono text-[11px] text-muted-foreground">{headline.sub}</div>
             </div>
-            <div className="font-mono text-lg font-bold tabular-nums sm:text-2xl">{formatSigned(row.war, 1)}</div>
-            <div className="font-mono text-[11px] text-muted-foreground">{runs(totalRuns(row))} runs · {row.season} season</div>
-          </div>
-          <div>
-            <div className="type-eyebrow flex min-h-8 items-center justify-center gap-1 text-muted-foreground">
-              Projected WAR <InfoTip text={`Projected wins above replacement for the ${row.grade_season} season.`} label="What is projected WAR?" />
-            </div>
-            <div className="font-mono text-lg font-bold tabular-nums text-primary sm:text-2xl">{formatNumber(row.proj_war, 1)}</div>
-            <div className="font-mono text-[11px] text-muted-foreground">{row.proj_war == null ? "Not enough data" : `${row.grade_season} season`}</div>
-          </div>
+          ))}
         </div>
         {/* Stacked under the tiles on phones, the tiles' bottom rule already separates the ledger. */}
         <div className="min-w-0 max-lg:[&>section]:border-t-0 max-lg:[&>section]:pt-0">
@@ -153,11 +95,18 @@ function LmbPlayerCard({ row, model }: { row: LmbPlayerRatingRow; model: LmbRati
           stats={{
             season: row.season,
             context: model.runsPerWin == null ? "" : `${formatNumber(model.runsPerWin, 2)} runs per win`,
-            tiers: [{ label: "Runs", stats: ledger(row, model) }],
+            tiers: [{ label: "Runs", stats: lmbLedger(row, model) }],
             note: "Runs are rounded to the nearest run; the total divided by the season's runs per win is his WAR.",
           }}
         />
         </div>
+      </div>
+      <div className="flex justify-end">
+        <DownloadCardLink
+          href={`/lmb/players/card/${row.pos.toLowerCase()}/${row.player_id}`}
+          filename={`lmb-${slug(row.name)}-card.png`}
+          label="Download card"
+        />
       </div>
     </div>
   );

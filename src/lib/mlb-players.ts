@@ -153,12 +153,21 @@ export const fetchPlayerValues = cache(async (): Promise<PlayerValues> => {
   };
 });
 
-export async function fetchPlayerDetails(ids: number[]): Promise<Record<string, PlayerDetail>> {
+// One player's index row, for his downloadable card, through the tagged client.
+export async function fetchPlayerValue(id: number): Promise<Omit<PlayerValueIndex, "bat" | "fld"> | null> {
+  const { data, error } = await supabaseMlbCached.from("player_values").select(INDEX_COLUMNS).eq("player_id", id).maybeSingle();
+  if (error) throw new Error(`Player value read failed: ${error.message}`);
+  return data as Omit<PlayerValueIndex, "bat" | "fld"> | null;
+}
+
+// `client` is the uncached one for the page's on-demand details, and the
+// tagged one where the result is stored, as in the card image.
+export async function fetchPlayerDetails(ids: number[], client: typeof supabase = supabase): Promise<Record<string, PlayerDetail>> {
   const signal = AbortSignal.timeout(10_000);
   const [valuesRes, traitsRes, statsRes] = await Promise.all([
-    supabase.from("player_details").select("player_id, outlook, tip").in("player_id", ids).limit(DETAIL_IDS).abortSignal(signal),
-    supabase.from("player_traits").select("*").in("player_id", ids).limit(DETAIL_IDS * 16).abortSignal(signal),
-    supabase.from("player_season_stats").select("player_id, season, levels, stats").eq("pool", "mlb").in("player_id", ids).limit(DETAIL_IDS).abortSignal(signal),
+    client.from("player_details").select("player_id, outlook, tip").in("player_id", ids).limit(DETAIL_IDS).abortSignal(signal),
+    client.from("player_traits").select("*").in("player_id", ids).limit(DETAIL_IDS * 16).abortSignal(signal),
+    client.from("player_season_stats").select("player_id, season, levels, stats").eq("pool", "mlb").in("player_id", ids).limit(DETAIL_IDS).abortSignal(signal),
   ]);
   // Failed or incomplete reads must reach the route's uncached 503 response.
   if (valuesRes.error) throw new Error(`Player outlook read failed: ${valuesRes.error.message}`);

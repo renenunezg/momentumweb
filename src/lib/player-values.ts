@@ -141,3 +141,104 @@ export function orderTraits<T extends { panel: string; trait: string }>(traits: 
   const rank = (panel: string) => (panels.indexOf(panel) + panels.length + 1) % (panels.length + 1);
   return [...traits].sort((a, b) => rank(a.panel) - rank(b.panel) || traitLabel(a.trait).label.localeCompare(traitLabel(b.trait).label));
 }
+
+// What the opened card reads of a player_values row.
+export interface CardPlayer extends ValuedPlayer {
+  season: number;
+  bats: string | null;
+  throws: string | null;
+  age: number | null;
+  secondary_positions: string[];
+  service_time: number | null;
+  fa_year: number | null;
+  owed_through_control_musd: number | null;
+  trade_value_low: number | null;
+  trade_value_high: number | null;
+  impact_runs: number | null;
+}
+
+// Service time is MLB's years.days, with 172 days to a year.
+export function serviceText(value: number | null): string | null {
+  if (value == null) return null;
+  const years = Math.floor(value);
+  const days = Math.round((value - years) * 1000);
+  if (days > 171) return null;
+  return `${years} yr ${days} days service`;
+}
+
+// The line of facts that opens a player's card.
+export function playerFacts(row: CardPlayer): string[] {
+  const service = serviceText(row.service_time);
+  return [
+    `${row.bats ?? "?"}/${row.throws ?? "?"}`,
+    row.age != null && `Age ${row.age}`,
+    row.secondary_positions.length > 0 && `also ${row.secondary_positions.join(", ")}`,
+    service,
+    row.fa_year != null && `free agent ${row.fa_year}`,
+    row.contract_status === "estimated" && "contract estimated from debut date",
+    row.contract_status === "unknown" && "contract not found",
+    row.owed_through_control_musd != null &&
+      (row.control_years ?? 0) > 0 &&
+      `owed ${formatMillions(row.owed_through_control_musd)} over ${row.control_years} control year${row.control_years === 1 ? "" : "s"}`,
+  ].filter((fact): fact is string => Boolean(fact));
+}
+
+// A text color token for his headline value: muted without a grade, plain at a
+// market price, and signed where it is a surplus over his contract.
+export function valueTone(row: ValuedPlayer): string {
+  if (row.grade == null) return "text-muted-foreground";
+  if (marketPriced(row)) return "text-foreground";
+  return (row.trade_value_musd ?? 0) >= 0 ? "text-positive" : "text-destructive";
+}
+
+// The line under his headline value.
+export function valueSub(row: CardPlayer): string {
+  if (row.grade == null) return "Not enough data";
+  return headlineValue(row).label === "Trade value" && row.trade_value_low != null
+    ? `${formatMillions(row.trade_value_low)} to ${formatMillions(row.trade_value_high)} · ${row.control_years} yrs`
+    : `${row.projected_war == null ? "–" : row.projected_war.toFixed(1)} projected WAR`;
+}
+
+const signed = (value: number, digits: number) => {
+  const rounded = Number(value.toFixed(digits));
+  const text = Math.abs(rounded).toFixed(digits);
+  return rounded > 0 ? `+${text}` : rounded < 0 ? `-${text}` : text;
+};
+
+// The line under his impact: last season's runs, or why there are none.
+export function impactSub(row: CardPlayer, pitcher: boolean): string {
+  if (row.impact_runs == null) return pitcher ? `no batters faced in ${row.season - 1}` : `no plate appearances in ${row.season - 1}`;
+  return `${signed(row.impact_runs, 1)} runs · ${row.season - 1} season`;
+}
+
+// The trait panels of a card, in order.
+export function cardPanels(pitcher: boolean): string[] {
+  return pitcher ? ["arsenal", "results", "durability"] : ["batting", "fielding"];
+}
+
+// A panel's rows: graded inputs first. A trait with no grade that would not
+// count toward the grade says nothing, so it is left out.
+export function panelTraits<T extends { panel: string; trait: string; grade: number | null; in_grade: boolean }>(traits: T[], panel: string): T[] {
+  return traits
+    .filter((t) => t.panel === panel && (t.grade != null || t.in_grade))
+    .sort((a, b) => Number(b.in_grade) - Number(a.in_grade) || a.trait.localeCompare(b.trait));
+}
+
+const SALARY_KINDS: Record<string, string> = { pre_arb: "min", arbitration: "arb", option: "opt", buyout: "buyout" };
+
+// One season of the control-year outlook as its four lines. A season past his
+// control reads as free agency and is drawn faded.
+export function outlookLines(
+  year: { season: number; age: number; war: number | null; salary_musd: number; salary_kind: string; surplus_musd: number | null; in_control: boolean },
+  graded: boolean,
+): { head: string; war: string; salary: string; surplus: string; faded: boolean; positive: boolean } {
+  const faded = !year.in_control && year.salary_kind !== "buyout";
+  return {
+    head: `${year.season} · ${year.age}`,
+    war: graded && year.war != null ? `${year.war.toFixed(1)} WAR` : "–",
+    salary: faded ? "free agent" : `${formatMillions(year.salary_musd)} ${SALARY_KINDS[year.salary_kind] ?? ""}`.trim(),
+    surplus: faded || !graded || year.surplus_musd == null ? "–" : `${signed(year.surplus_musd, 1).replace(/^([+-])/, "$1$")}M`,
+    faded,
+    positive: (year.surplus_musd ?? 0) >= 0,
+  };
+}
